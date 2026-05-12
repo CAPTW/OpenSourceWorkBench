@@ -9,6 +9,7 @@ from .plot_viewer import build_plot_viewer
 from .project_tree import build_project_tree
 from .properties_panel import build_properties_panel
 from .qt_compat import PySide6UnavailableError, pyside6_missing_message
+from .report_panel import build_report_panel
 from .result_viewer import build_result_viewer
 from .run_monitor import build_run_monitor
 from .table_viewer import build_table_viewer
@@ -49,6 +50,7 @@ class MainWindow(_BaseMainWindow):
         self.project_tree = build_project_tree(self)
         self.properties_panel = build_properties_panel(self)
         self.run_monitor = build_run_monitor(self)
+        self.report_panel = build_report_panel(self)
         self.viewer_tabs = self._build_viewer_tabs()
 
         self.setCentralWidget(self.viewer_tabs)
@@ -74,6 +76,8 @@ class MainWindow(_BaseMainWindow):
                 action.setObjectName(_action_object_name(action_title))
                 if action_title == "Plugin Manager":
                     action.triggered.connect(self.open_plugin_manager)
+                elif action_title == "Report":
+                    action.triggered.connect(self.export_report)
                 else:
                     action.triggered.connect(
                         lambda _checked=False, label=action_title: self.run_monitor.append_log(
@@ -101,6 +105,12 @@ class MainWindow(_BaseMainWindow):
             QtCore.Qt.DockWidgetArea.BottomDockWidgetArea,
             "runMonitorDock",
         )
+        self._add_dock(
+            "Report",
+            self.report_panel,
+            QtCore.Qt.DockWidgetArea.RightDockWidgetArea,
+            "reportDock",
+        )
 
     def _add_dock(self, title: str, widget: object, area: object, object_name: str) -> None:
         dock = QtWidgets.QDockWidget(title, self)
@@ -120,6 +130,10 @@ class MainWindow(_BaseMainWindow):
         dialog = PluginManagerDialog(self)
         dialog.exec()
         self.run_monitor.append_log("Plugin Manager closed", level="info")
+
+    def export_report(self) -> None:
+        output_path = self.report_panel.export_report()
+        self.run_monitor.append_log(f"Report exported to {output_path}", level="info")
 
 
 def _action_object_name(action_title: str) -> str:
