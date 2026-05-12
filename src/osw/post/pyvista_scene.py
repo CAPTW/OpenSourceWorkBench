@@ -1,0 +1,188 @@
+"""Optional PyVista scene bridge for mesh and result previews."""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from dataclasses import dataclass
+from importlib import import_module
+from pathlib import Path
+from types import ModuleType
+from typing import Any
+
+from osw.mesh.mesh_model import MeshCellBlock, MeshData, MeshInfo
+
+
+class PyVistaUnavailableError(RuntimeError):
+    """Raised when a rendering operation requires the optional PyVista extra."""
+
+
+@dataclass(frozen=True)
+class PyVistaSceneConfig:
+    """User-visible visualization options for the basic scene bridge."""
+
+    show_surface: bool = True
+    show_edges: bool = False
+    show_axes: bool = True
+    show_grid: bool = False
+    scalar_field: str | None = None
+    off_screen: bool = True
+
+
+@dataclass(frozen=True)
+class PyVistaSceneState:
+    """Preview state that can be displayed without importing PyVista."""
+
+    mesh_info: MeshInfo
+    bounding_box: Any
+    show_surface: bool
+    show_edges: bool
+    show_axes: bool
+    show_grid: bool
+    scalar_field: str | None
+    warnings: tuple[str, ...]
+    rendered: bool = False
+
+
+def pyvista_missing_message() -> str:
+    return (
+        "PyVista is not installed. Install the optional visualization extra with "
+        "`python -m pip install -e .[viz]` before rendering 3D scenes."
+    )
+
+
+def is_pyvista_available() -> bool:
+    try:
+        _load_pyvista()
+    except PyVistaUnavailableError:
+        return False
+    return True
+
+
+def build_scene_state(
+    mesh_data: MeshData,
+    *,
+    config: PyVistaSceneConfig | None = None,
+    rendered: bool = False,
+) -> PyVistaSceneState:
+    """Build mesh visualization metadata without requiring PyVista."""
+
+    scene_config = config or PyVistaSceneConfig()
+    mesh_info = mesh_data.info(source="<memory>", mesh_format="mesh")
+    warnings = _scalar_warnings(mesh_data, scene_config.scalar_field)
+    return PyVistaSceneState(
+        mesh_info=mesh_info,
+        bounding_box=mesh_info.bounding_box,
+        show_surface=scene_config.show_surface,
+        show_edges=scene_config.show_edges,
+        show_axes=scene_config.show_axes,
+        show_grid=scene_config.show_grid,
+        scalar_field=scene_config.scalar_field,
+        warnings=warnings,
+        rendered=rendered,
+    )
+
+
+def mesh_data_to_polydata(mesh_data: MeshData, *, pyvista_module: Any | None = None) -> Any:
+    """Convert supported surface cell blocks to a PyVista PolyData-like object."""
+
+    module = pyvista_module if pyvista_module is not None else _load_pyvista()
+    points = [list(point) for point in mesh_data.points]
+    faces = _surface_faces(mesh_data.cells)
+    return module.PolyData(points, faces)
+
+
+class PyVistaScene:
+    """Small optional rendering adapter isolated from solver-specific formats."""
+
+    def __init__(
+        self,
+        *,
+        config: PyVistaSceneConfig | None = None,
+        pyvista_module: Any | None = None,
+        loader: Callable[[], Any] | None = None,
+    ) -> None:
+        self.config = config or PyVistaSceneConfig()
+        self._pyvista_module = pyvista_module
+        self._loader = loader or _load_pyvista
+        self._plotter: Any | None = None
+
+    def add_mesh(self, mesh_data: MeshData) -> PyVistaSceneState:
+        module = self._require_pyvista()
+        dataset = mesh_data_to_polydata(mesh_data, pyvista_module=module)
+        self._attach_scalar_field(dataset, mesh_data)
+
+        plotter = module.Plotter(off_screen=self.config.off_screen)
+        self._plotter = plotter
+        if self.config.show_surface:
+            scalars = (
+                self.config.scalar_field
+                if _has_scalar(mesh_data, self.config.scalar_field)
+                else None
+            )
+            plotter.add_mesh(
+                dataset,
+                show_edges=self.config.show_edges,
+                scalars=scalars,
+            )
+        if self.config.show_axes and hasattr(plotter, "add_axes"):
+            plotter.add_axes()
+        if self.config.show_grid and hasattr(plotter, "show_grid"):
+            plotter.show_grid()
+
+        return build_scene_state(mesh_data, config=self.config, rendered=True)
+
+    def export_screenshot(self, mesh_data: MeshData, target_path: str | Path) -> Path:
+        target = Path(target_path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        self.add_mesh(mesh_data)
+        if self._plotter is None or not hasattr(self._plotter, "screenshot"):
+            msg = "PyVista plotter does not provide screenshot export in this environment."
+            raise PyVistaUnavailableError(msg)
+        self._plotter.screenshot(str(target))
+        return target
+
+    def _require_pyvista(self) -> Any:
+        if self._pyvista_module is not None:
+            return self._pyvista_module
+        module = self._loader()
+        if module is None:
+            raise PyVistaUnavailableError(pyvista_missing_message())
+        self._pyvista_module = module
+        return module
+
+    def _attach_scalar_field(self, dataset: Any, mesh_data: MeshData) -> None:
+        scalar_field = self.config.scalar_field
+        if not _has_scalar(mesh_data, scalar_field):
+            return
+        values = mesh_data.point_data.get(scalar_field)
+        if values is not None and hasattr(dataset, "point_data"):
+            dataset.point_data[scalar_field] = values
+
+
+def _load_pyvista() -> ModuleType:
+    try:
+        return import_module("pyvista")
+    except ImportError as exc:
+        raise PyVistaUnavailableError(pyvista_missing_message()) from exc
+
+
+def _surface_faces(cells: tuple[MeshCellBlock, ...]) -> list[int]:
+    faces: list[int] = []
+    for block in cells:
+        if block.cell_type not in {"triangle", "quad", "polygon"}:
+            continue
+        for row in block.data:
+            faces.extend([len(row), *row])
+    return faces
+
+
+def _has_scalar(mesh_data: MeshData, scalar_field: str | None) -> bool:
+    if scalar_field is None:
+        return False
+    return scalar_field in mesh_data.point_data or scalar_field in mesh_data.cell_data
+
+
+def _scalar_warnings(mesh_data: MeshData, scalar_field: str | None) -> tuple[str, ...]:
+    if scalar_field is None or _has_scalar(mesh_data, scalar_field):
+        return ()
+    return (f"Scalar field '{scalar_field}' is not present on the mesh.",)
