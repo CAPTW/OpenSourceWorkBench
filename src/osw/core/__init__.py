@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from osw.core.diagnostics import DiagnosticMessage, DiagnosticReport, DiagnosticSeverity
 from osw.core.materials import IsotropicElastic, Material, MaterialDB
 from osw.core.project_schema import (
     BoundaryCondition,
@@ -16,11 +17,17 @@ from osw.core.project_schema import (
     SolverConfig,
     load_project,
 )
+from osw.core.run_manager import ExecutableLookup, ExecutablePathRegistry
 from osw.core.units import Quantity, UnitSystem
 from osw.core.validation import ProjectSchemaError, ValidationMessage, ValidationReport
 
 __all__ = [
     "BoundaryCondition",
+    "DiagnosticMessage",
+    "DiagnosticReport",
+    "DiagnosticSeverity",
+    "ExecutableLookup",
+    "ExecutablePathRegistry",
     "GeometryRef",
     "IsotropicElastic",
     "Material",
