@@ -112,6 +112,10 @@ def is_allowed_fixture_path(path: str) -> bool:
         normalized.startswith("examples/")
         or normalized.startswith("tests/")
         or normalized == ".codex/reports/.gitkeep"
+        or (
+            normalized.startswith(".codex/reports/review/")
+            and normalized.endswith(".md")
+        )
     )
 
 

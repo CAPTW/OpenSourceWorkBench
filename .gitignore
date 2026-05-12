@@ -46,6 +46,12 @@ logs/
 tmp/
 temp/
 .cache/
+.codex/rescue/
+.codex/reports/merge/
+.codex/reports/blocked/
+.codex/reports/amend/
+.codex/reports/worktrees/
+.codex/reports/release/
 
 # Solver case/runtime directories
 solver_runs/

@@ -18,6 +18,13 @@ and report generation.
 - MATLAB/Octave `.m` and `.mat` preview-first workflow.
 - HTML reports, validation matrix, and golden tests.
 
+The eight planned v0.1 demos are empty project, STEP import preview, mesh import
+preview, Gmsh meshing template, CalculiX cantilever, OpenFOAM cavity/duct
+template, Cantera/CoolProp basics, and MATLAB/Octave figure preview.
+
+The expected workflow is Import -> Configure -> Run or prepare a bounded demo
+run -> inspect Result/Figure data -> export an HTML report with validation notes.
+
 ## Non-Goals
 
 OSW v0.1 is not a MATLAB, ANSYS, Simulink, SolidWorks, CATIA, NX, or Creo clone.
