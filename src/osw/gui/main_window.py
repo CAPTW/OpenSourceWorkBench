@@ -11,6 +11,7 @@ from .properties_panel import build_properties_panel
 from .qt_compat import PySide6UnavailableError, pyside6_missing_message
 from .result_viewer import build_result_viewer
 from .run_monitor import build_run_monitor
+from .table_viewer import build_table_viewer
 
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QApplication
@@ -22,6 +23,14 @@ except ModuleNotFoundError:
     QtWidgets = None
 
 MENU_TITLES = ("File", "Import", "Plugins", "Run", "Reports", "Help")
+MENU_ACTIONS = {
+    "File": ("New Project", "Open Project", "Save Project"),
+    "Import": ("Import",),
+    "Plugins": ("Plugin Manager",),
+    "Run": ("Run",),
+    "Reports": ("Report",),
+}
+VIEWER_TAB_TITLES = ("3D Viewer", "Plot Viewer", "Table Viewer")
 _BaseMainWindow: Any = QtWidgets.QMainWindow if QtWidgets is not None else object
 
 
@@ -45,18 +54,30 @@ class MainWindow(_BaseMainWindow):
         self.setCentralWidget(self.viewer_tabs)
         self._build_menus()
         self._build_docks()
+        self.project_tree.currentItemChanged.connect(self._on_project_tree_selection_changed)
+        self.project_tree.setCurrentItem(self.project_tree.topLevelItem(0))
 
     def _build_viewer_tabs(self) -> object:
         tabs = QtWidgets.QTabWidget(self)
         tabs.setObjectName("viewerTabs")
-        tabs.addTab(build_result_viewer(tabs), "Viewer")
-        tabs.addTab(build_plot_viewer(tabs), "Plots")
+        tabs.addTab(build_result_viewer(tabs), VIEWER_TAB_TITLES[0])
+        tabs.addTab(build_plot_viewer(tabs), VIEWER_TAB_TITLES[1])
+        tabs.addTab(build_table_viewer(tabs), VIEWER_TAB_TITLES[2])
         return tabs
 
     def _build_menus(self) -> None:
         menu_bar = self.menuBar()
         for title in MENU_TITLES:
-            menu_bar.addMenu(title)
+            menu = menu_bar.addMenu(title)
+            for action_title in MENU_ACTIONS.get(title, ()):
+                action = menu.addAction(action_title)
+                action.setObjectName(_action_object_name(action_title))
+                action.triggered.connect(
+                    lambda _checked=False, label=action_title: self.run_monitor.append_log(
+                        f"{label} action selected",
+                        level="info",
+                    )
+                )
 
     def _build_docks(self) -> None:
         self._add_dock(
@@ -83,6 +104,17 @@ class MainWindow(_BaseMainWindow):
         dock.setObjectName(object_name)
         dock.setWidget(widget)
         self.addDockWidget(area, dock)
+
+    def _on_project_tree_selection_changed(self, item: object | None, _previous: object) -> None:
+        if item is None:
+            self.properties_panel.set_node_selection("")
+            return
+        self.properties_panel.set_node_selection(item.text(0))
+
+
+def _action_object_name(action_title: str) -> str:
+    words = "".join(part.capitalize() for part in action_title.split())
+    return f"action{words}"
 
 
 def create_app(argv: Sequence[str] | None = None) -> QApplication:

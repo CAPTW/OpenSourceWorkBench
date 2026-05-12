@@ -21,7 +21,16 @@ GUI_MODULES = (
     "osw.gui.run_monitor",
     "osw.gui.result_viewer",
     "osw.gui.plot_viewer",
+    "osw.gui.table_viewer",
 )
+
+EXPECTED_MENU_ACTIONS = {
+    "File": ("New Project", "Open Project", "Save Project"),
+    "Import": ("Import",),
+    "Plugins": ("Plugin Manager",),
+    "Run": ("Run",),
+    "Reports": ("Report",),
+}
 
 
 def _python_env() -> dict[str, str]:
@@ -35,6 +44,40 @@ def test_gui_modules_import_without_requiring_pyside6() -> None:
         module = importlib.import_module(module_name)
 
         assert module is not None
+
+
+def test_gui_layout_contract_names_are_available_without_pyside6() -> None:
+    from osw.gui.main_window import MENU_ACTIONS, VIEWER_TAB_TITLES
+
+    assert VIEWER_TAB_TITLES == ("3D Viewer", "Plot Viewer", "Table Viewer")
+    assert MENU_ACTIONS == EXPECTED_MENU_ACTIONS
+
+
+def test_properties_for_project_tree_nodes_are_available_without_pyside6() -> None:
+    from osw.gui.project_tree import PROJECT_SECTIONS
+    from osw.gui.properties_panel import properties_for_node
+
+    for section in PROJECT_SECTIONS:
+        rows = properties_for_node(section)
+
+        assert rows["Selection"] == section
+        assert rows["Workflow step"]
+
+
+def test_run_monitor_append_helper_uses_stable_format_without_pyside6() -> None:
+    from osw.gui.run_monitor import append_run_log
+
+    class FakeMonitor:
+        def __init__(self) -> None:
+            self.lines: list[str] = []
+
+        def appendPlainText(self, text: str) -> None:
+            self.lines.append(text)
+
+    monitor = FakeMonitor()
+    append_run_log(monitor, "Project opened", level="info")
+
+    assert monitor.lines == ["[INFO] Project opened"]
 
 
 def test_cli_gui_help_is_available_without_pyside6() -> None:
