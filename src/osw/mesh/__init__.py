@@ -29,6 +29,11 @@ from .meshio_bridge import (
     load_mesh,
     load_mesh_info,
 )
+from .quality import (
+    MeshQualityMetrics,
+    MeshQualityWarning,
+    analyze_mesh_quality,
+)
 
 __all__ = [
     "GmshAdapterError",
@@ -39,8 +44,11 @@ __all__ = [
     "MeshData",
     "MeshImportError",
     "MeshInfo",
+    "MeshQualityMetrics",
+    "MeshQualityWarning",
     "MeshSizeControl",
     "PhysicalGroupMetadata",
+    "analyze_mesh_quality",
     "build_mesh_info",
     "convert_gmsh_msh_to_vtu",
     "convert_mesh",
