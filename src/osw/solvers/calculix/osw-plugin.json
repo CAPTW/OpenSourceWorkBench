@@ -1,0 +1,13 @@
+{
+  "id": "osw.solvers.calculix.linear_static",
+  "name": "CalculiX Linear Static Adapter",
+  "version": "0.1.0",
+  "domain": "solver",
+  "type": "solver_adapter",
+  "license": "GPL-3.0-or-later",
+  "input_formats": ["osw.mesh", "osw.project.material"],
+  "output_formats": ["calculix.inp"],
+  "requires": [],
+  "optional_requires": [],
+  "capabilities": ["validate", "prepare_case", "linear_static", "dry_run"]
+}
