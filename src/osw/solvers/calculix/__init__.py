@@ -1,6 +1,7 @@
 """CalculiX prepare-only adapter for OSW v0.1 linear static demos."""
 
 from .adapter import CalculixLinearStaticAdapter
+from .ccx_runner import CalculixCcxRunner
 from .input_deck import (
     CalculixBoundaryCondition,
     CalculixInputDeckError,
@@ -15,6 +16,7 @@ from .validation import validate_calculix_case
 
 __all__ = [
     "CalculixBoundaryCondition",
+    "CalculixCcxRunner",
     "CalculixInputDeckError",
     "CalculixInputDeckGenerator",
     "CalculixLinearStaticAdapter",
