@@ -1,0 +1,104 @@
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python packaging and build outputs
+build/
+dist/
+site/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Test, lint, typing, and coverage cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs and temporary files
+logs/
+*.log
+tmp/
+temp/
+.cache/
+
+# Solver case/runtime directories
+solver_runs/
+solver-runs/
+run_cases/
+scratch/
+work/
+
+# CalculiX runtime artifacts
+*.frd
+*.sta
+*.cvg
+*.12d
+*.eig
+*.mtx
+*.nam
+*.fcv
+*.rout
+
+# OpenFOAM runtime artifacts
+processor*/
+postProcessing/
+dynamicCode/
+*.OpenFOAM
+log.blockMesh
+log.checkMesh
+log.decomposePar
+log.icoFoam
+log.simpleFoam
+log.snappyHexMesh
+log.reconstructPar
+
+# Octave/MATLAB temporary outputs
+octave-workspace
+*.asv
+*.m~
+*.mat.tmp
+*.octave-tmp
+
+# Generated reports and exports
+reports/
+generated_reports/
+generated-reports/
+report-output/
+*.report.html
+report-*.html
+!.codex/reports/
+!.codex/reports/.gitkeep
+
+# Keep curated examples and tests available for golden fixtures.
+!examples/**
+!tests/**
+examples/**/__pycache__/
+tests/**/__pycache__/
+examples/**/*.py[cod]
+tests/**/*.py[cod]

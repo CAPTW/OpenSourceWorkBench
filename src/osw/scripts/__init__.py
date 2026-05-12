@@ -1,0 +1,3 @@
+"""Script preview and import package."""
+
+from __future__ import annotations

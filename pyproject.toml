@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "open-solver-workbench"
+version = "0.1.0a0"
+description = "Open-source educational and research engineering solver workbench."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "GPL-3.0-or-later recommended; final license pending project decision" }
+authors = [
+  { name = "OpenSolver Workbench contributors" }
+]
+keywords = ["engineering", "solver", "workbench", "cae", "education", "research"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Education",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+]
+dependencies = []
+
+[project.optional-dependencies]
+gui = ["PySide6>=6.7"]
+mesh = ["meshio>=5.3", "gmsh>=4.12"]
+viz = ["pyvista>=0.43", "matplotlib>=3.8"]
+solvers = []
+thermo = ["cantera>=3.0", "CoolProp>=6.6"]
+mscript = ["scipy>=1.11"]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+all = [
+  "PySide6>=6.7",
+  "meshio>=5.3",
+  "gmsh>=4.12",
+  "pyvista>=0.43",
+  "matplotlib>=3.8",
+  "cantera>=3.0",
+  "CoolProp>=6.6",
+  "scipy>=1.11",
+]
+
+[project.scripts]
+osw = "osw.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests", "tools"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

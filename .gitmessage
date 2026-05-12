@@ -1,0 +1,11 @@
+OSW: <short imperative summary>
+
+Context:
+- 
+
+Validation:
+- 
+
+Safety:
+- No remote/push/destructive Git operation.
+- No solver runtime artifacts or secrets staged.
