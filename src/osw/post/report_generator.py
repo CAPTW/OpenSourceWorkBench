@@ -518,10 +518,14 @@ def _report_screenshots(
 
 
 def _report_tables(result_tables: Iterable[object] | None) -> tuple[ReportTable, ...]:
-    return tuple(
-        _report_table(table, index)
-        for index, table in enumerate(result_tables or (), start=1)
-    )
+    tables: list[ReportTable] = []
+    for item in result_tables or ():
+        if hasattr(item, "to_report_tables"):
+            for table in item.to_report_tables():
+                tables.append(_report_table(table, len(tables) + 1))
+        else:
+            tables.append(_report_table(item, len(tables) + 1))
+    return tuple(tables)
 
 
 def _report_table(table: object, index: int) -> ReportTable:

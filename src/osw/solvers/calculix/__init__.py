@@ -12,6 +12,7 @@ from .input_deck import (
     CalculixSurface,
     generate_calculix_input_deck,
 )
+from .result_parser import parse_calculix_dat, parse_calculix_results
 from .validation import validate_calculix_case
 
 __all__ = [
@@ -25,5 +26,7 @@ __all__ = [
     "CalculixNodeSet",
     "CalculixSurface",
     "generate_calculix_input_deck",
+    "parse_calculix_dat",
+    "parse_calculix_results",
     "validate_calculix_case",
 ]

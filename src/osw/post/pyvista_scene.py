@@ -43,6 +43,14 @@ class PyVistaSceneState:
     rendered: bool = False
 
 
+@dataclass(frozen=True)
+class ResultContourPlaceholder:
+    scalar_field: str
+    available: bool
+    warning: str
+    dataset_id: str = ""
+
+
 def pyvista_missing_message() -> str:
     return (
         "PyVista is not installed. Install the optional visualization extra with "
@@ -79,6 +87,24 @@ def build_scene_state(
         scalar_field=scene_config.scalar_field,
         warnings=warnings,
         rendered=rendered,
+    )
+
+
+def build_result_contour_placeholder(
+    result_dataset: object,
+    *,
+    scalar_field: str,
+) -> ResultContourPlaceholder:
+    """Describe future result contour rendering without importing PyVista."""
+
+    return ResultContourPlaceholder(
+        scalar_field=scalar_field,
+        available=False,
+        warning=(
+            "PyVista contour rendering for ResultDataset fields is a placeholder "
+            "until result-to-mesh field mapping is implemented."
+        ),
+        dataset_id=str(getattr(result_dataset, "dataset_id", "")),
     )
 
 

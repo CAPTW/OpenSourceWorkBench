@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Any
+
 from osw.core.validation import ValidationReport
 
 SUPPORTED_CELL_TYPES = {
@@ -12,6 +15,69 @@ SUPPORTED_CELL_TYPES = {
     "hexahedron": "C3D8",
     "hexahedron20": "C3D20",
 }
+
+
+@dataclass(frozen=True)
+class CantileverValidationInput:
+    force: float
+    length: float
+    young_modulus: float
+    second_moment_area: float
+    tolerance_ratio: float = 0.05
+
+
+@dataclass(frozen=True)
+class CantileverValidationResult:
+    observed_displacement: float
+    expected_displacement: float
+    relative_error: float
+    tolerance_ratio: float
+    passed: bool
+    message: str
+    formula: str = "F L^3 / (3 E I)"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "observed_displacement": self.observed_displacement,
+            "expected_displacement": self.expected_displacement,
+            "relative_error": self.relative_error,
+            "tolerance_ratio": self.tolerance_ratio,
+            "passed": self.passed,
+            "message": self.message,
+            "formula": self.formula,
+        }
+
+
+def validate_cantilever_tip_displacement(
+    *,
+    observed_displacement: float,
+    inputs: CantileverValidationInput,
+) -> CantileverValidationResult:
+    """Validate a cantilever tip displacement against the beam-theory estimate."""
+
+    expected = (
+        abs(inputs.force)
+        * inputs.length**3
+        / (3.0 * inputs.young_modulus * inputs.second_moment_area)
+    )
+    if expected == 0:
+        relative_error = 0.0 if observed_displacement == 0 else float("inf")
+    else:
+        relative_error = abs(abs(observed_displacement) - expected) / expected
+    passed = relative_error <= inputs.tolerance_ratio
+    message = (
+        "Cantilever tip displacement is within tolerance."
+        if passed
+        else "Cantilever tip displacement is outside tolerance."
+    )
+    return CantileverValidationResult(
+        observed_displacement=observed_displacement,
+        expected_displacement=expected,
+        relative_error=relative_error,
+        tolerance_ratio=inputs.tolerance_ratio,
+        passed=passed,
+        message=message,
+    )
 
 
 def validate_calculix_case(case: object) -> ValidationReport:
