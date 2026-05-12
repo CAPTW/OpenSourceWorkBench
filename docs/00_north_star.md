@@ -16,18 +16,31 @@ standard data, configure units/materials/cases, run or prepare a bounded demo
 workflow, inspect results, and export an HTML report with enough validation
 evidence to understand what happened.
 
+The defining user experience is:
+
+```text
+Import -> Configure -> Run or prepare -> Result -> Report
+```
+
+`Run` is deliberately narrow in v0.1. It may mean preparing a case, loading a
+fixture result, running a small pure-Python demo, or documenting the external
+command a user can run outside the GUI. It does not mean broad GUI-triggered
+external solver execution.
+
 ## v0.1 Demos
 
-1. Empty project: create/open the smallest valid OSW project.
-2. STEP import preview: inspect standard exported geometry metadata.
-3. Mesh import preview: load a mesh through meshio-facing contracts.
-4. Gmsh meshing template: prepare a small educational meshing workflow.
-5. CalculiX cantilever: demonstrate a linear static case boundary.
-6. OpenFOAM cavity or duct template: demonstrate a bounded CFD template.
-7. Cantera/CoolProp basics: demonstrate thermo/property data flow.
-8. MATLAB/Octave script figure preview: inspect `.m`/`.mat` output safely.
+| Demo | Scope | Expected evidence |
+| --- | --- | --- |
+| 1. Empty project | Create/open the smallest valid OSW project. | Project metadata, default units, validation status. |
+| 2. STEP import preview | Inspect standard exported geometry metadata. | Preview summary before project mutation. |
+| 3. Mesh import preview | Load mesh metadata through meshio-facing contracts. | Mesh dimensions, fields/groups, validation notes. |
+| 4. Gmsh meshing template | Prepare a small educational meshing workflow. | Template parameters and generated-case plan, not broad meshing UI. |
+| 5. CalculiX cantilever | Demonstrate a linear static case boundary. | Prepared case or fixture result with assumptions and limits. |
+| 6. OpenFOAM cavity or duct template | Demonstrate a bounded CFD template. | Case template summary, not full OpenFOAM solver coverage. |
+| 7. Cantera/CoolProp basics | Demonstrate thermo/property data flow. | Small property or reactor result with units and source notes. |
+| 8. MATLAB/Octave script figure preview | Inspect `.m`/`.mat` output safely. | Previewed figure/table data without auto-running arbitrary code. |
 
-## Must Support
+## v0.1 Must Support
 
 - PySide6 desktop GUI shell and workflow previews.
 - Plugin/add-in architecture for importers, solvers, scripts, and reports.
@@ -40,7 +53,7 @@ evidence to understand what happened.
 - MATLAB/Octave `.m` and `.mat` preview-first workflow.
 - HTML report output, validation matrix, and golden tests.
 
-## Must Not Support
+## v0.1 Must Not Support
 
 - Native SolidWorks, CATIA, NX, Creo, or other commercial CAD direct import.
 - Simulink, `.slx`, or `.mlapp` compatibility.
@@ -48,10 +61,12 @@ evidence to understand what happened.
 - Full MATLAB proprietary toolbox compatibility.
 - Industrial certification, accuracy, compliance, or production CAE claims.
 - GUI direct subprocess solver execution.
+- Nonlinear contact/plasticity unless explicitly deferred as future work.
+- Full ANSYS Workbench-style workflow cloning.
 
 ## Success Path
 
-The v0.1 happy path is:
+Every accepted v0.1 workflow must show this path:
 
 1. Import: load or preview standard/exported input without proprietary software.
 2. Configure: assign project metadata, units, materials, and demo parameters.
@@ -62,3 +77,15 @@ The v0.1 happy path is:
 
 If a workflow cannot show this path transparently, it should be parked or
 deferred rather than expanded into unbounded solver coverage.
+
+## Scope Test
+
+Before accepting work into v0.1, ask:
+
+- Does it help one of the eight demos reach Import -> Configure -> Run ->
+  Result -> Report?
+- Can it run or be inspected without commercial software?
+- Are heavy dependencies optional for bootstrap and unit tests?
+- Does it avoid native commercial CAD, Simulink, `.mlapp`, full OpenFOAM UI,
+  industrial certification, and GUI direct solver execution?
+- Is the validation evidence honest about educational/research limits?

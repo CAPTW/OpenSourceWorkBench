@@ -24,13 +24,17 @@ template, Cantera/CoolProp basics, and MATLAB/Octave figure preview.
 
 The expected workflow is Import -> Configure -> Run or prepare a bounded demo
 run -> inspect Result/Figure data -> export an HTML report with validation notes.
+For v0.1, "Run" may mean case preparation, fixture-backed result inspection, or
+a small bounded demo. It does not mean GUI-triggered broad external solver
+execution.
 
 ## Non-Goals
 
 OSW v0.1 is not a MATLAB, ANSYS, Simulink, SolidWorks, CATIA, NX, or Creo clone.
 It does not claim industrial certification. It does not support native
 commercial CAD import, Simulink or `.mlapp`, full OpenFOAM coverage, full MATLAB
-toolbox compatibility, or GUI-triggered direct subprocess solver execution.
+toolbox compatibility, nonlinear contact/plasticity demos, industrial
+certification claims, or GUI-triggered direct subprocess solver execution.
 
 ## Quick Start
 

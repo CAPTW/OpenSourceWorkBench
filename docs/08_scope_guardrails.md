@@ -25,7 +25,7 @@ request should stop, park, or defer.
 - GUI direct subprocess solver execution.
 - Proprietary solver automation that requires licensed commercial software.
 
-## Scope Drift
+## Scope Drift Definition
 
 Scope drift is any change that:
 
@@ -35,30 +35,40 @@ Scope drift is any change that:
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;
 - adds user-facing claims that exceed validation evidence.
+- adds nonlinear contact/plasticity as in-scope work instead of future research;
+- changes file IO, parser, or runner behavior without focused tests.
 
-## Stop, Park, Defer
+## Stop / Park / Defer Criteria
 
-Stop immediately when a request introduces secrets, destructive Git operations,
-industrial certification claims, GUI direct solver subprocess execution, or
-native commercial CAD import.
+Use this table before implementing any ambiguous request.
 
-Park when the idea is useful but needs architecture first, such as generalized
-solver execution, remote job orchestration, or broad OpenFOAM case management.
-Parked work needs a decision log entry before implementation.
+| Decision | Criteria | Required action |
+| --- | --- | --- |
+| Stop | Secrets, destructive Git operations, industrial certification claims, GUI direct solver subprocess execution, native commercial CAD direct import, Simulink or `.mlapp`, full ANSYS clone, or full OpenFOAM UI. | Do not implement. Write a blocker or scope report. |
+| Park | Useful idea, but architecture is missing or risk is high: generalized solver execution, remote jobs, broad OpenFOAM case management, native CAD research, or advanced runner design. | Add a decision/risk note and create a future Task Card. |
+| Defer | Plausible after v0.1 but not needed for the eight demos: richer materials, more formats, GUI polish, parallel execution, nonlinear contact/plasticity, or advanced MATLAB compatibility. | Mark post-v0.1 and keep current diff focused. |
+| Proceed | Directly supports one of the eight demos and can show Import -> Configure -> Run -> Result -> Report without violating non-goals. | Implement within the Task Card and add evidence. |
 
-Defer when the idea is plausible after v0.1 but not necessary for the eight
-demos, such as richer material libraries, more import formats, GUI polish,
-parallel solver execution, or advanced MATLAB compatibility.
-
-## Success Criteria
+## Success Path Criteria
 
 For any v0.1 workflow, the acceptable path is:
 
 1. Import: input is standard/exported or a local template.
 2. Configure: units, materials, case options, and assumptions are visible.
-3. Run: execution is absent, mocked, prepared, or bounded by the demo contract.
+3. Run: execution is absent, fixture-backed, prepared, or bounded by the demo
+   contract.
 4. Result: outputs map into ResultDataset and FigureDataset concepts.
 5. Report: HTML report records inputs, assumptions, validation, and limitations.
 
 If a proposed feature cannot satisfy this path without expanding scope, it does
 not enter v0.1.
+
+## Required Review Questions
+
+- Which v0.1 demo does this change unblock?
+- Is any optional dependency made mandatory for bootstrap or unit tests?
+- Does any user-facing text overclaim solver coverage, validation, or
+  certification?
+- Can the workflow be inspected before mutation or execution?
+- Are generated artifacts, solver outputs, and reports either ignored or curated
+  as fixtures?

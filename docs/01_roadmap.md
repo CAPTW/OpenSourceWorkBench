@@ -5,29 +5,30 @@ industrial certification claims.
 
 ## Roadmap Items
 
-1. Repository skeleton, CLI smoke checks, Git safety rails, and contributor docs.
-2. Core contracts: ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and
+1. P0 scope baseline: North Star, roadmap, guardrails, risks, Git safety rails,
+   and contributor docs.
+2. P1 core contracts: ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and
    FigureDataset.
-3. Plugin/add-in API for importers, solvers, scripts, post-processing, and
-   reports.
-4. PySide6 shell with project tree, preview panes, validation surfaces, and
+3. P2 plugin/add-in API: importers, solvers, scripts, post-processing, and
+   report contributors.
+4. P3 PySide6 shell: project tree, preview panes, validation surfaces, and
    report entry points.
-5. Standard geometry and mesh preview workflows.
-6. Bounded solver and science demo workflows.
-7. HTML reports, golden tests, validation matrix, and release checklist.
+5. P4 standard geometry and mesh preview workflows.
+6. P5 bounded solver, science, and script demo workflows.
+7. P6 HTML reports, golden tests, validation matrix, and release checklist.
 
 ## Demo Mapping
 
-| Demo | User story | Roadmap item |
-| --- | --- | --- |
-| 1. Empty project | Create/open a minimal valid project and inspect metadata. | 2, 4 |
-| 2. STEP import preview | Preview standard exported geometry without native CAD. | 3, 5 |
-| 3. Mesh import preview | Load mesh metadata and fields through meshio-facing contracts. | 3, 5 |
-| 4. Gmsh meshing template | Prepare a small meshing workflow with reviewable parameters. | 3, 5, 6 |
-| 5. CalculiX cantilever | Demonstrate a linear static educational case boundary. | 3, 6, 7 |
-| 6. OpenFOAM cavity/duct template | Demonstrate a bounded CFD template, not full solver coverage. | 3, 6, 7 |
-| 7. Cantera/CoolProp basics | Demonstrate chemistry/property data flow and reporting. | 3, 6, 7 |
-| 8. MATLAB/Octave figure preview | Preview `.m`/`.mat` figure data before project mutation. | 3, 6, 7 |
+| Demo | User story | Roadmap item | v0.1 completion signal |
+| --- | --- | --- | --- |
+| 1. Empty project | Create/open a minimal valid project and inspect metadata. | P1, P3, P6 | Project validates and appears in GUI/report. |
+| 2. STEP import preview | Preview standard exported geometry without native CAD. | P2, P4, P6 | Import preview summarizes metadata before mutation. |
+| 3. Mesh import preview | Load mesh metadata and fields through meshio-facing contracts. | P2, P4, P6 | Mesh preview shows counts, fields/groups, units, and warnings. |
+| 4. Gmsh meshing template | Prepare a small meshing workflow with reviewable parameters. | P2, P4, P5, P6 | Template preparation is inspectable and optional-Gmsh aware. |
+| 5. CalculiX cantilever | Demonstrate a linear static educational case boundary. | P2, P5, P6 | Case or fixture result maps to ResultDataset with limits. |
+| 6. OpenFOAM cavity/duct template | Demonstrate a bounded CFD template, not full solver coverage. | P2, P5, P6 | Template/report states it is not a full OpenFOAM UI. |
+| 7. Cantera/CoolProp basics | Demonstrate chemistry/property data flow and reporting. | P2, P5, P6 | Property/reactor output includes units and dependency status. |
+| 8. MATLAB/Octave figure preview | Preview `.m`/`.mat` figure data before project mutation. | P2, P5, P6 | No arbitrary `.m` auto-run; figure/table data previews safely. |
 
 ## Phase Gates
 
@@ -49,3 +50,16 @@ v0.1 is complete only when each demo has:
 - a structured result or figure output;
 - a report section;
 - validation evidence or a documented limitation.
+
+## Parking Lot
+
+The following are explicitly outside the v0.1 roadmap unless a later decision
+log entry moves them:
+
+- native commercial CAD direct import;
+- Simulink, `.slx`, or `.mlapp`;
+- full ANSYS Workbench-like workflow cloning;
+- full OpenFOAM case editor or solver UI;
+- nonlinear contact/plasticity demos;
+- industrial certification, compliance, or production accuracy claims;
+- GUI-triggered direct external solver execution.
