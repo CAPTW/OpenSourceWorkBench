@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from .boundary_curve_bridge import (
+    boundary_curve_from_mat_preview,
+    boundary_curve_from_workspace_variables,
+)
 from .figure_capture import capture_existing_figures, capture_octave_figures
 from .figure_dataset import FigureDataset, FigureDatasetError, FigureRecord
 from .importer import MScriptImportError, import_mscript_preview, preview_mscript_text
@@ -33,6 +37,8 @@ __all__ = [
     "OctaveRunner",
     "SafetyFinding",
     "SafetyScanResult",
+    "boundary_curve_from_mat_preview",
+    "boundary_curve_from_workspace_variables",
     "capture_existing_figures",
     "capture_octave_figures",
     "export_mat_variable_csv",

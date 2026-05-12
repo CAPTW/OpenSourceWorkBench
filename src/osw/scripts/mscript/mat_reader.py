@@ -56,6 +56,13 @@ class MatFilePreview:
         msg = f"MAT variable not found: {name}"
         raise MatReaderError(msg)
 
+    def value(self, name: str) -> Any:
+        self.variable(name)
+        if name not in self._values:
+            msg = f"MAT variable data is unavailable for preview: {name}"
+            raise MatReaderError(msg)
+        return self._values[name]
+
     def table_preview(
         self,
         name: str,
@@ -63,13 +70,9 @@ class MatFilePreview:
         max_rows: int = 20,
         max_columns: int = 20,
     ) -> TablePreview:
-        self.variable(name)
-        if name not in self._values:
-            msg = f"MAT variable data is unavailable for preview: {name}"
-            raise MatReaderError(msg)
         return _table_preview_from_value(
             name,
-            self._values[name],
+            self.value(name),
             max_rows=max_rows,
             max_columns=max_columns,
             source=str(self.file_path),

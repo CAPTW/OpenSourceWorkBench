@@ -2,6 +2,13 @@
 
 from __future__ import annotations
 
+from osw.core.boundary_curve import (
+    BoundaryCurve,
+    BoundaryCurveError,
+    BoundaryCurveSourceTrace,
+    boundary_curve_from_xy,
+    make_source_trace,
+)
 from osw.core.diagnostics import DiagnosticMessage, DiagnosticReport, DiagnosticSeverity
 from osw.core.materials import IsotropicElastic, Material, MaterialDB
 from osw.core.project_schema import (
@@ -23,6 +30,9 @@ from osw.core.validation import ProjectSchemaError, ValidationMessage, Validatio
 
 __all__ = [
     "BoundaryCondition",
+    "BoundaryCurve",
+    "BoundaryCurveError",
+    "BoundaryCurveSourceTrace",
     "DiagnosticMessage",
     "DiagnosticReport",
     "DiagnosticSeverity",
@@ -45,5 +55,7 @@ __all__ = [
     "UnitSystem",
     "ValidationMessage",
     "ValidationReport",
+    "boundary_curve_from_xy",
     "load_project",
+    "make_source_trace",
 ]

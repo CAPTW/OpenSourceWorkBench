@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .boundary_curve import BoundaryCurve
 from .materials import Material, MaterialDB
 from .units import UnitSystem
 from .validation import ProjectSchemaError, ValidationReport
@@ -260,6 +261,7 @@ class Project:
     geometry: list[GeometryRef] = field(default_factory=list)
     meshes: list[MeshRef] = field(default_factory=list)
     scripts: list[ScriptRef] = field(default_factory=list)
+    boundary_curves: list[BoundaryCurve] = field(default_factory=list)
     physics: list[PhysicsSetup] = field(default_factory=list)
     solvers: list[SolverConfig] = field(default_factory=list)
     results: list[ResultRef] = field(default_factory=list)
@@ -275,6 +277,7 @@ class Project:
             "geometry": [item.to_dict() for item in self.geometry],
             "meshes": [item.to_dict() for item in self.meshes],
             "scripts": [item.to_dict() for item in self.scripts],
+            "boundary_curves": [item.to_dict() for item in self.boundary_curves],
             "physics": [item.to_dict() for item in self.physics],
             "solvers": [item.to_dict() for item in self.solvers],
             "results": [item.to_dict() for item in self.results],
@@ -305,6 +308,10 @@ class Project:
                 geometry=[GeometryRef.from_dict(item) for item in migrated.get("geometry", [])],
                 meshes=[MeshRef.from_dict(item) for item in migrated.get("meshes", [])],
                 scripts=[ScriptRef.from_dict(item) for item in migrated.get("scripts", [])],
+                boundary_curves=[
+                    BoundaryCurve.from_dict(item)
+                    for item in migrated.get("boundary_curves", [])
+                ],
                 physics=[PhysicsSetup.from_dict(item) for item in migrated.get("physics", [])],
                 solvers=[SolverConfig.from_dict(item) for item in migrated.get("solvers", [])],
                 results=[ResultRef.from_dict(item) for item in migrated.get("results", [])],
@@ -322,6 +329,8 @@ class Project:
         report.extend(self.metadata.validate())
         report.extend(self.units.validate())
         report.extend(self.material_db.validate())
+        for index, curve in enumerate(self.boundary_curves):
+            report.extend(curve.validate(path=f"boundary_curves[{index}]"))
         return report
 
     def save(self, path: str | Path) -> None:
