@@ -1,0 +1,16 @@
+{
+  "resources": [
+    {
+      "name": "OSW Prompt Templates",
+      "uri": "file:.codex/prompts/"
+    },
+    {
+      "name": "OSW Agent Roles",
+      "uri": "file:.codex/agents/"
+    },
+    {
+      "name": "OSW Harness Reports",
+      "uri": "file:.codex/reports/"
+    }
+  ]
+}

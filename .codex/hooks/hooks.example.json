@@ -1,0 +1,7 @@
+{
+  "pre_prompt": ["python tools/hooks/pre_prompt_scope_guard.py"],
+  "pre_edit": ["python tools/hooks/pre_edit_arch_boundary.py"],
+  "post_edit": ["python tools/hooks/post_edit_fast_checks.py"],
+  "pre_merge": ["python tools/hooks/pre_merge_quality_gate.py"],
+  "stop": ["python tools/hooks/stop_task_summary.py"]
+}

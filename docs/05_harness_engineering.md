@@ -70,20 +70,21 @@ the root contract.
 | `tools/AGENTS.md` | Git and QA helper safety, non-destructive behavior, and clear exit codes. |
 | `.codex/AGENTS.md` | Prompt catalog, report locations, and no secret-bearing MCP or connector output. |
 
-## Skills Plan
+## Skills
 
-Skills are planned reusable local instructions, not product features. HE-00 only
-documents them; actual skill files are created later.
+Skills are reusable local instructions, not product features. They live under
+`.codex/skills/` and are used only when relevant to the active prompt.
 
 | Skill | Responsibility |
 | --- | --- |
-| `scope-guard` | Check the requested task against v0.1 must-support and must-not-support lists. |
+| `architecture-review` | Review dependency direction, optional extras, plugin seams, and GUI/solver separation. |
+| `plugin-contract` | Guide importer, solver, script, post-processing, and report plugin contracts. |
+| `qa-review` | Run fast QA and summarize command evidence. |
+| `amend-revise` | Isolate review fixes and compare against the checkpoint. |
+| `scope-drift-recovery` | Stop and recover when work leaves v0.1 scope or the Task Card. |
 | `git-worktree` | Start feature and amend worktrees safely from local branches. |
-| `qa-fast` | Run the default local smoke suite and summarize failures. |
-| `review-gate` | Apply the review score table and produce required fixes. |
-| `amend-loop` | Isolate review fixes and compare against the checkpoint. |
-| `merge-gate` | Verify source and target branch cleanliness, QA, diff scope, and squash merge readiness. |
-| `release-gate` | Validate docs, examples, tests, packaging, license, and public claims before a release tag. |
+| `git-merge-gate` | Verify cleanliness, QA, review score, and squash merge readiness. |
+| `dirty-worktree-recovery` | Preserve and classify dirty local changes before recovery. |
 
 Each skill should include trigger conditions, required inputs, allowed files,
 forbidden actions, command evidence, and output format.
@@ -110,14 +111,16 @@ catch drift before review.
 
 | Script | Purpose |
 | --- | --- |
-| `tools/qa/run_fast_qa.py` | Run `python -m osw.cli --version`, `python -m osw.cli doctor`, `ruff check src tests`, and `pytest tests/unit -q` when available. |
+| `tools/qa/run_fast_qa.py` | Run `python -m osw.cli --version`, `python -m osw.cli doctor`, `ruff check src tests`, and `pytest tests/unit -q` when safe. |
 | `tools/qa/check_scope_drift.py` | Scan changed docs and code for out-of-scope claims or forbidden product directions. |
-| `tools/qa/check_architecture.py` | Check dependency boundaries, optional extras, plugin seams, and GUI/solver separation. |
+| `tools/qa/check_architecture_boundaries.py` | Check dependency boundaries, optional extras, plugin seams, and GUI/solver separation. |
+| `tools/qa/check_plugin_manifests.py` | Check plugin manifest completeness when manifests exist. |
+| `tools/qa/check_git_clean.py` | Report branch and dirty state for gate evidence. |
+| `tools/qa/check_no_solver_artifacts_committed.py` | Detect solver/runtime artifact paths in staged or changed files. |
 | `tools/qa/run_pre_merge_qa.py` | Combine fast QA, scope drift, architecture, and artifact checks for merge gate use. |
-| `tools/qa/run_release_gate.py` | Verify release checklist, validation matrix, examples, license, and public-facing claims. |
 
-Until these scripts exist, agents should run the equivalent commands directly
-and report skipped checks explicitly.
+Missing optional external tools must be reported explicitly rather than treated
+as hidden success.
 
 ## Sub-Agent Roles
 

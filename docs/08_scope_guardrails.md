@@ -72,3 +72,9 @@ not enter v0.1.
 - Can the workflow be inspected before mutation or execution?
 - Are generated artifacts, solver outputs, and reports either ignored or curated
   as fixtures?
+
+## Automated Guard
+
+Use `python tools/qa/check_scope_drift.py` to scan changed files and
+`python tools/qa/check_scope_drift.py --text "<claim>"` to check a proposed
+claim before editing documentation or UI text.

@@ -74,3 +74,15 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   packaging, and claim checks.
 - Consequences: Some changes wait for documentation and QA evidence before
   merge, but `develop` remains understandable and release claims stay bounded.
+
+## ADR-0007: Local Harness Scripts Are Advisory Until Wired
+
+- Status: Accepted
+- Date: 2026-05-12
+- Context: OSW needs local QA commands before remote CI or connector automation
+  exists.
+- Decision: Harness scripts under `tools/qa/` and hook entrypoints under
+  `tools/hooks/` are tracked, local-first, and safe to run without network
+  access. They report missing optional tools explicitly.
+- Consequences: The harness can gate local work immediately while remaining
+  lightweight. Future CI may call the same scripts.

@@ -249,3 +249,24 @@ directory is available:
 - `.codex/reports/amend/` for amend start and post-amend comparisons.
 - `.codex/reports/merge/` for merge or blocked-merge reports.
 - `.codex/reports/release/` for release gate evidence.
+
+## Harness QA
+
+Run these local commands before review or merge when available:
+
+```powershell
+python tools/qa/run_fast_qa.py
+python tools/qa/check_scope_drift.py
+python tools/qa/check_architecture_boundaries.py
+python tools/qa/check_no_solver_artifacts_committed.py
+```
+
+```sh
+python3 tools/qa/run_fast_qa.py
+python3 tools/qa/check_scope_drift.py
+python3 tools/qa/check_architecture_boundaries.py
+python3 tools/qa/check_no_solver_artifacts_committed.py
+```
+
+These commands must not push, edit remotes, delete branches, delete worktrees,
+or run destructive cleanup.

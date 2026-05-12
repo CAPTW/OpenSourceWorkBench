@@ -107,3 +107,17 @@ The merge gate may proceed only when the review decision is `Merge possible` or
 `Minor amend then merge possible`, score thresholds are met, required fixes are
 closed, source and target worktrees are clean, and pre-merge QA passes or has a
 valid skip reason. The default merge result is one squash commit on `develop`.
+
+## Harness QA Commands
+
+For harness and documentation changes, reviewers should prefer:
+
+```powershell
+python tools/qa/run_fast_qa.py
+python tools/qa/check_scope_drift.py
+python tools/qa/check_architecture_boundaries.py
+python tools/qa/check_no_solver_artifacts_committed.py
+```
+
+Unix shells use the same commands with `python3` when needed. If a command is
+not present, the review must record the exact skip reason.
