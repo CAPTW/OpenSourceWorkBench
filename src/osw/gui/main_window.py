@@ -72,12 +72,15 @@ class MainWindow(_BaseMainWindow):
             for action_title in MENU_ACTIONS.get(title, ()):
                 action = menu.addAction(action_title)
                 action.setObjectName(_action_object_name(action_title))
-                action.triggered.connect(
-                    lambda _checked=False, label=action_title: self.run_monitor.append_log(
-                        f"{label} action selected",
-                        level="info",
+                if action_title == "Plugin Manager":
+                    action.triggered.connect(self.open_plugin_manager)
+                else:
+                    action.triggered.connect(
+                        lambda _checked=False, label=action_title: self.run_monitor.append_log(
+                            f"{label} action selected",
+                            level="info",
+                        )
                     )
-                )
 
     def _build_docks(self) -> None:
         self._add_dock(
@@ -110,6 +113,13 @@ class MainWindow(_BaseMainWindow):
             self.properties_panel.set_node_selection("")
             return
         self.properties_panel.set_node_selection(item.text(0))
+
+    def open_plugin_manager(self) -> None:
+        from .plugin_manager_dialog import PluginManagerDialog
+
+        dialog = PluginManagerDialog(self)
+        dialog.exec()
+        self.run_monitor.append_log("Plugin Manager closed", level="info")
 
 
 def _action_object_name(action_title: str) -> str:
