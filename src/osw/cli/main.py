@@ -47,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"osw {__version__}")
     subparsers = parser.add_subparsers(dest="command")
     subparsers.add_parser("doctor", help="Report local bootstrap environment status.")
+    subparsers.add_parser(
+        "gui",
+        help="Launch the optional PySide6 GUI shell.",
+        description="Launch the optional PySide6 GUI shell.",
+    )
     return parser
 
 
@@ -57,6 +62,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "doctor":
         print("\n".join(doctor_lines()))
         return 0
+
+    if args.command == "gui":
+        from osw.gui.main_window import PySide6UnavailableError, run_gui
+
+        try:
+            return run_gui([])
+        except PySide6UnavailableError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
 
     parser.print_help(sys.stdout)
     return 0
