@@ -5,4 +5,5 @@ dependencies:
   - python>=3.11
   - pip
   - pip:
+      # Base development install; optional stacks are installed explicitly per task.
       - -e .[dev]

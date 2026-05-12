@@ -19,6 +19,7 @@ classifiers = [
   "Intended Audience :: Science/Research",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
 ]
 dependencies = []
 
@@ -27,8 +28,9 @@ gui = ["PySide6>=6.7"]
 mesh = ["meshio>=5.3", "gmsh>=4.12"]
 viz = ["pyvista>=0.43", "matplotlib>=3.8"]
 solvers = []
+chm = ["cantera>=3.0", "CoolProp>=6.6"]
 thermo = ["cantera>=3.0", "CoolProp>=6.6"]
-mscript = ["scipy>=1.11"]
+mscript = ["scipy>=1.11", "hdf5storage>=0.1"]
 dev = ["pytest>=8.0", "ruff>=0.6"]
 all = [
   "PySide6>=6.7",
@@ -39,6 +41,7 @@ all = [
   "cantera>=3.0",
   "CoolProp>=6.6",
   "scipy>=1.11",
+  "hdf5storage>=0.1",
 ]
 
 [project.scripts]

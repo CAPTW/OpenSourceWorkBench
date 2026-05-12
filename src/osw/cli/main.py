@@ -16,9 +16,10 @@ OPTIONAL_MODULES = {
     "gmsh": "mesh",
     "pyvista": "viz",
     "matplotlib": "viz",
-    "cantera": "thermo",
-    "CoolProp": "thermo",
+    "cantera": "chm",
+    "CoolProp": "chm",
     "scipy": "mscript",
+    "hdf5storage": "mscript",
 }
 
 

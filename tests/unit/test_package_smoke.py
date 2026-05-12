@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -15,6 +16,15 @@ def _python_env() -> dict[str, str]:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(SRC_ROOT)
     return env
+
+
+def _pyproject() -> dict[str, object]:
+    return tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+
+
+def _has_requirement(requirements: list[str], package_name: str) -> bool:
+    normalized = package_name.lower()
+    return any(requirement.lower().startswith(normalized) for requirement in requirements)
 
 
 def test_package_exports_version() -> None:
@@ -53,3 +63,44 @@ def test_cli_doctor_smoke() -> None:
     assert "OSW doctor" in result.stdout
     assert "python:" in result.stdout
     assert "external solver execution: disabled" in result.stdout
+
+
+def test_cli_doctor_reports_packaging_extras() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "osw.cli", "doctor"],
+        cwd=REPO_ROOT,
+        env=_python_env(),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "PySide6 (gui):" in result.stdout
+    assert "pyvista (viz):" in result.stdout
+    assert "meshio (mesh):" in result.stdout
+    assert "hdf5storage (mscript):" in result.stdout
+    assert "cantera (chm):" in result.stdout
+    assert "CoolProp (chm):" in result.stdout
+
+
+def test_pyproject_base_install_is_lightweight() -> None:
+    project = _pyproject()["project"]
+
+    assert project["requires-python"] == ">=3.11"
+    assert project.get("dependencies", []) == []
+
+
+def test_pyproject_optional_extras_cover_v0_1_stacks() -> None:
+    extras = _pyproject()["project"]["optional-dependencies"]
+
+    assert {"gui", "viz", "mesh", "mscript", "chm", "dev", "all"} <= set(extras)
+    assert _has_requirement(extras["gui"], "PySide6")
+    assert _has_requirement(extras["viz"], "pyvista")
+    assert _has_requirement(extras["viz"], "matplotlib")
+    assert _has_requirement(extras["mesh"], "meshio")
+    assert _has_requirement(extras["mesh"], "gmsh")
+    assert _has_requirement(extras["mscript"], "scipy")
+    assert _has_requirement(extras["mscript"], "hdf5storage")
+    assert _has_requirement(extras["chm"], "cantera")
+    assert _has_requirement(extras["chm"], "CoolProp")
