@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from .conversion import convert_mesh, convert_mesh_to_vtu
+from .conversion import (
+    SUPPORTED_EXPORT_FORMATS,
+    MeshExportArtifact,
+    MeshExportError,
+    convert_mesh,
+    convert_mesh_to_vtu,
+    export_mesh,
+)
 from .gmsh_adapter import (
     GmshAdapterError,
     GmshMeshResult,
@@ -42,18 +49,22 @@ __all__ = [
     "MeshBoundingBox",
     "MeshCellBlock",
     "MeshData",
+    "MeshExportArtifact",
+    "MeshExportError",
     "MeshImportError",
     "MeshInfo",
     "MeshQualityMetrics",
     "MeshQualityWarning",
     "MeshSizeControl",
     "PhysicalGroupMetadata",
+    "SUPPORTED_EXPORT_FORMATS",
     "analyze_mesh_quality",
     "build_mesh_info",
     "convert_gmsh_msh_to_vtu",
     "convert_mesh",
     "convert_mesh_to_vtu",
     "detect_mesh_format",
+    "export_mesh",
     "export_vtu",
     "generate_primitive_mesh",
     "is_gmsh_available",
