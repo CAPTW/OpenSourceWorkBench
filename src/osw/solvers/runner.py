@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import signal
 import subprocess
 import time
 from collections.abc import Mapping, Sequence
@@ -114,17 +116,37 @@ class ExternalCommandRunner:
 
         command = (str(lookup.path), *[str(arg) for arg in args])
         try:
-            completed = subprocess.run(
+            process = subprocess.Popen(
                 command,
                 cwd=cwd_path,
                 env=dict(env) if env is not None else None,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
-                timeout=effective_timeout.seconds,
-                check=False,
+                creationflags=_process_creationflags(),
+                start_new_session=os.name != "nt",
             )
+        except OSError as exc:
+            diagnostics.add_error("runner.os_error", f"Could not start command: {exc}")
+            return self._result(
+                status=RunStatus.FAILED,
+                executable=executable,
+                args=args,
+                cwd=cwd_path,
+                artifact_dir=artifact_path,
+                started=started,
+                diagnostics=diagnostics,
+            )
+        try:
+            stdout, stderr = process.communicate(timeout=effective_timeout.seconds)
         except subprocess.TimeoutExpired as exc:
-            log = RunLog(_coerce_output(exc.stdout), _coerce_output(exc.stderr))
+            _terminate_process_tree(process)
+            try:
+                stdout, stderr = process.communicate(timeout=1)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                stdout, stderr = process.communicate()
+            log = RunLog(_coerce_output(stdout or exc.stdout), _coerce_output(stderr or exc.stderr))
             diagnostics.add_error(
                 "runner.timeout",
                 f"Command timed out after {effective_timeout.seconds:g} seconds: {command[0]}",
@@ -147,29 +169,18 @@ class ExternalCommandRunner:
                 artifacts=artifacts,
                 diagnostics=diagnostics,
             )
-        except OSError as exc:
-            diagnostics.add_error("runner.os_error", f"Could not start command: {exc}")
-            return self._result(
-                status=RunStatus.FAILED,
-                executable=executable,
-                args=args,
-                cwd=cwd_path,
-                artifact_dir=artifact_path,
-                started=started,
-                diagnostics=diagnostics,
-            )
 
-        log = RunLog(completed.stdout, completed.stderr)
-        status = RunStatus.COMPLETED if completed.returncode == 0 else RunStatus.FAILED
+        log = RunLog(stdout, stderr)
+        status = RunStatus.COMPLETED if process.returncode == 0 else RunStatus.FAILED
         if status == RunStatus.FAILED:
             diagnostics.add_error(
                 "runner.nonzero_exit",
-                f"Command exited with status {completed.returncode}: {command[0]}",
+                f"Command exited with status {process.returncode}: {command[0]}",
             )
         artifacts = self._write_artifacts(
             artifact_path,
             command,
-            completed.returncode,
+            process.returncode,
             status,
             log,
         )
@@ -178,7 +189,7 @@ class ExternalCommandRunner:
             command=command,
             cwd=cwd_path,
             artifact_dir=artifact_path,
-            returncode=completed.returncode,
+            returncode=process.returncode,
             duration_seconds=time.monotonic() - started,
             log=log,
             artifacts=artifacts,
@@ -251,3 +262,27 @@ def _coerce_output(value: str | bytes | None) -> str:
     if isinstance(value, bytes):
         return value.decode(errors="replace")
     return value
+
+
+def _process_creationflags() -> int:
+    if os.name != "nt":
+        return 0
+    return subprocess.CREATE_NEW_PROCESS_GROUP
+
+
+def _terminate_process_tree(process: subprocess.Popen[str]) -> None:
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        return
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        return
+    except OSError:
+        process.kill()
