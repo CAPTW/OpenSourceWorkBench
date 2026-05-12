@@ -5,6 +5,14 @@ from __future__ import annotations
 from .figure_capture import capture_existing_figures, capture_octave_figures
 from .figure_dataset import FigureDataset, FigureDatasetError, FigureRecord
 from .importer import MScriptImportError, import_mscript_preview, preview_mscript_text
+from .mat_reader import (
+    MatFilePreview,
+    MatReader,
+    MatReaderError,
+    MatVariableSummary,
+    export_mat_variable_csv,
+    read_mat_file,
+)
 from .octave_runner import OctaveExecutionNotConfirmed, OctaveRunner
 from .safety_scan import scan_mscript_text, strip_mscript_comment
 from .script_model import MScriptKind, MScriptPreview, SafetyFinding, SafetyScanResult
@@ -17,16 +25,22 @@ __all__ = [
     "MScriptImportError",
     "MScriptKind",
     "MScriptPreview",
+    "MatFilePreview",
+    "MatReader",
+    "MatReaderError",
+    "MatVariableSummary",
     "OctaveExecutionNotConfirmed",
     "OctaveRunner",
     "SafetyFinding",
     "SafetyScanResult",
     "capture_existing_figures",
     "capture_octave_figures",
+    "export_mat_variable_csv",
     "extract_figure_dataset",
     "extract_figure_paths",
     "import_mscript_preview",
     "preview_mscript_text",
+    "read_mat_file",
     "scan_mscript_text",
     "strip_mscript_comment",
 ]
