@@ -12,14 +12,14 @@ of third-party solver binaries.
 | Area | Current state | Release impact |
 | --- | --- | --- |
 | `LICENSE` | Present and replaced with the canonical GNU GPL version 3 text from a trusted local source: `D:\Program Files\Git\mingw64\share\licenses\xz\COPYING.GPLv3` (SHA-256 `3972DC9744F6499F0F9B2DBF76696F2AE7AD8AF9B23DDE66D6AF86C9DFB36986`). | Source license text is present. The "or later" grant is recorded in project metadata and release docs. |
-| `pyproject.toml` license metadata | Aligned to `GPL-3.0-or-later`; package version is `0.1.0rc1`. | Metadata is ready for the release-candidate gate. |
+| `pyproject.toml` license metadata | Aligned to `GPL-3.0-or-later`; package version is `0.1.0rc2`. | Metadata is ready for the RC2 local tag gate. |
 | README license statement | Dedicated License and Release Candidate Status sections link this plan, known limitations, and third-party notices. | README is aligned with the maintainer decision. |
 | `docs/10_release_checklist.md` | License, pyproject metadata, README license section, release notes, and third-party notices are marked PASS when this step's checks pass. | Public tag and announcement remain blocked until the dedicated tag/release gate. |
 | `docs/09_risk_register.md` | Tracks license metadata drift, third-party notice review, external solver redistribution, and tag-control risks. | License decision risk is lowered; redistribution and tag risks remain monitored. |
 | `docs/07_decision_log.md` | Records the maintainer GPL-3.0-or-later decision and rc package/tag naming policy. | Future release prompts have an auditable decision record. |
 | Plugin manifest expectations | `docs/03_plugin_contract.md` and `src/osw/plugins/manifest.py` require a manifest `license` field. Built-in solver/property plugin manifests currently use `GPL-3.0-or-later`. | Plugin metadata must stay explicit. Third-party plugin packages remain responsible for their own license terms. |
 | Optional dependency assumptions | Installation docs treat CalculiX, OpenFOAM, Gmsh, GNU Octave, Cantera, and CoolProp as optional external tools or optional Python dependencies. | v0.1 release artifacts must not bundle external solver binaries unless license compatibility and redistribution obligations are explicitly reviewed. |
-| Git tag state | `git tag --list "v0.1*"` returned no local v0.1 tags. | No release tag exists. Tag creation is deferred to a dedicated release/tag prompt. |
+| Git tag state | Local `v0.1.0-rc1` exists as OSW-AUTO-043 historical evidence and points to `29c5c8bec8df30c7f7be72fc9be5e5409794968e`. Local `v0.1.0-rc2` is the current candidate tag target for OSW-AUTO-045. | rc1 must not be pushed as the current RC after OSW-AUTO-044A/045; rc2 may be created locally only after the RC2 tag gate passes. |
 
 ## Maintainer Decision Recorded
 
@@ -109,14 +109,16 @@ Recommended package versions:
 | Release stage | Package version | Notes |
 | --- | --- | --- |
 | Previous development placeholder | `0.1.0a0` | Superseded by the release-candidate metadata update. |
-| Release candidate | `0.1.0rc1` | Current package version for the v0.1 release-candidate gate. |
+| Historical release candidate | `0.1.0rc1` | Local-only rc1 evidence from OSW-AUTO-043. It is not current after OSW-AUTO-044A. |
+| Current release candidate | `0.1.0rc2` | Current package version for the v0.1 RC2 local tag gate. |
 | Final v0.1 | `0.1.0` | Recommended package version for final v0.1 release. |
 
 Recommended Git tag names:
 
 | Release stage | Git tag |
 | --- | --- |
-| Release candidate | `v0.1.0-rc1` |
+| Historical release candidate | `v0.1.0-rc1` |
+| Current release candidate | `v0.1.0-rc2` |
 | Final v0.1 | `v0.1.0` |
 
 The package version and Git tag do not have to use identical syntax. Package
@@ -126,6 +128,10 @@ hyphenated release-candidate suffix.
 ## Tag Policy
 
 - No tag is created in OSW-AUTO-041 or OSW-AUTO-042.
+- Local `v0.1.0-rc1` remains historical evidence and must not be moved,
+  retargeted, or pushed as the current RC after OSW-AUTO-044A/045.
+- Local `v0.1.0-rc2` is the next current RC candidate and may be created only
+  by the OSW-AUTO-045 post-merge tag gate.
 - Tag creation is allowed only after release checklist P1 blockers are cleared
   by a dedicated release/tag gate.
 - Tag creation should happen in a dedicated release/tag prompt.
@@ -137,7 +143,7 @@ hyphenated release-candidate suffix.
 Use this draft in a future release/tag prompt after release metadata approval:
 
 1. Verify `develop` is clean and the release checklist has no P1 blockers.
-2. Decide whether the release is `0.1.0rc1` or `0.1.0`.
+2. Decide whether the release is `0.1.0rc2` or `0.1.0`.
 3. Update `CHANGELOG.md` or release notes.
 4. Update package version metadata.
 5. Verify `LICENSE`, README license text, and third-party notices.
@@ -153,10 +159,10 @@ Use this draft in a future release/tag prompt after release metadata approval:
 8. Create an annotated local tag, for example:
 
    ```powershell
-   git tag -a v0.1.0-rc1 -m "OpenSolver Workbench v0.1.0 release candidate 1"
+   git tag -a v0.1.0-rc2 -m "OpenSolver Workbench v0.1.0rc2 release candidate"
    ```
 
-9. Verify the tag locally with `git show v0.1.0-rc1`.
+9. Verify the tag locally with `git show v0.1.0-rc2`.
 10. Do not push unless explicitly instructed by a maintainer.
 
 ## Local Rollback Plan For A Later Tag Prompt
@@ -165,7 +171,7 @@ If a later prompt creates a local tag and the release is rejected before any
 push, delete only the local tag:
 
 ```powershell
-git tag -d v0.1.0-rc1
+git tag -d v0.1.0-rc2
 ```
 
 If a tag was already pushed, stop and ask for maintainer direction. Do not delete
@@ -190,3 +196,11 @@ repository license text and metadata are aligned for `0.1.0rc1`, release notes
 exist, and a third-party notices draft exists for source-distribution review.
 No release tag is created in this prompt. Public tag creation and public
 announcement remain blocked until the dedicated release/tag gate passes.
+
+## OSW-AUTO-045 RC2 Plan
+
+OSW-AUTO-045 updates package metadata to `0.1.0rc2` and may create a local
+annotated `v0.1.0-rc2` tag only after merge and post-merge pre-tag QA pass.
+Existing local `v0.1.0-rc1` remains historical local-only evidence and must not
+be pushed as the current RC. Final `v0.1.0`, tag pushes, release artifacts, and
+public announcements remain blocked until separate maintainer-controlled gates.

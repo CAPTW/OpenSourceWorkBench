@@ -4,6 +4,41 @@ All notable OpenSolver Workbench changes are summarized here for release
 review. OSW follows source-first release evidence; public tags are created only
 by a dedicated release/tag gate.
 
+## 0.1.0rc2 - Draft
+
+Release candidate package version: `0.1.0rc2`
+
+Planned release-candidate tag: `v0.1.0-rc2`
+
+RC2 supersedes the local-only rc1 tag as the current `develop` release
+candidate. The existing local `v0.1.0-rc1` tag remains historical evidence for
+OSW-AUTO-043 and must not be pushed as the current RC after OSW-AUTO-044A/045.
+
+No public tag push, final `v0.1.0` tag, release artifact build, external solver
+binary bundle, or public announcement is created by this release-notes update.
+
+### Highlights
+
+- Package and CLI version metadata move from `0.1.0rc1` to `0.1.0rc2`.
+- Release metadata QA now supports strict pre-tag checks, prior local RC
+  evidence, and current RC tag validation without mutating tags.
+- RC2 keeps the v0.1 feature scope from rc1: PySide6 GUI shell,
+  plugin/add-in architecture, ProjectSchema / UnitSystem / MaterialDB,
+  standard CAD/Mesh import policy, meshio/Gmsh/PyVista surfaces, CalculiX
+  linear static demo, OpenFOAM cavity/duct templates, Cantera/CoolProp demos,
+  MATLAB/Octave preview-first workflow, FigureDataset / ResultDataset / report
+  flow, validation/golden/QA harness.
+
+### Known Limitations
+
+- OSW v0.1 remains educational and research oriented, with unchanged
+  out-of-scope boundaries recorded in `docs/known_limitations.md`.
+- Optional external solvers and tools are not bundled by default.
+- Default `pytest -q` duplicate basename collection behavior remains a P2
+  follow-up if still present; split suites and importlib-mode collection remain
+  release evidence.
+- `tools/qa/check_docs_links.py` remains a P2 follow-up if still absent.
+
 ## 0.1.0rc1 - Draft
 
 Release candidate package version: `0.1.0rc1`

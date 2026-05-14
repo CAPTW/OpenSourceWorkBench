@@ -131,10 +131,10 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Date: 2026-05-14
 - Context: OSW needs PEP 440 package versions and human-readable Git tag names
   without creating a release tag during metadata finalization.
-- Decision: Use package version `0.1.0rc1` for the release candidate and
-  `0.1.0` for final v0.1. Use Git tag names `v0.1.0-rc1` and `v0.1.0` in a
-  dedicated future release/tag prompt. No tag is created by metadata or release
-  notes prompts.
+- Decision: Use PEP 440 release-candidate versions such as `0.1.0rc1` and
+  `0.1.0rc2` before final `0.1.0`. Use Git tag names such as `v0.1.0-rc1`,
+  `v0.1.0-rc2`, and `v0.1.0` in dedicated release/tag prompts. No tag is
+  created by metadata or release notes prompts.
 - Consequences: CLI/package metadata and release notes can describe the release
   candidate consistently while public tag creation remains controlled by a
   separate gate.
@@ -173,3 +173,19 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   evidence. Because OSW-AUTO-044A creates a later commit, rc1 must remain
   local-only and must not be pushed as the current `develop` release candidate;
   the next public/pushable current RC should be produced by an RC2 tag gate.
+
+## ADR-0013: RC2 Supersedes Local RC1 As Current Candidate
+
+- Status: Accepted
+- Date: 2026-05-14
+- Context: OSW-AUTO-044A advanced `develop` after the local annotated
+  `v0.1.0-rc1` tag was created. The rc1 tag still points to the
+  OSW-AUTO-043 commit and remains useful local release evidence, but it no
+  longer represents current `develop`.
+- Decision: OSW-AUTO-045 updates package metadata to `0.1.0rc2` and controls
+  creation of a new local annotated `v0.1.0-rc2` tag after merge and
+  post-merge pre-tag QA. The existing `v0.1.0-rc1` tag must not be deleted,
+  moved, retargeted, recreated, overwritten, or pushed as the current RC.
+- Consequences: rc2 becomes the current local release candidate if the gate
+  passes. Any public tag push, final `v0.1.0` tag, release artifact, or public
+  announcement remains a separate maintainer-controlled gate.

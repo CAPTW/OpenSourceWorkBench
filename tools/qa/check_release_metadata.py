@@ -13,11 +13,22 @@ from pathlib import Path
 
 from _common import repo_root
 
-TARGET_VERSION = "0.1.0rc1"
+TARGET_VERSION = "0.1.0rc2"
 TARGET_LICENSE = "GPL-3.0-or-later"
-DEFAULT_RC_TAG = "v0.1.0-rc1"
+DEFAULT_RC_TAG = "v0.1.0-rc2"
+DEFAULT_PRIOR_RC_TAG = "v0.1.0-rc1"
+DEFAULT_PRIOR_RC_TARGET = "29c5c8bec8df30c7f7be72fc9be5e5409794968e"
 FINAL_TAG = "v0.1.0"
 RELEASE_TAG_PATTERN = "v0.1*"
+
+
+@dataclass(frozen=True)
+class ReleaseTagExpectation:
+    """Expected local release tag identity."""
+
+    name: str
+    target: str | None = None
+    require_annotated: bool = True
 
 
 @dataclass(frozen=True)
@@ -29,6 +40,9 @@ class ReleaseTagPolicy:
     expected_rc_target: str | None = None
     require_annotated_rc_tag: bool = True
     require_expected_rc_tag: bool = False
+    allowed_prior_rc_tags: tuple[ReleaseTagExpectation, ...] = (
+        ReleaseTagExpectation(DEFAULT_PRIOR_RC_TAG, DEFAULT_PRIOR_RC_TARGET),
+    )
 
 
 def _read(path: Path) -> str:
@@ -71,6 +85,55 @@ def _local_release_tags(root: Path) -> tuple[list[str] | None, str | None]:
     return [line.strip() for line in stdout.splitlines() if line.strip()], None
 
 
+def _resolve_expected_target(root: Path, target: str | None) -> tuple[str | None, str | None]:
+    if target != "HEAD":
+        return target, None
+    returncode, stdout, stderr = _git_stdout(root, ["rev-parse", "HEAD"])
+    if returncode != 0:
+        return None, stderr or "Could not resolve HEAD for expected release tag target."
+    return stdout, None
+
+
+def _validate_known_tag(
+    root: Path,
+    tags: list[str],
+    expectation: ReleaseTagExpectation,
+    *,
+    required: bool,
+) -> list[str]:
+    failures: list[str] = []
+    if expectation.name not in tags:
+        if required:
+            failures.append(f"Expected RC tag {expectation.name} is missing.")
+        return failures
+
+    returncode, object_type, stderr = _git_stdout(
+        root,
+        ["cat-file", "-t", f"refs/tags/{expectation.name}"],
+    )
+    if returncode != 0:
+        failures.append(stderr or f"Could not inspect expected RC tag {expectation.name}.")
+    elif expectation.require_annotated and object_type != "tag":
+        failures.append(f"Expected RC tag {expectation.name} is not an annotated tag object.")
+
+    expected_target, target_error = _resolve_expected_target(root, expectation.target)
+    if target_error is not None:
+        failures.append(target_error)
+    elif expected_target:
+        returncode, commit, stderr = _git_stdout(
+            root,
+            ["rev-parse", f"{expectation.name}^{{commit}}"],
+        )
+        if returncode != 0:
+            failures.append(stderr or f"Could not peel expected RC tag {expectation.name}.")
+        elif commit != expected_target:
+            failures.append(
+                f"Expected RC tag {expectation.name} points to {commit}, not {expected_target}."
+            )
+
+    return failures
+
+
 def _validate_release_tags(root: Path, policy: ReleaseTagPolicy) -> list[str]:
     failures: list[str] = []
     tags, error = _local_release_tags(root)
@@ -91,35 +154,30 @@ def _validate_release_tags(root: Path, policy: ReleaseTagPolicy) -> list[str]:
         )
 
     expected = policy.expected_rc_tag
-    allowed_tags = {expected} if expected else set()
+    prior_tags = {item.name for item in policy.allowed_prior_rc_tags}
+    allowed_tags = prior_tags | ({expected} if expected else set())
     unexpected_tags = sorted(tag for tag in tags if tag not in allowed_tags)
     if unexpected_tags:
         failures.append(
             "Unexpected local v0.1* Git tags exist: " + ", ".join(unexpected_tags) + "."
         )
 
-    if not expected:
-        return failures
+    for prior in policy.allowed_prior_rc_tags:
+        failures.extend(_validate_known_tag(root, tags, prior, required=False))
 
-    if expected not in tags:
-        if policy.require_expected_rc_tag:
-            failures.append(f"Expected RC tag {expected} is missing.")
-        return failures
-
-    returncode, object_type, stderr = _git_stdout(root, ["cat-file", "-t", f"refs/tags/{expected}"])
-    if returncode != 0:
-        failures.append(stderr or f"Could not inspect expected RC tag {expected}.")
-    elif policy.require_annotated_rc_tag and object_type != "tag":
-        failures.append(f"Expected RC tag {expected} is not an annotated tag object.")
-
-    if policy.expected_rc_target:
-        returncode, commit, stderr = _git_stdout(root, ["rev-parse", f"{expected}^{{commit}}"])
-        if returncode != 0:
-            failures.append(stderr or f"Could not peel expected RC tag {expected}.")
-        elif commit != policy.expected_rc_target:
-            failures.append(
-                f"Expected RC tag {expected} points to {commit}, not {policy.expected_rc_target}."
+    if expected:
+        failures.extend(
+            _validate_known_tag(
+                root,
+                tags,
+                ReleaseTagExpectation(
+                    expected,
+                    policy.expected_rc_target,
+                    policy.require_annotated_rc_tag,
+                ),
+                required=policy.require_expected_rc_tag,
             )
+        )
 
     return failures
 
@@ -127,6 +185,8 @@ def _validate_release_tags(root: Path, policy: ReleaseTagPolicy) -> list[str]:
 def check_release_metadata(
     root: Path,
     *,
+    expected_version: str = TARGET_VERSION,
+    expected_source_license: str = TARGET_LICENSE,
     check_tags: bool = True,
     tag_policy: ReleaseTagPolicy | None = None,
 ) -> list[str]:
@@ -156,16 +216,18 @@ def check_release_metadata(
         if not isinstance(project, dict):
             failures.append("pyproject.toml has no [project] table.")
         else:
-            if project.get("version") != TARGET_VERSION:
-                failures.append(f"pyproject project.version is not {TARGET_VERSION}.")
-            if _project_license_text(project) != TARGET_LICENSE:
-                failures.append(f"pyproject license metadata is not {TARGET_LICENSE}.")
+            if project.get("version") != expected_version:
+                failures.append(f"pyproject project.version is not {expected_version}.")
+            if _project_license_text(project) != expected_source_license:
+                failures.append(
+                    f"pyproject license metadata is not {expected_source_license}."
+                )
 
     init_path = root / "src" / "osw" / "__init__.py"
     if not init_path.exists():
         failures.append("src/osw/__init__.py is missing.")
-    elif f'__version__ = "{TARGET_VERSION}"' not in _read(init_path):
-        failures.append(f"osw.__version__ is not {TARGET_VERSION}.")
+    elif f'__version__ = "{expected_version}"' not in _read(init_path):
+        failures.append(f"osw.__version__ is not {expected_version}.")
 
     readme_path = root / "README.md"
     if not readme_path.exists():
@@ -174,14 +236,22 @@ def check_release_metadata(
         readme = _read(readme_path)
         if not _contains_heading(readme, "License"):
             failures.append("README.md has no License section.")
-        if TARGET_LICENSE not in readme:
-            failures.append(f"README.md does not mention {TARGET_LICENSE}.")
+        if expected_source_license not in readme:
+            failures.append(f"README.md does not mention {expected_source_license}.")
 
     changelog_path = root / "CHANGELOG.md"
     if not changelog_path.exists():
         failures.append("CHANGELOG.md is missing.")
-    elif TARGET_VERSION not in _read(changelog_path):
-        failures.append(f"CHANGELOG.md does not mention {TARGET_VERSION}.")
+    else:
+        changelog = _read(changelog_path)
+        if expected_version not in changelog:
+            failures.append(f"CHANGELOG.md does not mention {expected_version}.")
+        if (
+            tag_policy
+            and tag_policy.expected_rc_tag
+            and tag_policy.expected_rc_tag not in changelog
+        ):
+            failures.append(f"CHANGELOG.md does not mention {tag_policy.expected_rc_tag}.")
 
     for relative in [
         "docs/13_license_and_version_plan.md",
@@ -211,6 +281,17 @@ def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
     require_annotated = bool(args.require_annotated_rc_tag) or _truthy_env(
         "OSW_RELEASE_REQUIRE_ANNOTATED_RC_TAG"
     )
+    allowed_prior_rc_tags: list[ReleaseTagExpectation] = []
+    prior_tag = args.allowed_prior_rc_tag or os.environ.get("OSW_RELEASE_ALLOWED_PRIOR_RC_TAG")
+    prior_target = args.allowed_prior_rc_target or os.environ.get(
+        "OSW_RELEASE_ALLOWED_PRIOR_RC_TARGET"
+    )
+    if prior_tag:
+        allowed_prior_rc_tags.append(ReleaseTagExpectation(prior_tag, prior_target))
+    elif DEFAULT_PRIOR_RC_TAG:
+        allowed_prior_rc_tags.append(
+            ReleaseTagExpectation(DEFAULT_PRIOR_RC_TAG, DEFAULT_PRIOR_RC_TARGET)
+        )
 
     return ReleaseTagPolicy(
         forbid_release_tags=forbid_release_tags,
@@ -218,11 +299,22 @@ def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
         expected_rc_target=expected_rc_target,
         require_annotated_rc_tag=require_annotated or expected_rc_tag == DEFAULT_RC_TAG,
         require_expected_rc_tag=bool(args.expected_rc_tag),
+        allowed_prior_rc_tags=tuple(allowed_prior_rc_tags),
     )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--expected-version",
+        default=os.environ.get("OSW_RELEASE_EXPECTED_VERSION", TARGET_VERSION),
+        help="expected PEP 440 package version",
+    )
+    parser.add_argument(
+        "--expected-source-license",
+        default=os.environ.get("OSW_RELEASE_EXPECTED_SOURCE_LICENSE", TARGET_LICENSE),
+        help="expected project source license metadata",
+    )
     parser.add_argument(
         "--forbid-release-tags",
         action="store_true",
@@ -237,6 +329,14 @@ def main() -> int:
         help="RC-aware mode: expected peeled commit for the release-candidate tag",
     )
     parser.add_argument(
+        "--allowed-prior-rc-tag",
+        help="local historical RC tag allowed as release evidence",
+    )
+    parser.add_argument(
+        "--allowed-prior-rc-target",
+        help="expected peeled commit for the allowed prior RC tag",
+    )
+    parser.add_argument(
         "--require-annotated-rc-tag",
         action="store_true",
         help="require the expected RC tag to be an annotated tag object",
@@ -244,13 +344,18 @@ def main() -> int:
     args = parser.parse_args()
 
     root = repo_root()
-    failures = check_release_metadata(root, tag_policy=_tag_policy_from_args(args))
+    failures = check_release_metadata(
+        root,
+        expected_version=args.expected_version,
+        expected_source_license=args.expected_source_license,
+        tag_policy=_tag_policy_from_args(args),
+    )
     if failures:
         print("[fail] Release metadata check failed:")
         for failure in failures:
             print(f"  - {failure}")
         return 1
-    print("[ok] Release metadata is aligned for 0.1.0rc1.")
+    print(f"[ok] Release metadata is aligned for {args.expected_version}.")
     return 0
 
 
