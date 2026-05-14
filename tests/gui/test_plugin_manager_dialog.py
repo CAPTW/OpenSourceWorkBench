@@ -46,5 +46,7 @@ def test_plugin_manager_dialog_shows_entries(app: object) -> None:
     assert dialog.plugin_table.rowCount() == 1
     assert dialog.plugin_table.item(0, 1).text() == "demo.mesh"
     assert "demo.mesh" in dialog.manifest_viewer.toPlainText()
+    assert dialog.install_folder_button.objectName() == "pluginInstallFolderButton"
+    assert dialog.install_zip_button.objectName() == "pluginInstallZipButton"
 
     del app

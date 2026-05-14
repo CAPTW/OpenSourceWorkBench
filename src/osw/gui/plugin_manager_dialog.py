@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import json
 import shutil
-from collections.abc import Iterable, Mapping
-from dataclasses import dataclass, field
+from collections.abc import Callable, Iterable, Mapping
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
 from osw.plugins.discovery import discover_entry_point_plugins, iter_manifest_paths
 from osw.plugins.health import PluginHealthStatus, check_manifest_health
+from osw.plugins.installer import PluginInstallError, PluginInstallManager, PluginInstallResult
 from osw.plugins.manifest import PluginManifest, PluginManifestError
 
 from .qt_compat import PySide6UnavailableError, pyside6_missing_message
@@ -23,6 +24,7 @@ except ModuleNotFoundError:
 
 _BaseDialog: Any = QtWidgets.QDialog if QtWidgets is not None else object
 EXECUTABLE_CAPABILITY_PREFIXES = ("requires_executable:", "executable:")
+ENTRY_POINT_SOURCE = "entry-point"
 
 
 @dataclass(frozen=True)
@@ -171,6 +173,7 @@ class PluginManagerDialog(_BaseDialog):
         entries: Iterable[PluginManagerEntry] | None = None,
         plugin_paths: Iterable[str | Path] = (),
         enablement_store: PluginEnablementStore | None = None,
+        install_root: str | Path | None = None,
     ) -> None:
         if QtCore is None or QtWidgets is None:
             raise PySide6UnavailableError(pyside6_missing_message())
@@ -180,9 +183,13 @@ class PluginManagerDialog(_BaseDialog):
         self.setWindowTitle("Plugin Manager")
         self.resize(920, 560)
 
+        self.install_root = Path(install_root) if install_root else _default_install_root()
+        self.install_manager = PluginInstallManager(self.install_root)
+        self._plugin_paths = _deduplicate_paths([*plugin_paths, self.install_root])
+
         if entries is None:
             self.model = PluginManagerModel.from_paths(
-                plugin_paths,
+                self._plugin_paths,
                 include_entry_points=True,
                 enablement_store=enablement_store,
             )
@@ -191,6 +198,7 @@ class PluginManagerDialog(_BaseDialog):
                 tuple(entries),
                 enablement_store or PluginEnablementStore(),
             )
+        self._preserved_entry_point_entries = _entry_point_entries_from(self.model.entries)
 
         self.plugin_table = QtWidgets.QTableWidget(self)
         self.plugin_table.setObjectName("pluginManagerTable")
@@ -205,6 +213,13 @@ class PluginManagerDialog(_BaseDialog):
         self.executable_path_edit.setPlaceholderText("Executable path setting placeholder")
         self.health_button = QtWidgets.QPushButton("Run Health Check", self)
         self.health_button.setObjectName("pluginHealthCheckButton")
+        self.install_folder_button = QtWidgets.QPushButton("Install Folder", self)
+        self.install_folder_button.setObjectName("pluginInstallFolderButton")
+        self.install_zip_button = QtWidgets.QPushButton("Install Zip", self)
+        self.install_zip_button.setObjectName("pluginInstallZipButton")
+        self.install_status = QtWidgets.QLabel(self)
+        self.install_status.setObjectName("pluginInstallStatus")
+        self.install_status.setWordWrap(True)
         self.missing_executable_warning = QtWidgets.QLabel(self)
         self.missing_executable_warning.setObjectName("pluginMissingExecutableWarning")
         self.missing_executable_warning.setWordWrap(True)
@@ -214,12 +229,21 @@ class PluginManagerDialog(_BaseDialog):
         self.plugin_table.currentCellChanged.connect(self._on_current_cell_changed)
         self.plugin_table.itemChanged.connect(self._on_table_item_changed)
         self.health_button.clicked.connect(self._show_selected_entry)
+        self.install_folder_button.clicked.connect(self._choose_install_folder)
+        self.install_zip_button.clicked.connect(self._choose_install_zip)
         if self.model.entries:
             self.plugin_table.setCurrentCell(0, 0)
             self._show_entry(0)
 
     def _build_layout(self) -> None:
         root = QtWidgets.QVBoxLayout(self)
+        install_row = QtWidgets.QHBoxLayout()
+        install_row.addWidget(self.install_folder_button)
+        install_row.addWidget(self.install_zip_button)
+        install_row.addStretch(1)
+        root.addLayout(install_row)
+        root.addWidget(self.install_status)
+
         splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal, self)
         splitter.addWidget(self.plugin_table)
 
@@ -303,12 +327,127 @@ class PluginManagerDialog(_BaseDialog):
             "\n".join(entry.missing_executable_warnings)
         )
 
+    def _choose_install_folder(self) -> None:
+        selected = QtWidgets.QFileDialog.getExistingDirectory(
+            self,
+            "Install OSW Plugin Folder",
+        )
+        if selected:
+            self.install_plugin_folder(selected)
+
+    def _choose_install_zip(self) -> None:
+        selected, _filter = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            "Install OSW Plugin Zip",
+            "",
+            "Zip archives (*.zip)",
+        )
+        if selected:
+            self.install_plugin_zip(selected)
+
+    def install_plugin_folder(self, source: str | Path) -> PluginInstallResult | None:
+        return self._install_and_refresh(
+            lambda: self.install_manager.install_from_folder(
+                source,
+                existing_plugin_ids=self._current_plugin_ids(),
+            )
+        )
+
+    def install_plugin_zip(self, source: str | Path) -> PluginInstallResult | None:
+        return self._install_and_refresh(
+            lambda: self.install_manager.install_from_zip(
+                source,
+                existing_plugin_ids=self._current_plugin_ids(),
+            )
+        )
+
+    def _install_and_refresh(
+        self,
+        operation: Callable[[], PluginInstallResult],
+    ) -> PluginInstallResult | None:
+        try:
+            result = operation()
+        except PluginInstallError as exc:
+            self.install_status.setText(f"Install rejected: {exc}")
+            return None
+
+        warning_suffix = ""
+        if result.warnings:
+            warning_suffix = " Warnings: " + "; ".join(result.warnings)
+        self.install_status.setText(
+            f"Installed plugin {result.plugin_id} into {result.installed_path}.{warning_suffix}"
+        )
+        self._refresh_model(selected_plugin_id=result.plugin_id)
+        return result
+
+    def _refresh_model(self, *, selected_plugin_id: str | None = None) -> None:
+        refreshed_model = PluginManagerModel.from_paths(
+            self._plugin_paths,
+            include_entry_points=False,
+            enablement_store=self.model.enablement_store,
+        )
+        entries = _merge_preserved_entry_point_entries(
+            refreshed_model.entries,
+            self._preserved_entry_point_entries,
+            refreshed_model.enablement_store,
+        )
+        self.model = PluginManagerModel(entries, refreshed_model.enablement_store)
+        self._populate_table()
+        selected_row = 0
+        if selected_plugin_id is not None:
+            for row, entry in enumerate(self.model.entries):
+                if entry.plugin_id == selected_plugin_id:
+                    selected_row = row
+                    break
+        if self.model.entries:
+            self.plugin_table.setCurrentCell(selected_row, 0)
+            self._show_entry(selected_row)
+
+    def _current_plugin_ids(self) -> tuple[str, ...]:
+        return tuple(entry.plugin_id for entry in self.model.entries if entry.valid)
+
 
 def _manifest_paths(local_paths: Iterable[str | Path]) -> tuple[Path, ...]:
     paths: list[Path] = []
     for local_path in local_paths:
         paths.extend(iter_manifest_paths(local_path))
     return tuple(paths)
+
+
+def _default_install_root() -> Path:
+    return Path.home() / ".osw" / "plugins"
+
+
+def _deduplicate_paths(paths: Iterable[str | Path]) -> tuple[Path, ...]:
+    seen: set[Path] = set()
+    deduplicated: list[Path] = []
+    for path in paths:
+        resolved = Path(path)
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        deduplicated.append(resolved)
+    return tuple(deduplicated)
+
+
+def _entry_point_entries_from(
+    entries: Iterable[PluginManagerEntry],
+) -> tuple[PluginManagerEntry, ...]:
+    return tuple(entry for entry in entries if entry.source == ENTRY_POINT_SOURCE)
+
+
+def _merge_preserved_entry_point_entries(
+    entries: tuple[PluginManagerEntry, ...],
+    preserved_entries: Iterable[PluginManagerEntry],
+    store: PluginEnablementStore,
+) -> tuple[PluginManagerEntry, ...]:
+    seen_ids = {entry.plugin_id for entry in entries if entry.valid}
+    merged = list(entries)
+    for entry in preserved_entries:
+        if entry.plugin_id in seen_ids:
+            continue
+        merged.append(replace(entry, enabled=store.is_enabled(entry.plugin_id)))
+    return tuple(merged)
 
 
 def _entry_from_manifest_path(
@@ -344,7 +483,7 @@ def _entry_point_entries(
     return tuple(
         _entry_from_manifest(
             manifest,
-            source="entry-point",
+            source=ENTRY_POINT_SOURCE,
             store=store,
             seen_ids=seen_ids,
             executable_paths=executable_paths,
