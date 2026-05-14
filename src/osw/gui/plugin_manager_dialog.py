@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import json
-import shutil
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
 from osw.plugins.discovery import discover_entry_point_plugins, iter_manifest_paths
-from osw.plugins.health import PluginHealthStatus, check_manifest_health
+from osw.plugins.health import (
+    PluginHealthRecord,
+    build_plugin_health_record,
+)
 from osw.plugins.installer import PluginInstallError, PluginInstallManager, PluginInstallResult
 from osw.plugins.manifest import PluginManifest, PluginManifestError
 
@@ -23,7 +25,6 @@ except ModuleNotFoundError:
     QtWidgets = None
 
 _BaseDialog: Any = QtWidgets.QDialog if QtWidgets is not None else object
-EXECUTABLE_CAPABILITY_PREFIXES = ("requires_executable:", "executable:")
 ENTRY_POINT_SOURCE = "entry-point"
 
 
@@ -39,9 +40,13 @@ class PluginManagerEntry:
     health_status: str = "unknown"
     health_messages: tuple[str, ...] = field(default_factory=tuple)
     missing_executable_warnings: tuple[str, ...] = field(default_factory=tuple)
+    sample_project_reference: str = ""
+    last_health_check_status: str = "not-run"
+    last_run_status: str = "not-run"
     manifest_text: str = ""
     error_message: str = ""
     source: str = ""
+    health_record: PluginHealthRecord | None = None
 
     @property
     def dependency_status_lines(self) -> tuple[str, ...]:
@@ -52,6 +57,27 @@ class PluginManagerEntry:
         lines.extend(self.missing_executable_warnings)
         if not lines:
             lines.append("Dependencies available.")
+        return tuple(lines)
+
+    @property
+    def dashboard_status_lines(self) -> tuple[str, ...]:
+        lines = [
+            f"Plugin status: {self.health_status}",
+            "Dependency status: "
+            + (
+                self.health_record.dependency_status
+                if self.health_record is not None
+                else self.health_status
+            ),
+        ]
+        lines.extend(f"Dependency: {message}" for message in self.health_messages)
+        lines.extend(f"Executable: {message}" for message in self.missing_executable_warnings)
+        lines.append(
+            "Sample project: "
+            + (self.sample_project_reference or "No sample project reference declared.")
+        )
+        lines.append(f"Last health check: {self.last_health_check_status}")
+        lines.append(f"Last run: {self.last_run_status}")
         return tuple(lines)
 
 
@@ -208,6 +234,9 @@ class PluginManagerDialog(_BaseDialog):
         self.dependency_status = QtWidgets.QPlainTextEdit(self)
         self.dependency_status.setObjectName("pluginDependencyStatus")
         self.dependency_status.setReadOnly(True)
+        self.health_dashboard = QtWidgets.QPlainTextEdit(self)
+        self.health_dashboard.setObjectName("pluginHealthDashboard")
+        self.health_dashboard.setReadOnly(True)
         self.executable_path_edit = QtWidgets.QLineEdit(self)
         self.executable_path_edit.setObjectName("pluginExecutablePathEdit")
         self.executable_path_edit.setPlaceholderText("Executable path setting placeholder")
@@ -253,6 +282,8 @@ class PluginManagerDialog(_BaseDialog):
         detail_layout.addWidget(self.manifest_viewer, 2)
         detail_layout.addWidget(QtWidgets.QLabel("Dependency Status"))
         detail_layout.addWidget(self.dependency_status, 1)
+        detail_layout.addWidget(QtWidgets.QLabel("Health Dashboard"))
+        detail_layout.addWidget(self.health_dashboard, 1)
         detail_layout.addWidget(QtWidgets.QLabel("Executable Path"))
         detail_layout.addWidget(self.executable_path_edit)
         detail_layout.addWidget(self.missing_executable_warning)
@@ -319,10 +350,12 @@ class PluginManagerDialog(_BaseDialog):
         if entry is None:
             self.manifest_viewer.clear()
             self.dependency_status.clear()
+            self.health_dashboard.clear()
             self.missing_executable_warning.clear()
             return
         self.manifest_viewer.setPlainText(entry.manifest_text)
         self.dependency_status.setPlainText("\n".join(entry.dependency_status_lines))
+        self.health_dashboard.setPlainText("\n".join(entry.dashboard_status_lines))
         self.missing_executable_warning.setText(
             "\n".join(entry.missing_executable_warnings)
         )
@@ -504,11 +537,15 @@ def _entry_from_manifest(
         return _invalid_entry(source, f"Duplicate plugin id: {manifest.id}")
     seen_ids.add(manifest.id)
 
-    health = check_manifest_health(manifest)
-    missing_executable_warnings = _missing_executable_warnings(manifest, executable_paths)
-    health_status = health.status.value
-    if health.status is PluginHealthStatus.OK and missing_executable_warnings:
-        health_status = PluginHealthStatus.WARNING.value
+    health_record = build_plugin_health_record(
+        manifest,
+        enabled=store.is_enabled(manifest.id),
+        valid=True,
+        source=source,
+        executable_paths=executable_paths,
+        last_health_check_status="checked",
+        last_run_status="not-run",
+    )
 
     return PluginManagerEntry(
         plugin_id=manifest.id,
@@ -518,11 +555,15 @@ def _entry_from_manifest(
         domain=manifest.domain,
         enabled=store.is_enabled(manifest.id),
         valid=True,
-        health_status=health_status,
-        health_messages=health.messages,
-        missing_executable_warnings=missing_executable_warnings,
+        health_status=health_record.status,
+        health_messages=health_record.dependency_messages,
+        missing_executable_warnings=health_record.executable_messages,
+        sample_project_reference=health_record.sample_project_reference,
+        last_health_check_status=health_record.last_health_check_status,
+        last_run_status=health_record.last_run_status,
         manifest_text=json.dumps(manifest.to_dict(), indent=2, sort_keys=True),
         source=source,
+        health_record=health_record,
     )
 
 
@@ -538,31 +579,3 @@ def _invalid_entry(source: str | Path, message: str) -> PluginManagerEntry:
         error_message=message,
         source=source_text,
     )
-
-
-def _missing_executable_warnings(
-    manifest: PluginManifest,
-    executable_paths: Mapping[str, str | Path],
-) -> tuple[str, ...]:
-    warnings: list[str] = []
-    for executable in _required_executables(manifest):
-        configured_path = executable_paths.get(executable)
-        configured_exists = configured_path is not None and Path(configured_path).exists()
-        if configured_exists or shutil.which(executable):
-            continue
-        warnings.append(
-            "Executable not configured or found: "
-            f"{executable}. Set the path in Plugin Manager before preparing runs."
-        )
-    return tuple(warnings)
-
-
-def _required_executables(manifest: PluginManifest) -> tuple[str, ...]:
-    executables: list[str] = []
-    for capability in manifest.capabilities:
-        for prefix in EXECUTABLE_CAPABILITY_PREFIXES:
-            if capability.startswith(prefix):
-                executable = capability.removeprefix(prefix).strip()
-                if executable:
-                    executables.append(executable)
-    return tuple(executables)
