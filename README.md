@@ -39,6 +39,9 @@ certification claims, or GUI-triggered direct subprocess solver execution.
 See [Known Limitations](docs/known_limitations.md) for the full v0.1 boundary
 statement, including optional dependency behavior and script execution safety.
 
+Release-readiness review uses the [Release Checklist](docs/10_release_checklist.md)
+and [v0.1 Demo Smoke Checklist](docs/demo_smoke_checklist.md).
+
 ## Quick Start
 
 ```powershell
