@@ -53,6 +53,10 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+  "external_solver: requires a local external solver or script executable and is excluded from local-safe CI by default",
+  "optional_dependency: requires optional Python extras or optional local tools",
+]
 
 [tool.ruff]
 target-version = "py311"

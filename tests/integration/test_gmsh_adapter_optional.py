@@ -7,6 +7,8 @@ import pytest
 
 from osw.mesh.gmsh_adapter import GmshPrimitive, MeshSizeControl, generate_primitive_mesh
 
+pytestmark = pytest.mark.optional_dependency
+
 
 def _optional_gmsh_meshio() -> tuple[object, object]:
     try:

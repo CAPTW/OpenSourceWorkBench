@@ -9,6 +9,8 @@ from osw.scripts.mscript.figure_capture import capture_octave_figures
 from osw.scripts.mscript.octave_runner import OctaveRunner
 from osw.solvers.runner import RunStatus, TimeoutPolicy
 
+pytestmark = pytest.mark.external_solver
+
 
 def test_octave_simple_plot_can_be_captured_when_octave_is_available(tmp_path: Path) -> None:
     octave = shutil.which("octave")

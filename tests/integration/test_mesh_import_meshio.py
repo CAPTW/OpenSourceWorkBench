@@ -9,10 +9,13 @@ import pytest
 from osw.mesh.conversion import convert_mesh
 from osw.mesh.meshio_bridge import load_mesh_info
 
-pytestmark = pytest.mark.skipif(
-    importlib.util.find_spec("meshio") is None,
-    reason="meshio optional mesh extra is not installed.",
-)
+pytestmark = [
+    pytest.mark.optional_dependency,
+    pytest.mark.skipif(
+        importlib.util.find_spec("meshio") is None,
+        reason="meshio optional mesh extra is not installed.",
+    ),
+]
 
 
 def test_generated_vtu_mesh_import_and_export(tmp_path: Path) -> None:

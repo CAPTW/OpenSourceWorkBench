@@ -62,6 +62,38 @@ Optional stacks are grouped as extras:
 
 No external solver is executed by the bootstrap skeleton.
 
+## Local CI Commands
+
+The GitHub Actions workflow is intentionally local-safe and uses the same
+commands below. It installs only the base development extra and does not assume
+that external solvers or heavy optional stacks are available:
+
+```powershell
+python -m pip install -e .[dev]
+python -m osw.cli --version
+python -m osw.cli doctor
+ruff check src tests
+pytest tests/unit -q
+pytest tests/integration -q -m "not external_solver"
+pytest tests/golden -q
+pytest tests/validation -q
+python tools/qa/run_fast_qa.py
+python tools/qa/check_scope_drift.py
+python tools/qa/check_architecture_boundaries.py
+python tools/qa/check_no_solver_artifacts_committed.py
+```
+
+Optional executable smoke checks are opt-in. Run them only on a machine where
+the relevant dependency is intentionally installed and configured:
+
+```powershell
+pytest tests/integration -q -m external_solver
+```
+
+Missing external solvers, GNU Octave, Gmsh, Cantera, CoolProp, PySide6, meshio,
+or PyVista are expected in many local and CI environments and should be reported
+as skipped or optional rather than release blockers for the base workflow.
+
 ## Tutorial Examples
 
 The v0.1 tutorial path is documented in [docs/tutorials.md](docs/tutorials.md).

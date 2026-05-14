@@ -8,10 +8,13 @@ import pytest
 from osw.scripts.mscript.octave_runner import OctaveRunner
 from osw.solvers.runner import RunStatus, TimeoutPolicy
 
-pytestmark = pytest.mark.skipif(
-    shutil.which("octave") is None,
-    reason="GNU Octave is not installed on PATH.",
-)
+pytestmark = [
+    pytest.mark.external_solver,
+    pytest.mark.skipif(
+        shutil.which("octave") is None,
+        reason="GNU Octave is not installed on PATH.",
+    ),
+]
 
 
 def test_real_octave_optional_smoke(tmp_path: Path) -> None:

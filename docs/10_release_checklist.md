@@ -53,6 +53,13 @@ does not claim external solver availability in every environment.
 
 ## QA Command Checklist
 
+- [ ] `.github/workflows/ci.yml` exists and runs local-safe lint, unit,
+  integration smoke, golden, validation, scope, architecture, and solver
+  artifact checks.
+- [ ] CI excludes optional external solver tests by default with
+  `-m "not external_solver"`.
+- [ ] README documents the local CI commands and optional external-solver
+  opt-in command.
 - [ ] `python -m osw.cli --version` reports the intended version.
 - [ ] `python -m osw.cli doctor` reports environment status.
 - [ ] `python tools/qa/run_fast_qa.py` passes or has a documented blocker.

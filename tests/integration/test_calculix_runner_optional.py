@@ -6,6 +6,8 @@ import pytest
 
 from osw.solvers.calculix.ccx_runner import CalculixCcxRunner
 
+pytestmark = pytest.mark.external_solver
+
 
 def test_real_ccx_detection_is_optional() -> None:
     if shutil.which("ccx") is None:

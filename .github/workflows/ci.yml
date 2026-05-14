@@ -1,0 +1,130 @@
+name: OSW CI
+
+"on":
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  OSW_EXTERNAL_SOLVER_TESTS: "0"
+  OSW_CI_LOCAL_SAFE: "1"
+
+jobs:
+  local-safe-qa:
+    name: Local-safe QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install base development package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Validate workflow YAML when PyYAML is available
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import importlib.util
+
+          if importlib.util.find_spec("yaml") is None:
+              print("PyYAML is not installed; YAML parse check skipped.")
+              raise SystemExit(0)
+
+          import yaml
+
+          workflow = yaml.safe_load(Path(".github/workflows/ci.yml").read_text())
+          if not isinstance(workflow, dict) or "jobs" not in workflow:
+              raise SystemExit("CI workflow did not parse as a mapping with jobs.")
+          print("CI workflow YAML parsed successfully.")
+          PY
+
+      - name: CLI smoke
+        run: |
+          python -m osw.cli --version
+          python -m osw.cli doctor
+
+      - name: Lint
+        run: ruff check src tests
+
+      - name: Optional type check placeholder
+        run: |
+          python - <<'PY'
+          import os
+          import importlib.util
+          import subprocess
+          import sys
+
+          if os.environ.get("OSW_RUN_TYPE_CHECK") != "1":
+              print("OSW_RUN_TYPE_CHECK is not set to 1; optional type check skipped.")
+              raise SystemExit(0)
+
+          if importlib.util.find_spec("mypy") is None:
+              print("mypy is not installed; optional type check skipped.")
+              raise SystemExit(0)
+
+          subprocess.check_call([sys.executable, "-m", "mypy", "src/osw"])
+          PY
+
+      - name: Unit tests
+        run: pytest tests/unit -q
+
+      - name: Integration smoke without external solvers
+        run: pytest tests/integration -q -m "not external_solver"
+
+      - name: Golden tests
+        run: pytest tests/golden -q
+
+      - name: Validation tests
+        run: pytest tests/validation -q
+
+      - name: Repository fast QA
+        run: python tools/qa/run_fast_qa.py
+
+      - name: Scope drift check
+        run: python tools/qa/check_scope_drift.py
+
+      - name: Architecture boundary check
+        run: python tools/qa/check_architecture_boundaries.py
+
+      - name: Solver artifact check
+        run: python tools/qa/check_no_solver_artifacts_committed.py
+
+      - name: Documentation link check placeholder
+        run: |
+          if [ -f tools/qa/check_docs_links.py ]; then
+            python tools/qa/check_docs_links.py
+          else
+            echo "tools/qa/check_docs_links.py is not present; docs link check skipped."
+          fi
+
+      - name: License notice check placeholder
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          text = Path("pyproject.toml").read_text(encoding="utf-8")
+          if "license =" not in text:
+              raise SystemExit("pyproject.toml license metadata is missing.")
+          print("License notice placeholder passed: pyproject license metadata present.")
+          PY
+
+      - name: External solver tests disabled by default
+        run: |
+          echo "OSW_EXTERNAL_SOLVER_TESTS=${OSW_EXTERNAL_SOLVER_TESTS}"
+          echo "Optional external solver tests are not run in this local-safe workflow."

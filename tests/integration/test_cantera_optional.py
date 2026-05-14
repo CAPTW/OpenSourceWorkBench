@@ -4,6 +4,8 @@ import pytest
 
 from osw.solvers.cantera.adapter import CanteraReactorConfig, CanteraReactorPlugin
 
+pytestmark = pytest.mark.optional_dependency
+
 
 def test_cantera_optional_real_backend_runs_small_reactor() -> None:
     pytest.importorskip("cantera")
