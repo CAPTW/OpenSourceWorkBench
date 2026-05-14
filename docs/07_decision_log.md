@@ -189,3 +189,20 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: rc2 becomes the current local release candidate if the gate
   passes. Any public tag push, final `v0.1.0` tag, release artifact, or public
   announcement remains a separate maintainer-controlled gate.
+
+## ADR-0014: Default Pytest Collection Uses Unique Test Basenames
+
+- Status: Accepted
+- Date: 2026-05-14
+- Context: OSW-AUTO-046 verified local rc2, but default `pytest -q` still failed
+  before running tests because the GUI and unit plugin manager dialog tests
+  shared the same basename. Importlib mode passed, but the release hardening
+  goal is to make the default command work without relying on a global pytest
+  import-mode workaround.
+- Decision: Test files under `tests/` should have unique basenames. OSW-AUTO-047
+  renames the colliding plugin manager dialog tests and adds a local QA helper
+  that reports duplicate test basenames without importing test modules.
+- Consequences: Default `pytest -q` becomes a normal release-hardening check.
+  Since this fix advances `develop` after local rc2, `v0.1.0-rc2` remains
+  local historical feedback evidence; any new current RC should use a dedicated
+  RC3 tag gate.

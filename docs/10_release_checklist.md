@@ -24,17 +24,17 @@ or full solver parity.
 
 | Item | Status | Evidence / decision |
 | --- | --- | --- |
-| Release gate result | `PENDING` | Documentation, demo smoke, CI-local QA, validation, scope checks, license metadata, release notes, and [license/version planning](13_license_and_version_plan.md) are being checked for the RC2 local tag gate. Local `v0.1.0-rc1` remains historical evidence; `v0.1.0-rc2` is the current candidate tag target. |
+| Release gate result | `PENDING` | RC2 was verified locally by OSW-AUTO-046. This post-RC2 hardening prompt fixes default pytest collection before any public push. Local `v0.1.0-rc1` and `v0.1.0-rc2` remain historical evidence once `develop` advances. |
 | Scope discipline | `PASS` | README, [Known Limitations](known_limitations.md), tutorials, and this checklist describe OSW v0.1 as an educational/research prototype. |
 | External solver expectation | `PASS` | External solver executable checks are optional and local-environment dependent. Base install, CLI smoke, and unit tests do not require external solvers. |
 | Release version plan | `PASS` | [License and version plan](13_license_and_version_plan.md) defines current package version `0.1.0rc2`, final package version `0.1.0`, Git tag names `v0.1.0-rc1`, `v0.1.0-rc2`, and `v0.1.0`, strict pre-tag metadata checks, prior RC allowance, and RC-aware metadata checks for expected local annotated RC tags. |
 | License final decision | `PASS` | Maintainer decision recorded as `GPL-3.0-or-later`; `LICENSE`, `pyproject.toml`, README, this checklist, and [license/version planning](13_license_and_version_plan.md) are aligned. |
 | RC1 local annotated tag | `PASS` | OSW-AUTO-043 created local annotated `v0.1.0-rc1` at commit `29c5c8bec8df30c7f7be72fc9be5e5409794968e`. OSW-AUTO-045 must preserve that tag unchanged. |
-| RC2 local annotated tag gate | `PENDING` | OSW-AUTO-045 may create local annotated `v0.1.0-rc2` only after version metadata update, feature-branch QA, squash merge, post-merge pre-tag QA, and tag verification pass. |
+| RC2 local annotated tag gate | `PASS` | OSW-AUTO-045 created local annotated `v0.1.0-rc2` at commit `684dc6138d4257564bbcdd176a9d5ed311a7316d`; OSW-AUTO-046 verified it in local feedback mode with no push. |
 | Public tag push | `P1 BLOCKED` | Do not push `v0.1.0-rc1` or `v0.1.0-rc2` unless a later explicit maintainer push gate approves the exact tag. |
 | Final `v0.1.0` tag | `P1 BLOCKED` | Do not create the final tag in the RC tag gate. It requires a separate final release gate. |
 | Public announcement | `P1 BLOCKED` | Do not announce public v0.1 until the local tag state is reviewed and the maintainer explicitly directs announcement work. |
-| Broad pytest command | `P2 FOLLOW-UP` | `pytest -q` currently hits an import mismatch from duplicate `test_plugin_manager_dialog.py` basenames. CI-style split suites and `pytest -q --import-mode=importlib` pass. |
+| Broad pytest command | `PASS` | OSW-AUTO-047 renames the colliding plugin manager dialog tests and adds a duplicate-basename QA guard so default `pytest -q` can run without the import mismatch. |
 | Docs link checker | `SKIP` | `tools/qa/check_docs_links.py` is not present. Targeted local markdown link checks were used in recent docs steps. |
 
 ## Blocker Register
@@ -43,11 +43,11 @@ or full solver parity.
 | --- | --- | --- | --- | --- | --- |
 | REL-040-P1-001 | P1 | License and public release | `PASS` | Maintainer selected `GPL-3.0-or-later`; canonical GPLv3 text is in `LICENSE`; package metadata, README, release notes, and notice draft are aligned. | Keep metadata aligned during the dedicated release/tag gate. |
 | REL-043-P1-001 | P1 | RC local tag gate | `PASS` | OSW-AUTO-043 created local annotated `v0.1.0-rc1` at commit `29c5c8bec8df30c7f7be72fc9be5e5409794968e`. | Preserve it as local release evidence; do not move or recreate it. |
-| REL-045-P1-001 | P1 | RC2 local tag gate | `PENDING` | Package version is moving to `0.1.0rc2`; rc2 must not be created until post-merge pre-tag QA passes. | Create local annotated `v0.1.0-rc2` only after OSW-AUTO-045 final checks pass. |
+| REL-045-P1-001 | P1 | RC2 local tag gate | `PASS` | OSW-AUTO-045 created local annotated `v0.1.0-rc2` at commit `684dc6138d4257564bbcdd176a9d5ed311a7316d`; OSW-AUTO-046 verified it locally and did not push. | Preserve rc2 unchanged as local feedback evidence; run a fresh RC3 gate if `develop` advances before any current-RC push. |
 | REL-043-P1-002 | P1 | Public tag push | `P1 BLOCKED` | rc1 is local-only historical evidence and rc2 will be local-only unless a later push gate approves it. | Do not push tags unless a maintainer explicitly instructs the exact current RC tag after a fresh push gate. |
 | REL-043-P1-003 | P1 | Final release tag | `P1 BLOCKED` | `v0.1.0` is outside the RC tag gate. | Use a separate final release gate for the final tag. |
 | REL-041-P1-002 | P1 | Public announcement | `P1 BLOCKED` | The project has a release metadata packet, but no public push or announcement approval. | Announce no public release until local tag state is reviewed and maintainer announcement direction is explicit. |
-| REL-040-P2-001 | P2 | Broad pytest collection | `P2 FOLLOW-UP` | `pytest -q` fails during collection because `tests/gui/test_plugin_manager_dialog.py` and `tests/unit/test_plugin_manager_dialog.py` share a module basename. | Add pytest importlib configuration or rename one test module in a focused test-only PR. |
+| REL-040-P2-001 | P2 | Broad pytest collection | `PASS` | OSW-AUTO-047 renames the colliding plugin manager dialog test modules and adds `tools/qa/check_duplicate_test_basenames.py`. | Keep the duplicate-basename check in fast/pre-merge QA. |
 | REL-040-P2-002 | P2 | Docs link automation | `P2 FOLLOW-UP` | `tools/qa/check_docs_links.py` is absent and CI records it as a placeholder skip. | Add a lightweight docs link checker or keep the skip recorded until one exists. |
 | REL-040-P2-003 | P2 | External executable smoke | `P2 FOLLOW-UP` | Local `doctor` reports core optional stacks missing; external solver smoke was not attempted. | Keep optional executable smoke as environment-specific evidence; do not make it mandatory for v0.1 base release. |
 
@@ -93,7 +93,7 @@ or full solver parity.
 | License/version planning packet exists. | `PASS` | [License and version plan](13_license_and_version_plan.md) documents maintainer decision, version scheme, tag policy, release procedure draft, rollback plan, and artifact policy. |
 | Third-party notices draft exists. | `PASS` | [Third-party notices draft](14_third_party_notices.md) distinguishes source distribution from optional external solver binaries and records review areas. |
 | RC1 local annotated tag evidence is recorded. | `PASS` | OSW-AUTO-043 created local annotated `v0.1.0-rc1`; OSW-AUTO-045 keeps it unchanged as local-only evidence. |
-| RC2 local annotated tag gate is defined. | `PENDING` | OSW-AUTO-045 may create local annotated `v0.1.0-rc2` only after all post-merge pre-tag checks pass on merged `develop`. |
+| RC2 local annotated tag gate is defined. | `PASS` | OSW-AUTO-045 created local annotated `v0.1.0-rc2`; OSW-AUTO-046 verified object type `tag`, target commit `684dc6138d4257564bbcdd176a9d5ed311a7316d`, metadata, and local QA without pushing. |
 | Public tag push remains blocked until explicit maintainer approval. | `P1 BLOCKED` | A local tag is not a public release. Do not push rc1 or rc2 from this prompt. |
 | Final `v0.1.0` tag remains blocked until a final release gate. | `P1 BLOCKED` | The RC gate must not create `v0.1.0`. |
 | Public release announcement remains blocked until explicit maintainer direction. | `P1 BLOCKED` | Announcements require local tag review, push approval, and explicit maintainer direction. |
@@ -123,7 +123,7 @@ or full solver parity.
 | `python tools/qa/check_release_metadata.py` passes. | `PASS` | Verifies `LICENSE`, pyproject license/version metadata, README License section, release notes, third-party notices draft, final-tag absence, unexpected release-tag absence, prior rc1 evidence, and expected rc2 behavior when present. |
 | `python tools/qa/check_release_metadata.py --forbid-release-tags` enforces strict pre-tag mode. | `PASS` | This mode intentionally fails while local rc1 exists and remains available for future pre-tag metadata prompts before any local release tag is created. |
 | `python tools/qa/check_release_metadata.py --expected-version 0.1.0rc2 --expected-source-license GPL-3.0-or-later --allowed-prior-rc-tag v0.1.0-rc1 --allowed-prior-rc-target 29c5c8bec8df30c7f7be72fc9be5e5409794968e` passes before rc2 exists. | `PASS` | Validates rc2 metadata while preserving rc1 as historical local evidence. |
-| `python tools/qa/check_release_metadata.py --expected-version 0.1.0rc2 --expected-source-license GPL-3.0-or-later --allowed-prior-rc-tag v0.1.0-rc1 --allowed-prior-rc-target 29c5c8bec8df30c7f7be72fc9be5e5409794968e --expected-rc-tag v0.1.0-rc2 --expected-rc-target <develop HEAD> --require-annotated-rc-tag` passes after rc2 exists. | `PENDING` | RC2-aware mode must validate expected tag identity, annotated-tag status, peeled target commit, final-tag absence, and unexpected-tag absence without creating, moving, or deleting tags. |
+| `python tools/qa/check_release_metadata.py --expected-version 0.1.0rc2 --expected-source-license GPL-3.0-or-later --allowed-prior-rc-tag v0.1.0-rc1 --allowed-prior-rc-target 29c5c8bec8df30c7f7be72fc9be5e5409794968e --expected-rc-tag v0.1.0-rc2 --expected-rc-target <develop HEAD> --require-annotated-rc-tag` passes after rc2 exists. | `PASS` | OSW-AUTO-046 verified expected tag identity, annotated-tag status, peeled target commit, final-tag absence, and unexpected-tag absence without creating, moving, deleting, or pushing tags. |
 | `python tools/qa/run_pre_merge_qa.py` passes. | `PASS` | Passed on 2026-05-14. |
 | `python tools/qa/run_fast_qa.py` passes. | `PASS` | Passed as part of pre-merge QA. |
 | `pytest tests/unit -q` passes. | `PASS` | Current release-gate result is recorded in the OSW-AUTO-043 self-check and final output. |
@@ -131,7 +131,7 @@ or full solver parity.
 | `pytest tests/integration -q -m "not external_solver"` passes. | `PASS` | `4 passed, 3 skipped, 3 deselected`. |
 | `pytest tests/golden -q` passes. | `PASS` | `10 passed`. |
 | `pytest tests/validation -q` passes. | `PASS` | `4 passed`. |
-| `pytest -q` passes in default local mode. | `P2 FOLLOW-UP` | Default collection may fail due duplicate test module basename import mismatch. This remains non-blocking only when the failure is exactly that known issue and targeted suites pass. |
+| `pytest -q` passes in default local mode. | `PASS` | OSW-AUTO-047 fixes the duplicate test module basename mismatch directly; default collection is now a required release-hardening check. |
 | `python tools/qa/check_scope_drift.py` passes. | `PASS` | No OSW scope drift found. |
 | `python tools/qa/check_architecture_boundaries.py` passes. | `PASS` | Architecture boundaries respected. |
 | `python tools/qa/check_no_solver_artifacts_committed.py` passes. | `PASS` | No solver/runtime artifact paths detected. |
@@ -181,10 +181,10 @@ or full solver parity.
 
 | Item | Status | Evidence / notes |
 | --- | --- | --- |
-| Target `develop` commit hash is recorded. | `PENDING` | Record in the OSW-AUTO-045 self-check and final response after squash merge. |
-| Post-merge pre-tag QA result is recorded. | `PENDING` | Required before creating local annotated `v0.1.0-rc2`; record in the OSW-AUTO-045 self-check and final response. |
+| Target `develop` commit hash is recorded. | `PASS` | OSW-AUTO-046 verified `develop` at `684dc6138d4257564bbcdd176a9d5ed311a7316d` before this post-RC2 hardening prompt. |
+| Post-merge pre-tag QA result is recorded. | `PASS` | OSW-AUTO-045 and OSW-AUTO-046 recorded RC2 post-merge/pre-feedback QA evidence before this prompt. |
 | Local annotated `v0.1.0-rc1` tag verification is recorded. | `PASS` | Object type is `tag`, target commit is `29c5c8bec8df30c7f7be72fc9be5e5409794968e`, and no push occurred. |
-| Local annotated `v0.1.0-rc2` tag verification is recorded. | `PENDING` | Verify object type `tag`, target commit equals post-merge `develop` HEAD, and no push occurred. |
+| Local annotated `v0.1.0-rc2` tag verification is recorded. | `PASS` | OSW-AUTO-046 verified object type `tag`, target commit `684dc6138d4257564bbcdd176a9d5ed311a7316d`, and no push. |
 | Validation matrix reflects implemented workflows. | `PASS` | Current matrix covers CAE, mesh, script, chemistry/property, and report validation. |
 | License decision is finalized before public release. | `PASS` | Maintainer decision is `GPL-3.0-or-later`; metadata and release docs are aligned. Public tag/announcement still require the dedicated release/tag gate. |
 
@@ -192,9 +192,10 @@ or full solver parity.
 
 | Action | Priority | Size | Owner expectation |
 | --- | --- | --- | --- |
-| Complete the RC2 local tag gate and decide whether to push it for feedback. | P1 | Maintainer action | OSW-AUTO-045 may create local `v0.1.0-rc2`; a later `OSW-AUTO-046_RC2_PUSH_OR_FEEDBACK_GATE` controls any push. |
+| Preserve local rc2 feedback evidence after this hardening commit. | P1 | Release prompt | OSW-AUTO-046 parked rc2 for feedback without push. After OSW-AUTO-047 advances `develop`, rc2 remains local historical evidence and should not be pushed as the current RC. |
 | Run a separate final release gate before creating `v0.1.0`. | P1 | Small PR/prompt | The RC gate must not create the final tag. |
-| Fix broad `pytest -q` collection behavior by configuring importlib mode or renaming duplicate test module. | P2 | Small PR | Test-only change; CI split suites already pass. |
+| Keep default `pytest -q` collection green with duplicate-basename QA. | P2 | Small QA maintenance | OSW-AUTO-047 resolves the known collision; future duplicate test basenames should fail fast through the QA helper. |
+| Run a later RC3 tag gate if a current pushable RC is needed after post-RC2 hardening. | P1 | Release prompt | Because OSW-AUTO-047 advances `develop` after local rc2, `v0.1.0-rc2` remains local historical feedback evidence and must not be pushed as the current RC. |
 | Add a lightweight docs link checker or keep the CI placeholder skip explicit. | P2 | Small PR | Tools/docs QA improvement. |
 | Record optional executable smoke on machines that intentionally install `ccx`, OpenFOAM, Gmsh, Cantera, CoolProp, or GNU Octave. | P2 | Small evidence PR | Environment-specific evidence; do not make base release depend on it. |
 

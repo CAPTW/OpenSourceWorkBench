@@ -14,6 +14,10 @@ def main() -> int:
     commands: list[tuple[list[str], str]] = [
         ([python_executable(), "-m", "osw.cli", "--version"], "python -m osw.cli --version"),
         ([python_executable(), "-m", "osw.cli", "doctor"], "python -m osw.cli doctor"),
+        (
+            [python_executable(), "tools/qa/check_duplicate_test_basenames.py"],
+            "python tools/qa/check_duplicate_test_basenames.py",
+        ),
     ]
     if shutil.which("ruff"):
         commands.append((["ruff", "check", "src", "tests"], "ruff check src tests"))
