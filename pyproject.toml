@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "open-solver-workbench"
-version = "0.1.0a0"
+version = "0.1.0rc1"
 description = "Open-source educational and research engineering solver workbench."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "GPL-3.0-or-later recommended; final license pending project decision" }
+license = { text = "GPL-3.0-or-later" }
 authors = [
   { name = "OpenSolver Workbench contributors" }
 ]
@@ -17,6 +17,7 @@ classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Education",
   "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",

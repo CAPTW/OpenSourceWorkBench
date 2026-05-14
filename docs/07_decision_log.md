@@ -105,3 +105,36 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   third-party notices, then run a dedicated release/tag prompt. The current
   release plan can clear the version/tag planning blocker without clearing the
   final license blocker.
+
+## ADR-0009: GPL-3.0-or-later Source License For v0.1
+
+- Status: Accepted
+- Date: 2026-05-14
+- Context: The maintainer supplied an explicit v0.1 license decision:
+  repository source license is `GPL-3.0-or-later`, the `LICENSE` file should
+  contain the canonical GNU GPL version 3 text, optional external solver
+  binaries are not bundled by default, and third-party redistribution
+  obligations remain documented through notice review. This is a maintainer
+  project decision, not legal advice.
+- Decision: OSW v0.1 repository source is licensed as `GPL-3.0-or-later`.
+  The repository stores the canonical GNU GPL version 3 text in `LICENSE` and
+  records the "or later" grant through package metadata, README wording,
+  `docs/13_license_and_version_plan.md`, this decision log, and release
+  checklist wording.
+- Consequences: Public release metadata can align around `GPL-3.0-or-later`.
+  External solver binaries remain optional local tools unless a future packaging
+  and redistribution review explicitly approves bundling them.
+
+## ADR-0010: v0.1 Release Candidate Version And Tag Naming
+
+- Status: Accepted
+- Date: 2026-05-14
+- Context: OSW needs PEP 440 package versions and human-readable Git tag names
+  without creating a release tag during metadata finalization.
+- Decision: Use package version `0.1.0rc1` for the release candidate and
+  `0.1.0` for final v0.1. Use Git tag names `v0.1.0-rc1` and `v0.1.0` in a
+  dedicated future release/tag prompt. No tag is created by metadata or release
+  notes prompts.
+- Consequences: CLI/package metadata and release notes can describe the release
+  candidate consistently while public tag creation remains controlled by a
+  separate gate.

@@ -1,43 +1,46 @@
 # License And Version Plan
 
-Status: release-planning packet, not a final license decision
+Status: maintainer license decision recorded; release tag not created
 
-This document resolves the v0.1 license and tag planning blockers as far as a
-documentation prompt can. It does not finalize the project license, provide
-legal advice, create a Git tag, announce a public release, or approve
-redistribution of third-party solver binaries.
+This document records the v0.1 maintainer license decision, package version
+scheme, tag plan, and release artifact policy. It does not provide legal
+advice, create a Git tag, announce a public release, or approve redistribution
+of third-party solver binaries.
 
 ## Current License State Inventory
 
 | Area | Current state | Release impact |
 | --- | --- | --- |
-| `LICENSE` | Present, but it is a placeholder. It recommends GPL-3.0-or-later unless maintainers decide otherwise and says it is not the final license grant. | Public release remains blocked until maintainers replace it with the full selected license text. |
-| `pyproject.toml` license metadata | Present, but provisional: `GPL-3.0-or-later recommended; final license pending project decision`. | Metadata must be aligned with the final license before a public release tag. |
-| README license statement | No dedicated license section yet. README links known limitations and release readiness docs, but not this plan before OSW-AUTO-041. | Add a link to this plan; add a final license section only after maintainer approval. |
-| `docs/10_release_checklist.md` | License remains a P1 release blocker. Version/tag planning was also blocked before this packet. | Keep final license as P1. Mark version/tag plan ready after this document lands. |
-| `docs/09_risk_register.md` | Tracks pending license decision, broad pytest collection, and missing docs link checker risks. | Add explicit version/tag and third-party notice review risks. |
-| `docs/07_decision_log.md` | No license-specific ADR exists before this step. | Add a process ADR for license/tag planning without selecting the license. |
+| `LICENSE` | Present and replaced with the canonical GNU GPL version 3 text from a trusted local source: `D:\Program Files\Git\mingw64\share\licenses\xz\COPYING.GPLv3` (SHA-256 `3972DC9744F6499F0F9B2DBF76696F2AE7AD8AF9B23DDE66D6AF86C9DFB36986`). | Source license text is present. The "or later" grant is recorded in project metadata and release docs. |
+| `pyproject.toml` license metadata | Aligned to `GPL-3.0-or-later`; package version is `0.1.0rc1`. | Metadata is ready for the release-candidate gate. |
+| README license statement | Dedicated License and Release Candidate Status sections link this plan, known limitations, and third-party notices. | README is aligned with the maintainer decision. |
+| `docs/10_release_checklist.md` | License, pyproject metadata, README license section, release notes, and third-party notices are marked PASS when this step's checks pass. | Public tag and announcement remain blocked until the dedicated tag/release gate. |
+| `docs/09_risk_register.md` | Tracks license metadata drift, third-party notice review, external solver redistribution, and tag-control risks. | License decision risk is lowered; redistribution and tag risks remain monitored. |
+| `docs/07_decision_log.md` | Records the maintainer GPL-3.0-or-later decision and rc package/tag naming policy. | Future release prompts have an auditable decision record. |
 | Plugin manifest expectations | `docs/03_plugin_contract.md` and `src/osw/plugins/manifest.py` require a manifest `license` field. Built-in solver/property plugin manifests currently use `GPL-3.0-or-later`. | Plugin metadata must stay explicit. Third-party plugin packages remain responsible for their own license terms. |
 | Optional dependency assumptions | Installation docs treat CalculiX, OpenFOAM, Gmsh, GNU Octave, Cantera, and CoolProp as optional external tools or optional Python dependencies. | v0.1 release artifacts must not bundle external solver binaries unless license compatibility and redistribution obligations are explicitly reviewed. |
 | Git tag state | `git tag --list "v0.1*"` returned no local v0.1 tags. | No release tag exists. Tag creation is deferred to a dedicated release/tag prompt. |
 
-## Maintainer Decision Required
+## Maintainer Decision Recorded
 
-Final public release license selection is a maintainer decision. The repository
-currently contains a recommended direction, not an approved final license grant.
+The maintainer selected `GPL-3.0-or-later` for the OpenSolver Workbench v0.1
+repository source license on 2026-05-14. The `LICENSE` file contains the
+canonical GNU GPL version 3 license text, while the "or later" grant is recorded
+through `pyproject.toml`, README wording, this plan, the decision log, and the
+release checklist.
 
-Before a public v0.1 release or tag, maintainers must choose the license,
-replace the placeholder `LICENSE`, align package metadata, update README release
-text, review third-party notices, and rerun the release checklist.
+Before a public v0.1 release or tag, maintainers must still review third-party
+notices, confirm that no external solver binaries are bundled by default, rerun
+release QA, and use a dedicated release/tag prompt.
 
 This document is planning guidance for maintainers. It is not legal advice.
 
-## Recommended Default For v0.1
+## Selected Default For v0.1
 
-The recommended default for v0.1 is a GPL-compatible open-source path, with
-`GPL-3.0-or-later` as the practical default candidate, because OSW integrates
-with or may integrate with GPL-family solver and workflow ecosystems and the
-built-in plugin manifests already use that identifier.
+The selected default for v0.1 is a GPL-compatible open-source path:
+`GPL-3.0-or-later`. This fits OSW's optional integration surface with
+GPL-family solver and workflow ecosystems and aligns with built-in plugin
+manifest metadata.
 
 Separate these layers:
 
@@ -60,11 +63,11 @@ reviewed.
 | Option | Description | v0.1 fit | Notes |
 | --- | --- | --- | --- |
 | Option 1: GPL-3.0-only | License OSW source under GPL version 3 only. | Viable if maintainers want a fixed GPL version. | Less flexible for future compatibility than an "or later" license. |
-| Option 2: GPL-3.0-or-later | License OSW source under GPL version 3 or any later GPL version. | Recommended default candidate for v0.1. | Aligns with current placeholder text and built-in plugin manifest metadata, pending maintainer approval. |
+| Option 2: GPL-3.0-or-later | License OSW source under GPL version 3 or any later GPL version. | Selected for v0.1. | Aligns with maintainer decision and built-in plugin manifest metadata. |
 | Option 3: split/dual model | Use different licenses for different parts, or offer a dual-license model. | Future consideration, not the v0.1 default. | Requires a sharper contribution and ownership policy before it is safe to adopt. |
 
-Do not update `LICENSE` or `pyproject.toml` to a final license value until the
-maintainer decision is recorded.
+Do not change this selected license in a future prompt without another explicit
+maintainer decision.
 
 ## Distribution Policy
 
@@ -87,16 +90,15 @@ maintainer decision is recorded.
 
 Before a public v0.1 release:
 
-- [ ] Final license selected by maintainers.
-- [ ] `LICENSE` file replaced with the full chosen license text.
-- [ ] `pyproject.toml` license metadata aligned with the selected license.
-- [ ] README license section aligned with the selected license.
-- [ ] `docs/10_release_checklist.md` updated from P1 blocker to release-ready
-      status for license.
-- [ ] Third-party notices and optional dependency redistribution assumptions
-      reviewed.
-- [ ] Built-in plugin manifest license fields reviewed for consistency.
-- [ ] Release notes or `CHANGELOG.md` updated with the selected release version.
+- [x] Final license selected by maintainers: `GPL-3.0-or-later`.
+- [x] `LICENSE` file replaced with the full GNU GPL version 3 license text.
+- [x] `pyproject.toml` license metadata aligned with the selected license.
+- [x] README license section aligned with the selected license.
+- [x] `docs/10_release_checklist.md` updated for release metadata readiness.
+- [x] Third-party notices draft created for source-distribution review.
+- [x] Built-in plugin manifest license fields reviewed for consistency.
+- [x] Release notes or `CHANGELOG.md` updated with the selected release version.
+- [ ] Dedicated release/tag gate completed.
 
 ## Version Scheme
 
@@ -106,8 +108,8 @@ Recommended package versions:
 
 | Release stage | Package version | Notes |
 | --- | --- | --- |
-| Current development placeholder | `0.1.0a0` | Current package metadata. |
-| Release candidate | `0.1.0rc1` | Recommended package version if maintainers want a v0.1 candidate. |
+| Previous development placeholder | `0.1.0a0` | Superseded by the release-candidate metadata update. |
+| Release candidate | `0.1.0rc1` | Current package version for the v0.1 release-candidate gate. |
 | Final v0.1 | `0.1.0` | Recommended package version for final v0.1 release. |
 
 Recommended Git tag names:
@@ -123,15 +125,16 @@ hyphenated release-candidate suffix.
 
 ## Tag Policy
 
-- No tag is created in OSW-AUTO-041.
-- Tag creation is allowed only after release checklist P1 blockers are cleared.
+- No tag is created in OSW-AUTO-041 or OSW-AUTO-042.
+- Tag creation is allowed only after release checklist P1 blockers are cleared
+  by a dedicated release/tag gate.
 - Tag creation should happen in a dedicated release/tag prompt.
 - Do not push tags unless a maintainer explicitly instructs that exact action.
 - Prefer annotated tags for release candidates and final v0.1 tags.
 
 ## Release Branch And Tag Procedure Draft
 
-Use this draft in a future release/tag prompt after license approval:
+Use this draft in a future release/tag prompt after release metadata approval:
 
 1. Verify `develop` is clean and the release checklist has no P1 blockers.
 2. Decide whether the release is `0.1.0rc1` or `0.1.0`.
@@ -180,10 +183,10 @@ requests that exact operation.
 - If a future standalone desktop package is attempted, it must go through a
   separate packaging review and dependency redistribution review.
 
-## OSW-AUTO-041 Outcome
+## OSW-AUTO-042 Outcome
 
-This plan clears the version/tag planning blocker by documenting a coherent
-candidate/final version scheme, tag policy, release procedure, rollback plan,
-and artifact policy. It does not clear the final license blocker. Public tag
-creation and public announcement remain blocked until maintainers finalize the
-license and align metadata.
+The maintainer license decision is recorded as `GPL-3.0-or-later`, the
+repository license text and metadata are aligned for `0.1.0rc1`, release notes
+exist, and a third-party notices draft exists for source-distribution review.
+No release tag is created in this prompt. Public tag creation and public
+announcement remain blocked until the dedicated release/tag gate passes.

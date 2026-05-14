@@ -10,6 +10,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "src"
+EXPECTED_VERSION = "0.1.0rc1"
 
 
 def _python_env() -> dict[str, str]:
@@ -32,7 +33,7 @@ def test_package_exports_version() -> None:
 
     import osw
 
-    assert osw.__version__ == "0.1.0a0"
+    assert osw.__version__ == EXPECTED_VERSION
 
 
 def test_cli_version_smoke() -> None:
@@ -46,7 +47,7 @@ def test_cli_version_smoke() -> None:
     )
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "osw 0.1.0a0"
+    assert result.stdout.strip() == f"osw {EXPECTED_VERSION}"
 
 
 def test_cli_doctor_smoke() -> None:

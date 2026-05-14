@@ -42,8 +42,30 @@ statement, including optional dependency behavior and script execution safety.
 Release-readiness review uses the [Release Checklist](docs/10_release_checklist.md)
 and [v0.1 Demo Smoke Checklist](docs/demo_smoke_checklist.md). License and
 release tag planning is tracked in the
-[License and Version Plan](docs/13_license_and_version_plan.md); final public
-release licensing remains a maintainer decision.
+[License and Version Plan](docs/13_license_and_version_plan.md).
+
+## Release Candidate Status
+
+The current release-candidate package version is `0.1.0rc1`. Public tag
+creation and release announcement are handled by a separate release/tag gate;
+this source tree does not bundle external solver binaries by default.
+
+OSW v0.1 is educational and research oriented. It is not industrial certified,
+does not replace expert engineering judgment, and does not guarantee that
+optional external solvers are installed in every local environment.
+
+## License
+
+OpenSolver Workbench source is licensed under
+[GPL-3.0-or-later](LICENSE). This is the recorded maintainer decision for
+v0.1; see the [License and Version Plan](docs/13_license_and_version_plan.md)
+for the version/tag policy and the [Third-Party Notices Draft](docs/14_third_party_notices.md)
+for optional dependency notice review areas.
+
+External solver binaries such as CalculiX, OpenFOAM tools, Gmsh, GNU Octave,
+and SU2 are optional local runtime tools and are not bundled in v0.1 release
+artifacts by default. See [Known Limitations](docs/known_limitations.md) for
+scope, validation, optional dependency, and script safety boundaries.
 
 ## Quick Start
 
