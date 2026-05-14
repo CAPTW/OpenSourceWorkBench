@@ -1,0 +1,44 @@
+{
+  "id": "osw.solvers.coolprop.property",
+  "name": "CoolProp Property Plugin",
+  "version": "0.1.0",
+  "domain": "property",
+  "type": "property_model",
+  "license": "GPL-3.0-or-later",
+  "entry_point": "osw.solvers.coolprop.property_plugin:CoolPropPropertyPlugin",
+  "adapter_class": "CoolPropPropertyPlugin",
+  "input_formats": [
+    "osw.property.state.si"
+  ],
+  "output_formats": [
+    "osw.property.table",
+    "csv",
+    "osw.plot.placeholder"
+  ],
+  "requires": [],
+  "optional_requires": [
+    "CoolProp"
+  ],
+  "capabilities": [
+    "validate",
+    "property_calculation",
+    "sweep_table",
+    "csv_export",
+    "plot_dataset_placeholder",
+    "dependency_diagnostic"
+  ],
+  "preview_required": true,
+  "mutates_project": false,
+  "executes_external_process": false,
+  "dependency_behavior": "CoolProp is optional; importing this plugin does not import CoolProp. Property calculations return a friendly diagnostic when CoolProp is missing.",
+  "safety_flags": [
+    "lazy_optional_dependency",
+    "no_external_process",
+    "no_project_mutation",
+    "si_units_required"
+  ],
+  "limitations": [
+    "CoolProp support in OSW v0.1 is a property-point and sweep-table demo, not a process flowsheet simulator.",
+    "Inputs and outputs use SI units at the plugin boundary."
+  ]
+}
