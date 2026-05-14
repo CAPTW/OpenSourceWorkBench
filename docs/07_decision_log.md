@@ -86,3 +86,22 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   access. They report missing optional tools explicitly.
 - Consequences: The harness can gate local work immediately while remaining
   lightweight. Future CI may call the same scripts.
+
+## ADR-0008: License And Tag Gates Require Maintainer Approval
+
+- Status: Accepted for release process; final license remains pending
+- Date: 2026-05-14
+- Context: OSW v0.1 reached release-readiness review with a placeholder
+  `LICENSE`, provisional package license metadata, no local `v0.1*` tag, and
+  optional solver/runtime integrations that may carry separate license and
+  redistribution obligations.
+- Decision: License selection is a maintainer decision and must be completed
+  before any public v0.1 tag or announcement. Release planning may document a
+  recommended GPL-compatible path, package version scheme, tag naming scheme,
+  rollback plan, and artifact policy, but planning prompts must not create tags,
+  push tags, finalize public announcements, or bundle external solver binaries.
+- Consequences: Public release remains blocked until maintainers finalize the
+  license, align `LICENSE`, package metadata, README, release notes, and
+  third-party notices, then run a dedicated release/tag prompt. The current
+  release plan can clear the version/tag planning blocker without clearing the
+  final license blocker.

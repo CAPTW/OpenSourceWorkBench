@@ -23,11 +23,13 @@ or full solver parity.
 
 | Item | Status | Evidence / decision |
 | --- | --- | --- |
-| Release gate result | `P1 BLOCKED` | Documentation, demo smoke, CI-local QA, validation, and scope checks are ready for review. Public v0.1 release/tag remains blocked until the final license decision is made. |
+| Release gate result | `P1 BLOCKED` | Documentation, demo smoke, CI-local QA, validation, scope checks, and [license/version planning](13_license_and_version_plan.md) are ready for review. Public v0.1 release/tag remains blocked until the final license decision is made. |
 | Scope discipline | `PASS` | README, [Known Limitations](known_limitations.md), tutorials, and this checklist describe OSW v0.1 as an educational/research prototype. |
 | External solver expectation | `PASS` | External solver executable checks are optional and local-environment dependent. Base install, CLI smoke, and unit tests do not require external solvers. |
-| Release version plan | `P1 BLOCKED` | Current package version is `0.1.0a0`. No `v0.1*` tag is present. Create the release tag only after P1 blockers are resolved. |
-| License plan | `P1 BLOCKED` | `pyproject.toml` and `LICENSE` still describe GPL-3.0-or-later as recommended/final decision pending. Final license decision is required before public release. |
+| Release version plan | `PASS` | [License and version plan](13_license_and_version_plan.md) defines PEP 440 package versions `0.1.0rc1` and `0.1.0`, Git tag names `v0.1.0-rc1` and `v0.1.0`, and a no-tag-in-planning policy. |
+| License plan | `P1 BLOCKED` | `pyproject.toml` and `LICENSE` still describe GPL-3.0-or-later as recommended/final decision pending. Final license selection is a maintainer decision before public release. |
+| Public tag creation | `P1 BLOCKED` | No `v0.1*` tag exists locally. Do not create a release tag until the final license decision and metadata alignment are complete. |
+| Public announcement | `P1 BLOCKED` | Do not announce public v0.1 until license, version metadata, release notes, QA evidence, and tag plan are complete. |
 | Broad pytest command | `P2 FOLLOW-UP` | `pytest -q` currently hits an import mismatch from duplicate `test_plugin_manager_dialog.py` basenames. CI-style split suites and `pytest -q --import-mode=importlib` pass. |
 | Docs link checker | `SKIP` | `tools/qa/check_docs_links.py` is not present. Targeted local markdown link checks were used in recent docs steps. |
 
@@ -36,7 +38,8 @@ or full solver parity.
 | ID | Priority | Area | Status | Evidence | Required next action |
 | --- | --- | --- | --- | --- | --- |
 | REL-040-P1-001 | P1 | License and public release | `P1 BLOCKED` | `LICENSE` is a placeholder and `pyproject.toml` says the final license is pending. | Decide and record the project license, update metadata/notices, and rerun release QA. |
-| REL-040-P1-002 | P1 | Version/tag plan | `P1 BLOCKED` | Package version is `0.1.0a0`; no `v0.1*` Git tag exists locally. | After license approval, choose `v0.1.0a0`, `v0.1.0-rc1`, or final `v0.1.0` tag plan and document release notes. |
+| REL-041-P1-001 | P1 | Public tag creation | `P1 BLOCKED` | [License and version plan](13_license_and_version_plan.md) exists, but no final license decision exists. | Create no tag until final license, metadata, notices, release notes, and QA are complete. |
+| REL-041-P1-002 | P1 | Public announcement | `P1 BLOCKED` | The project has a planning packet but not a final release packet. | Announce no public release until license and version/tag release steps are complete. |
 | REL-040-P2-001 | P2 | Broad pytest collection | `P2 FOLLOW-UP` | `pytest -q` fails during collection because `tests/gui/test_plugin_manager_dialog.py` and `tests/unit/test_plugin_manager_dialog.py` share a module basename. | Add pytest importlib configuration or rename one test module in a focused test-only PR. |
 | REL-040-P2-002 | P2 | Docs link automation | `P2 FOLLOW-UP` | `tools/qa/check_docs_links.py` is absent and CI records it as a placeholder skip. | Add a lightweight docs link checker or keep the skip recorded until one exists. |
 | REL-040-P2-003 | P2 | External executable smoke | `P2 FOLLOW-UP` | Local `doctor` reports core optional stacks missing; external solver smoke was not attempted. | Keep optional executable smoke as environment-specific evidence; do not make it mandatory for v0.1 base release. |
@@ -80,6 +83,9 @@ or full solver parity.
 | `python -m osw.cli --version` reports the intended version. | `PASS` | Command output: `osw 0.1.0a0`. |
 | `python -m osw.cli doctor` reports optional stack availability without failing when extras are absent. | `PASS` | Doctor reports PySide6, meshio, gmsh, pyvista, cantera, CoolProp, and hdf5storage missing; matplotlib and scipy available. |
 | Final license notice is ready for public release. | `P1 BLOCKED` | License metadata remains a placeholder pending final project decision. |
+| License/version planning packet exists. | `PASS` | [License and version plan](13_license_and_version_plan.md) documents current license inventory, maintainer decision requirements, version scheme, tag policy, release procedure draft, rollback plan, and artifact policy. |
+| Public tag creation remains blocked until license finalization. | `P1 BLOCKED` | OSW-AUTO-041 created no tag and keeps tag creation deferred to a dedicated release/tag prompt after P1 blockers are cleared. |
+| Public release announcement remains blocked until license and release metadata are complete. | `P1 BLOCKED` | Announcements require final license, aligned metadata, release notes, QA evidence, and explicit maintainer direction. |
 
 ## Documentation Checklist
 
@@ -153,8 +159,8 @@ or full solver parity.
 | Feature worktree is clean after checkpoint/review commits. | `PASS` | Required merge-gate condition; final status is recorded in the phase self-check and final response. |
 | Target `develop` worktree is clean before merge. | `PASS` | Required merge-gate condition; final status is recorded in the phase self-check and final response. |
 | Review score meets the threshold in `docs/06_review_protocol.md`. | `PASS` | Required before merge; score and decision are recorded in the phase review report. |
-| Required amend items are complete, if any. | `PASS` | Review required fixes were limited to validation mapping and evidence-status wording; both are addressed in the amend pass. |
-| Squash merge uses the approved release/docs commit message. | `PASS` | Planned message: `docs(release): assess v0.1 release readiness`. |
+| Required amend items are complete, if any. | `PASS` | OSW-AUTO-041 review required only review-artifact evidence timing fixes; the amend pass adds the review report and clarifies pre-review self-check wording. |
+| Squash merge uses the approved release/docs commit message. | `PASS` | Planned message: `docs(release): define license decision packet and version tag plan`. |
 
 ## Final Sign-Off Checklist
 
@@ -171,7 +177,7 @@ or full solver parity.
 | Action | Priority | Size | Owner expectation |
 | --- | --- | --- | --- |
 | Finalize project license and update `LICENSE`, `pyproject.toml`, README, and release notes. | P1 | Small PR | Maintainer decision plus docs metadata update. |
-| Decide release version and tag plan after license update. | P1 | Small PR | Choose alpha/RC/final tag and record in release notes or changelog. |
+| Choose release candidate or final version and apply metadata updates after license approval. | P1 | Small PR | Use the package/tag scheme in [License and version plan](13_license_and_version_plan.md). |
 | Fix broad `pytest -q` collection behavior by configuring importlib mode or renaming duplicate test module. | P2 | Small PR | Test-only change; CI split suites already pass. |
 | Add a lightweight docs link checker or keep the CI placeholder skip explicit. | P2 | Small PR | Tools/docs QA improvement. |
 | Record optional executable smoke on machines that intentionally install `ccx`, OpenFOAM, Gmsh, Cantera, CoolProp, or GNU Octave. | P2 | Small evidence PR | Environment-specific evidence; do not make base release depend on it. |

@@ -40,7 +40,10 @@ See [Known Limitations](docs/known_limitations.md) for the full v0.1 boundary
 statement, including optional dependency behavior and script execution safety.
 
 Release-readiness review uses the [Release Checklist](docs/10_release_checklist.md)
-and [v0.1 Demo Smoke Checklist](docs/demo_smoke_checklist.md).
+and [v0.1 Demo Smoke Checklist](docs/demo_smoke_checklist.md). License and
+release tag planning is tracked in the
+[License and Version Plan](docs/13_license_and_version_plan.md); final public
+release licensing remains a maintainer decision.
 
 ## Quick Start
 
