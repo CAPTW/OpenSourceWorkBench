@@ -3,15 +3,32 @@
 
 from __future__ import annotations
 
+import argparse
+import os
 import re
 import subprocess
 import tomllib
+from dataclasses import dataclass
 from pathlib import Path
 
 from _common import repo_root
 
 TARGET_VERSION = "0.1.0rc1"
 TARGET_LICENSE = "GPL-3.0-or-later"
+DEFAULT_RC_TAG = "v0.1.0-rc1"
+FINAL_TAG = "v0.1.0"
+RELEASE_TAG_PATTERN = "v0.1*"
+
+
+@dataclass(frozen=True)
+class ReleaseTagPolicy:
+    """Release tag validation policy for pre-tag and RC-aware gates."""
+
+    forbid_release_tags: bool = False
+    expected_rc_tag: str | None = DEFAULT_RC_TAG
+    expected_rc_target: str | None = None
+    require_annotated_rc_tag: bool = True
+    require_expected_rc_tag: bool = False
 
 
 def _read(path: Path) -> str:
@@ -34,7 +51,85 @@ def _contains_heading(text: str, heading: str) -> bool:
     return bool(pattern.search(text))
 
 
-def check_release_metadata(root: Path, *, check_tags: bool = True) -> list[str]:
+def _git_stdout(root: Path, args: list[str]) -> tuple[int, str, str]:
+    proc = subprocess.run(
+        ["git", *args],
+        cwd=root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
+
+
+def _local_release_tags(root: Path) -> tuple[list[str] | None, str | None]:
+    returncode, stdout, stderr = _git_stdout(root, ["tag", "--list", RELEASE_TAG_PATTERN])
+    if returncode != 0:
+        return None, stderr or "git tag check failed."
+    if not stdout:
+        return [], None
+    return [line.strip() for line in stdout.splitlines() if line.strip()], None
+
+
+def _validate_release_tags(root: Path, policy: ReleaseTagPolicy) -> list[str]:
+    failures: list[str] = []
+    tags, error = _local_release_tags(root)
+    if error is not None:
+        return [error]
+    assert tags is not None
+
+    if policy.forbid_release_tags:
+        if tags:
+            failures.append(
+                "Local v0.1* Git tags exist; strict pre-tag mode forbids release tags."
+            )
+        return failures
+
+    if FINAL_TAG in tags:
+        failures.append(
+            f"Final {FINAL_TAG} tag exists; final tag creation requires a separate release gate."
+        )
+
+    expected = policy.expected_rc_tag
+    allowed_tags = {expected} if expected else set()
+    unexpected_tags = sorted(tag for tag in tags if tag not in allowed_tags)
+    if unexpected_tags:
+        failures.append(
+            "Unexpected local v0.1* Git tags exist: " + ", ".join(unexpected_tags) + "."
+        )
+
+    if not expected:
+        return failures
+
+    if expected not in tags:
+        if policy.require_expected_rc_tag:
+            failures.append(f"Expected RC tag {expected} is missing.")
+        return failures
+
+    returncode, object_type, stderr = _git_stdout(root, ["cat-file", "-t", f"refs/tags/{expected}"])
+    if returncode != 0:
+        failures.append(stderr or f"Could not inspect expected RC tag {expected}.")
+    elif policy.require_annotated_rc_tag and object_type != "tag":
+        failures.append(f"Expected RC tag {expected} is not an annotated tag object.")
+
+    if policy.expected_rc_target:
+        returncode, commit, stderr = _git_stdout(root, ["rev-parse", f"{expected}^{{commit}}"])
+        if returncode != 0:
+            failures.append(stderr or f"Could not peel expected RC tag {expected}.")
+        elif commit != policy.expected_rc_target:
+            failures.append(
+                f"Expected RC tag {expected} points to {commit}, not {policy.expected_rc_target}."
+            )
+
+    return failures
+
+
+def check_release_metadata(
+    root: Path,
+    *,
+    check_tags: bool = True,
+    tag_policy: ReleaseTagPolicy | None = None,
+) -> list[str]:
     failures: list[str] = []
 
     license_path = root / "LICENSE"
@@ -96,30 +191,66 @@ def check_release_metadata(root: Path, *, check_tags: bool = True) -> list[str]:
             failures.append(f"{relative} is missing.")
 
     if check_tags:
-        proc = subprocess.run(
-            ["git", "tag", "--list", "v0.1*"],
-            cwd=root,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        if proc.returncode != 0:
-            failures.append(proc.stderr.strip() or "git tag check failed.")
-        elif proc.stdout.strip():
-            failures.append("Local v0.1* Git tags exist; this metadata step must not create tags.")
+        failures.extend(_validate_release_tags(root, tag_policy or ReleaseTagPolicy()))
 
     return failures
 
 
+def _truthy_env(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
+    forbid_release_tags = bool(args.forbid_release_tags) or _truthy_env("OSW_RELEASE_FORBID_TAGS")
+    expected_rc_tag = (
+        args.expected_rc_tag
+        or os.environ.get("OSW_RELEASE_EXPECTED_RC_TAG")
+        or DEFAULT_RC_TAG
+    )
+    expected_rc_target = args.expected_rc_target or os.environ.get("OSW_RELEASE_EXPECTED_RC_TARGET")
+    require_annotated = bool(args.require_annotated_rc_tag) or _truthy_env(
+        "OSW_RELEASE_REQUIRE_ANNOTATED_RC_TAG"
+    )
+
+    return ReleaseTagPolicy(
+        forbid_release_tags=forbid_release_tags,
+        expected_rc_tag=expected_rc_tag,
+        expected_rc_target=expected_rc_target,
+        require_annotated_rc_tag=require_annotated or expected_rc_tag == DEFAULT_RC_TAG,
+        require_expected_rc_tag=bool(args.expected_rc_tag),
+    )
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--forbid-release-tags",
+        action="store_true",
+        help="strict pre-tag mode: fail if any local v0.1* tag exists",
+    )
+    parser.add_argument(
+        "--expected-rc-tag",
+        help="RC-aware mode: expected local release-candidate tag name",
+    )
+    parser.add_argument(
+        "--expected-rc-target",
+        help="RC-aware mode: expected peeled commit for the release-candidate tag",
+    )
+    parser.add_argument(
+        "--require-annotated-rc-tag",
+        action="store_true",
+        help="require the expected RC tag to be an annotated tag object",
+    )
+    args = parser.parse_args()
+
     root = repo_root()
-    failures = check_release_metadata(root)
+    failures = check_release_metadata(root, tag_policy=_tag_policy_from_args(args))
     if failures:
         print("[fail] Release metadata check failed:")
         for failure in failures:
             print(f"  - {failure}")
         return 1
-    print("[ok] Release metadata is aligned for 0.1.0rc1 and no local v0.1* tags exist.")
+    print("[ok] Release metadata is aligned for 0.1.0rc1.")
     return 0
 
 

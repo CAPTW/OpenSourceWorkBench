@@ -156,3 +156,20 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: A local RC tag is release evidence, not a public release.
   Maintainers can inspect it locally and decide separately whether to push,
   retag for a later RC, or run the final release gate.
+
+## ADR-0012: Release Metadata Checks Have Pre-Tag And RC-Aware Modes
+
+- Status: Accepted
+- Date: 2026-05-14
+- Context: OSW-AUTO-043 created a valid local annotated `v0.1.0-rc1` tag as
+  release evidence. OSW-AUTO-044 then showed that the release metadata checker
+  still assumed all metadata checks happen before any local `v0.1*` tag exists.
+- Decision: `tools/qa/check_release_metadata.py` supports strict pre-tag mode
+  with `--forbid-release-tags` and RC-aware mode with an expected RC tag,
+  expected peeled target commit, and annotated-tag requirement. Default checks
+  may accept the expected local annotated rc1 tag, but still reject the final
+  `v0.1.0` tag and unexpected `v0.1*` tags.
+- Consequences: Existing local `v0.1.0-rc1` remains valid OSW-AUTO-043
+  evidence. Because OSW-AUTO-044A creates a later commit, rc1 must remain
+  local-only and must not be pushed as the current `develop` release candidate;
+  the next public/pushable current RC should be produced by an RC2 tag gate.
