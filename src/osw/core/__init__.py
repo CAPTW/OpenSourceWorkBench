@@ -26,7 +26,13 @@ from osw.core.project_schema import (
 )
 from osw.core.run_manager import ExecutableLookup, ExecutablePathRegistry
 from osw.core.units import Quantity, UnitSystem
-from osw.core.validation import ProjectSchemaError, ValidationMessage, ValidationReport
+from osw.core.validation import (
+    ProjectSchemaError,
+    ValidationMessage,
+    ValidationReport,
+    validate_mesh_sanity,
+    validate_project_sanity,
+)
 
 __all__ = [
     "BoundaryCondition",
@@ -58,4 +64,6 @@ __all__ = [
     "boundary_curve_from_xy",
     "load_project",
     "make_source_trace",
+    "validate_mesh_sanity",
+    "validate_project_sanity",
 ]

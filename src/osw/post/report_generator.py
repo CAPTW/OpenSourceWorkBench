@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from osw.core.project_schema import Project
-from osw.core.validation import ValidationReport
+from osw.core.validation import ValidationReport, validate_project_sanity
 
 DEFAULT_REPORT_FILENAME = "report.html"
 DEFAULT_REPORT_LIMITATIONS = (
@@ -78,6 +78,7 @@ def build_report_model(
     result_tables: Iterable[object] | None = None,
     screenshots: Iterable[object] | None = None,
     validation_report: ValidationReport | None = None,
+    sanity_report: ValidationReport | None = None,
     warnings: Iterable[str] | None = None,
 ) -> ReportModel:
     """Build a report model from core project data and optional preview datasets."""
@@ -92,7 +93,13 @@ def build_report_model(
         ("Unit system", project.units.name),
     )
 
-    validation = validation_report if validation_report is not None else project.validate()
+    effective_sanity_report = (
+        validate_project_sanity(project) if sanity_report is None else sanity_report
+    )
+    validation = _combined_validation_report(
+        validation_report if validation_report is not None else project.validate(),
+        effective_sanity_report,
+    )
     validation_lines = (
         _validation_summary(validation)
         if project.report.include_validation
@@ -200,6 +207,7 @@ def export_report_html(
     result_tables: Iterable[object] | None = None,
     screenshots: Iterable[object] | None = None,
     validation_report: ValidationReport | None = None,
+    sanity_report: ValidationReport | None = None,
     warnings: Iterable[str] | None = None,
 ) -> Path:
     target = _resolve_output_path(project, output)
@@ -211,6 +219,7 @@ def export_report_html(
         result_tables=result_tables,
         screenshots=screenshots,
         validation_report=validation_report,
+        sanity_report=sanity_report,
         warnings=warnings,
     )
     target.write_text(render_report_html(model), encoding="utf-8")
@@ -224,6 +233,18 @@ def _resolve_output_path(project: Project, output: str | Path | None) -> Path:
     if target.suffix.lower() != ".html":
         return target / DEFAULT_REPORT_FILENAME
     return target
+
+
+def _combined_validation_report(
+    validation_report: ValidationReport,
+    sanity_report: ValidationReport | None,
+) -> ValidationReport:
+    if sanity_report is None:
+        return validation_report
+    combined = ValidationReport()
+    combined.extend(validation_report)
+    combined.extend(sanity_report)
+    return combined
 
 
 def _key_value_table(rows: tuple[tuple[str, str], ...]) -> str:
