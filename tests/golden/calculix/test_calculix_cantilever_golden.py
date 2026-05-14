@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from helpers import assert_text_matches_golden
+
 from osw.core.materials import IsotropicElastic, Material
 from osw.core.units import Quantity
 from osw.mesh.mesh_model import MeshCellBlock, MeshData
@@ -57,13 +59,13 @@ def cantilever_case() -> CalculixLinearStaticCase:
     )
 
 
-def normalize(text: str) -> str:
-    return "\n".join(line.rstrip() for line in text.strip().splitlines())
-
-
 def test_cantilever_input_deck_matches_golden_fixture() -> None:
     expected = Path(__file__).with_name("cantilever_linear_static.inp").read_text(
         encoding="utf-8"
     )
 
-    assert normalize(generate_calculix_input_deck(cantilever_case())) == normalize(expected)
+    assert_text_matches_golden(
+        generate_calculix_input_deck(cantilever_case()),
+        expected,
+        label="calculix/cantilever_linear_static.inp",
+    )

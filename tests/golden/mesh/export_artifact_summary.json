@@ -1,0 +1,11 @@
+{
+  "cell_types": [
+    "triangle"
+  ],
+  "element_count": 1,
+  "format": "vtu",
+  "meshio_format": "vtu",
+  "metadata": {},
+  "node_count": 3,
+  "path": "mesh/out.vtu"
+}

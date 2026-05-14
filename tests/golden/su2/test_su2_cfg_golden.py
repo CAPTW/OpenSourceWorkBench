@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from helpers import assert_text_matches_golden
+
 from osw.solvers.su2.config import Su2BoundaryConfig, Su2SimulationConfig, generate_su2_config
 
 
@@ -19,4 +21,8 @@ def test_basic_euler_cfg_matches_golden() -> None:
     )
     expected = (Path(__file__).with_name("basic_euler.cfg")).read_text(encoding="utf-8")
 
-    assert generate_su2_config(config) == expected
+    assert_text_matches_golden(
+        generate_su2_config(config),
+        expected,
+        label="su2/basic_euler.cfg",
+    )

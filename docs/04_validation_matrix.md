@@ -41,6 +41,7 @@ installed.
 | Scope drift | `python tools/qa/check_scope_drift.py` | No forbidden v0.1 scope claims in changed files | 2026-05-14 |
 | Architecture boundaries | `python tools/qa/check_architecture_boundaries.py` | GUI/core/plugin dependency direction remains within documented boundaries | 2026-05-14 |
 | Solver artifacts | `python tools/qa/check_no_solver_artifacts_committed.py` | No runtime solver outputs, logs, or generated reports staged or committed | 2026-05-14 |
+| Golden fixtures | `pytest tests/golden -q` | CalculiX decks, OpenFOAM templates, mesh export summaries, report sections, and plugin health output match curated fixtures with normalized diffs | 2026-05-14 |
 
 ## Limitations
 

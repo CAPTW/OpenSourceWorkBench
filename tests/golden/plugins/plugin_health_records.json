@@ -1,0 +1,28 @@
+[
+  {
+    "dependency_messages": [
+      "Required dependency is missing: osw_missing_dependency_for_golden_test"
+    ],
+    "dependency_status": "error",
+    "display_name": "Golden Manifest Plugin",
+    "domain": "solver",
+    "enabled": true,
+    "executable_status": [
+      {
+        "available": false,
+        "configured_path": "",
+        "executable": "osw-missing-golden-exe",
+        "message": "Executable not configured or found: osw-missing-golden-exe. Set the path in Plugin Manager before preparing runs."
+      }
+    ],
+    "last_health_check_status": "checked",
+    "last_run_status": "not-run",
+    "plugin_id": "osw.golden.manifest",
+    "plugin_type": "solver_adapter",
+    "sample_project_reference": "examples/golden_manifest",
+    "source": "tests/golden/plugins/osw-plugin.json",
+    "status": "error",
+    "valid": true,
+    "version": "0.1.0"
+  }
+]

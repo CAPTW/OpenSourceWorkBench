@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+from helpers import assert_text_matches_golden
+
 from osw.core.project_schema import MeshRef, Project, ProjectMetadata, ReportConfig, ResultRef
 from osw.post.report_generator import build_report_model, render_report_html
 from osw.post.table_model import TablePreview
@@ -19,24 +23,16 @@ def test_report_html_contains_required_sections_in_stable_order() -> None:
     )
 
     html = render_report_html(build_report_model(project, result_tables=(table,)))
-    markers = [
-        "Project Summary",
-        "Input Conditions",
-        "Unit System",
-        "Materials",
-        "Mesh Info",
-        "Solver Settings",
-        "Warnings",
-        "Figures",
-        "3D Screenshots",
-        "Result Tables",
-        "Result Summary",
-        "Validation Summary",
-        "Known Limitations",
-    ]
+    expected = (Path(__file__).with_name("required_sections.txt")).read_text(encoding="utf-8")
+    markers = tuple(line for line in expected.splitlines() if line)
 
     positions = [html.index(marker) for marker in markers]
 
     assert positions == sorted(positions)
+    assert_text_matches_golden(
+        "\n".join(markers),
+        expected,
+        label="report/required_sections.txt",
+    )
     assert "Golden result table" in html
     assert "No report warnings." in html
