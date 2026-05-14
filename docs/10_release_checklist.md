@@ -18,13 +18,22 @@ does not claim external solver availability in every environment.
 
 - [ ] `pyproject.toml` metadata, package discovery, and `requires-python >=3.11` are current.
 - [ ] Base install has no mandatory heavy GUI, visualization, mesh, chemistry, or script extras.
-- [ ] Optional extras are declared for `gui`, `viz`, `mesh`, `mscript`, and `chm`.
+- [ ] Optional extras are declared for `gui`, `viz`, `mesh`, `mscript`, `chm`,
+  and the public `thermo` alias.
 - [ ] `environment.yml` installs the editable development package without optional solver stacks.
+- [ ] [Installation guide](install.md) documents conda, pip, uv, Windows, Linux,
+  troubleshooting, and optional external dependency behavior.
+- [ ] Release packaging uses the source/conda editable install path if
+  PyInstaller or standalone packaging is not release-ready.
+- [ ] External solver installers are not bundled or required by the base
+  package.
 - [ ] `python -m osw.cli --version` reports the intended version.
 - [ ] `python -m osw.cli doctor` reports optional stack availability without failing when extras are absent.
 
 ## Documentation Checklist
 
+- [ ] [Installation guide](install.md) is linked from README and separates base
+  install from optional extras and external solver tools.
 - [ ] [Tutorial examples](tutorials.md) cover examples `01` through `08`.
 - [ ] [Demo smoke checklist](demo_smoke_checklist.md) covers examples `01`
   through `08`.

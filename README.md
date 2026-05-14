@@ -44,8 +44,11 @@ and [v0.1 Demo Smoke Checklist](docs/demo_smoke_checklist.md).
 
 ## Quick Start
 
+For full Windows, Linux, conda, pip, uv, optional dependency, and external tool
+notes, see the [Installation Guide](docs/install.md).
+
 ```powershell
-python -m pip install -e .[dev]
+python -m pip install -e ".[dev]"
 python -m osw.cli --version
 python -m osw.cli doctor
 pytest tests/unit -q
@@ -69,7 +72,7 @@ commands below. It installs only the base development extra and does not assume
 that external solvers or heavy optional stacks are available:
 
 ```powershell
-python -m pip install -e .[dev]
+python -m pip install -e ".[dev]"
 python -m osw.cli --version
 python -m osw.cli doctor
 ruff check src tests
