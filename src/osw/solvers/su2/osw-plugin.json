@@ -1,0 +1,25 @@
+{
+  "id": "osw.solvers.su2.basic",
+  "name": "SU2 Basic Adapter",
+  "version": "0.1.0",
+  "domain": "solver",
+  "type": "solver_adapter",
+  "license": "GPL-3.0-or-later",
+  "input_formats": [
+    "su2.mesh_reference",
+    ".su2"
+  ],
+  "output_formats": [
+    "su2.cfg"
+  ],
+  "requires": [],
+  "optional_requires": [
+    "SU2_CFD"
+  ],
+  "capabilities": [
+    "validate",
+    "prepare_case",
+    "cfg_generator",
+    "dry_run"
+  ]
+}
