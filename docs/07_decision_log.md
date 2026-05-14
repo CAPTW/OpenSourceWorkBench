@@ -138,3 +138,21 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: CLI/package metadata and release notes can describe the release
   candidate consistently while public tag creation remains controlled by a
   separate gate.
+
+## ADR-0011: Local RC Tag Gate Is Separate From Push And Final Release
+
+- Status: Accepted
+- Date: 2026-05-14
+- Context: OSW v0.1 release-candidate metadata is aligned for package version
+  `0.1.0rc1` and local tag name `v0.1.0-rc1`. Creating a local release-candidate
+  tag is useful for final inspection, but it must not be confused with pushing a
+  public tag, publishing release artifacts, creating the final `v0.1.0` tag, or
+  announcing a public release.
+- Decision: OSW-AUTO-043 may create a local annotated `v0.1.0-rc1` tag only
+  after feature-branch QA, review, squash merge to `develop`, post-merge
+  pre-tag QA, clean worktree verification, and tag-object verification pass.
+  The final `v0.1.0` tag, any tag push, release artifacts, and public
+  announcement require separate maintainer-controlled gates.
+- Consequences: A local RC tag is release evidence, not a public release.
+  Maintainers can inspect it locally and decide separately whether to push,
+  retag for a later RC, or run the final release gate.
