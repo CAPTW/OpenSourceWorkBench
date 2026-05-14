@@ -24,7 +24,7 @@ or full solver parity.
 
 | Item | Status | Evidence / decision |
 | --- | --- | --- |
-| Release gate result | `PENDING` | RC2 was verified locally by OSW-AUTO-046. This post-RC2 hardening prompt fixes default pytest collection before any public push. Local `v0.1.0-rc1` and `v0.1.0-rc2` remain historical evidence once `develop` advances. |
+| Release gate result | `PENDING` | RC2 was verified locally by OSW-AUTO-046. Post-RC2 hardening fixed default pytest collection in OSW-AUTO-047 and adds local docs-link checking in OSW-AUTO-048 before any public push. Local `v0.1.0-rc1` and `v0.1.0-rc2` remain historical evidence once `develop` advances. |
 | Scope discipline | `PASS` | README, [Known Limitations](known_limitations.md), tutorials, and this checklist describe OSW v0.1 as an educational/research prototype. |
 | External solver expectation | `PASS` | External solver executable checks are optional and local-environment dependent. Base install, CLI smoke, and unit tests do not require external solvers. |
 | Release version plan | `PASS` | [License and version plan](13_license_and_version_plan.md) defines current package version `0.1.0rc2`, final package version `0.1.0`, Git tag names `v0.1.0-rc1`, `v0.1.0-rc2`, and `v0.1.0`, strict pre-tag metadata checks, prior RC allowance, and RC-aware metadata checks for expected local annotated RC tags. |
@@ -35,7 +35,7 @@ or full solver parity.
 | Final `v0.1.0` tag | `P1 BLOCKED` | Do not create the final tag in the RC tag gate. It requires a separate final release gate. |
 | Public announcement | `P1 BLOCKED` | Do not announce public v0.1 until the local tag state is reviewed and the maintainer explicitly directs announcement work. |
 | Broad pytest command | `PASS` | OSW-AUTO-047 renames the colliding plugin manager dialog tests and adds a duplicate-basename QA guard so default `pytest -q` can run without the import mismatch. |
-| Docs link checker | `SKIP` | `tools/qa/check_docs_links.py` is not present. Targeted local markdown link checks were used in recent docs steps. |
+| Docs link checker | `PASS` | OSW-AUTO-048 adds `tools/qa/check_docs_links.py`, a local-only Markdown link checker for README, CHANGELOG, docs, and examples. |
 
 ## Blocker Register
 
@@ -48,7 +48,7 @@ or full solver parity.
 | REL-043-P1-003 | P1 | Final release tag | `P1 BLOCKED` | `v0.1.0` is outside the RC tag gate. | Use a separate final release gate for the final tag. |
 | REL-041-P1-002 | P1 | Public announcement | `P1 BLOCKED` | The project has a release metadata packet, but no public push or announcement approval. | Announce no public release until local tag state is reviewed and maintainer announcement direction is explicit. |
 | REL-040-P2-001 | P2 | Broad pytest collection | `PASS` | OSW-AUTO-047 renames the colliding plugin manager dialog test modules and adds `tools/qa/check_duplicate_test_basenames.py`. | Keep the duplicate-basename check in fast/pre-merge QA. |
-| REL-040-P2-002 | P2 | Docs link automation | `P2 FOLLOW-UP` | `tools/qa/check_docs_links.py` is absent and CI records it as a placeholder skip. | Add a lightweight docs link checker or keep the skip recorded until one exists. |
+| REL-040-P2-002 | P2 | Docs link automation | `PASS` | OSW-AUTO-048 adds a local-only docs link checker and wires it into fast/pre-merge QA. | Keep the checker local-only and fix future broken links narrowly. |
 | REL-040-P2-003 | P2 | External executable smoke | `P2 FOLLOW-UP` | Local `doctor` reports core optional stacks missing; external solver smoke was not attempted. | Keep optional executable smoke as environment-specific evidence; do not make it mandatory for v0.1 base release. |
 
 ## Release Scope Confirmation
@@ -109,7 +109,7 @@ or full solver parity.
 | Each tutorial has goal, prerequisites, steps, expected output, and troubleshooting. | `PASS` | Tutorials index and example READMEs were added in prior docs steps. |
 | Documentation distinguishes tutorial smoke from optional local executable smoke. | `PASS` | Demo smoke checklist separates documentation smoke from optional local executable smoke. |
 | Documentation avoids implying documentation-only examples are executable fixtures. | `PASS` | Demo smoke checklist permits documentation-only smoke and optional local executable smoke when dependencies exist. |
-| Docs link checker command exists. | `SKIP` | `tools/qa/check_docs_links.py` is absent; local targeted markdown link checks have been used in docs steps. |
+| Docs link checker command exists. | `PASS` | `tools/qa/check_docs_links.py` checks README, CHANGELOG, docs, and examples without network access by default. |
 
 ## QA Command Checklist
 
@@ -135,8 +135,8 @@ or full solver parity.
 | `python tools/qa/check_scope_drift.py` passes. | `PASS` | No OSW scope drift found. |
 | `python tools/qa/check_architecture_boundaries.py` passes. | `PASS` | Architecture boundaries respected. |
 | `python tools/qa/check_no_solver_artifacts_committed.py` passes. | `PASS` | No solver/runtime artifact paths detected. |
-| `tools/qa/check_docs_links.py` is run if present; absent skip is recorded. | `SKIP` | Tool is not present. |
-| Local markdown link/content check is run if a project command exists. | `SKIP` | No dedicated project command exists; prior docs steps used targeted local markdown checks. |
+| `tools/qa/check_docs_links.py` is run if present; absent skip is recorded. | `PASS` | OSW-AUTO-048 adds the command and fast/pre-merge QA runs it. |
+| Local markdown link/content check is run if a project command exists. | `PASS` | `tools/qa/check_docs_links.py` validates local files and anchors while classifying external links as skipped without fetching them. |
 | Validation matrix reflects implemented workflows. | `PASS` | [Validation matrix](04_validation_matrix.md) maps at least five cases to demos and current QA evidence. |
 | No solver runtime artifacts, secrets, or generated report dumps are staged. | `PASS` | Solver artifact scan passed; only docs/reports are expected for this gate. |
 
@@ -196,7 +196,7 @@ or full solver parity.
 | Run a separate final release gate before creating `v0.1.0`. | P1 | Small PR/prompt | The RC gate must not create the final tag. |
 | Keep default `pytest -q` collection green with duplicate-basename QA. | P2 | Small QA maintenance | OSW-AUTO-047 resolves the known collision; future duplicate test basenames should fail fast through the QA helper. |
 | Run a later RC3 tag gate if a current pushable RC is needed after post-RC2 hardening. | P1 | Release prompt | Because OSW-AUTO-047 advances `develop` after local rc2, `v0.1.0-rc2` remains local historical feedback evidence and must not be pushed as the current RC. |
-| Add a lightweight docs link checker or keep the CI placeholder skip explicit. | P2 | Small PR | Tools/docs QA improvement. |
+| Keep docs link checker green as docs evolve. | P2 | Small QA maintenance | OSW-AUTO-048 resolves the missing checker placeholder; future docs edits should run `python tools/qa/check_docs_links.py`. |
 | Record optional executable smoke on machines that intentionally install `ccx`, OpenFOAM, Gmsh, Cantera, CoolProp, or GNU Octave. | P2 | Small evidence PR | Environment-specific evidence; do not make base release depend on it. |
 
 ## Release Discipline

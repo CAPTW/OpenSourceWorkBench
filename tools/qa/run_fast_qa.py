@@ -18,6 +18,10 @@ def main() -> int:
             [python_executable(), "tools/qa/check_duplicate_test_basenames.py"],
             "python tools/qa/check_duplicate_test_basenames.py",
         ),
+        (
+            [python_executable(), "tools/qa/check_docs_links.py"],
+            "python tools/qa/check_docs_links.py",
+        ),
     ]
     if shutil.which("ruff"):
         commands.append((["ruff", "check", "src", "tests"], "ruff check src tests"))

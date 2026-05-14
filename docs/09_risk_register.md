@@ -28,7 +28,7 @@
 | External solver binaries accidentally bundled | Release artifacts could inherit unreviewed redistribution duties or platform-specific binary risk | Keep CalculiX, OpenFOAM, Gmsh, GNU Octave, and SU2 as user-installed optional runtime tools | Remove binaries from artifacts and document install-only handoff |
 | Release artifacts staged by mistake | `dist/`, `build/`, `wheelhouse/`, logs, or generated solver outputs could enter a release commit | Run solver artifact and release metadata scans before merge and before any tag prompt | Stop release, remove artifacts from the index, and rerun QA before tagging |
 | Broad `pytest -q` collection mismatch | A single all-tests command can fail before running tests if duplicate test basenames reappear | Rename colliding test modules and run `tools/qa/check_duplicate_test_basenames.py` in fast QA | Block future duplicate basenames before merge; use `pytest -q --import-mode=importlib` only as diagnostic evidence, not as the default fix |
-| Docs link checker absent | Release docs rely on targeted local link checks instead of a reusable project command | Keep CI skip explicit and record manual/targeted checks | Add `tools/qa/check_docs_links.py` in a small QA tooling PR |
+| Docs link checker regression | Broken local Markdown links could enter release docs or examples | Run `tools/qa/check_docs_links.py` in fast and pre-merge QA; keep it local-only and exclude generated `.codex/reports/` evidence | Fix broken links narrowly or block release docs changes until links pass |
 
 ## Review Trigger Risks
 

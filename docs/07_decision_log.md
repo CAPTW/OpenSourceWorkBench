@@ -206,3 +206,20 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   Since this fix advances `develop` after local rc2, `v0.1.0-rc2` remains
   local historical feedback evidence; any new current RC should use a dedicated
   RC3 tag gate.
+
+## ADR-0015: Documentation Links Are Checked Locally
+
+- Status: Accepted
+- Date: 2026-05-14
+- Context: The release checklist kept docs link checking as the last known P2
+  QA placeholder after default pytest collection was fixed. OSW needs a reusable
+  local command that checks repository documentation without making network
+  access part of release QA.
+- Decision: Add `tools/qa/check_docs_links.py` to validate local Markdown file
+  links and anchors in README, CHANGELOG, docs, and examples. External links are
+  classified as skipped by default, generated `.codex/reports/` evidence is not
+  scanned by default, and fast/pre-merge QA run the checker.
+- Consequences: Broken local docs links block QA. External URL freshness remains
+  outside this local checker. Since this hardening commit advances `develop`
+  after local rc2, `v0.1.0-rc2` stays historical local evidence; a current
+  pushable RC requires a later RC3 tag gate.
