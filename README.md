@@ -55,3 +55,18 @@ Optional stacks are grouped as extras:
 - `.[mscript]` for `.mat` preview support.
 
 No external solver is executed by the bootstrap skeleton.
+
+## Tutorial Examples
+
+The v0.1 tutorial path is documented in [docs/tutorials.md](docs/tutorials.md).
+Each example README includes a goal, prerequisites, steps, expected output, and
+troubleshooting notes:
+
+- [01 STEP import preview](examples/01_step_import/README.md)
+- [02 mesh import preview](examples/02_mesh_import/README.md)
+- [03 Gmsh meshing template](examples/03_gmsh_meshing/README.md)
+- [04 CalculiX cantilever](examples/04_calculix_cantilever/README.md)
+- [05 OpenFOAM cavity and duct templates](examples/05_openfoam_cavity/README.md)
+- [06 Cantera reactor](examples/06_cantera_reactor/README.md)
+- [07 CoolProp property table](examples/07_coolprop_property/README.md)
+- [08 MATLAB/Octave figure preview](examples/08_mscript_figure/README.md)
