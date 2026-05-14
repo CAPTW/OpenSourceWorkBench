@@ -1,0 +1,48 @@
+{
+  "id": "osw.solvers.cantera.reactor0d",
+  "name": "Cantera 0D Reactor Plugin",
+  "version": "0.1.0",
+  "domain": "solver",
+  "type": "solver_adapter",
+  "license": "GPL-3.0-or-later",
+  "entry_point": "osw.solvers.cantera.adapter:CanteraReactorPlugin",
+  "adapter_class": "CanteraReactorPlugin",
+  "input_formats": [
+    "osw.chm.reactor0d.si"
+  ],
+  "output_formats": [
+    "osw.table.species_time",
+    "osw.plot.temperature_time",
+    "csv"
+  ],
+  "requires": [],
+  "optional_requires": [
+    "cantera"
+  ],
+  "capabilities": [
+    "validate",
+    "prepare_case",
+    "reactor_0d",
+    "time_integration",
+    "table_result",
+    "plot_dataset_placeholder",
+    "dependency_diagnostic",
+    "mechanism_diagnostic"
+  ],
+  "preview_required": true,
+  "mutates_project": false,
+  "executes_external_process": false,
+  "dependency_behavior": "Cantera is optional; importing this plugin does not import Cantera. 0D reactor runs return friendly diagnostics when Cantera or a mechanism is missing.",
+  "safety_flags": [
+    "lazy_optional_dependency",
+    "no_external_process",
+    "no_project_mutation",
+    "si_units_required",
+    "bounded_0d_demo"
+  ],
+  "limitations": [
+    "Cantera support in OSW v0.1 is a bounded 0D reactor demo, not a combustion CFD solver.",
+    "This plugin is not a process simulator and does not model plant flowsheets.",
+    "Inputs and outputs use SI units at the plugin boundary."
+  ]
+}
