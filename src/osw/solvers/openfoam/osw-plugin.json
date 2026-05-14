@@ -1,0 +1,13 @@
+{
+  "id": "osw.solvers.openfoam.cavity_template",
+  "name": "OpenFOAM Cavity Template Adapter",
+  "version": "0.1.0",
+  "domain": "solver",
+  "type": "solver_adapter",
+  "license": "GPL-3.0-or-later",
+  "input_formats": ["osw.project.cfd_template"],
+  "output_formats": ["openfoam.case_directory"],
+  "requires": [],
+  "optional_requires": [],
+  "capabilities": ["validate", "prepare_case", "cavity_template", "dry_run"]
+}
