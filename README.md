@@ -36,6 +36,9 @@ commercial CAD import, Simulink or `.mlapp`, full OpenFOAM coverage, full MATLAB
 toolbox compatibility, nonlinear contact/plasticity demos, industrial
 certification claims, or GUI-triggered direct subprocess solver execution.
 
+See [Known Limitations](docs/known_limitations.md) for the full v0.1 boundary
+statement, including optional dependency behavior and script execution safety.
+
 ## Quick Start
 
 ```powershell

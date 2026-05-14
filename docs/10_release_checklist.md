@@ -16,6 +16,7 @@
 - [ ] `pytest tests/unit -q` passes.
 - [ ] `ruff check src tests` passes or has a documented blocker.
 - [ ] README scope and non-goals are current.
+- [ ] `docs/known_limitations.md` is current and linked from README.
 - [ ] Validation matrix reflects implemented workflows.
 - [ ] No solver runtime artifacts, secrets, or generated report dumps are staged.
 - [ ] License decision is finalized before public release.
@@ -23,5 +24,6 @@
 ## Release Discipline
 
 - [ ] Public packages do not claim industrial certification or full commercial solver parity.
+- [ ] Known limitations are included in release notes or linked from release documentation.
 - [ ] External solver installers are not bundled into the base package.
 - [ ] Generated reports and runtime case outputs are excluded unless they are curated examples or tests.
