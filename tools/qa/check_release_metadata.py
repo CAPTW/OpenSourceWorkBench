@@ -13,13 +13,15 @@ from pathlib import Path
 
 from _common import repo_root
 
-TARGET_VERSION = "0.1.0rc3"
+TARGET_VERSION = "0.1.0"
 TARGET_LICENSE = "GPL-3.0-or-later"
 DEFAULT_RC_TAG = "v0.1.0-rc3"
 DEFAULT_PRIOR_RC1_TAG = "v0.1.0-rc1"
 DEFAULT_PRIOR_RC1_TARGET = "29c5c8bec8df30c7f7be72fc9be5e5409794968e"
 DEFAULT_PRIOR_RC2_TAG = "v0.1.0-rc2"
 DEFAULT_PRIOR_RC2_TARGET = "684dc6138d4257564bbcdd176a9d5ed311a7316d"
+DEFAULT_PRIOR_RC3_TAG = "v0.1.0-rc3"
+DEFAULT_PRIOR_RC3_TARGET = "dc7df75c53f0a4acb0a1ccf33d97c01ffdde4b16"
 FINAL_TAG = "v0.1.0"
 RELEASE_TAG_PATTERN = "v0.1*"
 
@@ -36,6 +38,7 @@ class ReleaseTagExpectation:
 DEFAULT_PRIOR_RC_TAGS = (
     ReleaseTagExpectation(DEFAULT_PRIOR_RC1_TAG, DEFAULT_PRIOR_RC1_TARGET),
     ReleaseTagExpectation(DEFAULT_PRIOR_RC2_TAG, DEFAULT_PRIOR_RC2_TARGET),
+    ReleaseTagExpectation(DEFAULT_PRIOR_RC3_TAG, DEFAULT_PRIOR_RC3_TARGET),
 )
 
 
@@ -49,6 +52,11 @@ class ReleaseTagPolicy:
     require_annotated_rc_tag: bool = True
     require_expected_rc_tag: bool = False
     allowed_prior_rc_tags: tuple[ReleaseTagExpectation, ...] = DEFAULT_PRIOR_RC_TAGS
+    forbid_final_tag: bool = False
+    expected_final_tag: str | None = None
+    expected_final_target: str | None = None
+    require_annotated_final_tag: bool = True
+    require_expected_final_tag: bool = False
 
 
 def _read(path: Path) -> str:
@@ -106,11 +114,12 @@ def _validate_known_tag(
     expectation: ReleaseTagExpectation,
     *,
     required: bool,
+    label: str = "RC",
 ) -> list[str]:
     failures: list[str] = []
     if expectation.name not in tags:
         if required:
-            failures.append(f"Expected RC tag {expectation.name} is missing.")
+            failures.append(f"Expected {label} tag {expectation.name} is missing.")
         return failures
 
     returncode, object_type, stderr = _git_stdout(
@@ -118,9 +127,9 @@ def _validate_known_tag(
         ["cat-file", "-t", f"refs/tags/{expectation.name}"],
     )
     if returncode != 0:
-        failures.append(stderr or f"Could not inspect expected RC tag {expectation.name}.")
+        failures.append(stderr or f"Could not inspect expected {label} tag {expectation.name}.")
     elif expectation.require_annotated and object_type != "tag":
-        failures.append(f"Expected RC tag {expectation.name} is not an annotated tag object.")
+        failures.append(f"Expected {label} tag {expectation.name} is not an annotated tag object.")
 
     expected_target, target_error = _resolve_expected_target(root, expectation.target)
     if target_error is not None:
@@ -131,10 +140,11 @@ def _validate_known_tag(
             ["rev-parse", f"{expectation.name}^{{commit}}"],
         )
         if returncode != 0:
-            failures.append(stderr or f"Could not peel expected RC tag {expectation.name}.")
+            failures.append(stderr or f"Could not peel expected {label} tag {expectation.name}.")
         elif commit != expected_target:
             failures.append(
-                f"Expected RC tag {expectation.name} points to {commit}, not {expected_target}."
+                f"Expected {label} tag {expectation.name} points to {commit}, "
+                f"not {expected_target}."
             )
 
     return failures
@@ -154,14 +164,19 @@ def _validate_release_tags(root: Path, policy: ReleaseTagPolicy) -> list[str]:
             )
         return failures
 
-    if FINAL_TAG in tags:
+    expected_final = policy.expected_final_tag
+    if FINAL_TAG in tags and (policy.forbid_final_tag or expected_final != FINAL_TAG):
         failures.append(
             f"Final {FINAL_TAG} tag exists; final tag creation requires a separate release gate."
         )
 
     expected = policy.expected_rc_tag
     prior_tags = {item.name for item in policy.allowed_prior_rc_tags}
-    allowed_tags = prior_tags | ({expected} if expected else set())
+    allowed_tags = (
+        prior_tags
+        | ({expected} if expected else set())
+        | ({expected_final} if expected_final else set())
+    )
     unexpected_tags = sorted(tag for tag in tags if tag not in allowed_tags)
     if unexpected_tags:
         failures.append(
@@ -182,6 +197,21 @@ def _validate_release_tags(root: Path, policy: ReleaseTagPolicy) -> list[str]:
                     policy.require_annotated_rc_tag,
                 ),
                 required=policy.require_expected_rc_tag,
+            )
+        )
+
+    if expected_final:
+        failures.extend(
+            _validate_known_tag(
+                root,
+                tags,
+                ReleaseTagExpectation(
+                    expected_final,
+                    policy.expected_final_target,
+                    policy.require_annotated_final_tag,
+                ),
+                required=policy.require_expected_final_tag,
+                label="final",
             )
         )
 
@@ -258,6 +288,12 @@ def check_release_metadata(
             and tag_policy.expected_rc_tag not in changelog
         ):
             failures.append(f"CHANGELOG.md does not mention {tag_policy.expected_rc_tag}.")
+        if (
+            tag_policy
+            and tag_policy.expected_final_tag
+            and tag_policy.expected_final_tag not in changelog
+        ):
+            failures.append(f"CHANGELOG.md does not mention {tag_policy.expected_final_tag}.")
 
     for relative in [
         "docs/13_license_and_version_plan.md",
@@ -287,6 +323,15 @@ def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
     require_annotated = bool(args.require_annotated_rc_tag) or _truthy_env(
         "OSW_RELEASE_REQUIRE_ANNOTATED_RC_TAG"
     )
+    expected_final_tag = args.expected_final_tag or os.environ.get(
+        "OSW_RELEASE_EXPECTED_FINAL_TAG"
+    )
+    expected_final_target = args.expected_final_target or os.environ.get(
+        "OSW_RELEASE_EXPECTED_FINAL_TARGET"
+    )
+    require_annotated_final = bool(args.require_annotated_final_tag) or _truthy_env(
+        "OSW_RELEASE_REQUIRE_ANNOTATED_FINAL_TAG"
+    )
     prior_tags = args.allowed_prior_rc_tag
     prior_targets = args.allowed_prior_rc_target
     env_prior_tag = os.environ.get("OSW_RELEASE_ALLOWED_PRIOR_RC_TAG")
@@ -311,6 +356,11 @@ def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
         require_annotated_rc_tag=require_annotated or expected_rc_tag == DEFAULT_RC_TAG,
         require_expected_rc_tag=bool(args.expected_rc_tag),
         allowed_prior_rc_tags=allowed_prior_rc_tags,
+        forbid_final_tag=bool(args.forbid_final_tag),
+        expected_final_tag=expected_final_tag,
+        expected_final_target=expected_final_target,
+        require_annotated_final_tag=require_annotated_final,
+        require_expected_final_tag=bool(args.expected_final_tag),
     )
 
 
@@ -355,6 +405,24 @@ def main() -> int:
         "--require-annotated-rc-tag",
         action="store_true",
         help="require the expected RC tag to be an annotated tag object",
+    )
+    parser.add_argument(
+        "--forbid-final-tag",
+        action="store_true",
+        help="final-prep mode: fail if local v0.1.0 already exists",
+    )
+    parser.add_argument(
+        "--expected-final-tag",
+        help="final-tag-aware mode: expected local final release tag name",
+    )
+    parser.add_argument(
+        "--expected-final-target",
+        help="final-tag-aware mode: expected peeled commit for the final release tag",
+    )
+    parser.add_argument(
+        "--require-annotated-final-tag",
+        action="store_true",
+        help="require the expected final tag to be an annotated tag object",
     )
     args = parser.parse_args()
     if args.allowed_prior_rc_tag and (

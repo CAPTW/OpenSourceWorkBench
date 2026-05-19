@@ -4,6 +4,77 @@ All notable OpenSolver Workbench changes are summarized here for release
 review. OSW follows source-first release evidence; public tags are created only
 by a dedicated release/tag gate.
 
+## 0.1.0 - Final Metadata Prepared
+
+Final package version: `0.1.0`
+
+Planned final local tag: `v0.1.0`
+
+Final v0.1.0 metadata is prepared after local RC3 UAT passed with no P0 or P1
+blockers. The final `v0.1.0` tag is not created by this release-prep update; it
+remains pending a dedicated local tag gate. No public tag push, release artifact
+build, external solver binary bundle, remote push gate, or public announcement is
+created by this update.
+
+Local annotated `v0.1.0-rc1`, `v0.1.0-rc2`, and `v0.1.0-rc3` remain historical
+local release evidence. RC3 points to
+`dc7df75c53f0a4acb0a1ccf33d97c01ffdde4b16`, the last release-candidate commit
+before this final metadata-prep change.
+
+### Highlights
+
+- PySide6 desktop GUI shell architecture remains optional behind the `gui`
+  extra, with CLI diagnostics when PySide6 is unavailable.
+- Plugin/add-in architecture covers importers, solvers, scripts,
+  post-processing, and reports without executing plugin code during manifest
+  validation.
+- ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset define
+  the core v0.1 data contracts.
+- Standard/exported CAD and mesh import policy remains explicit; commercial
+  native CAD direct import is out of scope.
+- meshio, Gmsh, PyVista, and Matplotlib workflows are optional integration
+  surfaces with missing-dependency diagnostics.
+- CalculiX linear static demo coverage includes input deck generation, optional
+  runner diagnostics, result parsing, golden fixtures, and validation helpers.
+- OpenFOAM cavity and duct template demos remain bounded educational templates,
+  not a full OpenFOAM UI.
+- Cantera and CoolProp basic demos cover small chemistry/property workflows with
+  explicit SI-unit data and optional dependency behavior.
+- MATLAB/Octave `.m` and `.mat` workflows remain preview-first; importing a
+  script does not auto-run code.
+- FigureDataset, ResultDataset, and HTML report workflows include assumptions,
+  warnings, validation notes, figures, result tables, and known limitations.
+- Validation, golden tests, docs link checking, duplicate test basename
+  prevention, scope checks, architecture checks, and solver artifact scans are
+  part of the release QA harness.
+
+### RC3 Local UAT Summary
+
+- OSW-AUTO-052 local UAT passed with no P0 or P1 blockers.
+- Automated QA passed: release metadata, docs link checker, duplicate basename
+  checker, scope drift, architecture boundaries, solver artifact scan, fast QA,
+  pre-merge QA, ruff, required pytest suites, and default `pytest -q`.
+- Demo smoke results: CAD import and HTML report passed; mesh import, Gmsh,
+  CalculiX, OpenFOAM, Cantera/CoolProp, and MATLAB/Octave workflows passed with
+  optional dependency missing where local optional stacks were unavailable.
+- PySide6 was missing in the local UAT environment, so GUI help and friendly
+  missing-extra diagnostics passed, but live GUI interaction was skipped.
+- Live external solver runs were not performed because local solver executables
+  and optional stacks were missing; this is treated as environment-specific and
+  non-blocking for the base v0.1 source workflow.
+
+### Known Limitations
+
+- Simulink, `.slx`, and `.mlapp` workflows are not supported.
+- Native commercial CAD direct import is not supported; use standard/exported
+  formats such as STEP, STL, OBJ, IGES, BREP, or mesh formats.
+- OSW is not a MATLAB clone, full ANSYS clone, full OpenFOAM UI, industrial
+  certified CAE product, or substitute for expert engineering judgment.
+- External solver executables and heavy optional Python stacks are not bundled
+  by default and remain local environment responsibilities.
+- External URL freshness is intentionally out of scope for the local-only docs
+  link checker.
+
 ## 0.1.0rc3 - Draft
 
 Release candidate package version: `0.1.0rc3`

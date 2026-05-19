@@ -241,3 +241,21 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: rc3 becomes the current local release candidate if the gate
   passes. Any tag push, final `v0.1.0` tag, release artifact, remote push gate,
   or public announcement remains a separate maintainer-controlled gate.
+
+## ADR-0017: Final v0.1 Metadata Prep Follows RC3 Local UAT
+
+- Status: Accepted
+- Date: 2026-05-19
+- Context: OSW-AUTO-052 local RC3 UAT passed with no P0 or P1 blockers. The
+  local environment lacked PySide6 and optional external solver stacks, so live
+  GUI interaction and live solver runs were not claimed; those remain
+  environment-specific follow-ups. Automated QA, docs link checking, duplicate
+  basename prevention, scope/architecture checks, solver artifact scans, and
+  default `pytest -q` passed.
+- Decision: OSW-AUTO-053 prepares final package metadata as `0.1.0`, updates
+  final release notes and release checklist evidence, and preserves local
+  `v0.1.0-rc1`, `v0.1.0-rc2`, and `v0.1.0-rc3` unchanged as historical
+  evidence. The final `v0.1.0` tag is deferred to OSW-AUTO-054.
+- Consequences: After final metadata prep advances `develop`, rc3 is no longer
+  current `develop` HEAD. Final tag creation, tag pushes, release artifacts, and
+  public announcements remain separate maintainer-controlled gates.

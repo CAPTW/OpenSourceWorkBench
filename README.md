@@ -44,17 +44,18 @@ and [v0.1 Demo Smoke Checklist](docs/demo_smoke_checklist.md). License and
 release tag planning is tracked in the
 [License and Version Plan](docs/13_license_and_version_plan.md).
 
-## Release Candidate Status
+## Release Status
 
-The current release-candidate package version is `0.1.0rc3`. Local rc1 and rc2
-remain historical release evidence and must not be pushed as the current RC.
-Public tag push and release announcement are handled by separate
-maintainer-controlled gates; this source tree does not bundle external solver
-binaries by default.
+The final-prep package version is `0.1.0`. Local rc1, rc2, and rc3 tags remain
+historical release evidence. The final `v0.1.0` tag, public tag push, release
+artifacts, and release announcement are handled by separate
+maintainer-controlled gates. See the [Changelog](CHANGELOG.md) for final v0.1.0
+release notes and RC3 UAT evidence.
 
-OSW v0.1 is educational and research oriented. It is not industrial certified,
-does not replace expert engineering judgment, and does not guarantee that
-optional external solvers are installed in every local environment.
+OSW v0.1 is educational and research oriented. It makes no regulated-use or
+production-accuracy claim, does not replace expert engineering judgment, and
+does not guarantee that optional external solvers are installed in every local
+environment.
 
 ## License
 
@@ -84,13 +85,17 @@ ruff check src tests
 
 Optional stacks are grouped as extras:
 
+- Base install supports CLI, docs, validation metadata, and HTML report code
+  paths without requiring heavy optional stacks.
 - `.[gui]` for PySide6.
 - `.[mesh]` for mesh import and Gmsh-facing work.
 - `.[viz]` for PyVista and Matplotlib.
 - `.[thermo]` for Cantera and CoolProp.
 - `.[mscript]` for `.mat` preview support.
 
-No external solver is executed by the bootstrap skeleton.
+External solver binaries are not bundled by default. Optional solver stacks and
+executables remain user-installed local tools, and missing dependencies should
+produce diagnostics or skips rather than blocking the base CLI workflow.
 
 ## Local CI Commands
 
