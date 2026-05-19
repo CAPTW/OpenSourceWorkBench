@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class DiagnosticSeverity(str, Enum):
+class DiagnosticSeverity(StrEnum):
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -67,4 +67,3 @@ class DiagnosticReport:
                 f"{message.message}"
             )
         return "\n".join(lines)
-

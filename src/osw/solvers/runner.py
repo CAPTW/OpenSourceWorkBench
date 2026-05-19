@@ -9,14 +9,14 @@ import subprocess
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 from osw.core.diagnostics import DiagnosticReport
 from osw.core.run_manager import ExecutablePathRegistry
 
 
-class RunStatus(str, Enum):
+class RunStatus(StrEnum):
     COMPLETED = "completed"
     FAILED = "failed"
     TIMED_OUT = "timed_out"

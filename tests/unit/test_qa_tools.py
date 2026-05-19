@@ -1,16 +1,33 @@
 from __future__ import annotations
 
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+PYTHON_BIN = Path(sys.executable).resolve().parent
+ORIGINAL_PATH = os.environ.get("PATH", "")
+GIT_BIN = shutil.which("git")
+
+
+def tool_env() -> dict[str, str]:
+    env = os.environ.copy()
+    path_parts = [str(PYTHON_BIN)]
+    if GIT_BIN:
+        path_parts.append(str(Path(GIT_BIN).resolve().parent))
+    if ORIGINAL_PATH:
+        path_parts.append(ORIGINAL_PATH)
+    env["PATH"] = os.pathsep.join(path_parts)
+    return env
 
 
 def run_tool(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, *args],
         cwd=REPO_ROOT,
+        env=tool_env(),
         text=True,
         capture_output=True,
         check=False,

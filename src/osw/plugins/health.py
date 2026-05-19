@@ -7,7 +7,7 @@ import json
 import shutil
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +18,7 @@ EXECUTABLE_CAPABILITY_PREFIXES = ("requires_executable:", "executable:")
 SAMPLE_PROJECT_CAPABILITY_PREFIXES = ("sample_project:", "sample-project:")
 
 
-class PluginHealthStatus(str, Enum):
+class PluginHealthStatus(StrEnum):
     OK = "ok"
     WARNING = "warning"
     ERROR = "error"

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -35,7 +35,7 @@ class PluginManifestError(ValueError):
     """Raised when plugin manifest data is missing or invalid."""
 
 
-class PluginType(str, Enum):
+class PluginType(StrEnum):
     CAD_IMPORTER = "cad_importer"
     MESH_IMPORTER = "mesh_importer"
     MESH_GENERATOR = "mesh_generator"

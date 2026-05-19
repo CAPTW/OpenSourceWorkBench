@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class LogSeverity(str, Enum):
+class LogSeverity(StrEnum):
     WARNING = "warning"
     ERROR = "error"
 
@@ -27,4 +27,3 @@ def parse_run_log(text: str) -> list[RunLogFinding]:
         elif "warning" in lowered or "warn:" in lowered:
             findings.append(RunLogFinding(LogSeverity.WARNING, line_number, line))
     return findings
-
