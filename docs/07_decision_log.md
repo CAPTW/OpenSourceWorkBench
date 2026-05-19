@@ -259,3 +259,29 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: After final metadata prep advances `develop`, rc3 is no longer
   current `develop` HEAD. Final tag creation, tag pushes, release artifacts, and
   public announcements remain separate maintainer-controlled gates.
+
+## ADR-0018: Patch Release Recovery After Source-Install UAT Fix
+
+- Status: Accepted
+- Date: 2026-05-19
+- Context: OSW-AUTO-054 created a local annotated `v0.1.0` tag at commit
+  `da8728adf679314442755ed781c1dd57d1c6ed27` before source-install UAT found
+  isolated-venv blockers. OSW-AUTO-056 showed that editable install succeeded,
+  but newer tooling exposed `ruff 0.15.13` UP042 failures and five default
+  pytest/importlib pytest failures. OSW-AUTO-057 fixed those source-run blockers
+  on `develop` at `50e606b869e7a9a9c2e0275c32470c4d011a94a1` without moving,
+  deleting, retargeting, or pushing any tag. OSW-AUTO-058 then performed a fresh
+  source-install retest: ruff, default pytest, importlib pytest,
+  fast/pre-merge QA, docs link checking, duplicate basename checking, and GUI
+  offscreen launch all passed with no P0/P1 blockers.
+- Decision: Preserve local `v0.1.0` as historical local-only evidence and do
+  not publish it as the current release because `develop` is now ahead of that
+  tag. The selected recovery path is a patch release sequence:
+  `0.1.1rc1` / `v0.1.1-rc1` followed by `0.1.1` / `v0.1.1`, controlled by later
+  dedicated version/tag gates. OSW-AUTO-059 records the decision only; it does
+  not bump package metadata, create tags, move tags, or push.
+- Consequences: Existing `v0.1.0`, `v0.1.0-rc1`, `v0.1.0-rc2`, and
+  `v0.1.0-rc3` remain immutable local historical evidence. Public publish of
+  `v0.1.0` remains blocked. The next actionable release prompt is
+  OSW-AUTO-060 to prepare `0.1.1rc1` metadata and the `v0.1.1-rc1` local tag
+  gate path.
