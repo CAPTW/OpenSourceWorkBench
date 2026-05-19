@@ -24,10 +24,10 @@ or full solver parity.
 
 | Item | Status | Evidence / decision |
 | --- | --- | --- |
-| Release gate result | `PENDING` | Local `v0.1.0` exists but is historical local-only evidence after OSW-AUTO-056 found source-install blockers and OSW-AUTO-057 advanced `develop`. OSW-AUTO-058 retest passed; selected next publishable path is `0.1.1rc1` / `v0.1.1-rc1` followed by `0.1.1` / `v0.1.1`. |
+| Release gate result | `PENDING` | Package metadata is prepared for patch RC1 `0.1.1rc1`. Local `v0.1.0` exists but is historical local-only evidence after OSW-AUTO-056 found source-install blockers and OSW-AUTO-057 advanced `develop`; it must not be published as current. |
 | Scope discipline | `PASS` | README, [Known Limitations](known_limitations.md), tutorials, and this checklist describe OSW v0.1 as an educational/research prototype. |
 | External solver expectation | `PASS` | External solver executable checks are optional and local-environment dependent. Base install, CLI smoke, and unit tests do not require external solvers. |
-| Release version plan | `PASS` | [License and version plan](13_license_and_version_plan.md) defines package version `0.1.0`, historical local tags `v0.1.0-rc1`, `v0.1.0-rc2`, `v0.1.0-rc3`, and `v0.1.0`, and the selected patch recovery path `0.1.1rc1` / `v0.1.1-rc1` -> `0.1.1` / `v0.1.1`. |
+| Release version plan | `PASS` | [License and version plan](13_license_and_version_plan.md) defines package version `0.1.1rc1`, historical local tags `v0.1.0-rc1`, `v0.1.0-rc2`, `v0.1.0-rc3`, and `v0.1.0`, and the patch path `0.1.1rc1` / `v0.1.1-rc1` -> `0.1.1` / `v0.1.1`. |
 | License final decision | `PASS` | Maintainer decision recorded as `GPL-3.0-or-later`; `LICENSE`, `pyproject.toml`, README, this checklist, and [license/version planning](13_license_and_version_plan.md) are aligned. |
 | RC1 local annotated tag | `PASS` | OSW-AUTO-043 created local annotated `v0.1.0-rc1` at commit `29c5c8bec8df30c7f7be72fc9be5e5409794968e`. OSW-AUTO-045 must preserve that tag unchanged. |
 | RC2 local annotated tag gate | `PASS` | OSW-AUTO-045 created local annotated `v0.1.0-rc2` at commit `684dc6138d4257564bbcdd176a9d5ed311a7316d`; OSW-AUTO-046 verified it in local feedback mode with no push. |
@@ -36,8 +36,9 @@ or full solver parity.
 | Final metadata prep | `PASS` | OSW-AUTO-053 prepares final package version `0.1.0`, final release notes, final-prep metadata checks, and final tag gate documentation. |
 | Final `v0.1.0` local tag | `PASS` | OSW-AUTO-054 created local annotated `v0.1.0` at `da8728adf679314442755ed781c1dd57d1c6ed27`; after OSW-AUTO-057 advanced `develop`, this tag is historical local-only evidence. |
 | Source-install UAT retest | `PASS` | OSW-AUTO-058 passed after OSW-AUTO-057 fixed the isolated-venv ruff UP042 and pytest QA-tool failures. |
-| Next patch release candidate | `PENDING` | Next candidate is package `0.1.1rc1` with local tag `v0.1.1-rc1`; this prompt does not bump version or create tags. |
-| Public tag push | `P1 BLOCKED` | Do not push `v0.1.0-rc1`, `v0.1.0-rc2`, `v0.1.0-rc3`, or historical `v0.1.0` unless a later explicit maintainer push gate approves the exact current tag. |
+| Patch `v0.1.1-rc1` local tag gate | `PENDING` | Current candidate is package `0.1.1rc1` with local tag `v0.1.1-rc1`; the tag may be created locally only after OSW-AUTO-060 merge, post-merge QA, and fresh source-install validation pass. |
+| Final `v0.1.1` tag | `P1 BLOCKED` | Do not create final `v0.1.1` in the RC1 prompt; it requires a later final release gate. |
+| Public tag push | `P1 BLOCKED` | Do not push `v0.1.0-rc1`, `v0.1.0-rc2`, `v0.1.0-rc3`, historical `v0.1.0`, or local `v0.1.1-rc1` unless a later explicit maintainer push gate approves the exact current tag. |
 | Public `v0.1.0` publish | `P1 BLOCKED` | Current `develop` is ahead of `v0.1.0`; do not publish the existing local `v0.1.0` tag as current. Use the selected patch release path instead. |
 | Public announcement | `P1 BLOCKED` | Do not announce public v0.1 until the local tag state is reviewed and the maintainer explicitly directs announcement work. |
 | Broad pytest command | `PASS` | OSW-AUTO-047 renames the colliding plugin manager dialog tests and adds a duplicate-basename QA guard so default `pytest -q` can run without the import mismatch. |
@@ -55,6 +56,7 @@ or full solver parity.
 | REL-053-P1-001 | P1 | Final metadata prep | `PASS` | OSW-AUTO-053 prepares package version `0.1.0`, final release notes, final-prep metadata checks, and final tag gate routing. | Run OSW-AUTO-054 before creating local final `v0.1.0`. |
 | REL-056-P0-001 | P0 | Source-install UAT blockers | `PASS` | OSW-AUTO-056 found isolated-venv ruff UP042 and pytest QA-tool failures after the local `v0.1.0` tag was created. OSW-AUTO-057 fixed them on `develop`; OSW-AUTO-058 retest passed. | Keep `v0.1.0` as historical local evidence and use a new patch release candidate for publication. |
 | REL-059-P1-001 | P1 | Version recovery decision | `PASS` | OSW-AUTO-059 selects the safe patch path `0.1.1rc1` / `v0.1.1-rc1` -> `0.1.1` / `v0.1.1` without moving tags, pushing, or bumping version in this prompt. | Run OSW-AUTO-060 to prepare `0.1.1rc1` metadata and tag-gate evidence. |
+| REL-060-P1-001 | P1 | Patch RC1 local tag gate | `PENDING` | OSW-AUTO-060 prepares package version `0.1.1rc1`, release metadata checks for historical `v0.1.0`, and fresh isolated source-install validation before local `v0.1.1-rc1` creation. | Create local annotated `v0.1.1-rc1` only after post-merge checks pass; do not create final `v0.1.1`. |
 | REL-043-P1-002 | P1 | Public tag push | `P1 BLOCKED` | rc1 and rc2 are local-only historical evidence; rc3 is local-only unless a later push gate approves it. | Do not push tags unless a maintainer explicitly instructs the exact current RC tag after a fresh push gate. |
 | REL-043-P1-003 | P1 | Historical final release tag | `PASS` | `v0.1.0` exists locally as an annotated tag at `da8728adf679314442755ed781c1dd57d1c6ed27`, but current `develop` is ahead after OSW-AUTO-057. | Do not publish, move, or retag `v0.1.0`; use the patch release path for the next publishable candidate. |
 | REL-041-P1-002 | P1 | Public announcement | `P1 BLOCKED` | The project has a release metadata packet, but no public push or announcement approval. | Announce no public release until local tag state is reviewed and maintainer announcement direction is explicit. |
@@ -91,14 +93,14 @@ or full solver parity.
 
 | Item | Status | Evidence / notes |
 | --- | --- | --- |
-| `pyproject.toml` metadata, package discovery, and `requires-python >=3.11` are current. | `PASS` | Package version is `0.1.0`; Python requirement is `>=3.11`; license metadata is `GPL-3.0-or-later`. |
+| `pyproject.toml` metadata, package discovery, and `requires-python >=3.11` are current. | `PASS` | Package version is `0.1.1rc1`; Python requirement is `>=3.11`; license metadata is `GPL-3.0-or-later`. |
 | Base install has no mandatory heavy GUI, visualization, mesh, chemistry, or script extras. | `PASS` | `python -m osw.cli doctor` imports and reports optional stack status without failing. |
 | Optional extras are declared for `gui`, `viz`, `mesh`, `mscript`, `chm`, and public `thermo` alias. | `PASS` | Install guide and release checklist document optional extras. |
 | `environment.yml` installs the editable development package without optional solver stacks. | `PASS` | Installation guide keeps source/conda install separate from optional solver stacks. |
 | Installation guide documents conda, pip, uv, Windows, Linux, troubleshooting, and optional external dependency behavior. | `PASS` | [Installation guide](install.md) is linked from README. |
 | Release packaging uses source/conda editable install path if PyInstaller or standalone packaging is not release-ready. | `PASS` | Install guide names source/conda as the v0.1 release path. |
 | External solver installers are not bundled or required by the base package. | `PASS` | Install guide and known limitations state external solvers are optional local dependencies. |
-| `python -m osw.cli --version` reports the intended version. | `PASS` | Expected command output after final metadata alignment: `osw 0.1.0`. |
+| `python -m osw.cli --version` reports the intended version. | `PASS` | Expected command output after patch RC1 metadata alignment: `osw 0.1.1rc1`. |
 | `python -m osw.cli doctor` reports optional stack availability without failing when extras are absent. | `PASS` | Doctor reports PySide6, meshio, gmsh, pyvista, cantera, CoolProp, and hdf5storage missing; matplotlib and scipy available. |
 | Final license notice is ready for public release metadata review. | `PASS` | `LICENSE` contains canonical GNU GPL version 3 text, with the "or later" grant recorded in metadata and release docs. |
 | License/version planning packet exists. | `PASS` | [License and version plan](13_license_and_version_plan.md) documents maintainer decision, version scheme, tag policy, release procedure draft, rollback plan, and artifact policy. |
@@ -107,8 +109,8 @@ or full solver parity.
 | RC2 local annotated tag gate is defined. | `PASS` | OSW-AUTO-045 created local annotated `v0.1.0-rc2`; OSW-AUTO-046 verified object type `tag`, target commit `684dc6138d4257564bbcdd176a9d5ed311a7316d`, metadata, and local QA without pushing. |
 | RC3 local annotated tag gate is complete. | `PASS` | OSW-AUTO-049 created `v0.1.0-rc3`; OSW-AUTO-052 local UAT verified it as local historical evidence with no push. |
 | Final local annotated `v0.1.0` tag evidence is recorded. | `PASS` | OSW-AUTO-054 created local annotated `v0.1.0` at `da8728adf679314442755ed781c1dd57d1c6ed27`; OSW-AUTO-059 keeps it historical because `develop` is now ahead. |
-| Public tag push remains blocked until explicit maintainer approval. | `P1 BLOCKED` | A local tag is not a public release. Do not push rc1, rc2, rc3, or historical `v0.1.0` from this prompt. |
-| Patch release candidate gate is pending. | `PENDING` | OSW-AUTO-060 should prepare `0.1.1rc1` metadata and the `v0.1.1-rc1` local tag gate path. |
+| Public tag push remains blocked until explicit maintainer approval. | `P1 BLOCKED` | A local tag is not a public release. Do not push rc1, rc2, rc3, historical `v0.1.0`, or patch RC1 from this prompt. |
+| Patch release candidate gate is pending. | `PENDING` | OSW-AUTO-060 prepares `0.1.1rc1` metadata and may create local annotated `v0.1.1-rc1` only after all post-merge and source-install checks pass. |
 | Public release announcement remains blocked until explicit maintainer direction. | `P1 BLOCKED` | Announcements require local tag review, push approval, and explicit maintainer direction. |
 
 ## Documentation Checklist
@@ -131,7 +133,7 @@ or full solver parity.
 | `.github/workflows/ci.yml` exists and runs local-safe lint, unit, integration smoke, golden, validation, scope, architecture, and solver artifact checks. | `PASS` | CI workflow exists and excludes external solver execution by default. |
 | CI excludes optional external solver tests by default with `-m "not external_solver"`. | `PASS` | Workflow uses `pytest tests/integration -q -m "not external_solver"` and sets `OSW_EXTERNAL_SOLVER_TESTS=0`. |
 | README documents local CI commands and optional external-solver opt-in command. | `PASS` | README Local CI Commands section documents both paths. |
-| `python -m osw.cli --version` reports intended version. | `PASS` | Expected output after OSW-AUTO-053 metadata alignment: `osw 0.1.0`. |
+| `python -m osw.cli --version` reports intended version. | `PASS` | Expected output after OSW-AUTO-060 metadata alignment: `osw 0.1.1rc1`. |
 | `python -m osw.cli doctor` reports environment status. | `PASS` | Doctor command passed with optional dependency diagnostics. |
 | `python tools/qa/check_release_metadata.py` passes. | `PASS` | Verifies `LICENSE`, pyproject license/version metadata, README License section, release notes, third-party notices draft, expected historical rc/final tags, unexpected release-tag absence, and annotated tag targets when expected tags are supplied. |
 | `python tools/qa/check_release_metadata.py --forbid-release-tags` enforces strict pre-tag mode. | `PASS` | This mode intentionally fails while local rc1/rc2 tags exist and remains available for future pre-tag metadata prompts before any local release tag is created. |
@@ -140,6 +142,7 @@ or full solver parity.
 | `python tools/qa/check_release_metadata.py --expected-version 0.1.0rc3 --expected-source-license GPL-3.0-or-later --allowed-prior-rc-tag v0.1.0-rc1 --allowed-prior-rc-target 29c5c8bec8df30c7f7be72fc9be5e5409794968e --allowed-prior-rc-tag v0.1.0-rc2 --allowed-prior-rc-target 684dc6138d4257564bbcdd176a9d5ed311a7316d` passes before rc3 exists. | `PASS` | Validated rc3 metadata while preserving rc1 and rc2 as historical local evidence. |
 | `python tools/qa/check_release_metadata.py --expected-version 0.1.0rc3 --expected-source-license GPL-3.0-or-later --allowed-prior-rc-tag v0.1.0-rc1 --allowed-prior-rc-target 29c5c8bec8df30c7f7be72fc9be5e5409794968e --allowed-prior-rc-tag v0.1.0-rc2 --allowed-prior-rc-target 684dc6138d4257564bbcdd176a9d5ed311a7316d --expected-rc-tag v0.1.0-rc3 --expected-rc-target <develop HEAD> --require-annotated-rc-tag` passes after rc3 exists. | `PASS` | OSW-AUTO-049/050 verified expected rc3 tag identity, annotated-tag status, peeled target commit, final-tag absence, and unexpected-tag absence without moving prior tags or pushing. |
 | `python tools/qa/check_release_metadata.py --expected-version 0.1.0 --expected-source-license GPL-3.0-or-later --allowed-prior-rc-tag v0.1.0-rc1 --allowed-prior-rc-target 29c5c8bec8df30c7f7be72fc9be5e5409794968e --allowed-prior-rc-tag v0.1.0-rc2 --allowed-prior-rc-target 684dc6138d4257564bbcdd176a9d5ed311a7316d --allowed-prior-rc-tag v0.1.0-rc3 --allowed-prior-rc-target dc7df75c53f0a4acb0a1ccf33d97c01ffdde4b16 --expected-final-tag v0.1.0 --expected-final-target da8728adf679314442755ed781c1dd57d1c6ed27 --require-annotated-final-tag` passes after the historical final tag exists. | `PASS` | Validates package metadata while preserving rc1, rc2, rc3, and historical `v0.1.0` tag evidence. |
+| `python tools/qa/check_release_metadata.py --expected-version 0.1.1rc1 --expected-source-license GPL-3.0-or-later --allowed-historical-final-tag v0.1.0 --allowed-historical-final-target da8728adf679314442755ed781c1dd57d1c6ed27 --allowed-prior-rc-tag v0.1.0-rc1 --allowed-prior-rc-target 29c5c8bec8df30c7f7be72fc9be5e5409794968e --allowed-prior-rc-tag v0.1.0-rc2 --allowed-prior-rc-target 684dc6138d4257564bbcdd176a9d5ed311a7316d --allowed-prior-rc-tag v0.1.0-rc3 --allowed-prior-rc-target dc7df75c53f0a4acb0a1ccf33d97c01ffdde4b16 --forbid-final-tag v0.1.1` passes before patch RC1 tag creation. | `PASS` | Validates `0.1.1rc1` metadata while allowing historical `v0.1.0` only at the expected annotated target and blocking final `v0.1.1`. |
 | `python tools/qa/run_pre_merge_qa.py` passes. | `PASS` | Passed on 2026-05-14. |
 | `python tools/qa/run_fast_qa.py` passes. | `PASS` | Passed as part of pre-merge QA. |
 | `pytest tests/unit -q` passes. | `PASS` | Current release-gate result is recorded in the OSW-AUTO-043 self-check and final output. |
@@ -190,8 +193,8 @@ or full solver parity.
 | Feature worktree is clean after checkpoint/review commits. | `PASS` | Required merge-gate condition; final status is recorded in the phase self-check and final response. |
 | Target `develop` worktree is clean before merge. | `PASS` | Required merge-gate condition; final status is recorded in the phase self-check and final response. |
 | Review score meets the threshold in `docs/06_review_protocol.md`. | `PASS` | Required before merge; score and decision are recorded in the phase review report. |
-| Required amend items are complete, if any. | `PASS` | OSW-AUTO-053 review determines whether an amend branch is needed; no broad feature fixes are allowed in this prompt. |
-| Squash merge uses the approved release/docs commit message. | `PASS` | Planned message: `chore(release): prepare final v0.1.0 metadata`. |
+| Required amend items are complete, if any. | `PASS` | OSW-AUTO-060 review determines whether an amend branch is needed; no broad feature fixes are allowed in this prompt. |
+| Squash merge uses the approved release/docs commit message. | `PASS` | Planned message: `chore(release): prepare v0.1.1rc1 candidate`. |
 
 ## Final Sign-Off Checklist
 
@@ -211,7 +214,7 @@ or full solver parity.
 | Action | Priority | Size | Owner expectation |
 | --- | --- | --- | --- |
 | Preserve local rc1/rc2/rc3 and `v0.1.0` historical evidence after source-run recovery. | P1 | Release prompt | OSW-AUTO-059 preserves all existing local tags unchanged; `v0.1.0` must not be moved or published as current after OSW-AUTO-057 advanced `develop`. |
-| Prepare the patch release candidate metadata. | P1 | Small PR/prompt | OSW-AUTO-060 should prepare `0.1.1rc1` and the `v0.1.1-rc1` local tag gate path without reusing or moving `v0.1.0`. |
+| Prepare the patch release candidate metadata and local tag. | P1 | Small PR/prompt | OSW-AUTO-060 prepares `0.1.1rc1` and may create local annotated `v0.1.1-rc1` only after merge, post-merge QA, and fresh source-install validation, without reusing or moving `v0.1.0`. |
 | Keep default `pytest -q` collection green with duplicate-basename QA. | P2 | Small QA maintenance | OSW-AUTO-047 resolves the known collision; future duplicate test basenames should fail fast through the QA helper. |
 | Keep docs link checker green as docs evolve. | P2 | Small QA maintenance | OSW-AUTO-048 resolves the missing checker placeholder; future docs edits should run `python tools/qa/check_docs_links.py`. |
 | Record optional executable smoke on machines that intentionally install `ccx`, OpenFOAM, Gmsh, Cantera, CoolProp, or GNU Octave. | P2 | Small evidence PR | Environment-specific evidence; do not make base release depend on it. |

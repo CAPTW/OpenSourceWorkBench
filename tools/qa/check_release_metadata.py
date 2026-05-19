@@ -53,10 +53,12 @@ class ReleaseTagPolicy:
     require_expected_rc_tag: bool = False
     allowed_prior_rc_tags: tuple[ReleaseTagExpectation, ...] = DEFAULT_PRIOR_RC_TAGS
     forbid_final_tag: bool = False
+    forbidden_final_tag: str | None = None
     expected_final_tag: str | None = None
     expected_final_target: str | None = None
     require_annotated_final_tag: bool = True
     require_expected_final_tag: bool = False
+    allowed_historical_final_tags: tuple[ReleaseTagExpectation, ...] = ()
 
 
 def _read(path: Path) -> str:
@@ -165,9 +167,19 @@ def _validate_release_tags(root: Path, policy: ReleaseTagPolicy) -> list[str]:
         return failures
 
     expected_final = policy.expected_final_tag
-    if FINAL_TAG in tags and (policy.forbid_final_tag or expected_final != FINAL_TAG):
+    historical_final_tags = {item.name for item in policy.allowed_historical_final_tags}
+    forbidden_final_tag = policy.forbidden_final_tag or (
+        FINAL_TAG if policy.forbid_final_tag else None
+    )
+    if forbidden_final_tag and forbidden_final_tag in tags:
         failures.append(
-            f"Final {FINAL_TAG} tag exists; final tag creation requires a separate release gate."
+            f"Final {forbidden_final_tag} tag exists; final tag creation requires "
+            "a separate release gate."
+        )
+    if FINAL_TAG in tags and FINAL_TAG not in historical_final_tags and expected_final != FINAL_TAG:
+        failures.append(
+            f"Final {FINAL_TAG} tag exists; final tag creation requires a separate "
+            "release gate."
         )
 
     expected = policy.expected_rc_tag
@@ -176,6 +188,7 @@ def _validate_release_tags(root: Path, policy: ReleaseTagPolicy) -> list[str]:
         prior_tags
         | ({expected} if expected else set())
         | ({expected_final} if expected_final else set())
+        | historical_final_tags
     )
     unexpected_tags = sorted(tag for tag in tags if tag not in allowed_tags)
     if unexpected_tags:
@@ -185,6 +198,17 @@ def _validate_release_tags(root: Path, policy: ReleaseTagPolicy) -> list[str]:
 
     for prior in policy.allowed_prior_rc_tags:
         failures.extend(_validate_known_tag(root, tags, prior, required=False))
+
+    for historical_final in policy.allowed_historical_final_tags:
+        failures.extend(
+            _validate_known_tag(
+                root,
+                tags,
+                historical_final,
+                required=True,
+                label="historical final",
+            )
+        )
 
     if expected:
         failures.extend(
@@ -334,6 +358,8 @@ def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
     )
     prior_tags = args.allowed_prior_rc_tag
     prior_targets = args.allowed_prior_rc_target
+    historical_final_tags = args.allowed_historical_final_tag
+    historical_final_targets = args.allowed_historical_final_target
     env_prior_tag = os.environ.get("OSW_RELEASE_ALLOWED_PRIOR_RC_TAG")
     env_prior_target = os.environ.get("OSW_RELEASE_ALLOWED_PRIOR_RC_TARGET")
     allowed_prior_rc_tags: tuple[ReleaseTagExpectation, ...]
@@ -349,6 +375,14 @@ def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
     else:
         allowed_prior_rc_tags = DEFAULT_PRIOR_RC_TAGS
 
+    allowed_historical_final_tags = tuple(
+        ReleaseTagExpectation(
+            tag,
+            historical_final_targets[index] if index < len(historical_final_targets) else None,
+        )
+        for index, tag in enumerate(historical_final_tags)
+    )
+
     return ReleaseTagPolicy(
         forbid_release_tags=forbid_release_tags,
         expected_rc_tag=expected_rc_tag,
@@ -357,10 +391,12 @@ def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
         require_expected_rc_tag=bool(args.expected_rc_tag),
         allowed_prior_rc_tags=allowed_prior_rc_tags,
         forbid_final_tag=bool(args.forbid_final_tag),
+        forbidden_final_tag=args.forbid_final_tag,
         expected_final_tag=expected_final_tag,
         expected_final_target=expected_final_target,
         require_annotated_final_tag=require_annotated_final,
         require_expected_final_tag=bool(args.expected_final_tag),
+        allowed_historical_final_tags=allowed_historical_final_tags,
     )
 
 
@@ -408,8 +444,22 @@ def main() -> int:
     )
     parser.add_argument(
         "--forbid-final-tag",
-        action="store_true",
-        help="final-prep mode: fail if local v0.1.0 already exists",
+        nargs="?",
+        const=FINAL_TAG,
+        default=None,
+        help="final-prep mode: fail if the named final tag exists; defaults to v0.1.0",
+    )
+    parser.add_argument(
+        "--allowed-historical-final-tag",
+        action="append",
+        default=[],
+        help="local historical final tag allowed as release evidence",
+    )
+    parser.add_argument(
+        "--allowed-historical-final-target",
+        action="append",
+        default=[],
+        help="expected peeled commit for the allowed historical final tag",
     )
     parser.add_argument(
         "--expected-final-tag",
@@ -431,6 +481,16 @@ def main() -> int:
         parser.error("--allowed-prior-rc-tag and --allowed-prior-rc-target must be paired")
     if args.allowed_prior_rc_target and not args.allowed_prior_rc_tag:
         parser.error("--allowed-prior-rc-target requires --allowed-prior-rc-tag")
+    if args.allowed_historical_final_tag and (
+        len(args.allowed_historical_final_tag) != len(args.allowed_historical_final_target)
+    ):
+        parser.error(
+            "--allowed-historical-final-tag and --allowed-historical-final-target must be paired"
+        )
+    if args.allowed_historical_final_target and not args.allowed_historical_final_tag:
+        parser.error(
+            "--allowed-historical-final-target requires --allowed-historical-final-tag"
+        )
 
     root = repo_root()
     failures = check_release_metadata(

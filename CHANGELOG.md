@@ -4,6 +4,43 @@ All notable OpenSolver Workbench changes are summarized here for release
 review. OSW follows source-first release evidence; public tags are created only
 by a dedicated release/tag gate.
 
+## 0.1.1rc1 - Patch Release Candidate
+
+Release candidate package version: `0.1.1rc1`
+
+Planned local release-candidate tag: `v0.1.1-rc1`
+
+This patch release candidate follows the source-install recovery path selected
+in OSW-AUTO-059. The existing local annotated `v0.1.0` tag remains historical
+local-only evidence at `da8728adf679314442755ed781c1dd57d1c6ed27` and must not
+be published as the current release. `v0.1.1-rc1` is local-only unless a later
+explicit maintainer push gate approves the exact tag.
+
+No final `v0.1.1` tag, public tag push, release artifact build, external solver
+binary bundle, remote push gate, or public announcement is created by this
+release-candidate prep.
+
+### Fixed Blocker Summary
+
+- OSW-AUTO-057 fixed the isolated source-run blockers found after the local
+  `v0.1.0` tag was created, including Ruff UP042 enum issues and subprocess
+  PATH stabilization for QA tests.
+- OSW-AUTO-058 verified a fresh source-install retest with ruff, default
+  pytest, importlib pytest, fast QA, pre-merge QA, docs link checking, duplicate
+  basename checking, and GUI offscreen launch passing with no P0/P1 blockers.
+- OSW-AUTO-060 updates package metadata and release checks for the
+  `0.1.1rc1` patch candidate without moving or publishing historical tags.
+
+### Known Limitations
+
+- Optional external solver executables remain environment-specific and are not
+  bundled by default.
+- GUI live interaction depth remains environment-specific even though offscreen
+  launch smoke passed in source-install retest.
+- External URL freshness remains out of scope for the local-only docs checker.
+- Final `v0.1.1` remains blocked until a later final release gate.
+- Public push remains blocked until an explicit maintainer gate.
+
 ## 0.1.0 - Final Metadata Prepared
 
 Final package version: `0.1.0`

@@ -285,3 +285,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   `v0.1.0` remains blocked. The next actionable release prompt is
   OSW-AUTO-060 to prepare `0.1.1rc1` metadata and the `v0.1.1-rc1` local tag
   gate path.
+
+## ADR-0019: Patch v0.1.1 RC1 Candidate After Source-Install Recovery
+
+- Status: Accepted
+- Date: 2026-05-19
+- Context: OSW-AUTO-059 selected the safe patch-release path after OSW-AUTO-058
+  verified the OSW-AUTO-057 source-install fixes with no P0/P1 blockers. The
+  local annotated `v0.1.0` tag remains historical evidence at
+  `da8728adf679314442755ed781c1dd57d1c6ed27`; current `develop` must move
+  forward through a new release-candidate version instead of moving or
+  publishing that historical tag.
+- Decision: Prepare patch release-candidate metadata as package version
+  `0.1.1rc1` with local tag name `v0.1.1-rc1`. The RC tag may be created only
+  after merge, post-merge QA, fresh source-install validation, historical tag
+  preservation checks, and release metadata validation pass. Final `v0.1.1`
+  remains deferred to a later final release gate.
+- Consequences: `v0.1.0`, `v0.1.0-rc1`, `v0.1.0-rc2`, and `v0.1.0-rc3` remain
+  immutable local historical evidence. Public push, final `v0.1.1` tag
+  creation, release artifacts, and public announcement remain blocked until
+  separate maintainer-controlled gates.
