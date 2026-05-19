@@ -131,10 +131,10 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Date: 2026-05-14
 - Context: OSW needs PEP 440 package versions and human-readable Git tag names
   without creating a release tag during metadata finalization.
-- Decision: Use PEP 440 release-candidate versions such as `0.1.0rc1` and
-  `0.1.0rc2` before final `0.1.0`. Use Git tag names such as `v0.1.0-rc1`,
-  `v0.1.0-rc2`, and `v0.1.0` in dedicated release/tag prompts. No tag is
-  created by metadata or release notes prompts.
+- Decision: Use PEP 440 release-candidate versions such as `0.1.0rc1`,
+  `0.1.0rc2`, and `0.1.0rc3` before final `0.1.0`. Use Git tag names such as
+  `v0.1.0-rc1`, `v0.1.0-rc2`, `v0.1.0-rc3`, and `v0.1.0` in dedicated
+  release/tag prompts. No tag is created by metadata or release notes prompts.
 - Consequences: CLI/package metadata and release notes can describe the release
   candidate consistently while public tag creation remains controlled by a
   separate gate.
@@ -222,4 +222,22 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: Broken local docs links block QA. External URL freshness remains
   outside this local checker. Since this hardening commit advances `develop`
   after local rc2, `v0.1.0-rc2` stays historical local evidence; a current
-  pushable RC requires a later RC3 tag gate.
+  pushable RC requires the RC3 tag gate.
+
+## ADR-0016: RC3 Supersedes Local RC2 As Current Candidate
+
+- Status: Accepted
+- Date: 2026-05-19
+- Context: OSW-AUTO-047 fixed default `pytest -q` collection and
+  OSW-AUTO-048 added the local-only docs link checker after the local annotated
+  `v0.1.0-rc2` tag was created. The rc1 and rc2 tags still provide useful
+  local release evidence, but neither represents current `develop` after those
+  hardening commits.
+- Decision: OSW-AUTO-049 updates package metadata to `0.1.0rc3`, preserves
+  `v0.1.0-rc1` and `v0.1.0-rc2` unchanged as historical local-only evidence,
+  and controls local annotated `v0.1.0-rc3` creation only after merge,
+  post-merge pre-tag QA, prior-RC verification, docs-link QA, duplicate
+  basename QA, and default pytest pass.
+- Consequences: rc3 becomes the current local release candidate if the gate
+  passes. Any tag push, final `v0.1.0` tag, release artifact, remote push gate,
+  or public announcement remains a separate maintainer-controlled gate.

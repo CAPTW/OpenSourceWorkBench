@@ -46,10 +46,11 @@ release tag planning is tracked in the
 
 ## Release Candidate Status
 
-The current release-candidate package version is `0.1.0rc2`. Local rc1 remains
-historical release evidence and must not be pushed as the current RC. Public
-tag push and release announcement are handled by separate maintainer-controlled
-gates; this source tree does not bundle external solver binaries by default.
+The current release-candidate package version is `0.1.0rc3`. Local rc1 and rc2
+remain historical release evidence and must not be pushed as the current RC.
+Public tag push and release announcement are handled by separate
+maintainer-controlled gates; this source tree does not bundle external solver
+binaries by default.
 
 OSW v0.1 is educational and research oriented. It is not industrial certified,
 does not replace expert engineering judgment, and does not guarantee that

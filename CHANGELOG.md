@@ -4,6 +4,44 @@ All notable OpenSolver Workbench changes are summarized here for release
 review. OSW follows source-first release evidence; public tags are created only
 by a dedicated release/tag gate.
 
+## 0.1.0rc3 - Draft
+
+Release candidate package version: `0.1.0rc3`
+
+Planned local release-candidate tag: `v0.1.0-rc3`
+
+RC3 is the current local release-candidate target for `develop` after the
+post-RC2 hardening work in OSW-AUTO-047 and OSW-AUTO-048. Local annotated
+`v0.1.0-rc1` remains historical evidence at
+`29c5c8bec8df30c7f7be72fc9be5e5409794968e`; local annotated `v0.1.0-rc2`
+remains historical evidence at
+`684dc6138d4257564bbcdd176a9d5ed311a7316d` and is no longer current
+`develop` after OSW-AUTO-047/048. Neither prior RC tag should be pushed as the
+current RC.
+
+No public tag push, final `v0.1.0` tag, release artifact build, external solver
+binary bundle, remote push gate, or public announcement is created by this
+release-notes update.
+
+### Highlights
+
+- Package and CLI version metadata move from `0.1.0rc2` to `0.1.0rc3`.
+- Release metadata QA accepts prior local rc1 and rc2 evidence while validating
+  an expected annotated rc3 tag after the local tag gate.
+- Default `pytest -q` collection remains fixed by OSW-AUTO-047 through unique
+  test basenames and duplicate-basename QA.
+- Documentation link checking is implemented by OSW-AUTO-048 and remains
+  local-only/no-network by default. External URL freshness is intentionally out
+  of scope for that checker.
+
+### Known Limitations
+
+- OSW v0.1 remains educational and research oriented, with unchanged
+  out-of-scope boundaries recorded in `docs/known_limitations.md`.
+- Optional external solvers and tools are not bundled by default.
+- Final `v0.1.0`, public tag push, release artifacts, and public announcement
+  remain blocked until separate maintainer-controlled gates.
+
 ## 0.1.0rc2 - Draft
 
 Release candidate package version: `0.1.0rc2`

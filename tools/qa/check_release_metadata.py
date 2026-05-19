@@ -13,11 +13,13 @@ from pathlib import Path
 
 from _common import repo_root
 
-TARGET_VERSION = "0.1.0rc2"
+TARGET_VERSION = "0.1.0rc3"
 TARGET_LICENSE = "GPL-3.0-or-later"
-DEFAULT_RC_TAG = "v0.1.0-rc2"
-DEFAULT_PRIOR_RC_TAG = "v0.1.0-rc1"
-DEFAULT_PRIOR_RC_TARGET = "29c5c8bec8df30c7f7be72fc9be5e5409794968e"
+DEFAULT_RC_TAG = "v0.1.0-rc3"
+DEFAULT_PRIOR_RC1_TAG = "v0.1.0-rc1"
+DEFAULT_PRIOR_RC1_TARGET = "29c5c8bec8df30c7f7be72fc9be5e5409794968e"
+DEFAULT_PRIOR_RC2_TAG = "v0.1.0-rc2"
+DEFAULT_PRIOR_RC2_TARGET = "684dc6138d4257564bbcdd176a9d5ed311a7316d"
 FINAL_TAG = "v0.1.0"
 RELEASE_TAG_PATTERN = "v0.1*"
 
@@ -31,6 +33,12 @@ class ReleaseTagExpectation:
     require_annotated: bool = True
 
 
+DEFAULT_PRIOR_RC_TAGS = (
+    ReleaseTagExpectation(DEFAULT_PRIOR_RC1_TAG, DEFAULT_PRIOR_RC1_TARGET),
+    ReleaseTagExpectation(DEFAULT_PRIOR_RC2_TAG, DEFAULT_PRIOR_RC2_TARGET),
+)
+
+
 @dataclass(frozen=True)
 class ReleaseTagPolicy:
     """Release tag validation policy for pre-tag and RC-aware gates."""
@@ -40,9 +48,7 @@ class ReleaseTagPolicy:
     expected_rc_target: str | None = None
     require_annotated_rc_tag: bool = True
     require_expected_rc_tag: bool = False
-    allowed_prior_rc_tags: tuple[ReleaseTagExpectation, ...] = (
-        ReleaseTagExpectation(DEFAULT_PRIOR_RC_TAG, DEFAULT_PRIOR_RC_TARGET),
-    )
+    allowed_prior_rc_tags: tuple[ReleaseTagExpectation, ...] = DEFAULT_PRIOR_RC_TAGS
 
 
 def _read(path: Path) -> str:
@@ -281,17 +287,22 @@ def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
     require_annotated = bool(args.require_annotated_rc_tag) or _truthy_env(
         "OSW_RELEASE_REQUIRE_ANNOTATED_RC_TAG"
     )
-    allowed_prior_rc_tags: list[ReleaseTagExpectation] = []
-    prior_tag = args.allowed_prior_rc_tag or os.environ.get("OSW_RELEASE_ALLOWED_PRIOR_RC_TAG")
-    prior_target = args.allowed_prior_rc_target or os.environ.get(
-        "OSW_RELEASE_ALLOWED_PRIOR_RC_TARGET"
-    )
-    if prior_tag:
-        allowed_prior_rc_tags.append(ReleaseTagExpectation(prior_tag, prior_target))
-    elif DEFAULT_PRIOR_RC_TAG:
-        allowed_prior_rc_tags.append(
-            ReleaseTagExpectation(DEFAULT_PRIOR_RC_TAG, DEFAULT_PRIOR_RC_TARGET)
+    prior_tags = args.allowed_prior_rc_tag
+    prior_targets = args.allowed_prior_rc_target
+    env_prior_tag = os.environ.get("OSW_RELEASE_ALLOWED_PRIOR_RC_TAG")
+    env_prior_target = os.environ.get("OSW_RELEASE_ALLOWED_PRIOR_RC_TARGET")
+    allowed_prior_rc_tags: tuple[ReleaseTagExpectation, ...]
+    if prior_tags:
+        allowed_prior_rc_tags = tuple(
+            ReleaseTagExpectation(tag, prior_targets[index] if index < len(prior_targets) else None)
+            for index, tag in enumerate(prior_tags)
         )
+    elif env_prior_tag:
+        allowed_prior_rc_tags = (
+            ReleaseTagExpectation(env_prior_tag, env_prior_target),
+        )
+    else:
+        allowed_prior_rc_tags = DEFAULT_PRIOR_RC_TAGS
 
     return ReleaseTagPolicy(
         forbid_release_tags=forbid_release_tags,
@@ -299,7 +310,7 @@ def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
         expected_rc_target=expected_rc_target,
         require_annotated_rc_tag=require_annotated or expected_rc_tag == DEFAULT_RC_TAG,
         require_expected_rc_tag=bool(args.expected_rc_tag),
-        allowed_prior_rc_tags=tuple(allowed_prior_rc_tags),
+        allowed_prior_rc_tags=allowed_prior_rc_tags,
     )
 
 
@@ -330,10 +341,14 @@ def main() -> int:
     )
     parser.add_argument(
         "--allowed-prior-rc-tag",
+        action="append",
+        default=[],
         help="local historical RC tag allowed as release evidence",
     )
     parser.add_argument(
         "--allowed-prior-rc-target",
+        action="append",
+        default=[],
         help="expected peeled commit for the allowed prior RC tag",
     )
     parser.add_argument(
@@ -342,6 +357,12 @@ def main() -> int:
         help="require the expected RC tag to be an annotated tag object",
     )
     args = parser.parse_args()
+    if args.allowed_prior_rc_tag and (
+        len(args.allowed_prior_rc_tag) != len(args.allowed_prior_rc_target)
+    ):
+        parser.error("--allowed-prior-rc-tag and --allowed-prior-rc-target must be paired")
+    if args.allowed_prior_rc_target and not args.allowed_prior_rc_tag:
+        parser.error("--allowed-prior-rc-target requires --allowed-prior-rc-tag")
 
     root = repo_root()
     failures = check_release_metadata(
