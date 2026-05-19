@@ -305,3 +305,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   immutable local historical evidence. Public push, final `v0.1.1` tag
   creation, release artifacts, and public announcement remain blocked until
   separate maintainer-controlled gates.
+
+## ADR-0020: Patch RC1 Readiness Wording Cleanup
+
+- Status: Accepted
+- Date: 2026-05-19
+- Context: OSW-AUTO-060 created local annotated `v0.1.1-rc1` at
+  `da1a2c9e2d27674dc4bb85a2800138170c4c4dec` after release metadata checks,
+  post-merge QA, and fresh source-install validation passed. OSW-AUTO-061
+  verified the tag, package version `0.1.1rc1`, source license metadata,
+  default/importlib pytest, ruff, fast QA, pre-merge QA, and source-install
+  evidence, but found stale release checklist rows that still described the
+  completed RC1 local tag gate as pending.
+- Decision: OSW-AUTO-061A corrects release readiness documentation only. It
+  marks local `v0.1.1-rc1` creation and verification as PASS, keeps final
+  `v0.1.1`, public push, and public announcement blocked, and does not change
+  package version, source code, tests, or any tag.
+- Consequences: This docs-only merge can advance `develop` beyond the
+  `v0.1.1-rc1` tag. Final prep may proceed from docs-clean `develop` only if the
+  maintainer accepts this post-RC documentation delta; if exact final-from-current
+  RC identity is required, a later dedicated `v0.1.1-rc2` gate should create the
+  next current release-candidate tag.
