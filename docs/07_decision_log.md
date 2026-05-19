@@ -326,3 +326,22 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   maintainer accepts this post-RC documentation delta; if exact final-from-current
   RC identity is required, a later dedicated `v0.1.1-rc2` gate should create the
   next current release-candidate tag.
+
+## ADR-0021: Patch v0.1.1 Final Prep From Docs-Clean Develop
+
+- Status: Accepted
+- Date: 2026-05-19
+- Context: OSW-AUTO-060 created local annotated `v0.1.1-rc1` at
+  `da1a2c9e2d27674dc4bb85a2800138170c4c4dec` after source-install validation
+  and local QA passed. OSW-AUTO-061A then advanced `develop` only with
+  docs/readiness cleanup at `eeac576cc830cf75038127b1fb5d1c178b8b0d6e`. No
+  code, version, or tag changed in that cleanup.
+- Decision: The maintainer accepts the docs-only post-RC delta for final prep.
+  OSW-AUTO-062 prepares final package metadata as `0.1.1`, final release notes,
+  final-prep release metadata checks, and final tag gate routing. It preserves
+  `v0.1.0`, `v0.1.0-rc1`, `v0.1.0-rc2`, `v0.1.0-rc3`, and `v0.1.1-rc1`
+  unchanged and does not create final `v0.1.1`.
+- Consequences: Final local `v0.1.1` tag creation remains deferred to
+  OSW-AUTO-063. Public push, release artifacts, external solver binary bundles,
+  and public announcements remain blocked until separate maintainer-controlled
+  gates.

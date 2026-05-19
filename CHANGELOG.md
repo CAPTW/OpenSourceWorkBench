@@ -4,11 +4,50 @@ All notable OpenSolver Workbench changes are summarized here for release
 review. OSW follows source-first release evidence; public tags are created only
 by a dedicated release/tag gate.
 
+## 0.1.1 - Final Metadata Prepared
+
+Final package version: `0.1.1`
+
+Planned final local tag: `v0.1.1`
+
+Final v0.1.1 metadata is prepared after the patch RC1 recovery path passed local
+QA and source-install validation. The final `v0.1.1` tag is not created by this
+release-prep update; it remains pending a dedicated local tag gate. No public tag
+push, release artifact build, external solver binary bundle, remote push gate, or
+public announcement is created by this update.
+
+### Release Evidence
+
+- Historical local `v0.1.0` evidence remains preserved at
+  `da8728adf679314442755ed781c1dd57d1c6ed27` and must not be published as the
+  current release.
+- Local annotated `v0.1.1-rc1` evidence remains preserved at
+  `da1a2c9e2d27674dc4bb85a2800138170c4c4dec`; it was not pushed.
+- OSW-AUTO-061A was a docs/readiness cleanup only. The maintainer accepted that
+  docs-only post-RC delta for this final-prep path.
+- OSW-AUTO-057 fixed the isolated source-run blockers found after the local
+  `v0.1.0` tag was created, including Ruff UP042 enum issues and subprocess
+  PATH stabilization for QA tests.
+- OSW-AUTO-058 verified a fresh source-install retest with no P0/P1 blockers.
+- OSW-AUTO-060 verified `0.1.1rc1` source-install validation with ruff,
+  default/importlib pytest, fast QA, pre-merge QA, docs link checking, and
+  duplicate basename checking.
+
+### Known Limitations
+
+- Optional external solver executables remain environment-specific and are not
+  bundled by default.
+- GUI live interaction depth remains environment-specific; source-install
+  validation records dependency and offscreen/QA evidence, not a full manual GUI
+  UAT.
+- External URL freshness remains out of scope for the local-only docs checker.
+- Public push remains blocked until an explicit maintainer gate.
+
 ## 0.1.1rc1 - Patch Release Candidate
 
 Release candidate package version: `0.1.1rc1`
 
-Planned local release-candidate tag: `v0.1.1-rc1`
+Local release-candidate tag: `v0.1.1-rc1`
 
 This patch release candidate follows the source-install recovery path selected
 in OSW-AUTO-059. The existing local annotated `v0.1.0` tag remains historical

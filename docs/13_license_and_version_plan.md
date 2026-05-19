@@ -12,7 +12,7 @@ of third-party solver binaries.
 | Area | Current state | Release impact |
 | --- | --- | --- |
 | `LICENSE` | Present and replaced with the canonical GNU GPL version 3 text from a trusted local source: `D:\Program Files\Git\mingw64\share\licenses\xz\COPYING.GPLv3` (SHA-256 `3972DC9744F6499F0F9B2DBF76696F2AE7AD8AF9B23DDE66D6AF86C9DFB36986`). | Source license text is present. The "or later" grant is recorded in project metadata and release docs. |
-| `pyproject.toml` license metadata | Aligned to `GPL-3.0-or-later`; package version is `0.1.1rc1`. | Patch RC1 metadata and local `v0.1.1-rc1` tag evidence are verified; final `v0.1.1` remains pending. |
+| `pyproject.toml` license metadata | Aligned to `GPL-3.0-or-later`; package version is `0.1.1`. | Final v0.1.1 metadata is prepared; final `v0.1.1` tag remains pending a dedicated local tag gate. |
 | README license statement | Dedicated License and Release Candidate Status sections link this plan, known limitations, and third-party notices. | README is aligned with the maintainer decision. |
 | `docs/10_release_checklist.md` | License, pyproject metadata, README license section, release notes, and third-party notices are marked PASS when this step's checks pass. | Public tag and announcement remain blocked until the dedicated tag/release gate. |
 | `docs/09_risk_register.md` | Tracks license metadata drift, third-party notice review, external solver redistribution, and tag-control risks. | License decision risk is lowered; redistribution and tag risks remain monitored. |
@@ -116,8 +116,8 @@ Recommended package versions:
 | Historical release candidate | `0.1.0rc2` | Local-only rc2 evidence from OSW-AUTO-045/046. It is not current after OSW-AUTO-047/048. |
 | Historical release candidate | `0.1.0rc3` | Local-only rc3 evidence from OSW-AUTO-049/052. It is not current after final metadata prep advances `develop`. |
 | Historical local final evidence | `0.1.0` | Local `v0.1.0` evidence from OSW-AUTO-054. It is not publishable as current after OSW-AUTO-057 advanced `develop` with source-run fixes. |
-| Current patch release candidate | `0.1.1rc1` | Selected recovery path after OSW-AUTO-058 source-install retest passed; prepared by OSW-AUTO-060. |
-| Next patch final | `0.1.1` | Intended publishable patch release after the `0.1.1rc1` gate and feedback path pass. |
+| Historical patch release candidate | `0.1.1rc1` | Local `v0.1.1-rc1` evidence from OSW-AUTO-060. It remains preserved after the docs-only OSW-AUTO-061A cleanup and final metadata prep. |
+| Current patch final metadata | `0.1.1` | Prepared by OSW-AUTO-062 after maintainer accepted the docs-only post-RC delta. Final tag creation remains pending. |
 
 Recommended Git tag names:
 
@@ -127,8 +127,8 @@ Recommended Git tag names:
 | Historical release candidate | `v0.1.0-rc2` |
 | Historical release candidate | `v0.1.0-rc3` |
 | Historical local final evidence | `v0.1.0` |
-| Current patch release candidate | `v0.1.1-rc1` |
-| Next patch final | `v0.1.1` |
+| Historical patch release candidate | `v0.1.1-rc1` |
+| Pending patch final | `v0.1.1` |
 
 The package version and Git tag do not have to use identical syntax. Package
 metadata should follow PEP 440; Git tags may use the common `v` prefix and a
@@ -146,10 +146,12 @@ hyphenated release-candidate suffix.
 - Local `v0.1.0` remains historical local evidence after OSW-AUTO-056 found
   source-install blockers and OSW-AUTO-057 advanced `develop`; it must not be
   moved, retargeted, deleted, recreated, overwritten, or published as current.
-- The current patch release-candidate path is `v0.1.1-rc1` followed by
-  `v0.1.1`; OSW-AUTO-060 created local annotated `v0.1.1-rc1` only after merge,
+- The patch release-candidate path is `v0.1.1-rc1` followed by `v0.1.1`;
+  OSW-AUTO-060 created local annotated `v0.1.1-rc1` only after merge,
   post-merge QA, source-install validation, and tag preservation checks passed.
-- Final `v0.1.1` remains blocked until a later dedicated final release gate.
+- OSW-AUTO-062 prepares final package metadata as `0.1.1` after the maintainer
+  accepted the docs-only post-RC delta from OSW-AUTO-061A.
+- Final `v0.1.1` remains blocked until a later dedicated final local tag gate.
 - Tag creation is allowed only after release checklist P1 blockers are cleared
   by a dedicated release/tag gate.
 - Tag creation should happen in a dedicated release/tag prompt.
@@ -302,3 +304,20 @@ tag, changes no package version, and does not push. After this docs-only merge,
 `develop` only if the maintainer accepts the post-RC documentation delta. If
 exact final-from-current-RC identity is required, a later dedicated
 `v0.1.1-rc2` gate should create the next current release-candidate tag.
+
+## OSW-AUTO-062 Patch v0.1.1 Final Metadata Prep
+
+The maintainer accepted the OSW-AUTO-061A docs-only post-RC delta for final
+prep. OSW-AUTO-062 prepares final package metadata as `0.1.1` and keeps
+historical local evidence unchanged:
+
+- historical `v0.1.0` remains at `da8728adf679314442755ed781c1dd57d1c6ed27`
+  and must not be moved, retargeted, pushed, or published as current;
+- local `v0.1.1-rc1` remains at
+  `da1a2c9e2d27674dc4bb85a2800138170c4c4dec` and must not be moved,
+  retargeted, pushed, or published as current;
+- final `v0.1.1` tag creation is deferred to
+  OSW-AUTO-063_PATCH_V0_1_1_FINAL_LOCAL_TAG_GATE.
+
+This prompt creates no final tag, no RC tag, no release artifact, no public
+announcement, and no push.
