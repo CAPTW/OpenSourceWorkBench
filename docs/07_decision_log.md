@@ -398,3 +398,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   prepares `0.1.2rc1`. Public publish of the existing `v0.1.1` tag remains
   blocked. Existing `v0.1.0`, `v0.1.0-rc1`, `v0.1.0-rc2`, `v0.1.0-rc3`,
   `v0.1.1-rc1`, and `v0.1.1` remain immutable local historical evidence.
+
+## ADR-0024: Patch v0.1.2 RC1 Candidate After GUI Workflow Recovery
+
+- Status: Accepted
+- Date: 2026-05-21
+- Context: OSW-AUTO-069 selected the safe patch-release recovery path after
+  OSW-AUTO-067 advanced `develop` beyond the local `v0.1.1` tag with GUI
+  workflow glue and OSW-AUTO-068 retested the result as `PASS_WITH_LIMITATIONS`
+  with no P0/P1 blockers. The local `v0.1.1` final tag remains annotated at
+  `7b232f5003fcc8eb207846570499ffb3442d3197`; `v0.1.1-rc1` remains at
+  `da1a2c9e2d27674dc4bb85a2800138170c4c4dec`; historical `v0.1.0` remains at
+  `da8728adf679314442755ed781c1dd57d1c6ed27`.
+- Decision: OSW-AUTO-070 prepares package metadata as `0.1.2rc1`, release notes,
+  release metadata checker coverage, source-install evidence, and compact GUI
+  workflow smoke evidence for the next local RC tag `v0.1.2-rc1`. Historical
+  `v0.1.0`, `v0.1.0-rc1`, `v0.1.0-rc2`, `v0.1.0-rc3`, `v0.1.1-rc1`, and
+  `v0.1.1` must not be moved, recreated, retargeted, overwritten, deleted, or
+  pushed.
+- Consequences: The current local patch candidate is `0.1.2rc1` /
+  `v0.1.2-rc1`. Final `0.1.2` / `v0.1.2`, public push, release artifacts,
+  external solver binary bundles, and public announcements remain blocked until
+  later dedicated maintainer gates.

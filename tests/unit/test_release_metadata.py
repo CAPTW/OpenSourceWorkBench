@@ -23,6 +23,8 @@ CURRENT_RC3_TARGET = PRIOR_RC3_TARGET
 FINAL_TARGET = "1111111111111111111111111111111111111111"
 PATCH_RC1_TARGET = "2222222222222222222222222222222222222222"
 PATCH_FINAL_TARGET = "3333333333333333333333333333333333333333"
+PATCH_V012_RC1_TARGET = "4444444444444444444444444444444444444444"
+PATCH_V012_FINAL_TARGET = "5555555555555555555555555555555555555555"
 ZERO_TARGET = "0000000000000000000000000000000000000000"
 
 
@@ -36,6 +38,8 @@ def _minimal_release_tree(root: Path, *, version: str = "0.1.0rc3") -> None:
         "0.1.0": "v0.1.0",
         "0.1.1rc1": "v0.1.1-rc1",
         "0.1.1": "v0.1.1",
+        "0.1.2rc1": "v0.1.2-rc1",
+        "0.1.2": "v0.1.2",
     }
     tag = tag_by_version.get(version, "v0.1.0-rc3")
     _write(
@@ -194,6 +198,46 @@ def _patch_final_tag_policy(*, final_target: str | None = PATCH_FINAL_TARGET) ->
         ),
         allowed_historical_final_tags=(
             ReleaseTagExpectation("v0.1.0", FINAL_TARGET),
+        ),
+    )
+
+
+def _patch_v012_rc1_prep_policy() -> ReleaseTagPolicy:
+    return ReleaseTagPolicy(
+        expected_rc_tag=None,
+        forbidden_final_tag="v0.1.2",
+        allowed_prior_rc_tags=(
+            ReleaseTagExpectation("v0.1.0-rc1", PRIOR_RC1_TARGET),
+            ReleaseTagExpectation("v0.1.0-rc2", PRIOR_RC2_TARGET),
+            ReleaseTagExpectation("v0.1.0-rc3", PRIOR_RC3_TARGET),
+            ReleaseTagExpectation("v0.1.1-rc1", PATCH_RC1_TARGET),
+        ),
+        allowed_historical_final_tags=(
+            ReleaseTagExpectation("v0.1.0", FINAL_TARGET),
+            ReleaseTagExpectation("v0.1.1", PATCH_FINAL_TARGET),
+        ),
+    )
+
+
+def _patch_v012_rc1_tag_policy(
+    *,
+    rc_target: str | None = PATCH_V012_RC1_TARGET,
+) -> ReleaseTagPolicy:
+    return ReleaseTagPolicy(
+        expected_rc_tag="v0.1.2-rc1",
+        expected_rc_target=rc_target,
+        require_annotated_rc_tag=True,
+        require_expected_rc_tag=True,
+        forbidden_final_tag="v0.1.2",
+        allowed_prior_rc_tags=(
+            ReleaseTagExpectation("v0.1.0-rc1", PRIOR_RC1_TARGET),
+            ReleaseTagExpectation("v0.1.0-rc2", PRIOR_RC2_TARGET),
+            ReleaseTagExpectation("v0.1.0-rc3", PRIOR_RC3_TARGET),
+            ReleaseTagExpectation("v0.1.1-rc1", PATCH_RC1_TARGET),
+        ),
+        allowed_historical_final_tags=(
+            ReleaseTagExpectation("v0.1.0", FINAL_TARGET),
+            ReleaseTagExpectation("v0.1.1", PATCH_FINAL_TARGET),
         ),
     )
 
@@ -1214,6 +1258,357 @@ def test_patch_final_unexpected_v0_1_1_tag_is_rejected(
 
     assert any(
         "Unexpected local v0.1* Git tags exist: v0.1.1-rc2" in failure
+        for failure in failures
+    )
+
+
+def test_patch_v012_rc1_metadata_accepts_multiple_historical_final_tags(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.2rc1")
+    _mock_git_tags(
+        monkeypatch,
+        tags=[
+            "v0.1.0-rc1",
+            "v0.1.0-rc2",
+            "v0.1.0-rc3",
+            "v0.1.0",
+            "v0.1.1-rc1",
+            "v0.1.1",
+        ],
+        tag_types={
+            "v0.1.0-rc1": "tag",
+            "v0.1.0-rc2": "tag",
+            "v0.1.0-rc3": "tag",
+            "v0.1.0": "tag",
+            "v0.1.1-rc1": "tag",
+            "v0.1.1": "tag",
+        },
+        commits={
+            "v0.1.0-rc1": PRIOR_RC1_TARGET,
+            "v0.1.0-rc2": PRIOR_RC2_TARGET,
+            "v0.1.0-rc3": PRIOR_RC3_TARGET,
+            "v0.1.0": FINAL_TARGET,
+            "v0.1.1-rc1": PATCH_RC1_TARGET,
+            "v0.1.1": PATCH_FINAL_TARGET,
+        },
+    )
+
+    assert (
+        check_release_metadata(
+            tmp_path,
+            expected_version="0.1.2rc1",
+            tag_policy=_patch_v012_rc1_prep_policy(),
+        )
+        == []
+    )
+
+
+def test_patch_v012_rc1_historical_v011_wrong_target_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.2rc1")
+    _mock_git_tags(
+        monkeypatch,
+        tags=[
+            "v0.1.0-rc1",
+            "v0.1.0-rc2",
+            "v0.1.0-rc3",
+            "v0.1.0",
+            "v0.1.1-rc1",
+            "v0.1.1",
+        ],
+        tag_types={
+            "v0.1.0-rc1": "tag",
+            "v0.1.0-rc2": "tag",
+            "v0.1.0-rc3": "tag",
+            "v0.1.0": "tag",
+            "v0.1.1-rc1": "tag",
+            "v0.1.1": "tag",
+        },
+        commits={
+            "v0.1.0-rc1": PRIOR_RC1_TARGET,
+            "v0.1.0-rc2": PRIOR_RC2_TARGET,
+            "v0.1.0-rc3": PRIOR_RC3_TARGET,
+            "v0.1.0": FINAL_TARGET,
+            "v0.1.1-rc1": PATCH_RC1_TARGET,
+            "v0.1.1": ZERO_TARGET,
+        },
+    )
+
+    failures = check_release_metadata(
+        tmp_path,
+        expected_version="0.1.2rc1",
+        tag_policy=_patch_v012_rc1_prep_policy(),
+    )
+
+    assert any(f"not {PATCH_FINAL_TARGET}" in failure for failure in failures)
+
+
+def test_patch_v012_rc1_prior_v011_rc1_wrong_target_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.2rc1")
+    _mock_git_tags(
+        monkeypatch,
+        tags=[
+            "v0.1.0-rc1",
+            "v0.1.0-rc2",
+            "v0.1.0-rc3",
+            "v0.1.0",
+            "v0.1.1-rc1",
+            "v0.1.1",
+        ],
+        tag_types={
+            "v0.1.0-rc1": "tag",
+            "v0.1.0-rc2": "tag",
+            "v0.1.0-rc3": "tag",
+            "v0.1.0": "tag",
+            "v0.1.1-rc1": "tag",
+            "v0.1.1": "tag",
+        },
+        commits={
+            "v0.1.0-rc1": PRIOR_RC1_TARGET,
+            "v0.1.0-rc2": PRIOR_RC2_TARGET,
+            "v0.1.0-rc3": PRIOR_RC3_TARGET,
+            "v0.1.0": FINAL_TARGET,
+            "v0.1.1-rc1": ZERO_TARGET,
+            "v0.1.1": PATCH_FINAL_TARGET,
+        },
+    )
+
+    failures = check_release_metadata(
+        tmp_path,
+        expected_version="0.1.2rc1",
+        tag_policy=_patch_v012_rc1_prep_policy(),
+    )
+
+    assert any(f"not {PATCH_RC1_TARGET}" in failure for failure in failures)
+
+
+def test_patch_v012_rc1_forbids_v0_1_2_final_tag(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.2rc1")
+    _mock_git_tags(
+        monkeypatch,
+        tags=[
+            "v0.1.0-rc1",
+            "v0.1.0-rc2",
+            "v0.1.0-rc3",
+            "v0.1.0",
+            "v0.1.1-rc1",
+            "v0.1.1",
+            "v0.1.2",
+        ],
+        tag_types={
+            "v0.1.0-rc1": "tag",
+            "v0.1.0-rc2": "tag",
+            "v0.1.0-rc3": "tag",
+            "v0.1.0": "tag",
+            "v0.1.1-rc1": "tag",
+            "v0.1.1": "tag",
+            "v0.1.2": "tag",
+        },
+        commits={
+            "v0.1.0-rc1": PRIOR_RC1_TARGET,
+            "v0.1.0-rc2": PRIOR_RC2_TARGET,
+            "v0.1.0-rc3": PRIOR_RC3_TARGET,
+            "v0.1.0": FINAL_TARGET,
+            "v0.1.1-rc1": PATCH_RC1_TARGET,
+            "v0.1.1": PATCH_FINAL_TARGET,
+            "v0.1.2": PATCH_V012_FINAL_TARGET,
+        },
+    )
+
+    failures = check_release_metadata(
+        tmp_path,
+        expected_version="0.1.2rc1",
+        tag_policy=_patch_v012_rc1_prep_policy(),
+    )
+
+    assert any("Final v0.1.2 tag exists" in failure for failure in failures)
+
+
+def test_expected_patch_v012_rc1_annotated_tag_passes_when_target_matches(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.2rc1")
+    _mock_git_tags(
+        monkeypatch,
+        tags=[
+            "v0.1.0-rc1",
+            "v0.1.0-rc2",
+            "v0.1.0-rc3",
+            "v0.1.0",
+            "v0.1.1-rc1",
+            "v0.1.1",
+            "v0.1.2-rc1",
+        ],
+        tag_types={
+            "v0.1.0-rc1": "tag",
+            "v0.1.0-rc2": "tag",
+            "v0.1.0-rc3": "tag",
+            "v0.1.0": "tag",
+            "v0.1.1-rc1": "tag",
+            "v0.1.1": "tag",
+            "v0.1.2-rc1": "tag",
+        },
+        commits={
+            "v0.1.0-rc1": PRIOR_RC1_TARGET,
+            "v0.1.0-rc2": PRIOR_RC2_TARGET,
+            "v0.1.0-rc3": PRIOR_RC3_TARGET,
+            "v0.1.0": FINAL_TARGET,
+            "v0.1.1-rc1": PATCH_RC1_TARGET,
+            "v0.1.1": PATCH_FINAL_TARGET,
+            "v0.1.2-rc1": PATCH_V012_RC1_TARGET,
+        },
+    )
+
+    assert (
+        check_release_metadata(
+            tmp_path,
+            expected_version="0.1.2rc1",
+            tag_policy=_patch_v012_rc1_tag_policy(),
+        )
+        == []
+    )
+
+
+def test_expected_patch_v012_rc1_wrong_target_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.2rc1")
+    _mock_git_tags(
+        monkeypatch,
+        tags=[
+            "v0.1.0-rc1",
+            "v0.1.0-rc2",
+            "v0.1.0-rc3",
+            "v0.1.0",
+            "v0.1.1-rc1",
+            "v0.1.1",
+            "v0.1.2-rc1",
+        ],
+        tag_types={
+            "v0.1.0-rc1": "tag",
+            "v0.1.0-rc2": "tag",
+            "v0.1.0-rc3": "tag",
+            "v0.1.0": "tag",
+            "v0.1.1-rc1": "tag",
+            "v0.1.1": "tag",
+            "v0.1.2-rc1": "tag",
+        },
+        commits={
+            "v0.1.0-rc1": PRIOR_RC1_TARGET,
+            "v0.1.0-rc2": PRIOR_RC2_TARGET,
+            "v0.1.0-rc3": PRIOR_RC3_TARGET,
+            "v0.1.0": FINAL_TARGET,
+            "v0.1.1-rc1": PATCH_RC1_TARGET,
+            "v0.1.1": PATCH_FINAL_TARGET,
+            "v0.1.2-rc1": ZERO_TARGET,
+        },
+    )
+
+    failures = check_release_metadata(
+        tmp_path,
+        expected_version="0.1.2rc1",
+        tag_policy=_patch_v012_rc1_tag_policy(),
+    )
+
+    assert any(f"not {PATCH_V012_RC1_TARGET}" in failure for failure in failures)
+
+
+def test_expected_patch_v012_rc1_lightweight_tag_fails_when_annotated_required(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.2rc1")
+    _mock_git_tags(
+        monkeypatch,
+        tags=[
+            "v0.1.0-rc1",
+            "v0.1.0-rc2",
+            "v0.1.0-rc3",
+            "v0.1.0",
+            "v0.1.1-rc1",
+            "v0.1.1",
+            "v0.1.2-rc1",
+        ],
+        tag_types={
+            "v0.1.0-rc1": "tag",
+            "v0.1.0-rc2": "tag",
+            "v0.1.0-rc3": "tag",
+            "v0.1.0": "tag",
+            "v0.1.1-rc1": "tag",
+            "v0.1.1": "tag",
+            "v0.1.2-rc1": "commit",
+        },
+        commits={
+            "v0.1.0-rc1": PRIOR_RC1_TARGET,
+            "v0.1.0-rc2": PRIOR_RC2_TARGET,
+            "v0.1.0-rc3": PRIOR_RC3_TARGET,
+            "v0.1.0": FINAL_TARGET,
+            "v0.1.1-rc1": PATCH_RC1_TARGET,
+            "v0.1.1": PATCH_FINAL_TARGET,
+            "v0.1.2-rc1": PATCH_V012_RC1_TARGET,
+        },
+    )
+
+    failures = check_release_metadata(
+        tmp_path,
+        expected_version="0.1.2rc1",
+        tag_policy=_patch_v012_rc1_tag_policy(),
+    )
+
+    assert any(
+        "Expected RC tag v0.1.2-rc1 is not an annotated tag object" in failure
+        for failure in failures
+    )
+
+
+def test_patch_v012_rc1_unexpected_v0_1_2_tag_is_rejected(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.2rc1")
+    _mock_git_tags(
+        monkeypatch,
+        tags=[
+            "v0.1.0-rc1",
+            "v0.1.0-rc2",
+            "v0.1.0-rc3",
+            "v0.1.0",
+            "v0.1.1-rc1",
+            "v0.1.1",
+            "v0.1.2-rc2",
+        ],
+        tag_types={
+            "v0.1.0-rc1": "tag",
+            "v0.1.0-rc2": "tag",
+            "v0.1.0-rc3": "tag",
+            "v0.1.0": "tag",
+            "v0.1.1-rc1": "tag",
+            "v0.1.1": "tag",
+            "v0.1.2-rc2": "tag",
+        },
+        commits={
+            "v0.1.0-rc1": PRIOR_RC1_TARGET,
+            "v0.1.0-rc2": PRIOR_RC2_TARGET,
+            "v0.1.0-rc3": PRIOR_RC3_TARGET,
+            "v0.1.0": FINAL_TARGET,
+            "v0.1.1-rc1": PATCH_RC1_TARGET,
+            "v0.1.1": PATCH_FINAL_TARGET,
+            "v0.1.2-rc2": PATCH_V012_RC1_TARGET,
+        },
+    )
+
+    failures = check_release_metadata(
+        tmp_path,
+        expected_version="0.1.2rc1",
+        tag_policy=_patch_v012_rc1_prep_policy(),
+    )
+
+    assert any(
+        "Unexpected local v0.1* Git tags exist: v0.1.2-rc2" in failure
         for failure in failures
     )
 

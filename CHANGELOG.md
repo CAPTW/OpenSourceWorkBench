@@ -6,13 +6,17 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
-### Release Version Recovery
+### Patch v0.1.2rc1 Release Candidate
 
-- OSW-AUTO-069 records the safe release recovery path after the GUI workflow
-  fix: preserve local `v0.1.1` as historical evidence and prepare
-  `0.1.2rc1` / `v0.1.2-rc1` in a later gate.
-- No `0.1.2` metadata, tag, release artifact, public push, or announcement is
-  created by this planning note.
+- OSW-AUTO-070 prepares package metadata for `0.1.2rc1` and the local
+  annotated `v0.1.2-rc1` release-candidate gate after OSW-AUTO-068 verified
+  the GUI workflow fix with no P0/P1 blockers.
+- The local `v0.1.1` final tag remains historical evidence at
+  `7b232f5003fcc8eb207846570499ffb3442d3197` and must not be published as
+  current after the post-tag GUI workflow fix.
+- `v0.1.2-rc1` is local-only unless a later explicit maintainer push gate
+  approves it. Final `0.1.2` / `v0.1.2`, release artifacts, public push, and
+  announcement remain blocked.
 
 ### GUI Workflow Glue
 
