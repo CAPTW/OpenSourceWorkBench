@@ -420,3 +420,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   `v0.1.2-rc1`. Final `0.1.2` / `v0.1.2`, public push, release artifacts,
   external solver binary bundles, and public announcements remain blocked until
   later dedicated maintainer gates.
+
+## ADR-0025: Patch v0.1.2 Final Metadata Prep After RC1 Triage
+
+- Status: Accepted
+- Date: 2026-05-21
+- Context: OSW-AUTO-070 prepared package metadata as `0.1.2rc1`, ran main
+  checkout QA, fresh source-install validation, compact GUI workflow validation,
+  and created local annotated `v0.1.2-rc1` at
+  `28b30c1f79d4c62d160629e96fc1fcefa2382ebe` with no push. OSW-AUTO-071
+  triaged RC1 as `NO_FEEDBACK_REPORTED` with no P0/P1 blockers. Remaining
+  risks are P2/P3: optional external solver live runs, manual desktop CUA
+  depth, Cantera 3.2 deprecation warning, packaging smoke, and external URL
+  freshness.
+- Decision: OSW-AUTO-072 prepares final package metadata as `0.1.2`, final
+  release notes, release metadata checker coverage, fresh source-install
+  evidence, and compact GUI workflow evidence. It must preserve historical
+  `v0.1.0`, `v0.1.1`, and current `v0.1.2-rc1` local evidence unchanged. It
+  must not create the final `v0.1.2` tag, create a new RC tag, push, build
+  release artifacts, or create a public announcement.
+- Consequences: Final local `v0.1.2` tag creation remains deferred to
+  OSW-AUTO-073. Public push, release artifacts, external solver binary bundles,
+  and public announcements remain blocked until later dedicated maintainer
+  gates.

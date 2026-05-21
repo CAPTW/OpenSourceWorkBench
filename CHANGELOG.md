@@ -6,6 +6,31 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Patch v0.1.2 Final Metadata Prepared
+
+Final package version: `0.1.2`
+
+Planned final local tag: `v0.1.2`
+
+- OSW-AUTO-072 prepares final `0.1.2` package metadata after the local
+  `v0.1.2-rc1` candidate and OSW-AUTO-071 triage reported no P0/P1 blockers.
+  This prompt does not create the final `v0.1.2` tag, push any branch or tag,
+  build release artifacts, or create a public announcement.
+- Local `v0.1.2-rc1` remains annotated evidence at
+  `28b30c1f79d4c62d160629e96fc1fcefa2382ebe` and was not pushed. The final
+  `v0.1.2` tag remains pending the dedicated local tag gate.
+- The local `v0.1.1` final tag remains historical local-only evidence at
+  `7b232f5003fcc8eb207846570499ffb3442d3197` and must not be published as
+  current after the OSW-AUTO-067 GUI workflow fix.
+- GUI workflow evidence remains based on OSW-AUTO-068 and OSW-AUTO-070: import
+  creates visible project items, Project Tree and Properties update,
+  Run/Generate uses `WorkbenchWorkflowSession`, and table/report state reflects
+  imported project data and diagnostics.
+- Known limitations remain P2/P3: optional external solver executables and
+  live runs are environment-specific, manual desktop CUA depth is limited,
+  Cantera 3.2 emits a deprecation warning, external URL freshness is outside the
+  local docs checker, and packaging smoke is separate.
+
 ### Patch v0.1.2rc1 Release Candidate
 
 - OSW-AUTO-070 prepares package metadata for `0.1.2rc1` and the local
