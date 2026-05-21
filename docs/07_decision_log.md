@@ -369,3 +369,32 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   evidence and must not be pushed as the current state after post-tag product
   changes. Public publish remains blocked pending a new version/release decision
   such as a later candidate or final gate.
+
+## ADR-0023: Patch v0.1.2 Recovery Path After GUI Workflow Retest
+
+- Status: Accepted
+- Date: 2026-05-21
+- Context: OSW-AUTO-063 created local annotated `v0.1.1` at
+  `7b232f5003fcc8eb207846570499ffb3442d3197` before the GUI workflow glue fix.
+  OSW-AUTO-064 parked that local final release with no remote publication.
+  OSW-AUTO-067 then improved GUI-native import, project tree, properties,
+  run/generate, table/result, and report glue on `develop` at
+  `a12812dab77e1d968223a30859a8fa91e2ef0e1d` without moving tags. OSW-AUTO-068
+  retested current `develop` and returned `PASS_WITH_LIMITATIONS` with no P0/P1
+  blockers: STL, VTU, `.m`, and `.mat` imports created visible project items;
+  selection updated type/status/path/diagnostics; Run/Generate produced
+  CalculiX, OpenFOAM, Gmsh, CHM, and M-script prepare or diagnostic items; and
+  report export included imported files, diagnostics, limitations, CalculiX, and
+  OpenFOAM state. The original development goal alignment is now much stronger
+  than OSW-AUTO-066, but `develop` is ahead of the local `v0.1.1` tag.
+- Decision: Preserve `v0.1.1` as historical local-only final evidence. Do not
+  move, retarget, recreate, overwrite, delete, push, or publish `v0.1.1` as the
+  current release after the post-tag GUI workflow fix. The selected safe
+  recovery path is a new patch sequence: package version `0.1.2rc1` with local
+  RC tag `v0.1.2-rc1`, followed later by package version `0.1.2` and final tag
+  `v0.1.2`. OSW-AUTO-069 records only this decision; it does not bump version,
+  create tags, build artifacts, or push.
+- Consequences: Current package metadata remains `0.1.1` until OSW-AUTO-070
+  prepares `0.1.2rc1`. Public publish of the existing `v0.1.1` tag remains
+  blocked. Existing `v0.1.0`, `v0.1.0-rc1`, `v0.1.0-rc2`, `v0.1.0-rc3`,
+  `v0.1.1-rc1`, and `v0.1.1` remain immutable local historical evidence.

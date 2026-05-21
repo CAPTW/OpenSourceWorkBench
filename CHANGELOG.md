@@ -6,6 +6,14 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Release Version Recovery
+
+- OSW-AUTO-069 records the safe release recovery path after the GUI workflow
+  fix: preserve local `v0.1.1` as historical evidence and prepare
+  `0.1.2rc1` / `v0.1.2-rc1` in a later gate.
+- No `0.1.2` metadata, tag, release artifact, public push, or announcement is
+  created by this planning note.
+
 ### GUI Workflow Glue
 
 - OSW-AUTO-067 improves the GUI-native Import -> Configure/Inspect ->

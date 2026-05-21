@@ -1,6 +1,6 @@
 # Release Checklist
 
-Release gate date: 2026-05-19
+Release gate date: 2026-05-21
 
 This checklist records v0.1 release readiness evidence for the educational and
 research OpenSolver Workbench prototype. It confirms documentation coverage,
@@ -24,10 +24,10 @@ or full solver parity.
 
 | Item | Status | Evidence / decision |
 | --- | --- | --- |
-| Release gate result | `PASS` | Patch final package metadata is prepared as `0.1.1`. The maintainer accepted the OSW-AUTO-061A docs-only post-RC delta for final prep, and final `v0.1.1` tag creation remains pending a dedicated local tag gate. |
+| Release gate result | `PASS` | Patch final package metadata remains `0.1.1`, but current `develop` is now ahead of the parked local `v0.1.1` tag after the OSW-AUTO-067 GUI workflow fix. OSW-AUTO-069 selects the safe next patch path `0.1.2rc1` / `v0.1.2-rc1` -> `0.1.2` / `v0.1.2`; no version bump or tag is created in this decision prompt. |
 | Scope discipline | `PASS` | README, [Known Limitations](known_limitations.md), tutorials, and this checklist describe OSW v0.1 as an educational/research prototype. |
 | External solver expectation | `PASS` | External solver executable checks are optional and local-environment dependent. Base install, CLI smoke, and unit tests do not require external solvers. |
-| Release version plan | `PASS` | [License and version plan](13_license_and_version_plan.md) defines final package version `0.1.1`, historical local tags `v0.1.0-rc1`, `v0.1.0-rc2`, `v0.1.0-rc3`, `v0.1.0`, and `v0.1.1-rc1`, and the pending final tag `v0.1.1`. |
+| Release version plan | `PASS` | [License and version plan](13_license_and_version_plan.md) defines current package metadata `0.1.1`, historical local tags `v0.1.0-rc1`, `v0.1.0-rc2`, `v0.1.0-rc3`, `v0.1.0`, `v0.1.1-rc1`, and `v0.1.1`, and the selected next patch path `0.1.2rc1` / `v0.1.2-rc1` -> `0.1.2` / `v0.1.2`. |
 | License final decision | `PASS` | Maintainer decision recorded as `GPL-3.0-or-later`; `LICENSE`, `pyproject.toml`, README, this checklist, and [license/version planning](13_license_and_version_plan.md) are aligned. |
 | RC1 local annotated tag | `PASS` | OSW-AUTO-043 created local annotated `v0.1.0-rc1` at commit `29c5c8bec8df30c7f7be72fc9be5e5409794968e`. OSW-AUTO-045 must preserve that tag unchanged. |
 | RC2 local annotated tag gate | `PASS` | OSW-AUTO-045 created local annotated `v0.1.0-rc2` at commit `684dc6138d4257564bbcdd176a9d5ed311a7316d`; OSW-AUTO-046 verified it in local feedback mode with no push. |
@@ -41,6 +41,9 @@ or full solver parity.
 | Patch final `v0.1.1` metadata prep | `PASS` | OSW-AUTO-062 prepares final package version `0.1.1`, final release notes, final-prep metadata checks, and final tag gate routing without creating a tag or pushing. |
 | Final `v0.1.1` local tag | `PASS` | OSW-AUTO-063 created local annotated `v0.1.1` at `7b232f5003fcc8eb207846570499ffb3442d3197`; OSW-AUTO-064 parked it locally with no remote publication. |
 | GUI workflow glue follow-up | `PASS` | OSW-AUTO-066 found the GUI workflow credible but partial. OSW-AUTO-067 wires GUI-native import, inspect, prepare/diagnostic, result/table, and report state without changing package version or tags. After merge, `develop` is ahead of local `v0.1.1` release evidence. |
+| GUI workflow UAT retest | `PASS_WITH_LIMITATIONS` | OSW-AUTO-068 retested current `develop` after OSW-AUTO-067 and found no P0/P1 blockers. STL, VTU, `.m`, and `.mat` imports created visible project items; properties, table/plot/result state, Run/Generate diagnostics, and report export all improved. Remaining external solver live runs, manual Computer Use depth, Cantera deprecation warning, and packaging smoke remain P2 follow-ups. |
+| Public `v0.1.1` publish after GUI fix | `P1 BLOCKED` | Current `develop` is ahead of the local `v0.1.1` tag. Preserve `v0.1.1` as historical local-only final evidence and do not publish it as the current release after post-tag product changes. |
+| Next patch candidate `0.1.2rc1` / `v0.1.2-rc1` | `PENDING` | Selected by OSW-AUTO-069 as the next publishable candidate path. OSW-AUTO-070 should prepare package metadata `0.1.2rc1` and the later local RC tag gate; this checklist update does not bump version or create a tag. |
 | Public tag push | `P1 BLOCKED` | Do not push `v0.1.0-rc1`, `v0.1.0-rc2`, `v0.1.0-rc3`, historical `v0.1.0`, local `v0.1.1-rc1`, or local `v0.1.1` unless a later explicit maintainer push/version gate approves the exact current release path. |
 | Public `v0.1.0` publish | `P1 BLOCKED` | Current `develop` is ahead of `v0.1.0`; do not publish the existing local `v0.1.0` tag as current. Use the selected patch release path instead. |
 | Public announcement | `P1 BLOCKED` | Do not announce public v0.1 until the local tag state is reviewed and the maintainer explicitly directs announcement work. |
@@ -62,6 +65,8 @@ or full solver parity.
 | REL-060-P1-001 | P1 | Patch RC1 local tag gate | `PASS` | OSW-AUTO-060 prepared package version `0.1.1rc1`, validated historical `v0.1.0`, ran fresh isolated source-install validation, and created local annotated `v0.1.1-rc1` at `da1a2c9e2d27674dc4bb85a2800138170c4c4dec` with no push. | Final prep may proceed from docs-clean `develop` only if the maintainer accepts this docs-only post-RC delta; otherwise use a later dedicated `v0.1.1-rc2` gate. |
 | REL-062-P1-001 | P1 | Patch final metadata prep | `PASS` | Maintainer accepted the docs-only post-RC delta, and OSW-AUTO-062 prepared final package version `0.1.1`, release metadata checks, final notes, and final tag gate routing. OSW-AUTO-063 later created the local final tag and OSW-AUTO-064 parked it locally. | Preserve local `v0.1.1` as release evidence; new post-tag product changes require a later version/release decision before any public publish. |
 | REL-067-P2-001 | P2 | GUI workflow glue | `PASS` | OSW-AUTO-066 classified the GUI end-to-end workflow as `PASS_WITH_LIMITATIONS`; OSW-AUTO-067 adds GUI import/project-tree/property, prepare/diagnostic, table/result, and report glue while keeping external solvers optional. | Public publish remains blocked pending a new release/version decision because this product fix advances `develop` beyond the parked local `v0.1.1` tag. |
+| REL-068-P2-001 | P2 | GUI workflow retest | `PASS_WITH_LIMITATIONS` | OSW-AUTO-068 verified the OSW-AUTO-067 GUI workflow improvement with no P0/P1 blockers and stronger original-goal alignment than OSW-AUTO-066. Remaining live external solver/manual CUA/packaging depth is environment-specific or out of this gate. | Accept the GUI retest evidence for the next patch path; keep public publish blocked until a new version/tag gate. |
+| REL-069-P1-001 | P1 | Version recovery after GUI fix | `PENDING` | OSW-AUTO-069 records that `v0.1.1` is historical local-only final evidence and selects `0.1.2rc1` / `v0.1.2-rc1` as the next candidate path. | Run OSW-AUTO-070 to prepare `0.1.2rc1` metadata; do not move or publish `v0.1.1` as current. |
 | REL-043-P1-002 | P1 | Public tag push | `P1 BLOCKED` | rc1 and rc2 are local-only historical evidence; rc3 is local-only unless a later push gate approves it. | Do not push tags unless a maintainer explicitly instructs the exact current RC tag after a fresh push gate. |
 | REL-043-P1-003 | P1 | Historical final release tag | `PASS` | `v0.1.0` exists locally as an annotated tag at `da8728adf679314442755ed781c1dd57d1c6ed27`, but current `develop` is ahead after OSW-AUTO-057. | Do not publish, move, or retag `v0.1.0`; use the patch release path for the next publishable candidate. |
 | REL-041-P1-002 | P1 | Public announcement | `P1 BLOCKED` | The project has a release metadata packet, but no public push or announcement approval. | Announce no public release until local tag state is reviewed and maintainer announcement direction is explicit. |
@@ -114,10 +119,11 @@ or full solver parity.
 | RC2 local annotated tag gate is defined. | `PASS` | OSW-AUTO-045 created local annotated `v0.1.0-rc2`; OSW-AUTO-046 verified object type `tag`, target commit `684dc6138d4257564bbcdd176a9d5ed311a7316d`, metadata, and local QA without pushing. |
 | RC3 local annotated tag gate is complete. | `PASS` | OSW-AUTO-049 created `v0.1.0-rc3`; OSW-AUTO-052 local UAT verified it as local historical evidence with no push. |
 | Final local annotated `v0.1.0` tag evidence is recorded. | `PASS` | OSW-AUTO-054 created local annotated `v0.1.0` at `da8728adf679314442755ed781c1dd57d1c6ed27`; OSW-AUTO-059 keeps it historical because `develop` is now ahead. |
-| Public tag push remains blocked until explicit maintainer approval. | `P1 BLOCKED` | A local tag is not a public release. Do not push rc1, rc2, rc3, historical `v0.1.0`, or patch RC1 from this prompt. |
+| Public tag push remains blocked until explicit maintainer approval. | `P1 BLOCKED` | A local tag is not a public release. Do not push rc1, rc2, rc3, historical `v0.1.0`, patch RC1, or local `v0.1.1` from this prompt. |
 | Patch release candidate gate is verified. | `PASS` | Local annotated `v0.1.1-rc1` exists at `da1a2c9e2d27674dc4bb85a2800138170c4c4dec`; OSW-AUTO-061 verified tag identity, package metadata, release metadata, ruff, default/importlib pytest, fast QA, pre-merge QA, and source-install evidence. |
 | Public release announcement remains blocked until explicit maintainer direction. | `P1 BLOCKED` | Announcements require local tag review, push approval, and explicit maintainer direction. |
 | GUI-native import/run/report glue is present after OSW-AUTO-067. | `PASS` | Import can add visible mesh/geometry/script/MAT preview items; Run/Generate prepares bounded workflows or dependency diagnostics; Report export includes current project state and warnings. |
+| GUI workflow retest is accepted for the next patch path. | `PASS_WITH_LIMITATIONS` | OSW-AUTO-068 verified GUI-native import/project-tree/properties/run-generate/table-report state and no P0/P1 blockers. Optional external solver live runs, manual Computer Use depth, external URL freshness, packaging smoke, and Cantera deprecation remain P2 follow-ups. |
 
 ## Documentation Checklist
 
@@ -201,21 +207,21 @@ or full solver parity.
 | Target `develop` worktree is clean before merge. | `PASS` | Required merge-gate condition; final status is recorded in the phase self-check and final response. |
 | Review score meets the threshold in `docs/06_review_protocol.md`. | `PASS` | Required before merge; score and decision are recorded in the phase review report. |
 | Required amend items are complete, if any. | `PASS` | OSW-AUTO-060 review determines whether an amend branch is needed; no broad feature fixes are allowed in this prompt. |
-| Squash merge uses the approved release/docs commit message. | `PASS` | Planned message: `chore(release): prepare final v0.1.1 metadata`. |
+| Squash merge uses the approved release/docs commit message. | `PASS` | Planned message for OSW-AUTO-069: `docs(release): select v0.1.2 path after GUI workflow fix`. |
 
 ## Final Sign-Off Checklist
 
 | Item | Status | Evidence / notes |
 | --- | --- | --- |
-| Target `develop` commit hash is recorded. | `PASS` | OSW-AUTO-060 patch RC1 target is `da1a2c9e2d27674dc4bb85a2800138170c4c4dec`; OSW-AUTO-061 verified `develop` and `v0.1.1-rc1` both pointed there before this docs-only cleanup. |
-| Patch RC1 target commit hash is recorded. | `PASS` | OSW-AUTO-060 created local annotated `v0.1.1-rc1` at `da1a2c9e2d27674dc4bb85a2800138170c4c4dec`; OSW-AUTO-061 verified `develop` still equaled that tag before this docs-only cleanup. |
+| Target `develop` commit hash is recorded. | `PASS` | OSW-AUTO-069 starts from current `develop` commit `a12812dab77e1d968223a30859a8fa91e2ef0e1d`, which is ahead of local `v0.1.1` after the GUI workflow fix. |
+| Patch RC1 target commit hash is recorded. | `PASS` | OSW-AUTO-060 created local annotated `v0.1.1-rc1` at `da1a2c9e2d27674dc4bb85a2800138170c4c4dec`; it remains preserved as historical local RC evidence. |
 | Source-install UAT retest is recorded. | `PASS` | OSW-AUTO-060 source-install evidence for `0.1.1rc1` passed after editable install with full extras/dev; ruff, default pytest, importlib pytest, fast QA, pre-merge QA, docs link checker, and duplicate basename checker passed. |
 | Local annotated `v0.1.0-rc1` tag verification is recorded. | `PASS` | Object type is `tag`, target commit is `29c5c8bec8df30c7f7be72fc9be5e5409794968e`, and no push occurred. |
 | Local annotated `v0.1.0-rc2` tag verification is recorded. | `PASS` | OSW-AUTO-046 verified object type `tag`, target commit `684dc6138d4257564bbcdd176a9d5ed311a7316d`, and no push. |
 | Local annotated `v0.1.0-rc3` tag verification is recorded. | `PASS` | Object type is `tag`, target commit is `dc7df75c53f0a4acb0a1ccf33d97c01ffdde4b16`, and no push occurred. |
 | Local annotated `v0.1.0` tag verification is recorded. | `PASS` | Object type is `tag`, target commit is `da8728adf679314442755ed781c1dd57d1c6ed27`, no push occurred, and the tag is historical local-only evidence after `develop` advanced. |
-| Local annotated `v0.1.1-rc1` tag verification is recorded. | `PASS` | Object type is `tag`, target commit is `da1a2c9e2d27674dc4bb85a2800138170c4c4dec`, no push occurred, and final `v0.1.1` remains absent. |
-| Final `v0.1.1` metadata prep is recorded. | `PASS` | OSW-AUTO-062 prepares package version `0.1.1`; final `v0.1.1` tag is still absent and deferred to OSW-AUTO-063. |
+| Local annotated `v0.1.1-rc1` tag verification is recorded. | `PASS` | Object type is `tag`, target commit is `da1a2c9e2d27674dc4bb85a2800138170c4c4dec`, no push occurred, and it remains historical local RC evidence. |
+| Final `v0.1.1` metadata and local tag evidence is recorded. | `PASS` | OSW-AUTO-062 prepared package version `0.1.1`; OSW-AUTO-063 created local annotated `v0.1.1` at `7b232f5003fcc8eb207846570499ffb3442d3197`; OSW-AUTO-064 parked it locally. After OSW-AUTO-067, `v0.1.1` remains historical local-only final evidence, not the current publish target. |
 | Validation matrix reflects implemented workflows. | `PASS` | Current matrix covers CAE, mesh, script, chemistry/property, and report validation. |
 | License decision is finalized before public release. | `PASS` | Maintainer decision is `GPL-3.0-or-later`; metadata and release docs are aligned. Public tag/announcement still require the dedicated release/tag gate. |
 
@@ -225,6 +231,7 @@ or full solver parity.
 | --- | --- | --- | --- |
 | Preserve local rc1/rc2/rc3 and `v0.1.0` historical evidence after source-run recovery. | P1 | Release prompt | OSW-AUTO-059 preserves all existing local tags unchanged; `v0.1.0` must not be moved or published as current after OSW-AUTO-057 advanced `develop`. |
 | Preserve the local final `v0.1.1` tag after post-release workflow fixes. | P1 | Release prompt | OSW-AUTO-063 created local annotated `v0.1.1`; OSW-AUTO-067 advances `develop` beyond that tag only for GUI workflow glue. A later version/release decision must choose the next publishable candidate. |
+| Prepare the next patch candidate after GUI workflow recovery. | P1 | Release prompt | OSW-AUTO-069 selects `0.1.2rc1` / `v0.1.2-rc1` as the next current candidate path. OSW-AUTO-070 should perform the actual version bump and RC1 preparation; this checklist does not create tags. |
 | Keep default `pytest -q` collection green with duplicate-basename QA. | P2 | Small QA maintenance | OSW-AUTO-047 resolves the known collision; future duplicate test basenames should fail fast through the QA helper. |
 | Keep docs link checker green as docs evolve. | P2 | Small QA maintenance | OSW-AUTO-048 resolves the missing checker placeholder; future docs edits should run `python tools/qa/check_docs_links.py`. |
 | Record optional executable smoke on machines that intentionally install `ccx`, OpenFOAM, Gmsh, Cantera, CoolProp, or GNU Octave. | P2 | Small evidence PR | Environment-specific evidence; do not make base release depend on it. |
