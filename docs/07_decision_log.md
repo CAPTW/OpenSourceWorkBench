@@ -345,3 +345,27 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   OSW-AUTO-063. Public push, release artifacts, external solver binary bundles,
   and public announcements remain blocked until separate maintainer-controlled
   gates.
+
+## ADR-0022: GUI Workflow Glue After Parked Local v0.1.1
+
+- Status: Accepted
+- Date: 2026-05-21
+- Context: OSW-AUTO-063 created local annotated `v0.1.1` at
+  `7b232f5003fcc8eb207846570499ffb3442d3197`, and OSW-AUTO-064 parked that
+  local final release with no remote publication. OSW-AUTO-065 and OSW-AUTO-066
+  then validated that the GUI shell, menus, docks, plugin manager, preview
+  states, and report export were credible, but the fully GUI-native
+  Import -> Configure/Inspect -> Run/Generate -> Result/Table -> Report flow was
+  still limited by API/CLI fallbacks.
+- Decision: OSW-AUTO-067 may improve GUI workflow glue on `develop` without
+  changing package version, source license, release tags, or remote state. The
+  GUI may import/preview supported files into visible project state, select and
+  inspect item metadata, call a workflow service for prepare-only workflows and
+  optional dependency diagnostics, update table/result/report state, and keep
+  `.m` import preview-first. It must not directly execute external solver
+  subprocesses or claim live solver runs that were not performed.
+- Consequences: After OSW-AUTO-067 merges, `develop` is intentionally ahead of
+  the parked local `v0.1.1` tag. That tag remains immutable local release
+  evidence and must not be pushed as the current state after post-tag product
+  changes. Public publish remains blocked pending a new version/release decision
+  such as a later candidate or final gate.

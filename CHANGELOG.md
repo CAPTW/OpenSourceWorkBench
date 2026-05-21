@@ -4,6 +4,26 @@ All notable OpenSolver Workbench changes are summarized here for release
 review. OSW follows source-first release evidence; public tags are created only
 by a dedicated release/tag gate.
 
+## Unreleased
+
+### GUI Workflow Glue
+
+- OSW-AUTO-067 improves the GUI-native Import -> Configure/Inspect ->
+  Run/Generate -> Result/Table -> Report path after OSW-AUTO-066 classified the
+  interactive GUI workflow as `PASS_WITH_LIMITATIONS`.
+- GUI imports can now add visible project items for supported mesh, standard
+  geometry, `.m`, and `.mat` preview paths; selection updates the properties
+  panel and table/plot/mesh preview state where data is available.
+- GUI Run/Generate routes through a workflow service that prepares bounded
+  case/template outputs or records optional dependency diagnostics without
+  direct GUI solver subprocess execution.
+- GUI report export now includes current imported/project state, result tables,
+  mesh metadata, figure placeholders, and diagnostics when available.
+- The local annotated `v0.1.1` tag remains preserved release evidence at
+  `7b232f5003fcc8eb207846570499ffb3442d3197`. After this post-release workflow
+  fix merges, `develop` is ahead of `v0.1.1`; public publish remains blocked
+  pending a new release/version decision.
+
 ## 0.1.1 - Final Metadata Prepared
 
 Final package version: `0.1.1`

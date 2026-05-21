@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from tempfile import gettempdir
 from typing import Any
 
 from osw.core.project_schema import Project, ProjectMetadata
@@ -38,8 +39,14 @@ class ReportPanel(_BaseWidget):
         super().__init__(parent)
         self.setObjectName("reportPanel")
         self.project = project or default_report_project()
+        self.figure_datasets: tuple[object, ...] = ()
+        self.mesh_infos: tuple[object, ...] = ()
+        self.result_tables: tuple[object, ...] = ()
+        self.warnings: tuple[str, ...] = ()
         self.export_directory = (
-            Path(export_directory) if export_directory is not None else Path("reports")
+            Path(export_directory)
+            if export_directory is not None
+            else Path(gettempdir()) / "osw-reports"
         )
 
         self.export_button = QtWidgets.QPushButton("Export HTML Report", self)
@@ -55,10 +62,36 @@ class ReportPanel(_BaseWidget):
 
         self.export_button.clicked.connect(self.export_report)
 
-    def export_report(self) -> Path:
+    def set_report_state(
+        self,
+        *,
+        project: Project,
+        figure_datasets: tuple[object, ...] = (),
+        mesh_infos: tuple[object, ...] = (),
+        result_tables: tuple[object, ...] = (),
+        warnings: tuple[str, ...] = (),
+    ) -> None:
+        self.project = project
+        self.figure_datasets = tuple(figure_datasets)
+        self.mesh_infos = tuple(mesh_infos)
+        self.result_tables = tuple(result_tables)
+        self.warnings = tuple(warnings)
+
+    def export_report(self, output_path: str | Path | bool | None = None) -> Path:
+        if isinstance(output_path, bool):
+            output_path = None
+        target = (
+            Path(output_path)
+            if output_path is not None
+            else self.export_directory / DEFAULT_REPORT_FILENAME
+        )
         output_path = export_report_html(
             self.project,
-            self.export_directory / DEFAULT_REPORT_FILENAME,
+            target,
+            figure_datasets=self.figure_datasets,
+            mesh_infos=self.mesh_infos,
+            result_tables=self.result_tables,
+            warnings=self.warnings,
         )
         self.status_label.setText(f"Exported {output_path.name}")
         return output_path

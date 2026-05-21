@@ -18,6 +18,11 @@ DEFAULT_PROPERTIES = {
     "Units": "Not configured",
     "Selection": "Nothing selected",
     "Workflow step": "Select a project item",
+    "Type": "N/A",
+    "Path": "N/A",
+    "Status": "Idle",
+    "Summary": "No item selected",
+    "Diagnostics": "None",
 }
 
 NODE_PROPERTIES = {
@@ -74,24 +79,35 @@ class PropertiesPanel(_BaseWidget):
         self._labels: dict[str, Any] = {}
 
         layout = QtWidgets.QFormLayout(self)
+        self._layout = layout
         for key, value in DEFAULT_PROPERTIES.items():
-            value_label = QtWidgets.QLabel(value)
-            value_label.setObjectName(_row_object_name(key))
-            self._labels[key] = value_label
-            layout.addRow(key, value_label)
+            self._add_row(key, value)
 
     def set_node_selection(self, node_label: str) -> None:
         self.set_properties(properties_for_node(node_label))
 
     def set_properties(self, rows: dict[str, str]) -> None:
-        for key, value in rows.items():
+        merged = dict(DEFAULT_PROPERTIES)
+        merged.update(rows)
+        for key, label in self._labels.items():
+            label.setText(merged.get(key, ""))
+        for key in merged:
             label = self._labels.get(key)
-            if label is not None:
-                label.setText(value)
+            if label is None:
+                label = self._add_row(key, "")
+            label.setText(merged[key])
 
     def row_value(self, key: str) -> str:
         label = self._labels[key]
         return label.text()
+
+    def _add_row(self, key: str, value: str) -> object:
+        value_label = QtWidgets.QLabel(value)
+        value_label.setObjectName(_row_object_name(key))
+        value_label.setWordWrap(True)
+        self._labels[key] = value_label
+        self._layout.addRow(key, value_label)
+        return value_label
 
 
 def build_properties_panel(parent: object | None = None) -> object:
