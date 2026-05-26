@@ -23,6 +23,7 @@ class ScriptPreviewPanel(_BaseWidget):
     if QtCore is not None:
         importRequested = QtCore.Signal()
         cancelRequested = QtCore.Signal()
+        runCompleted = QtCore.Signal(object)
 
     def __init__(
         self,
@@ -35,6 +36,7 @@ class ScriptPreviewPanel(_BaseWidget):
         self.setObjectName("oswScriptPreviewPanel")
         self._tokens = DARK_TOKENS
         self._preview: ScriptPreview | None = None
+        self._octave_runner: object | None = None
         self._build_layout()
         self.set_theme_tokens(self._tokens)
         if preview is not None:
@@ -50,9 +52,52 @@ class ScriptPreviewPanel(_BaseWidget):
         self.code_text.setPlainText(_code_preview_text(preview))
         self._populate_safety_table(preview)
         self._populate_plot_table(preview)
+        self.run_status_label.setText(_run_status_text(preview))
+        self.run_log_preview.clear()
+        self.run_diagnostics_table.setRowCount(0)
+        self.run_button.setEnabled(_preview_can_run(preview))
 
     def current_preview(self) -> ScriptPreview | None:
         return self._preview
+
+    def set_octave_runner(self, runner: object | None) -> None:
+        self._octave_runner = runner
+
+    def run_previewed_script_with_octave(
+        self,
+        runner: object | None = None,
+        policy: object | None = None,
+    ) -> object | None:
+        preview = self._preview
+        if preview is None:
+            self.run_status_label.setText("No script preview loaded.")
+            return None
+        if not _preview_can_run(preview):
+            self.run_status_label.setText("Run blocked by high-risk safety findings.")
+            return None
+
+        from osw.scripts.mscript.octave_runner import (
+            OctaveRunner,
+            OctaveRunRequest,
+        )
+
+        active_runner = runner or self._octave_runner or OctaveRunner()
+        self.run_button.setEnabled(False)
+        self.run_status_label.setText("Running with GNU Octave...")
+        QtWidgets.QApplication.processEvents()
+        request = OctaveRunRequest(
+            script_path=preview.source_path,
+            preview=preview,
+            policy=policy,
+        )
+        result = active_runner.run(request)
+        status = getattr(result.status, "value", result.status)
+        self.run_status_label.setText(f"Octave run: {status}")
+        self.run_log_preview.setPlainText(getattr(result, "combined_log", "") or "")
+        self._populate_run_diagnostics(result)
+        self.runCompleted.emit(result)
+        self.run_button.setEnabled(_preview_can_run(preview))
+        return result
 
     def set_theme_tokens(self, tokens: ThemeTokens) -> None:
         self._tokens = tokens
@@ -132,15 +177,40 @@ class ScriptPreviewPanel(_BaseWidget):
         tables.setSizes([540, 360])
         layout.addWidget(tables)
 
+        run_box = QtWidgets.QGroupBox("Octave Run", self)
+        run_layout = QtWidgets.QVBoxLayout(run_box)
+        run_layout.setContentsMargins(8, 8, 8, 8)
+        run_layout.setSpacing(6)
+        self.run_status_label = QtWidgets.QLabel("No script preview loaded.", run_box)
+        self.run_status_label.setObjectName("oswScriptRunStatusLabel")
+        self.run_log_preview = QtWidgets.QPlainTextEdit(run_box)
+        self.run_log_preview.setObjectName("oswScriptRunLogPreview")
+        self.run_log_preview.setReadOnly(True)
+        self.run_log_preview.setMaximumHeight(82)
+        self.run_diagnostics_table = QtWidgets.QTableWidget(run_box)
+        self.run_diagnostics_table.setObjectName("oswScriptRunDiagnosticsTable")
+        self.run_diagnostics_table.setColumnCount(3)
+        self.run_diagnostics_table.setHorizontalHeaderLabels(["Severity", "Code", "Message"])
+        self.run_diagnostics_table.setMaximumHeight(92)
+        run_layout.addWidget(self.run_status_label)
+        run_layout.addWidget(self.run_log_preview)
+        run_layout.addWidget(self.run_diagnostics_table)
+        layout.addWidget(run_box)
+
         button_row = QtWidgets.QHBoxLayout()
+        self.run_button = QtWidgets.QPushButton("Run with Octave", self)
+        self.run_button.setObjectName("oswScriptRunWithOctaveButton")
+        self.run_button.setEnabled(False)
         self.import_button = QtWidgets.QPushButton("Import Preview", self)
         self.import_button.setObjectName("oswScriptPreviewImportButton")
         self.cancel_button = QtWidgets.QPushButton("Cancel", self)
         self.cancel_button.setObjectName("oswScriptPreviewCancelButton")
         button_row.addStretch(1)
+        button_row.addWidget(self.run_button)
         button_row.addWidget(self.import_button)
         button_row.addWidget(self.cancel_button)
         layout.addLayout(button_row)
+        self.run_button.clicked.connect(self.run_previewed_script_with_octave)
         self.import_button.clicked.connect(self.importRequested.emit)
         self.cancel_button.clicked.connect(self.cancelRequested.emit)
 
@@ -161,6 +231,21 @@ class ScriptPreviewPanel(_BaseWidget):
             self.plot_table.setItem(row, 2, _readonly_item(hint.context))
         self.plot_table.resizeColumnsToContents()
 
+    def _populate_run_diagnostics(self, result: object) -> None:
+        diagnostics = getattr(result, "diagnostics", None)
+        messages = getattr(diagnostics, "messages", ())
+        self.run_diagnostics_table.setRowCount(len(messages))
+        for row, message in enumerate(messages):
+            severity = getattr(getattr(message, "severity", ""), "value", "")
+            self.run_diagnostics_table.setItem(row, 0, _readonly_item(severity))
+            self.run_diagnostics_table.setItem(row, 1, _readonly_item(getattr(message, "code", "")))
+            self.run_diagnostics_table.setItem(
+                row,
+                2,
+                _readonly_item(getattr(message, "message", "")),
+            )
+        self.run_diagnostics_table.resizeColumnsToContents()
+
 
 def _readonly_item(value: object) -> object:
     item = QtWidgets.QTableWidgetItem(str(value))
@@ -180,3 +265,15 @@ def _code_preview_text(preview: ScriptPreview) -> str:
     if preview.help_text:
         lines.append("% Help text extracted above.")
     return "\n".join(lines)
+
+
+def _preview_can_run(preview: ScriptPreview) -> bool:
+    if preview.source_path in {"", "<memory>"}:
+        return False
+    return not any(finding.severity in {"high", "blocked"} for finding in preview.safety_findings)
+
+
+def _run_status_text(preview: ScriptPreview) -> str:
+    if _preview_can_run(preview):
+        return "Ready for explicit GNU Octave run."
+    return "Run blocked until high-risk or out-of-scope findings are resolved."

@@ -180,3 +180,9 @@ top of the same visual shell. Script refs can carry preview metadata and safety
 summaries, the project tree continues to render script rows, and the properties
 panel can show selected script summary data. The GUI preview does not run
 MATLAB, Octave, or script content.
+
+`OSW-FUNC-007_OCTAVE_RUNNER` adds an explicit, safety-gated Run with Octave path
+to the script preview surface. The action routes through backend
+`OctaveRunner`/`ExternalCommandRunner`, uses isolated workspaces and timeout
+handling, and remains disabled for high-risk or out-of-scope safety findings by
+default. The GUI still does not launch subprocesses directly.

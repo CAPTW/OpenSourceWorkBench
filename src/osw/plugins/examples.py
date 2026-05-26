@@ -75,18 +75,23 @@ def builtin_mscript_preview_plugin_manifest() -> PluginManifest:
             "output_formats": ["script_preview", "script_ref"],
             "requires": [],
             "optional_requires": [],
-            "executable_names": [],
+            "executable_names": ["octave", "octave-cli"],
             "capabilities": [
                 "m_file_preview",
                 "function_signature_detection",
                 "safety_scan",
                 "plot_hint_detection",
                 "project_script_ref_binding",
+                "octave_execution",
+                "timeout_policy",
+                "stdout_stderr_capture",
+                "isolated_workspace",
+                "artifact_collection",
             ],
             "metadata": {
                 "built_in": True,
                 "preview_first": True,
-                "no_script_execution": True,
+                "safe_execution_requires_explicit_request": True,
             },
         }
     )

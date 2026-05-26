@@ -53,7 +53,14 @@ def test_script_preview_dialog_displays_preview_regions(app: object) -> None:
     assert "Return a doubled value" in dialog.preview_panel.help_text.toPlainText()
     assert "function y = function_basic(x)" in dialog.preview_panel.code_text.toPlainText()
     assert dialog.preview_panel.import_button.isEnabled()
-    assert not _enabled_run_buttons(dialog)
+    assert dialog.preview_panel.run_button.objectName() == "oswScriptRunWithOctaveButton"
+    assert dialog.preview_panel.run_status_label.objectName() == "oswScriptRunStatusLabel"
+    assert dialog.preview_panel.run_log_preview.objectName() == "oswScriptRunLogPreview"
+    assert (
+        dialog.preview_panel.run_diagnostics_table.objectName()
+        == "oswScriptRunDiagnosticsTable"
+    )
+    assert dialog.preview_panel.run_button.isEnabled()
 
     del app
 
@@ -72,6 +79,8 @@ def test_script_preview_dialog_surfaces_safety_and_plot_hints(app: object) -> No
 
     assert safety_dialog.preview_panel.safety_table.rowCount() >= 4
     assert safety_dialog.preview_panel.safety_table.item(0, 0).text() == "high"
+    assert not safety_dialog.preview_panel.run_button.isEnabled()
+    assert "run blocked" in safety_dialog.preview_panel.run_status_label.text().lower()
     assert plot_dialog.preview_panel.plot_table.rowCount() >= 4
     commands = {
         plot_dialog.preview_panel.plot_table.item(row, 0).text()
@@ -79,6 +88,37 @@ def test_script_preview_dialog_surfaces_safety_and_plot_hints(app: object) -> No
     }
     assert {"figure", "plot", "title"}.issubset(commands)
 
+    del app
+
+
+def test_script_preview_dialog_can_use_injected_octave_runner(app: object) -> None:
+    from osw.core.diagnostics import DiagnosticReport
+    from osw.gui.dialogs.script_preview_dialog import ScriptPreviewDialog
+    from osw.scripts.mscript.importer import preview_mscript
+    from osw.scripts.mscript.octave_runner import OctaveRunResult, OctaveRunStatus
+
+    class FakeRunner:
+        def run(self, request: object) -> OctaveRunResult:
+            return OctaveRunResult(
+                run_id="gui-fake",
+                status=OctaveRunStatus.COMPLETED,
+                script_path=getattr(request, "script_path", ""),
+                workspace_dir="",
+                stdout="fake GUI Octave run\n",
+                diagnostics=DiagnosticReport(),
+            )
+
+    result = preview_mscript(FIXTURES / "simple_plot.m")
+    assert result.preview is not None
+    dialog = ScriptPreviewDialog(result.preview)
+    dialog.set_octave_runner(FakeRunner())
+
+    run_result = dialog.run_previewed_script_with_octave()
+
+    assert run_result is not None
+    assert run_result.status is OctaveRunStatus.COMPLETED
+    assert "completed" in dialog.preview_panel.run_status_label.text().lower()
+    assert "fake GUI Octave run" in dialog.preview_panel.run_log_preview.toPlainText()
     del app
 
 
@@ -96,12 +136,3 @@ def test_script_preview_dialog_accepts_theme_updates(app: object) -> None:
 
     assert dialog.current_preview() is result.preview
     del app
-
-
-def _enabled_run_buttons(dialog: object) -> list[object]:
-    assert QtWidgets is not None
-    return [
-        button
-        for button in dialog.findChildren(QtWidgets.QAbstractButton)
-        if "run" in button.text().lower() and button.isEnabled()
-    ]

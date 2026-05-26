@@ -16,7 +16,9 @@ def test_builtin_mscript_preview_plugin_manifest_validates() -> None:
     assert "m_file_preview" in manifest.capabilities
     assert "safety_scan" in manifest.capabilities
     assert "plot_hint_detection" in manifest.capabilities
-    assert manifest.executable_names == ()
+    assert manifest.executable_names == ("octave", "octave-cli")
+    assert "octave_execution" in manifest.capabilities
+    assert "isolated_workspace" in manifest.capabilities
     assert not [
         diagnostic
         for diagnostic in manifest.validate()

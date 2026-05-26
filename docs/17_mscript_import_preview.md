@@ -123,13 +123,19 @@ The GUI adds a safe script preview surface without changing the visual shell:
 - `ProjectTreePanel` continues rendering `ScriptRef` rows under Scripts.
 - `PropertiesPanel` can show selected script preview summaries.
 
-There is no Run button and no direct GUI execution path in this step.
+After `OSW-FUNC-007_OCTAVE_RUNNER`, the preview dialog may expose a safety-gated
+Run with Octave action. That action is explicit, disabled for high-risk or
+blocked findings by default, and routes through `OctaveRunner` and
+`ExternalCommandRunner`; the GUI still does not launch subprocesses directly.
 
 ## Security Rules
 
 - `.m` files are treated as untrusted source text.
 - Import and preview never execute script content.
 - GUI preview does not launch MATLAB, Octave, or external commands.
+- GNU Octave execution, when explicitly requested later, must use the backend
+  Octave runner and remain blocked for out-of-scope `.slx` or `.mlapp`
+  findings by default.
 - Simulink, `.slx`, `.mlapp`, `.fig`, `.mat`, and figure capture are deferred
   or out of scope for this step.
 - Scanner findings are conservative and may false-positive on complex MATLAB
@@ -145,4 +151,4 @@ There is no Run button and no direct GUI execution path in this step.
 
 ## Next Step
 
-Next functional step: `OSW-FUNC-007_OCTAVE_RUNNER`.
+Next functional step: `OSW-FUNC-008_FIGURE_CAPTURE_DATASET`.

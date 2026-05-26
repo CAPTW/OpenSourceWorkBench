@@ -168,6 +168,28 @@ def build_parser() -> argparse.ArgumentParser:
     mscript_scan_parser.add_argument("path", help="M-script .m file path.")
     mscript_scan_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
     subparsers.add_parser(
+        "octave-check",
+        help="Resolve GNU Octave without executing it.",
+    )
+    mscript_run_parser = subparsers.add_parser(
+        "mscript-run",
+        help="Run a previewed .m script through GNU Octave after safety checks.",
+    )
+    mscript_run_parser.add_argument("path", help="M-script .m file path.")
+    mscript_run_parser.add_argument("--timeout", type=float, default=30.0, help="Timeout seconds.")
+    mscript_run_parser.add_argument(
+        "--allow-high-risk",
+        action="store_true",
+        help="Allow high-risk safety findings in an isolated workspace.",
+    )
+    mscript_run_parser.add_argument(
+        "--allow-blocked",
+        action="store_true",
+        help="Allow blocked findings. Intended only for trusted local test fixtures.",
+    )
+    mscript_run_parser.add_argument("--workspace", default="", help="Optional run workspace root.")
+    mscript_run_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    subparsers.add_parser(
         "gui",
         help="Launch the optional PySide6 GUI shell.",
         description="Launch the optional PySide6 GUI shell.",
@@ -420,6 +442,45 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
         return 0
 
+    if args.command == "octave-check":
+        from osw.scripts.mscript.octave_runner import find_octave_executable
+
+        resolution = find_octave_executable()
+        print("GNU Octave")
+        print(f"Status: {'available' if resolution.found else 'missing'}")
+        print(f"Source: {resolution.source}")
+        if resolution.resolved_path:
+            print(f"Path: {resolution.resolved_path}")
+        print(resolution.diagnostics.summary())
+        return 0 if resolution.found else 1
+
+    if args.command == "mscript-run":
+        from osw.scripts.mscript.execution_policy import OctaveExecutionPolicy
+        from osw.scripts.mscript.octave_runner import (
+            OctaveRunner,
+            OctaveRunRequest,
+            OctaveRunStatus,
+        )
+
+        policy = OctaveExecutionPolicy(
+            timeout_seconds=args.timeout,
+            allow_high_risk=args.allow_high_risk,
+            allow_blocked=args.allow_blocked,
+        )
+        request = OctaveRunRequest(
+            Path(args.path),
+            working_directory=Path(args.workspace) if args.workspace else None,
+            policy=policy,
+        )
+        result = OctaveRunner().run(request)
+        if args.json:
+            import json
+
+            print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        else:
+            _print_octave_run_result(result)
+        return 0 if result.status is OctaveRunStatus.COMPLETED else 1
+
     if args.command == "gui":
         from osw.gui.main_window import PySide6UnavailableError, run_gui
 
@@ -475,6 +536,26 @@ def _print_mscript_preview(preview: object) -> None:
             f"{finding.severity.upper()} line {finding.line_no}: "
             f"{finding.token} - {finding.message}"
         )
+
+
+def _print_octave_run_result(result: object) -> None:
+    status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+    print(f"Octave run status: {status}")
+    print(f"Workspace: {getattr(result, 'workspace_dir', '')}")
+    return_code = getattr(result, "return_code", None)
+    if return_code is not None:
+        print(f"Return code: {return_code}")
+    stdout = str(getattr(result, "stdout", "") or "").strip()
+    stderr = str(getattr(result, "stderr", "") or "").strip()
+    if stdout:
+        print("stdout:")
+        print(stdout)
+    if stderr:
+        print("stderr:", file=sys.stderr)
+        print(stderr, file=sys.stderr)
+    diagnostics = getattr(result, "diagnostics", None)
+    if diagnostics is not None and getattr(diagnostics, "messages", ()):
+        print(diagnostics.summary(), file=sys.stderr)
 
 
 if __name__ == "__main__":

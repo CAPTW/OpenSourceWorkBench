@@ -52,3 +52,13 @@ signatures, plot hints, and structured safety findings, then can attach the
 summary to ProjectSchema `ScriptRef` records. It does not require MATLAB,
 Octave, Oct2Py, PySide6, or script execution. See
 `docs/17_mscript_import_preview.md`.
+
+## GNU Octave Runner
+
+GNU Octave execution lives under `osw.scripts.mscript.octave_runner` and is an
+explicit backend request, not an import or preview side effect. The runner
+resolves `octave`/`octave-cli` through `ExecutablePathRegistry`, gates execution
+with the M-Script safety scan, uses an isolated workspace by default, and hands
+process execution to `ExternalCommandRunner` for timeout handling,
+stdout/stderr capture, and artifact collection. GUI widgets may call the runner
+API, but must not launch subprocesses directly. See `docs/18_octave_runner.md`.

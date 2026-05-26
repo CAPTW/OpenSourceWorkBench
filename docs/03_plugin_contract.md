@@ -246,6 +246,12 @@ declares `script_importer` capabilities for metadata extraction, safety scan,
 plot hints, and ProjectSchema `ScriptRef` binding. It does not require or run
 MATLAB, Octave, or script content.
 
+`OSW-FUNC-007_OCTAVE_RUNNER` extends the same manifest with optional GNU Octave
+execution capabilities: `octave_execution`, `timeout_policy`,
+`stdout_stderr_capture`, `isolated_workspace`, and `artifact_collection`.
+`executable_names` may include `octave` and `octave-cli`; health checks resolve
+those names only and still do not run Octave, plugin code, or scripts.
+
 ## Next Step
 
-Next functional step: `OSW-FUNC-007_OCTAVE_RUNNER`.
+Next functional step: `OSW-FUNC-008_FIGURE_CAPTURE_DATASET`.

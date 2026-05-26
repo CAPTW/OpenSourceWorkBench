@@ -6,6 +6,7 @@ from .boundary_curve_bridge import (
     boundary_curve_from_mat_preview,
     boundary_curve_from_workspace_variables,
 )
+from .execution_policy import OctaveExecutionPolicy
 from .figure_capture import capture_existing_figures, capture_octave_figures
 from .figure_dataset import FigureDataset, FigureDatasetError, FigureRecord
 from .importer import (
@@ -27,7 +28,15 @@ from .mat_reader import (
     export_mat_variable_csv,
     read_mat_file,
 )
-from .octave_runner import OctaveExecutionNotConfirmed, OctaveRunner
+from .octave_runner import (
+    OctaveExecutionNotConfirmed,
+    OctaveRunner,
+    OctaveRunRequest,
+    OctaveRunResult,
+    OctaveRunStatus,
+    find_octave_executable,
+    octave_available,
+)
 from .safety_scan import scan_mscript_text, strip_mscript_comment
 from .script_model import (
     FunctionSignature,
@@ -60,6 +69,10 @@ __all__ = [
     "FunctionSignature",
     "PlotHint",
     "OctaveExecutionNotConfirmed",
+    "OctaveExecutionPolicy",
+    "OctaveRunRequest",
+    "OctaveRunResult",
+    "OctaveRunStatus",
     "OctaveRunner",
     "SafetyFinding",
     "SafetyScanResult",
@@ -75,7 +88,9 @@ __all__ = [
     "export_mat_variable_csv",
     "extract_figure_dataset",
     "extract_figure_paths",
+    "find_octave_executable",
     "import_mscript_preview",
+    "octave_available",
     "preview_mscript",
     "preview_mscript_text",
     "read_mat_file",

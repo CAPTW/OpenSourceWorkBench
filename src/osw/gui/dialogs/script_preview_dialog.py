@@ -23,6 +23,7 @@ class ScriptPreviewDialog(_BaseDialog):
 
     if QtCore is not None:
         previewAccepted = QtCore.Signal(object)
+        scriptRunCompleted = QtCore.Signal(object)
 
     def __init__(
         self,
@@ -46,6 +47,7 @@ class ScriptPreviewDialog(_BaseDialog):
 
         self.preview_panel.importRequested.connect(self._accept_preview)
         self.preview_panel.cancelRequested.connect(self.reject)
+        self.preview_panel.runCompleted.connect(self.scriptRunCompleted.emit)
         self.set_theme_tokens(self._tokens)
 
     def current_preview(self) -> ScriptPreview | None:
@@ -53,6 +55,16 @@ class ScriptPreviewDialog(_BaseDialog):
 
     def set_preview(self, preview: ScriptPreview) -> None:
         self.preview_panel.set_preview(preview)
+
+    def set_octave_runner(self, runner: object | None) -> None:
+        self.preview_panel.set_octave_runner(runner)
+
+    def run_previewed_script_with_octave(
+        self,
+        runner: object | None = None,
+        policy: object | None = None,
+    ) -> object | None:
+        return self.preview_panel.run_previewed_script_with_octave(runner=runner, policy=policy)
 
     def set_theme_tokens(self, tokens: ThemeTokens) -> None:
         self._tokens = tokens

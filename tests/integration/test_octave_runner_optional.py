@@ -5,8 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from osw.scripts.mscript.octave_runner import OctaveRunner
-from osw.solvers.runner import RunStatus, TimeoutPolicy
+from osw.scripts.mscript.execution_policy import OctaveExecutionPolicy
+from osw.scripts.mscript.octave_runner import (
+    OctaveRunner,
+    OctaveRunRequest,
+    OctaveRunStatus,
+)
 
 pytestmark = [
     pytest.mark.external_solver,
@@ -20,13 +24,15 @@ pytestmark = [
 def test_real_octave_optional_smoke(tmp_path: Path) -> None:
     script_path = tmp_path / "hello_octave.m"
     script_path.write_text("disp('osw octave optional smoke');\n", encoding="utf-8")
-    runner = OctaveRunner(timeout_policy=TimeoutPolicy(seconds=10))
+    runner = OctaveRunner()
 
-    result = runner.run_script(
-        script_path,
-        artifact_dir=tmp_path / "artifacts",
-        allow_execution=True,
+    result = runner.run(
+        OctaveRunRequest(
+            script_path,
+            working_directory=tmp_path / "artifacts",
+            policy=OctaveExecutionPolicy(timeout_seconds=10),
+        )
     )
 
-    assert result.status == RunStatus.COMPLETED
-    assert "osw octave optional smoke" in result.log.stdout
+    assert result.status == OctaveRunStatus.COMPLETED
+    assert "osw octave optional smoke" in result.stdout

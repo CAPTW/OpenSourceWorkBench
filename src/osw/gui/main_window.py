@@ -424,11 +424,20 @@ class MainWindow(_BaseMainWindow):
             self._placeholder_action(f"Previewed script metadata: {getattr(preview, 'name', '')}")
 
         dialog.previewAccepted.connect(_attach)
+        dialog.scriptRunCompleted.connect(self._on_script_run_completed)
         self.script_preview_dialog = dialog
         dialog.show()
         dialog.raise_()
         dialog.activateWindow()
         return dialog
+
+    def _on_script_run_completed(self, result: object) -> None:
+        status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+        if hasattr(self.run_monitor, "append_log"):
+            self.run_monitor.append_log(f"Octave script run: {status}", level="info")
+            combined = str(getattr(result, "combined_log", "") or "").strip()
+            if combined:
+                self.run_monitor.append_log(combined.splitlines()[-1], level="info")
 
     def _on_plugin_state_changed(self, _plugin_id: str, _enabled: bool) -> None:
         self.run_plugin_health_check(log=False)
