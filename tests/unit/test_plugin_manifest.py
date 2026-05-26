@@ -7,7 +7,16 @@ from pathlib import Path
 
 import pytest
 
-from osw.plugins.manifest import PluginManifest, PluginManifestError, PluginType
+from osw.plugins.errors import PluginDiagnosticSeverity
+from osw.plugins.manifest import (
+    PluginDomain,
+    PluginManifest,
+    PluginManifestError,
+    PluginType,
+    validate_manifest_data,
+)
+
+FIXTURES = Path(__file__).parents[1] / "fixtures" / "plugins"
 
 
 def _manifest_data() -> dict[str, object]:
@@ -31,6 +40,7 @@ def test_valid_manifest_loads_from_mapping() -> None:
 
     assert manifest.id == "osw.demo.step_importer"
     assert manifest.type == PluginType.CAD_IMPORTER
+    assert manifest.domain == PluginDomain.GEOMETRY.value
     assert manifest.input_formats == ("step", "stp")
     assert manifest.supports_capability("preview")
 
@@ -58,3 +68,59 @@ def test_manifest_rejects_unknown_plugin_type() -> None:
 
     with pytest.raises(PluginManifestError, match="unsupported plugin type"):
         PluginManifest.from_dict(data)
+
+
+def test_valid_json_fixture_loads() -> None:
+    manifest = PluginManifest.load(FIXTURES / "valid_calculix" / "manifest.json")
+
+    assert manifest.id == "osw.calculix"
+    assert manifest.type == PluginType.SOLVER_ADAPTER
+    assert manifest.domain == PluginDomain.CAE.value
+    assert manifest.executable_names == ("ccx",)
+
+
+def test_valid_yaml_fixture_loads_when_pyyaml_available() -> None:
+    pytest.importorskip("yaml")
+
+    manifest = PluginManifest.load(FIXTURES / "valid_mscript" / "manifest.yaml")
+
+    assert manifest.id == "osw.mscript"
+    assert manifest.type == PluginType.SCRIPT_IMPORTER
+    assert manifest.optional_requires == ("scipy",)
+
+
+def test_missing_required_fields_return_structured_diagnostics() -> None:
+    diagnostics = validate_manifest_data({"name": "Missing ID"})
+
+    missing = [item for item in diagnostics if item.code == "missing-required-field"]
+
+    assert any(item.field == "id" for item in missing)
+    assert all(item.severity is PluginDiagnosticSeverity.ERROR for item in missing)
+
+
+def test_unknown_plugin_type_returns_structured_diagnostic() -> None:
+    data = _manifest_data()
+    data["type"] = "unsupported_plugin_type"
+
+    diagnostics = validate_manifest_data(data)
+
+    assert any(item.code == "invalid-plugin-type" for item in diagnostics)
+
+
+def test_unknown_fields_are_preserved_in_metadata() -> None:
+    path = FIXTURES / "json_equivalent" / "plugin.json"
+    raw_data = json.loads(path.read_text(encoding="utf-8"))
+    manifest = PluginManifest.load(path)
+
+    assert manifest.metadata["custom_unknown_field"] == "preserved"
+    assert any(
+        item.code == "unknown-manifest-field"
+        for item in validate_manifest_data(raw_data)
+    )
+
+
+def test_example_report_manifest_uses_report_plugin_type() -> None:
+    manifest = PluginManifest.load(FIXTURES / "valid_report" / "plugin.json")
+
+    assert manifest.type == PluginType.REPORT_PLUGIN
+    assert manifest.output_formats == ("html",)

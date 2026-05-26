@@ -1,0 +1,15 @@
+{
+  "id": "osw.json.equivalent",
+  "name": "JSON Equivalent Plugin",
+  "version": "0.1.0",
+  "domain": "GENERAL",
+  "type": "ui_extension",
+  "license": "MIT",
+  "description": "Data-only fixture for manifest validation.",
+  "requires": [],
+  "optional_requires": [],
+  "capabilities": [
+    "manifest_validation"
+  ],
+  "custom_unknown_field": "preserved"
+}

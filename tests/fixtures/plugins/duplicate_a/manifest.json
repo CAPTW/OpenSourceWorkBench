@@ -1,0 +1,11 @@
+{
+  "id": "osw.duplicate.fixture",
+  "name": "Duplicate Fixture A",
+  "version": "0.1.0",
+  "domain": "MESH",
+  "type": "mesh_importer",
+  "license": "MIT",
+  "capabilities": [
+    "preview"
+  ]
+}

@@ -1,0 +1,22 @@
+id: osw.mscript
+name: MATLAB/Octave Script Importer
+version: "0.1.0"
+domain: MATH
+type: script_importer
+license: GPL-compatible
+input_formats:
+  - m
+  - mat
+output_formats:
+  - figure_dataset
+  - png
+  - svg
+requires: []
+optional_requires:
+  - scipy
+executable_names:
+  - octave
+capabilities:
+  - m_file_preview
+  - octave_execution_placeholder
+  - figure_capture_placeholder

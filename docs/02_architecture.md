@@ -17,3 +17,11 @@ The completed PySide6 GUI baseline binds to `osw.core` through ProjectSchema
 objects. Core schema, unit, material, validation, and project IO modules remain
 PySide6-free; GUI widgets consume them through explicit `set_project()` methods
 without replacing the visual shell or adding solver execution behavior.
+
+## Plugin Contract Integration
+
+Plugin manifests and discovery live under `osw.plugins` and remain GUI-free.
+Local discovery reads manifest data only, entry point loading is explicit, and
+health checks inspect Python package availability and executable presence without
+running solver binaries. See `docs/03_plugin_contract.md` for the manifest
+schema and security rules.

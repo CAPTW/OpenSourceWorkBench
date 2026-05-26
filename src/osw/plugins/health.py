@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from .discovery import iter_manifest_paths
+from .errors import PluginDiagnostic
 from .manifest import PluginManifest
 
 EXECUTABLE_CAPABILITY_PREFIXES = ("requires_executable:", "executable:")
@@ -22,12 +23,18 @@ class PluginHealthStatus(StrEnum):
     OK = "ok"
     WARNING = "warning"
     ERROR = "error"
+    UNAVAILABLE = "unavailable"
+    UNKNOWN = "unknown"
 
 
 @dataclass(frozen=True)
 class PluginHealth:
     status: PluginHealthStatus
-    messages: tuple[str, ...] = field(default_factory=tuple)
+    diagnostics: tuple[PluginDiagnostic, ...] = field(default_factory=tuple)
+
+    @property
+    def messages(self) -> tuple[str, ...]:
+        return tuple(diagnostic.message for diagnostic in self.diagnostics)
 
 
 @dataclass(frozen=True)
@@ -56,6 +63,7 @@ class PluginHealthRecord:
     status: str
     dependency_status: str
     dependency_messages: tuple[str, ...] = field(default_factory=tuple)
+    dependency_diagnostics: tuple[PluginDiagnostic, ...] = field(default_factory=tuple)
     executable_status: tuple[PluginExecutableStatus, ...] = field(default_factory=tuple)
     sample_project_reference: str = ""
     last_health_check_status: str = "not-run"
@@ -74,6 +82,9 @@ class PluginHealthRecord:
             "status": self.status,
             "dependency_status": self.dependency_status,
             "dependency_messages": list(self.dependency_messages),
+            "dependency_diagnostics": [
+                diagnostic.to_dict() for diagnostic in self.dependency_diagnostics
+            ],
             "executable_status": [item.to_dict() for item in self.executable_status],
             "sample_project_reference": self.sample_project_reference,
             "last_health_check_status": self.last_health_check_status,
@@ -103,6 +114,13 @@ class InvalidPluginHealthRecord:
             "status": PluginHealthStatus.ERROR.value,
             "dependency_status": PluginHealthStatus.ERROR.value,
             "dependency_messages": [self.message],
+            "dependency_diagnostics": [
+                PluginDiagnostic.error(
+                    "invalid-manifest",
+                    self.message,
+                    source=self.source,
+                ).to_dict()
+            ],
             "executable_status": [],
             "sample_project_reference": "",
             "last_health_check_status": "checked",
@@ -117,21 +135,34 @@ PluginHealthRow = PluginHealthRecord | InvalidPluginHealthRecord
 
 
 def check_manifest_health(manifest: PluginManifest) -> PluginHealth:
-    errors: list[str] = []
-    warnings: list[str] = []
+    diagnostics: list[PluginDiagnostic] = []
 
     for requirement in manifest.requires:
         if not _requirement_available(requirement):
-            errors.append(f"Required dependency is missing: {requirement}")
+            diagnostics.append(
+                PluginDiagnostic.error(
+                    "missing-python-package",
+                    f"Required dependency is missing: {requirement}",
+                    hint=f"Install the Python package for {requirement}.",
+                    field="requires",
+                )
+            )
 
     for requirement in manifest.optional_requires:
         if not _requirement_available(requirement):
-            warnings.append(f"Optional dependency is missing: {requirement}")
+            diagnostics.append(
+                PluginDiagnostic.warning(
+                    "missing-python-package",
+                    f"Optional dependency is missing: {requirement}",
+                    hint=f"Install {requirement} to enable optional plugin capabilities.",
+                    field="optional_requires",
+                )
+            )
 
-    if errors:
-        return PluginHealth(PluginHealthStatus.ERROR, tuple(errors))
-    if warnings:
-        return PluginHealth(PluginHealthStatus.WARNING, tuple(warnings))
+    if any(diagnostic.severity.value == "error" for diagnostic in diagnostics):
+        return PluginHealth(PluginHealthStatus.ERROR, tuple(diagnostics))
+    if diagnostics:
+        return PluginHealth(PluginHealthStatus.WARNING, tuple(diagnostics))
     return PluginHealth(PluginHealthStatus.OK)
 
 
@@ -227,6 +258,7 @@ def build_plugin_health_record(
         status=status.value,
         dependency_status=dependency_health.status.value,
         dependency_messages=dependency_health.messages,
+        dependency_diagnostics=dependency_health.diagnostics,
         executable_status=executable_status,
         sample_project_reference=_sample_project_reference(manifest),
         last_health_check_status=last_health_check_status,
@@ -287,14 +319,14 @@ def _executable_status(
 
 
 def _required_executables(manifest: PluginManifest) -> tuple[str, ...]:
-    executables: list[str] = []
+    executables: list[str] = list(manifest.executable_names)
     for capability in manifest.capabilities:
         for prefix in EXECUTABLE_CAPABILITY_PREFIXES:
             if capability.startswith(prefix):
                 executable = capability.removeprefix(prefix).strip()
                 if executable:
                     executables.append(executable)
-    return tuple(executables)
+    return tuple(dict.fromkeys(executables))
 
 
 def _sample_project_reference(manifest: PluginManifest) -> str:

@@ -1,22 +1,23 @@
 # Plugin Contract
 
-OSW plugins are planned for importers, solver adapters, post-processing steps,
-and report contributors. A plugin should declare:
+OpenSolver Workbench plugins are bounded add-ins for import, preparation,
+post-processing, scripting, property models, and reporting. The v0.1 contract is
+manifest-first: OSW can discover, validate, and report plugin health without
+executing plugin code or external solver binaries.
 
-- stable `id`, `name`, `version`, `domain`, `type`, and `license`;
-- `input_formats` and `output_formats` for standard/exported data contracts;
-- `requires` for mandatory import-time Python modules;
-- `optional_requires` for optional stacks such as mesh, visualization, GUI, or
-  chemistry integrations;
-- `capabilities` such as `preview`, `validate`, `prepare_case`, `import_result`,
-  `post_process`, or `render_report`.
+## Purpose
 
-v0.1 plugins must prefer preview-first behavior and structured validation
-messages over direct mutation.
+The plugin layer gives OSW a small typed boundary for future adapters while
+keeping the completed GUI baseline and core project schema independent of heavy
+optional integrations.
 
-## v0.1 Plugin Types
+Plugins may eventually prepare cases, import results, preview scripts, evaluate
+properties, or generate reports. External execution remains behind a future
+runner boundary and is not part of discovery.
 
-The base contract defines these plugin families:
+## Plugin Types
+
+Supported manifest `type` values are:
 
 - `cad_importer`
 - `mesh_importer`
@@ -25,19 +26,210 @@ The base contract defines these plugin families:
 - `script_importer`
 - `property_model`
 - `post_processor`
-- `report`
+- `report_plugin`
+- `ui_extension`
+- `unknown`
 
-Solver adapters may prepare cases and import results, but external execution
-still belongs behind a future reviewed runner contract.
+The Python contract classes mirror these families:
 
-## Discovery
+- `WorkbenchPlugin`
+- `CADImporterPlugin`
+- `MeshImporterPlugin`
+- `MeshGeneratorPlugin`
+- `SolverAdapterPlugin`
+- `ScriptImporterPlugin`
+- `PropertyModelPlugin`
+- `PostProcessorPlugin`
+- `ReportPlugin`
 
-Discovery supports:
+## Domains
 
-- local plugin directories containing `osw-plugin.json`, `osw-plugin.yaml`, or
-  `*.manifest.json` / `*.manifest.yaml`;
-- Python entry points in the `osw.plugins` group when packages are installed.
+Supported manifest `domain` values are:
 
-Discovery loads manifests only. It must not launch solver processes, mutate
-projects, write output files, or import heavy optional dependencies merely to
-list available plugins.
+- `CAE`
+- `CFD`
+- `CHM`
+- `MATH`
+- `GEOMETRY`
+- `MESH`
+- `REPORT`
+- `GENERAL`
+
+Legacy lowercase domains from early manifests are normalized to these values.
+
+## Manifest Schema
+
+Supported manifest file names:
+
+- `manifest.yaml`
+- `manifest.yml`
+- `manifest.json`
+- `plugin.yaml`
+- `plugin.json`
+- `osw-plugin.yaml`
+- `osw-plugin.yml`
+- `osw-plugin.json`
+
+Required fields:
+
+- `id`
+- `name`
+- `version`
+- `domain`
+- `type`
+- `license`
+- `capabilities`
+
+Optional fields:
+
+- `description`
+- `author`
+- `homepage`
+- `input_formats`
+- `output_formats`
+- `requires`
+- `optional_requires`
+- `executable_names`
+- `entry_point`
+- `min_osw_version`
+- `max_osw_version`
+- `ui_panels`
+- `example_projects`
+- `tags`
+- `metadata`
+
+Unknown manifest fields are preserved in `metadata` and surfaced as structured
+warnings. Missing required fields and unsupported plugin types are structured
+errors.
+
+## Local Directory Discovery
+
+Local discovery accepts:
+
+- a single manifest file;
+- a plugin folder containing one manifest;
+- a parent folder containing multiple plugin folders;
+- explicit search roots from the caller;
+- roots listed in `OSW_PLUGINS_PATH`, split by the platform path separator.
+
+Discovery returns manifests, diagnostics, duplicate IDs, and skipped paths. It
+does not import local plugin Python modules.
+
+## Python Entry Point Discovery
+
+OSW recognizes these entry point groups:
+
+- `osw.plugins`
+- `opensolver_workbench.plugins`
+
+Entry point metadata discovery lists records only. Loading an entry point object
+is a separate explicit operation through `load_entry_point_plugin()`.
+
+## Health Check Model
+
+Health statuses are:
+
+- `ok`
+- `warning`
+- `error`
+- `unavailable`
+- `unknown`
+
+Health checks inspect manifest data only:
+
+- required Python packages in `requires`;
+- optional Python packages in `optional_requires`;
+- executable names in `executable_names`;
+- legacy executable capability markers such as `requires_executable:ccx`.
+
+Executable checks use `shutil.which()` or explicit configured paths. They do not
+run solver binaries.
+
+## Security Rules
+
+- Manifest validation does not execute plugin code.
+- Local plugin discovery reads data files only.
+- Entry point loading is explicit.
+- Solver executables are not run during health checks.
+- Script import plugins must not auto-run `.m` files.
+- Plugin imports must avoid writing files, changing global state, launching
+  processes, or importing heavy dependencies unnecessarily.
+- Discovery never performs network access.
+
+## What Discovery Must Not Do
+
+Discovery must not:
+
+- execute OpenFOAM, CalculiX, SU2, Octave, MATLAB, or other external tools;
+- import local plugin Python modules just to validate a manifest;
+- mutate a project;
+- install plugins from remote sources;
+- create files outside explicitly requested output/report paths.
+
+## Example Manifests
+
+CalculiX-like solver adapter:
+
+```yaml
+id: osw.calculix
+name: CalculiX Adapter
+version: "0.1.0"
+domain: CAE
+type: solver_adapter
+license: GPL-compatible
+input_formats:
+  - internal_project_schema
+  - inp
+output_formats:
+  - frd
+  - dat
+  - vtk
+requires: []
+optional_requires: []
+executable_names:
+  - ccx
+capabilities:
+  - linear_static
+  - thermal_placeholder
+```
+
+MATLAB/Octave script importer:
+
+```yaml
+id: osw.mscript
+name: MATLAB/Octave Script Importer
+version: "0.1.0"
+domain: MATH
+type: script_importer
+license: GPL-compatible
+input_formats:
+  - m
+  - mat
+output_formats:
+  - figure_dataset
+  - png
+  - svg
+requires: []
+optional_requires:
+  - scipy
+executable_names:
+  - octave
+capabilities:
+  - m_file_preview
+  - octave_execution_placeholder
+  - figure_capture_placeholder
+```
+
+## Future Extension Points
+
+Later functional steps will bind this contract to:
+
+- runner diagnostics and dry-run command planning;
+- a plugin manager dialog;
+- standard mesh import bridges;
+- MATLAB/Octave preview workflows;
+- report generator binding.
+
+## Next Step
+
+Next functional step: `OSW-FUNC-003_RUNNER_DIAGNOSTICS`.

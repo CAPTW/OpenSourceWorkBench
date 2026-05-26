@@ -7,6 +7,7 @@ from pathlib import Path
 from osw.plugins.health import (
     PluginHealthStatus,
     build_plugin_health_record,
+    check_manifest_health,
     collect_plugin_health_records,
     plugin_health_records_as_json,
     plugin_health_records_as_text,
@@ -145,3 +146,52 @@ def test_cli_plugin_health_json_reports_empty_default(
 
     assert exit_code == 0
     assert json.loads(output) == []
+
+
+def test_missing_required_package_is_error() -> None:
+    manifest = PluginManifest.from_dict(
+        _manifest_data(requires=["osw_missing_required_for_health_test"])
+    )
+
+    health = check_manifest_health(manifest)
+
+    assert health.status == PluginHealthStatus.ERROR
+    assert health.diagnostics[0].code == "missing-python-package"
+
+
+def test_missing_optional_package_is_warning_not_error() -> None:
+    manifest = PluginManifest.from_dict(
+        _manifest_data(optional_requires=["osw_missing_optional_for_health_test"])
+    )
+
+    health = check_manifest_health(manifest)
+
+    assert health.status == PluginHealthStatus.WARNING
+    assert health.diagnostics[0].severity.value == "warning"
+
+
+def test_manifest_executable_names_are_checked_without_execution() -> None:
+    manifest = PluginManifest.from_dict(
+        _manifest_data(executable_names=["osw-definitely-missing-health-exe"])
+    )
+
+    record = build_plugin_health_record(manifest)
+
+    assert record.status == PluginHealthStatus.WARNING.value
+    assert record.executable_status[0].executable == "osw-definitely-missing-health-exe"
+    assert not record.executable_status[0].available
+
+
+def test_health_collection_does_not_import_plugin_code(tmp_path: Path) -> None:
+    sentinel = tmp_path / "executed.txt"
+    plugin_dir = tmp_path / "plugins" / "demo"
+    _write_manifest(plugin_dir / "manifest.json", entry_point="plugin_code:Plugin")
+    (plugin_dir / "plugin_code.py").write_text(
+        f"from pathlib import Path\nPath({str(sentinel)!r}).write_text('executed')\n",
+        encoding="utf-8",
+    )
+
+    records = collect_plugin_health_records([tmp_path / "plugins"])
+
+    assert len(records) == 1
+    assert not sentinel.exists()

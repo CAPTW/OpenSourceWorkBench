@@ -1,0 +1,10 @@
+{
+  "name": "Invalid Missing ID",
+  "version": "0.1.0",
+  "domain": "GENERAL",
+  "type": "mesh_importer",
+  "license": "MIT",
+  "capabilities": [
+    "preview"
+  ]
+}

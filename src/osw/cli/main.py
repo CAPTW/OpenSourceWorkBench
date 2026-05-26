@@ -10,6 +10,8 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from osw import __version__
+from osw.plugins.discovery import discover_local_plugin_manifests
+from osw.plugins.errors import PluginDiagnosticSeverity
 from osw.plugins.health import (
     collect_plugin_health_records,
     plugin_health_records_as_json,
@@ -70,10 +72,51 @@ def build_parser() -> argparse.ArgumentParser:
         help="Additional local plugin directory to scan. May be repeated.",
     )
     plugin_health_parser.add_argument(
+        "--plugins-dir",
+        action="append",
+        default=[],
+        help="Alias for --plugin-path.",
+    )
+    plugin_health_parser.add_argument(
         "--json",
         action="store_true",
         help="Emit JSON health records.",
     )
+    plugins_list_parser = subparsers.add_parser(
+        "plugins-list",
+        help="List plugin manifests from local directories without loading plugin code.",
+    )
+    plugins_list_parser.add_argument(
+        "--plugins-dir",
+        action="append",
+        default=[],
+        help="Local plugin directory or manifest path to scan. May be repeated.",
+    )
+    plugins_list_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    plugins_validate_parser = subparsers.add_parser(
+        "plugins-validate",
+        help="Validate local plugin manifests without loading plugin code.",
+    )
+    plugins_validate_parser.add_argument(
+        "path",
+        help="Plugin manifest, plugin folder, or parent plugin directory to validate.",
+    )
+    plugins_validate_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit JSON validation output.",
+    )
+    plugins_health_parser = subparsers.add_parser(
+        "plugins-health",
+        help="Alias for plugin-health using --plugins-dir.",
+    )
+    plugins_health_parser.add_argument(
+        "--plugins-dir",
+        action="append",
+        default=[],
+        help="Local plugin directory or manifest path to scan. May be repeated.",
+    )
+    plugins_health_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
     subparsers.add_parser(
         "gui",
         help="Launch the optional PySide6 GUI shell.",
@@ -101,13 +144,92 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     if args.command == "plugin-health":
-        plugin_paths = [DEFAULT_PLUGIN_INSTALL_ROOT, *(Path(path) for path in args.plugin_path)]
+        plugin_paths = [
+            DEFAULT_PLUGIN_INSTALL_ROOT,
+            *(Path(path) for path in args.plugin_path),
+            *(Path(path) for path in args.plugins_dir),
+        ]
         records = collect_plugin_health_records(plugin_paths)
         if args.json:
             print(plugin_health_records_as_json(records))
         else:
             print(plugin_health_records_as_text(records))
         return 0
+
+    if args.command == "plugins-health":
+        plugin_paths = [DEFAULT_PLUGIN_INSTALL_ROOT, *(Path(path) for path in args.plugins_dir)]
+        records = collect_plugin_health_records(plugin_paths)
+        if args.json:
+            print(plugin_health_records_as_json(records))
+        else:
+            print(plugin_health_records_as_text(records))
+        return 0
+
+    if args.command == "plugins-list":
+        plugin_paths = [DEFAULT_PLUGIN_INSTALL_ROOT, *(Path(path) for path in args.plugins_dir)]
+        result = discover_local_plugin_manifests(plugin_paths)
+        if args.json:
+            import json
+
+            print(
+                json.dumps(
+                    {
+                        "plugins": [
+                            manifest.to_dict() for manifest in result.manifests
+                        ],
+                        "diagnostics": [
+                            diagnostic.to_dict() for diagnostic in result.diagnostics
+                        ],
+                        "duplicate_ids": result.duplicate_ids,
+                        "skipped_paths": result.skipped_paths,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+            return 0
+        print("OSW plugins")
+        if not result.manifests:
+            print("No local plugin manifests discovered.")
+        for manifest in result.manifests:
+            print(f"- {manifest.id}: {manifest.name} ({manifest.type.value})")
+        for diagnostic in result.diagnostics:
+            print(f"{diagnostic.severity.value}: {diagnostic.message}", file=sys.stderr)
+        return 0
+
+    if args.command == "plugins-validate":
+        result = discover_local_plugin_manifests([Path(args.path)])
+        has_errors = any(
+            diagnostic.severity is PluginDiagnosticSeverity.ERROR
+            for diagnostic in result.diagnostics
+        ) or bool(result.duplicate_ids)
+        if args.json:
+            import json
+
+            print(
+                json.dumps(
+                    {
+                        "plugins": [manifest.id for manifest in result.manifests],
+                        "diagnostics": [
+                            diagnostic.to_dict() for diagnostic in result.diagnostics
+                        ],
+                        "duplicate_ids": result.duplicate_ids,
+                        "skipped_paths": result.skipped_paths,
+                        "valid": not has_errors,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+            return 1 if has_errors else 0
+        print("OSW plugin validation")
+        for manifest in result.manifests:
+            print(f"ok: {manifest.id}")
+        for duplicate_id in result.duplicate_ids:
+            print(f"error: Duplicate plugin id: {duplicate_id}", file=sys.stderr)
+        for diagnostic in result.diagnostics:
+            print(f"{diagnostic.severity.value}: {diagnostic.message}", file=sys.stderr)
+        return 1 if has_errors else 0
 
     if args.command == "gui":
         from osw.gui.main_window import PySide6UnavailableError, run_gui

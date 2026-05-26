@@ -1,0 +1,26 @@
+{
+  "id": "osw.calculix",
+  "name": "CalculiX Adapter",
+  "version": "0.1.0",
+  "domain": "CAE",
+  "type": "solver_adapter",
+  "license": "GPL-compatible",
+  "input_formats": [
+    "internal_project_schema",
+    "inp"
+  ],
+  "output_formats": [
+    "frd",
+    "dat",
+    "vtk"
+  ],
+  "requires": [],
+  "optional_requires": [],
+  "executable_names": [
+    "ccx"
+  ],
+  "capabilities": [
+    "linear_static",
+    "thermal_placeholder"
+  ]
+}

@@ -17,10 +17,21 @@ from osw.plugins.base import (
 from osw.plugins.discovery import (
     DuplicatePluginIdError,
     PluginDiscoveryError,
-    PluginRegistry,
+    PluginDiscoveryRecord,
+    PluginDiscoveryResult,
     discover_entry_point_plugins,
+    discover_entry_points,
+    discover_local_plugin_manifests,
     discover_local_plugins,
+    discover_plugin_search_paths,
     discover_plugins,
+    load_entry_point_plugin,
+)
+from osw.plugins.errors import (
+    PluginDiagnostic,
+    PluginDiagnosticSeverity,
+    PluginError,
+    PluginValidationError,
 )
 from osw.plugins.health import (
     InvalidPluginHealthRecord,
@@ -43,7 +54,14 @@ from osw.plugins.installer import (
     PluginValidationResult,
     ZipPathTraversalError,
 )
-from osw.plugins.manifest import PluginManifest, PluginManifestError, PluginType
+from osw.plugins.manifest import (
+    PluginDomain,
+    PluginManifest,
+    PluginManifestError,
+    PluginType,
+    validate_manifest_data,
+)
+from osw.plugins.registry import PluginRegistry, PluginRegistryEntry
 
 __all__ = [
     "CADImporterPlugin",
@@ -53,7 +71,13 @@ __all__ = [
     "MeshGeneratorPlugin",
     "MeshImporterPlugin",
     "PluginContractError",
+    "PluginDiagnostic",
+    "PluginDiagnosticSeverity",
     "PluginDiscoveryError",
+    "PluginDiscoveryRecord",
+    "PluginDiscoveryResult",
+    "PluginDomain",
+    "PluginError",
     "PluginHealth",
     "PluginExecutableStatus",
     "PluginHealthRecord",
@@ -65,7 +89,9 @@ __all__ = [
     "PluginManifest",
     "PluginManifestError",
     "PluginRegistry",
+    "PluginRegistryEntry",
     "PluginType",
+    "PluginValidationError",
     "PluginValidationResult",
     "PostProcessorPlugin",
     "PropertyModelPlugin",
@@ -77,9 +103,14 @@ __all__ = [
     "build_plugin_health_record",
     "check_manifest_health",
     "collect_plugin_health_records",
+    "discover_entry_points",
     "discover_entry_point_plugins",
     "discover_local_plugins",
+    "discover_local_plugin_manifests",
+    "discover_plugin_search_paths",
     "discover_plugins",
+    "load_entry_point_plugin",
     "plugin_health_records_as_json",
     "plugin_health_records_as_text",
+    "validate_manifest_data",
 ]

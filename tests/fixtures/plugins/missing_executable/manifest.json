@@ -1,0 +1,16 @@
+{
+  "id": "osw.missing.executable",
+  "name": "Missing Executable Plugin",
+  "version": "0.1.0",
+  "domain": "CAE",
+  "type": "solver_adapter",
+  "license": "MIT",
+  "requires": [],
+  "optional_requires": [],
+  "executable_names": [
+    "osw-definitely-missing-executable"
+  ],
+  "capabilities": [
+    "case_generation_placeholder"
+  ]
+}

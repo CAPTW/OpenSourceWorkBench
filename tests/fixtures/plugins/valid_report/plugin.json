@@ -1,0 +1,19 @@
+{
+  "id": "osw.report.html",
+  "name": "HTML Report Plugin",
+  "version": "0.1.0",
+  "domain": "REPORT",
+  "type": "report_plugin",
+  "license": "MIT",
+  "input_formats": [
+    "internal_project_schema"
+  ],
+  "output_formats": [
+    "html"
+  ],
+  "requires": [],
+  "optional_requires": [],
+  "capabilities": [
+    "render_report_placeholder"
+  ]
+}

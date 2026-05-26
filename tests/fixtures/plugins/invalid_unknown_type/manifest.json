@@ -1,0 +1,11 @@
+{
+  "id": "osw.invalid.type",
+  "name": "Invalid Type",
+  "version": "0.1.0",
+  "domain": "GENERAL",
+  "type": "runs_everything",
+  "license": "MIT",
+  "capabilities": [
+    "preview"
+  ]
+}
