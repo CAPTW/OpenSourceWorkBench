@@ -46,17 +46,15 @@ release tag planning is tracked in the
 
 ## Release Status
 
-The current package version is `0.1.2`. Local `v0.1.0-rc1`, `v0.1.0-rc2`,
-`v0.1.0-rc3`, `v0.1.0`, `v0.1.1-rc1`, and `v0.1.1` tags remain local-only
-release evidence. The local `v0.1.1` final tag was parked with no public push
-and must not be published as the current release after the OSW-AUTO-067 GUI
-workflow fix advanced `develop`. OSW-AUTO-070 prepared the local patch
-candidate `0.1.2rc1` / `v0.1.2-rc1`, and OSW-AUTO-072 prepares final `0.1.2`
-package metadata after RC1 triage found no P0/P1 blockers. The final
-`v0.1.2` tag, public tag push, release artifacts, and announcement remain
-blocked until later maintainer-controlled gates. See the
-[Changelog](CHANGELOG.md) for patch candidate and final-prep notes plus
-source-install retest evidence.
+The current package version is `0.1.2`. OSW-AUTO-077 published the `develop`
+branch and annotated `v0.1.2` tag to GitHub at commit
+`c39f21372ef837f096aa0d430cced82adc6f3485`. Historical `v0.1.0`,
+`v0.1.1`, and release-candidate tags remain preserved evidence and were not
+pushed by that gate unless separately listed on the remote. Release artifacts,
+a GitHub Release page, and public announcement text remain separate
+maintainer-controlled gates. Optional external solvers remain user-installed
+local tools. See the [Changelog](CHANGELOG.md) for the published source-release
+notes and source-install smoke evidence.
 
 OSW v0.1 is educational and research oriented. It makes no regulated-use or
 production-accuracy claim, does not replace expert engineering judgment, and

@@ -443,3 +443,22 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   OSW-AUTO-073. Public push, release artifacts, external solver binary bundles,
   and public announcements remain blocked until later dedicated maintainer
   gates.
+
+## ADR-0026: Patch v0.1.2 GitHub Source Publish
+
+- Status: Accepted
+- Date: 2026-05-26
+- Context: OSW-AUTO-073 created local annotated `v0.1.2` at
+  `c39f21372ef837f096aa0d430cced82adc6f3485`. OSW-AUTO-075 source smoke passed
+  with limitations and no P0/P1 blockers. OSW-AUTO-076E verified a clean publish
+  clone and found the GitHub remote ready for first-time publication.
+- Decision: OSW-AUTO-077 published only
+  `refs/heads/develop:refs/heads/develop` and
+  `refs/tags/v0.1.2:refs/tags/v0.1.2` from the clean publish clone. It did not
+  push historical `v0.1.0`, `v0.1.1`, or `v0.1.2-rc1` tags, did not run
+  `git push --tags`, and did not create release artifacts or announcement text.
+- Consequences: The GitHub source release is now published at `develop` and
+  `v0.1.2`, both resolving to `c39f21372ef837f096aa0d430cced82adc6f3485`.
+  Release artifacts, GitHub Release notes, binary installers, optional solver
+  live-run evidence, and public announcement text remain separate
+  maintainer-controlled gates.

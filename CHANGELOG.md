@@ -6,19 +6,27 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
-### Patch v0.1.2 Final Metadata Prepared
+No product changes after the GitHub source publication are recorded here yet.
+
+## 0.1.2 - GitHub Source Release Published
+
+### Patch v0.1.2 Source Release
 
 Final package version: `0.1.2`
 
-Planned final local tag: `v0.1.2`
+Published final tag: `v0.1.2`
 
-- OSW-AUTO-072 prepares final `0.1.2` package metadata after the local
+- OSW-AUTO-072 prepared final `0.1.2` package metadata after the local
   `v0.1.2-rc1` candidate and OSW-AUTO-071 triage reported no P0/P1 blockers.
-  This prompt does not create the final `v0.1.2` tag, push any branch or tag,
-  build release artifacts, or create a public announcement.
+- OSW-AUTO-073 created the local annotated `v0.1.2` tag, and OSW-AUTO-077
+  pushed only `refs/heads/develop:refs/heads/develop` and
+  `refs/tags/v0.1.2:refs/tags/v0.1.2` to GitHub.
+- Remote `develop` and `v0.1.2^{}` both resolve to
+  `c39f21372ef837f096aa0d430cced82adc6f3485`; the remote annotated tag object
+  verified by OSW-AUTO-077 is `353a87897c842ee01aaae18abc4d69f330406e09`.
 - Local `v0.1.2-rc1` remains annotated evidence at
-  `28b30c1f79d4c62d160629e96fc1fcefa2382ebe` and was not pushed. The final
-  `v0.1.2` tag remains pending the dedicated local tag gate.
+  `28b30c1f79d4c62d160629e96fc1fcefa2382ebe` and was not pushed by
+  OSW-AUTO-077.
 - The local `v0.1.1` final tag remains historical local-only evidence at
   `7b232f5003fcc8eb207846570499ffb3442d3197` and must not be published as
   current after the OSW-AUTO-067 GUI workflow fix.
@@ -30,6 +38,8 @@ Planned final local tag: `v0.1.2`
   live runs are environment-specific, manual desktop CUA depth is limited,
   Cantera 3.2 emits a deprecation warning, external URL freshness is outside the
   local docs checker, and packaging smoke is separate.
+- Release artifacts, a GitHub Release page, binary installers, and public
+  announcement text were not created by the source publish gate.
 
 ### Patch v0.1.2rc1 Release Candidate
 
