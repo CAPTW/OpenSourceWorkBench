@@ -98,6 +98,7 @@ class MainWindow(_BaseMainWindow):
         self.plugin_health_map: dict[str, object] = {}
         self.plugin_discovery_result: object | None = None
         self.plugin_manager_dialog: object | None = None
+        self.script_preview_dialog: object | None = None
         self.preferences_dialog: object | None = None
         self.toolbar_actions: dict[str, object] = {}
         self.menu_actions: dict[str, object] = {}
@@ -225,6 +226,16 @@ class MainWindow(_BaseMainWindow):
         for widget in self._themed_widgets:
             if hasattr(widget, "set_theme_tokens"):
                 widget.set_theme_tokens(tokens)
+        if self.plugin_manager_dialog is not None and hasattr(
+            self.plugin_manager_dialog,
+            "set_theme_tokens",
+        ):
+            self.plugin_manager_dialog.set_theme_tokens(tokens)
+        if self.script_preview_dialog is not None and hasattr(
+            self.script_preview_dialog,
+            "set_theme_tokens",
+        ):
+            self.script_preview_dialog.set_theme_tokens(tokens)
 
     def _on_top_bar_action_triggered(self, label: str) -> None:
         if label == "New":
@@ -358,6 +369,67 @@ class MainWindow(_BaseMainWindow):
         self._placeholder_action(f"Imported mesh metadata: {mesh_ref.name}")
         return True
 
+    def preview_script_file(self, path: str | Path, *, show_dialog: bool = False) -> bool:
+        """Preview a MATLAB/Octave script and attach its ScriptRef metadata.
+
+        The preview path is text-only. It records metadata and safety findings
+        without launching MATLAB, Octave, or any script content.
+        """
+
+        from osw.gui.dialogs.script_preview_dialog import ScriptPreviewDialog
+        from osw.scripts.mscript.importer import create_script_ref, preview_mscript
+
+        result = preview_mscript(path)
+        if result.preview is None:
+            self._placeholder_action(result.diagnostics.summary())
+            return False
+
+        preview = result.preview
+        if show_dialog:
+            self.script_preview_dialog = ScriptPreviewDialog(
+                preview=preview,
+                parent=self,
+                theme_tokens=self.theme_manager.current_tokens,
+            )
+            accepted = self.script_preview_dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted
+            if not accepted:
+                return False
+
+        script_ref = create_script_ref(preview)
+        self.set_project(_project_with_script_ref(self.current_project, script_ref))
+        self._placeholder_action(f"Previewed script metadata: {script_ref.name}")
+        return True
+
+    def open_script_preview_dialog(self, path: str | Path) -> object | None:
+        """Open the script preview dialog without mutating the project until accepted."""
+
+        from osw.gui.dialogs.script_preview_dialog import ScriptPreviewDialog
+        from osw.scripts.mscript.importer import create_script_ref, preview_mscript
+
+        result = preview_mscript(path)
+        if result.preview is None:
+            self._placeholder_action(result.diagnostics.summary())
+            return None
+
+        dialog = ScriptPreviewDialog(
+            preview=result.preview,
+            parent=self,
+            theme_tokens=self.theme_manager.current_tokens,
+        )
+
+        def _attach(preview: object) -> None:
+            self.set_project(
+                _project_with_script_ref(self.current_project, create_script_ref(preview))
+            )
+            self._placeholder_action(f"Previewed script metadata: {getattr(preview, 'name', '')}")
+
+        dialog.previewAccepted.connect(_attach)
+        self.script_preview_dialog = dialog
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+        return dialog
+
     def _on_plugin_state_changed(self, _plugin_id: str, _enabled: bool) -> None:
         self.run_plugin_health_check(log=False)
 
@@ -396,6 +468,32 @@ def _project_with_mesh_ref(project: Project, mesh_ref: object) -> Project:
         geometry=project.geometry,
         meshes=meshes,
         scripts=project.scripts,
+        boundary_curves=project.boundary_curves,
+        physics=project.physics,
+        solvers=project.solvers,
+        results=project.results,
+        report=project.report,
+        schema_version=project.schema_version,
+        plugins=project.plugins,
+        warnings=project.warnings,
+    )
+
+
+def _project_with_script_ref(project: Project, script_ref: object) -> Project:
+    scripts = [
+        script
+        for script in project.script_refs
+        if getattr(script, "id", "") != getattr(script_ref, "id", "")
+        and getattr(script, "path", "") != getattr(script_ref, "path", "")
+    ]
+    scripts.append(script_ref)
+    return Project(
+        metadata=project.metadata,
+        units=project.units,
+        materials=project.materials,
+        geometry=project.geometry,
+        meshes=project.meshes,
+        scripts=scripts,
         boundary_curves=project.boundary_curves,
         physics=project.physics,
         solvers=project.solvers,

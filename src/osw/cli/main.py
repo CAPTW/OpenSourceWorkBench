@@ -155,6 +155,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional output format override such as vtu, vtk, msh, inp, or xdmf.",
     )
+    mscript_preview_parser = subparsers.add_parser(
+        "mscript-preview",
+        help="Preview a MATLAB/Octave .m file without executing it.",
+    )
+    mscript_preview_parser.add_argument("path", help="M-script .m file path.")
+    mscript_preview_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    mscript_scan_parser = subparsers.add_parser(
+        "mscript-scan",
+        help="Run the MATLAB/Octave .m safety scanner without executing code.",
+    )
+    mscript_scan_parser.add_argument("path", help="M-script .m file path.")
+    mscript_scan_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
     subparsers.add_parser(
         "gui",
         help="Launch the optional PySide6 GUI shell.",
@@ -346,6 +358,68 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Wrote mesh: {export_result.output_path}")
         return 0
 
+    if args.command == "mscript-preview":
+        from osw.scripts.mscript.importer import preview_mscript
+
+        result = preview_mscript(Path(args.path))
+        if args.json:
+            import json
+
+            print(
+                json.dumps(
+                    {
+                        "status": result.status.value,
+                        "preview": result.preview.to_dict() if result.preview else None,
+                        "diagnostics": result.diagnostics.to_dict(),
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        elif result.preview is not None:
+            _print_mscript_preview(result.preview)
+            if result.diagnostics.messages:
+                print(result.diagnostics.summary(), file=sys.stderr)
+        else:
+            print(result.diagnostics.summary(), file=sys.stderr)
+        return 1 if result.status.value == "error" else 0
+
+    if args.command == "mscript-scan":
+        from osw.scripts.mscript.importer import read_mscript_text
+        from osw.scripts.mscript.safety_scan import scan_mscript_text
+
+        read_result = read_mscript_text(Path(args.path))
+        if not read_result.ok:
+            if args.json:
+                import json
+
+                print(
+                    json.dumps(
+                        {
+                            "status": read_result.status.value,
+                            "diagnostics": read_result.diagnostics.to_dict(),
+                        },
+                        indent=2,
+                        sort_keys=True,
+                    )
+                )
+            else:
+                print(read_result.diagnostics.summary(), file=sys.stderr)
+            return 1
+        scan = scan_mscript_text(read_result.text, source=read_result.source_path)
+        if args.json:
+            import json
+
+            print(json.dumps(scan.to_dict(), indent=2, sort_keys=True))
+        else:
+            print(f"Safety findings: {len(scan.findings)}")
+            for finding in scan.findings:
+                print(
+                    f"- {finding.severity}: line {finding.line_no} "
+                    f"{finding.token} ({finding.code}) - {finding.message}"
+                )
+        return 0
+
     if args.command == "gui":
         from osw.gui.main_window import PySide6UnavailableError, run_gui
 
@@ -380,6 +454,27 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     parser.print_help(sys.stdout)
     return 0
+
+
+def _print_mscript_preview(preview: object) -> None:
+    signature = getattr(preview, "function_signature", None)
+    print(f"M-script: {getattr(preview, 'name', '')}")
+    print(f"Kind: {getattr(getattr(preview, 'kind', ''), 'value', getattr(preview, 'kind', ''))}")
+    if signature is not None:
+        print(f"Function: {signature.raw_signature or signature.name}")
+    print(f"Lines: {getattr(preview, 'line_count', 0)}")
+    print(f"Safety: {preview.safety_summary()}")
+    print(f"Plot hints: {len(getattr(preview, 'plot_hints', ()))}")
+    high = [
+        finding
+        for finding in getattr(preview, "safety_findings", ())
+        if finding.severity in {"high", "blocked"}
+    ]
+    for finding in high:
+        print(
+            f"{finding.severity.upper()} line {finding.line_no}: "
+            f"{finding.token} - {finding.message}"
+        )
 
 
 if __name__ == "__main__":

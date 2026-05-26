@@ -174,3 +174,9 @@ top of the existing ProjectSchema binding. Mesh refs can carry `MeshInfo`
 summaries, the project tree continues to render mesh rows, and the properties
 panel can show selected mesh metadata without replacing the mock viewport or
 running external tools.
+
+`OSW-FUNC-006_MSCRIPT_IMPORT_PREVIEW` adds safe MATLAB/Octave `.m` preview on
+top of the same visual shell. Script refs can carry preview metadata and safety
+summaries, the project tree continues to render script rows, and the properties
+panel can show selected script summary data. The GUI preview does not run
+MATLAB, Octave, or script content.

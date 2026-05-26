@@ -56,7 +56,43 @@ def builtin_meshio_plugin_manifest() -> PluginManifest:
     )
 
 
+def builtin_mscript_preview_plugin_manifest() -> PluginManifest:
+    """Return the data-only manifest for previewing `.m` files."""
+
+    return PluginManifest.from_dict(
+        {
+            "id": "osw.mscript_preview",
+            "name": "MATLAB/Octave Script Preview Importer",
+            "version": "0.1.0",
+            "domain": "MATH",
+            "type": "script_importer",
+            "license": "GPL-compatible",
+            "description": (
+                "Reads MATLAB/Octave .m files as text, extracts metadata, and "
+                "surfaces safety findings without running scripts."
+            ),
+            "input_formats": ["m"],
+            "output_formats": ["script_preview", "script_ref"],
+            "requires": [],
+            "optional_requires": [],
+            "executable_names": [],
+            "capabilities": [
+                "m_file_preview",
+                "function_signature_detection",
+                "safety_scan",
+                "plot_hint_detection",
+                "project_script_ref_binding",
+            ],
+            "metadata": {
+                "built_in": True,
+                "preview_first": True,
+                "no_script_execution": True,
+            },
+        }
+    )
+
+
 def builtin_plugin_manifests() -> tuple[PluginManifest, ...]:
     """Return built-in data-only plugin manifest records."""
 
-    return (builtin_meshio_plugin_manifest(),)
+    return (builtin_meshio_plugin_manifest(), builtin_mscript_preview_plugin_manifest())

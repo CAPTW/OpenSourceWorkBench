@@ -208,6 +208,48 @@ def test_script_refs_default_to_safe_preview_for_m_files() -> None:
     assert script.safe_preview_required is True
 
 
+def test_project_validation_warns_when_mscript_preview_metadata_is_missing() -> None:
+    project = Project(
+        metadata=ProjectMetadata(name="script warning"),
+        scripts=[ScriptRef(id="script", path="scripts/run_case.m", language="matlab_octave")],
+        results=[ResultRef(ref_id="result-1", path="results/preview.json", kind="dataset")],
+    )
+
+    report = validate_project(project)
+
+    assert report.has_warnings
+    assert any("has not been previewed" in item.message for item in report.messages)
+
+
+def test_project_validation_warns_for_high_risk_mscript_findings() -> None:
+    script = ScriptRef(
+        id="script",
+        path="scripts/run_case.m",
+        language="matlab_octave",
+        metadata={
+            "kind": "script",
+            "safety_summary": "blocked=0, high=1, warnings=0",
+            "safety_findings": [
+                {
+                    "severity": "high",
+                    "token": "system",
+                    "message": "External command token detected.",
+                }
+            ],
+        },
+    )
+    project = Project(
+        metadata=ProjectMetadata(name="script warning"),
+        scripts=[script],
+        results=[ResultRef(ref_id="result-1", path="results/preview.json", kind="dataset")],
+    )
+
+    report = validate_project(project)
+
+    assert report.has_warnings
+    assert any("high-risk or blocked" in item.message for item in report.messages)
+
+
 def test_project_validation_warns_for_native_commercial_cad_extension() -> None:
     project = Project(
         metadata=ProjectMetadata(name="native cad warning"),

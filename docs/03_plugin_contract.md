@@ -201,28 +201,26 @@ capabilities:
 MATLAB/Octave script importer:
 
 ```yaml
-id: osw.mscript
-name: MATLAB/Octave Script Importer
+id: osw.mscript_preview
+name: MATLAB/Octave Script Preview Importer
 version: "0.1.0"
 domain: MATH
 type: script_importer
 license: GPL-compatible
 input_formats:
   - m
-  - mat
 output_formats:
-  - figure_dataset
-  - png
-  - svg
+  - script_preview
+  - script_ref
 requires: []
-optional_requires:
-  - scipy
-executable_names:
-  - octave
+optional_requires: []
+executable_names: []
 capabilities:
   - m_file_preview
-  - octave_execution_placeholder
-  - figure_capture_placeholder
+  - function_signature_detection
+  - safety_scan
+  - plot_hint_detection
+  - project_script_ref_binding
 ```
 
 ## Future Extension Points
@@ -237,11 +235,17 @@ Later functional steps will bind this contract to:
 - MATLAB/Octave preview workflows;
 - report generator binding.
 
-`OSW-FUNC-005_MESH_IMPORT_BRIDGE` adds the built-in data-only
-`osw.meshio` manifest for the standard mesh import bridge. It declares
-`mesh_importer` capabilities and the optional `meshio` dependency, but
-discovery and health checks still do not execute plugin code or external tools.
+`OSW-FUNC-005_MESH_IMPORT_BRIDGE` adds the built-in data-only `osw.meshio`
+manifest for the standard mesh import bridge. It declares `mesh_importer`
+capabilities and the optional `meshio` dependency, but discovery and health
+checks still do not execute plugin code or external tools.
+
+`OSW-FUNC-006_MSCRIPT_IMPORT_PREVIEW` adds the built-in data-only
+`osw.mscript_preview` manifest for previewing MATLAB/Octave `.m` files. It
+declares `script_importer` capabilities for metadata extraction, safety scan,
+plot hints, and ProjectSchema `ScriptRef` binding. It does not require or run
+MATLAB, Octave, or script content.
 
 ## Next Step
 
-Next functional step: `OSW-FUNC-006_MSCRIPT_IMPORT_PREVIEW`.
+Next functional step: `OSW-FUNC-007_OCTAVE_RUNNER`.

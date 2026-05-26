@@ -910,6 +910,8 @@ def _validate_project_references(project: Project, report: ValidationReport) -> 
                 f"scripts[{index}].safe_preview_required",
                 "MATLAB/Octave scripts require safe preview before execution.",
             )
+        if Path(script.path).suffix.lower() == ".m":
+            _validate_mscript_preview_metadata(script, report, path=f"scripts[{index}]")
 
 
 def _validate_solver_config(
@@ -931,6 +933,41 @@ def _validate_solver_config(
             f"{path}.convergence_tolerance",
             "Convergence tolerance must be positive.",
         )
+
+
+def _validate_mscript_preview_metadata(
+    script: ScriptRef,
+    report: ValidationReport,
+    *,
+    path: str,
+) -> None:
+    metadata = script.metadata if isinstance(script.metadata, dict) else {}
+    preview_payload = metadata.get("preview")
+    if not (preview_payload or metadata.get("safety_summary") or metadata.get("kind")):
+        report.add_warning(
+            f"{path}.metadata",
+            "MATLAB/Octave script has not been previewed by the safety scanner yet.",
+        )
+        return
+
+    findings = []
+    if isinstance(preview_payload, dict):
+        raw_findings = preview_payload.get("safety_findings", ())
+        if isinstance(raw_findings, list | tuple):
+            findings.extend(item for item in raw_findings if isinstance(item, dict))
+    raw_findings = metadata.get("safety_findings", ())
+    if isinstance(raw_findings, list | tuple):
+        findings.extend(item for item in raw_findings if isinstance(item, dict))
+    for finding in findings:
+        severity = str(finding.get("severity", "")).lower()
+        if severity in {"high", "blocked"}:
+            report.add_warning(
+                f"{path}.metadata.safety_findings",
+                (
+                    "MATLAB/Octave script preview contains high-risk or blocked "
+                    f"safety finding: {finding.get('message', finding.get('token', 'script'))}"
+                ),
+            )
 
 
 def _physics_list(value: Sequence[PhysicsSetup] | PhysicsSetup | None) -> list[PhysicsSetup]:

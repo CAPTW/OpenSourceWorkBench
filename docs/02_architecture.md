@@ -43,3 +43,12 @@ GUI and solver adapters. The meshio bridge imports meshio lazily, extracts
 and reports unsupported, corrupt, or dependency-missing imports through
 structured diagnostics. It does not run Gmsh, solvers, shell commands, or native
 commercial CAD readers. See `docs/16_mesh_import_bridge.md`.
+
+## M-Script Import Preview
+
+MATLAB/Octave `.m` preview lives under `osw.scripts.mscript` and is text-only.
+It classifies scripts/functions/classdefs, extracts help text, function
+signatures, plot hints, and structured safety findings, then can attach the
+summary to ProjectSchema `ScriptRef` records. It does not require MATLAB,
+Octave, Oct2Py, PySide6, or script execution. See
+`docs/17_mscript_import_preview.md`.

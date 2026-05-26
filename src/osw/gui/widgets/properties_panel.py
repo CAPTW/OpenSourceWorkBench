@@ -47,6 +47,7 @@ class PropertiesPanel(_BaseWidget):
         self._selection = "HeatSink_Flow"
         self._current_project: Project | None = None
         self._mesh_by_label: dict[str, object] = {}
+        self._script_by_label: dict[str, object] = {}
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -100,6 +101,9 @@ class PropertiesPanel(_BaseWidget):
         mesh = self._selected_mesh_ref()
         if mesh is not None:
             return _mesh_row_value(mesh, name)
+        script = self._selected_script_ref()
+        if script is not None:
+            return _script_row_value(script, name)
         return ""
 
     def set_node_selection(self, selection: str) -> None:
@@ -107,6 +111,9 @@ class PropertiesPanel(_BaseWidget):
 
     def _selected_mesh_ref(self) -> object | None:
         return self._mesh_by_label.get(self._selection)
+
+    def _selected_script_ref(self) -> object | None:
+        return self._script_by_label.get(self._selection)
 
     def set_project(self, project: Project) -> None:
         self._current_project = project
@@ -119,6 +126,10 @@ class PropertiesPanel(_BaseWidget):
         self._mesh_by_label = {
             _mesh_label(mesh): mesh
             for mesh in project.mesh_refs
+        }
+        self._script_by_label = {
+            _script_label(script): script
+            for script in project.script_refs
         }
         material = project.materials[0] if project.materials else None
         if material is not None:
@@ -355,4 +366,48 @@ def _mesh_count(value: object, info: dict[str, object], *keys: str) -> str:
     for key in keys:
         if info.get(key) not in (None, ""):
             return str(info[key])
+    return ""
+
+
+def _script_label(script: object) -> str:
+    name = str(getattr(script, "name", "") or "")
+    path = str(getattr(script, "path", "") or "")
+    if name:
+        return name
+    if path:
+        from pathlib import Path
+
+        return Path(path).name
+    return str(getattr(script, "id", ""))
+
+
+def _script_info(script: object) -> dict[str, object]:
+    metadata = getattr(script, "metadata", {})
+    return dict(metadata) if isinstance(metadata, dict) else {}
+
+
+def _script_row_value(script: object, name: str) -> str:
+    info = _script_info(script)
+    preview = info.get("preview")
+    preview_info = preview if isinstance(preview, dict) else {}
+    if name in {"Script kind", "Kind"}:
+        return str(info.get("kind", preview_info.get("kind", "")))
+    if name in {"Lines", "Line count"}:
+        return str(info.get("line_count", preview_info.get("line_count", "")))
+    if name in {"Safety", "Safety summary"}:
+        preview_metadata = preview_info.get("metadata", {})
+        fallback = (
+            preview_metadata.get("safety_summary", "")
+            if isinstance(preview_metadata, dict)
+            else ""
+        )
+        return str(info.get("safety_summary", fallback))
+    if name in {"Plot hints", "Plot hint count"}:
+        return str(info.get("plot_hint_count", len(preview_info.get("plot_hints", ()))))
+    if name in {"Function", "Function signature"}:
+        return str(info.get("raw_signature", info.get("function_name", "")))
+    if name in {"Script status", "Status"}:
+        return str(getattr(script, "status", "") or "")
+    if name == "Safe preview required":
+        return str(getattr(script, "safe_preview_required", True))
     return ""

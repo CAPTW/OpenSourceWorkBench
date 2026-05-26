@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-__all__ = ["ExecutablePathDialog", "PluginManagerDialog"]
+__all__ = ["ExecutablePathDialog", "PluginManagerDialog", "ScriptPreviewDialog"]
 
 
 def __getattr__(name: str) -> object:
-    if name in __all__:
+    if name in {"ExecutablePathDialog", "PluginManagerDialog"}:
         from osw.gui.dialogs.plugin_manager_dialog import (
             ExecutablePathDialog,
             PluginManagerDialog,
@@ -16,4 +16,8 @@ def __getattr__(name: str) -> object:
             "ExecutablePathDialog": ExecutablePathDialog,
             "PluginManagerDialog": PluginManagerDialog,
         }[name]
+    if name == "ScriptPreviewDialog":
+        from osw.gui.dialogs.script_preview_dialog import ScriptPreviewDialog
+
+        return ScriptPreviewDialog
     raise AttributeError(name)
