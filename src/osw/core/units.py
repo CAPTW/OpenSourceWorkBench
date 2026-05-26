@@ -9,6 +9,14 @@ from .validation import ValidationReport
 
 
 @dataclass(frozen=True)
+class UnitWarning:
+    """Friendly unit diagnostic for project-boundary validation."""
+
+    path: str
+    message: str
+
+
+@dataclass(frozen=True)
 class Quantity:
     value: float
     unit: str
@@ -48,6 +56,7 @@ class UnitSystem:
     stress: str = "Pa"
     energy: str = "J"
     pressure: str = "Pa"
+    power: str = "W"
     defaulted: bool = False
 
     @classmethod
@@ -67,6 +76,7 @@ class UnitSystem:
             "stress": self.stress,
             "energy": self.energy,
             "pressure": self.pressure,
+            "power": self.power,
         }
 
     @classmethod
@@ -91,3 +101,28 @@ class UnitSystem:
             if not unit:
                 report.add_error(f"{path}.{field_name}", f"{field_name} unit is required.")
         return report
+
+
+def default_si_units() -> UnitSystem:
+    """Return the default SI unit system used by new OSW projects."""
+
+    return UnitSystem.si()
+
+
+def default_engineering_units() -> UnitSystem:
+    """Return a compact engineering unit set for future project preferences."""
+
+    return UnitSystem(
+        name="Engineering",
+        length="mm",
+        mass="kg",
+        time="s",
+        temperature="K",
+        amount="mol",
+        current="A",
+        force="N",
+        stress="MPa",
+        energy="J",
+        pressure="Pa",
+        power="W",
+    )

@@ -10,3 +10,10 @@ to an explicit backend/service boundary in later milestones.
 
 Heavy integrations such as PySide6, Gmsh, PyVista, Cantera, CoolProp, and SciPy
 are optional extras so bootstrap tests can run in a light Python environment.
+
+## Project Schema Integration
+
+The completed PySide6 GUI baseline binds to `osw.core` through ProjectSchema
+objects. Core schema, unit, material, validation, and project IO modules remain
+PySide6-free; GUI widgets consume them through explicit `set_project()` methods
+without replacing the visual shell or adding solver execution behavior.

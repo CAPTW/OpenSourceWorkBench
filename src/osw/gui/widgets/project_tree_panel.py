@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
+from osw.core.demo_project import create_heatsink_flow_demo_project
+from osw.core.project_schema import Project
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
 from osw.gui.theme_tokens import DARK_TOKENS, ThemeTokens
 
@@ -131,6 +134,136 @@ def project_tree_filter_matches(text: str) -> list[str]:
     return [label for label in DEMO_PROJECT_LABELS if query in label.casefold()]
 
 
+def _project_to_tree_node(project: Project) -> ProjectTreeNode:
+    physics = project.primary_physics
+    solver = project.solver_config
+    return ProjectTreeNode(
+        project.metadata.name,
+        kind="project",
+        icon_key="project",
+        children=(
+            ProjectTreeNode(
+                "Geometry",
+                kind="group",
+                icon_key="geometry",
+                children=tuple(
+                    ProjectTreeNode(_ref_label(ref), icon_key="geometry_file")
+                    for ref in project.geometry_refs
+                ),
+            ),
+            ProjectTreeNode(
+                "Mesh",
+                kind="group",
+                icon_key="mesh",
+                children=tuple(
+                    ProjectTreeNode(
+                        _ref_label(ref),
+                        icon_key="mesh_file",
+                        complete=_mesh_is_complete(ref),
+                    )
+                    for ref in project.mesh_refs
+                ),
+            ),
+            ProjectTreeNode(
+                "Physics",
+                kind="group",
+                icon_key="physics",
+                children=tuple(
+                    ProjectTreeNode(label, icon_key="config_file")
+                    for label in (physics.files if physics is not None else ())
+                ),
+            ),
+            ProjectTreeNode(
+                "Solvers",
+                kind="group",
+                icon_key="solver",
+                children=(
+                    ProjectTreeNode(
+                        solver.solver or solver.name,
+                        icon_key="solver_file",
+                    )
+                    if solver is not None
+                    else ProjectTreeNode("No solver configured", icon_key="solver_file"),
+                    ProjectTreeNode(
+                        str(
+                            (solver.settings if solver is not None else {}).get(
+                                "settings_file",
+                                "settings.json",
+                            )
+                        ),
+                        icon_key="config_file",
+                    ),
+                ),
+            ),
+            ProjectTreeNode(
+                "Scripts",
+                kind="group",
+                icon_key="script",
+                children=tuple(
+                    ProjectTreeNode(_ref_label(ref), icon_key="script_file")
+                    for ref in project.script_refs
+                ),
+            ),
+            ProjectTreeNode(
+                "Results",
+                kind="group",
+                icon_key="result",
+                children=tuple(_result_nodes(project)),
+            ),
+            ProjectTreeNode(
+                "Reports",
+                kind="group",
+                icon_key="report",
+                children=tuple(
+                    ProjectTreeNode(label, icon_key="report_file")
+                    for label in _report_labels(project)
+                ),
+            ),
+        ),
+    )
+
+
+def _ref_label(ref: object) -> str:
+    name = str(getattr(ref, "name", "") or "")
+    path = str(getattr(ref, "path", "") or "")
+    return name or Path(path).name or str(getattr(ref, "id", ""))
+
+
+def _mesh_is_complete(ref: object) -> bool:
+    label = _ref_label(ref)
+    status = str(getattr(ref, "status", "") or "").casefold()
+    return label == "mesh.msh" or status in {"complete", "completed"}
+
+
+def _result_nodes(project: Project) -> list[ProjectTreeNode]:
+    run_0001_children = [
+        ProjectTreeNode(_ref_label(ref), icon_key="result_file")
+        for ref in project.result_refs
+        if getattr(ref, "run_id", "") == "run_0001" and getattr(ref, "role", "") != "run"
+    ]
+    nodes: list[ProjectTreeNode] = []
+    if any(getattr(ref, "run_id", "") == "run_0001" for ref in project.result_refs):
+        nodes.append(
+            ProjectTreeNode(
+                "run_0001",
+                kind="run",
+                icon_key="result",
+                children=tuple(run_0001_children),
+            )
+        )
+    for ref in project.result_refs:
+        if getattr(ref, "run_id", "") != "run_0001":
+            nodes.append(ProjectTreeNode(_ref_label(ref), kind="run", icon_key="result_file"))
+    return nodes
+
+
+def _report_labels(project: Project) -> list[str]:
+    if project.report.artifacts:
+        return list(project.report.artifacts)
+    path_label = Path(project.report.path).name
+    return [path_label] if path_label else []
+
+
 class ProjectTreePanel(_BaseWidget):
     """Theme-aware project sidebar for the HeatSink_Flow demo project."""
 
@@ -143,6 +276,7 @@ class ProjectTreePanel(_BaseWidget):
         self.items_by_label: dict[str, object] = {}
         self._icon_cache: dict[str, object] = {}
         self._current_tokens = DARK_TOKENS
+        self._current_project: Project | None = None
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 8)
@@ -200,12 +334,23 @@ class ProjectTreePanel(_BaseWidget):
         layout.addWidget(self.footer_label)
 
         self.set_theme_tokens(DARK_TOKENS)
-        self.populate_demo_project()
+        self.set_project(create_heatsink_flow_demo_project())
 
     def populate_demo_project(self) -> None:
+        self.set_project(create_heatsink_flow_demo_project())
+
+    def set_project(self, project: Project) -> None:
+        self._current_project = project
+        self.populate_from_project(project)
+        self.set_active_project(project.metadata.name)
+
+    def current_project(self) -> Project | None:
+        return self._current_project
+
+    def populate_from_project(self, project: Project) -> None:
         self.tree.clear()
         self.items_by_label.clear()
-        root = self._build_item(DEMO_PROJECT_TREE)
+        root = self._build_item(_project_to_tree_node(project))
         self.tree.addTopLevelItem(root)
         self.expand_demo_tree()
         self.tree.setColumnWidth(1, 24)

@@ -155,3 +155,11 @@ OSW-FUNC-001_PROJECT_SCHEMA_INTEGRATION
 If the repository's functional autopilot queue is being used, adapt the existing
 `OSW-AUTO-005_PROJECT_SCHEMA` step to this completed GUI baseline. Do not run a
 generic GUI skeleton step.
+
+## Functional Binding Note
+
+`OSW-FUNC-001_PROJECT_SCHEMA_INTEGRATION` binds the frozen GUI to the
+`HeatSink_Flow` demo `ProjectSchema` via `MainWindow.set_project()`,
+`ProjectTreePanel.set_project()`, and `PropertiesPanel.set_project()`. Future
+functional prompts should continue extending those model bindings instead of
+rerunning a GUI skeleton.

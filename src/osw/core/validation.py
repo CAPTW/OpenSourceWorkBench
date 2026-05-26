@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Literal
 
 Severity = Literal["error", "warning", "info"]
@@ -12,6 +13,12 @@ Severity = Literal["error", "warning", "info"]
 
 class ProjectSchemaError(ValueError):
     """Raised when project data cannot be parsed into the OSW schema."""
+
+
+class ValidationSeverity(str, Enum):
+    ERROR = "error"
+    WARNING = "warning"
+    INFO = "info"
 
 
 @dataclass(frozen=True)
@@ -93,6 +100,64 @@ def validate_project_sanity(
     _check_mesh_payloads(meshes, report)
     _check_boundary_condition_completeness(project, report, path=path)
     _check_solver_convergence_placeholders(project, report, path=path)
+    return report
+
+
+def validate_project(project: object) -> ValidationReport:
+    """Validate a ProjectSchema object without requiring callers to know methods."""
+
+    validate = getattr(project, "validate", None)
+    if callable(validate):
+        return validate()
+    report = ValidationReport()
+    report.add_error("project", "Object does not provide ProjectSchema validation.")
+    return report
+
+
+def validate_units(project: object) -> ValidationReport:
+    units = getattr(project, "units", getattr(project, "unit_system", None))
+    if units is None:
+        report = ValidationReport()
+        report.add_warning("units", "Unit system missing; verify physical units.")
+        return report
+    validate = getattr(units, "validate", None)
+    if callable(validate):
+        return validate()
+    return ValidationReport()
+
+
+def validate_materials(project: object) -> ValidationReport:
+    from osw.core.materials import MaterialDB
+
+    return MaterialDB(list(getattr(project, "materials", ()) or ())).validate()
+
+
+def validate_boundaries(project: object) -> ValidationReport:
+    report = ValidationReport()
+    for setup_index, setup in enumerate(tuple(getattr(project, "physics", ()) or ())):
+        for bc_index, boundary_condition in enumerate(
+            tuple(getattr(setup, "boundary_conditions", ()) or ())
+        ):
+            _check_boundary_condition(
+                boundary_condition,
+                report,
+                path=f"physics[{setup_index}].boundary_conditions[{bc_index}]",
+            )
+    return report
+
+
+def validate_solver_config(project: object) -> ValidationReport:
+    report = ValidationReport()
+    for index, solver in enumerate(tuple(getattr(project, "solvers", ()) or ())):
+        solver_name = str(getattr(solver, "solver", "") or getattr(solver, "name", "") or "")
+        if not solver_name:
+            report.add_error(f"solvers[{index}].solver", "Solver name is required.")
+        tolerance = _coerce_float(getattr(solver, "convergence_tolerance", None))
+        if tolerance is not None and tolerance <= 0:
+            report.add_error(
+                f"solvers[{index}].convergence_tolerance",
+                "Convergence tolerance must be positive.",
+            )
     return report
 
 

@@ -6,8 +6,10 @@ from pathlib import Path
 
 import pytest
 
+from osw.core.demo_project import create_heatsink_flow_demo_project
 from osw.core.materials import IsotropicElastic, Material
 from osw.core.project_schema import (
+    BoundaryCondition,
     GeometryRef,
     MeshRef,
     Project,
@@ -20,6 +22,7 @@ from osw.core.project_schema import (
     load_project,
 )
 from osw.core.units import Quantity, UnitSystem
+from osw.core.validation import validate_project
 
 
 def _sample_project() -> Project:
@@ -70,6 +73,7 @@ def test_project_json_round_trip(tmp_path: Path) -> None:
 
 
 def test_project_yaml_round_trip(tmp_path: Path) -> None:
+    pytest.importorskip("yaml")
     project = _sample_project()
     path = tmp_path / "project.osw.yaml"
 
@@ -81,6 +85,7 @@ def test_project_yaml_round_trip(tmp_path: Path) -> None:
 
 
 def test_invalid_yaml_raises_friendly_schema_error(tmp_path: Path) -> None:
+    pytest.importorskip("yaml")
     path = tmp_path / "broken.osw.yaml"
     path.write_text("metadata: [unterminated\n", encoding="utf-8")
 
@@ -115,3 +120,86 @@ def test_project_migration_adds_current_schema_version() -> None:
 
     assert project.schema_version == "0.1"
     assert project.units == UnitSystem.si()
+
+
+def test_demo_project_matches_heatsink_flow_visual_data() -> None:
+    project = create_heatsink_flow_demo_project()
+
+    assert project.metadata.name == "HeatSink_Flow"
+    assert project.schema_version == "0.1"
+    assert [item.name for item in project.geometry_refs] == [
+        "heatsink.step",
+        "enclosure.stp",
+        "fluid_domain.csg",
+    ]
+    assert [item.name for item in project.mesh_refs] == ["mesh.msh", "mesh_stats.txt"]
+    assert [item.name for item in project.script_refs] == [
+        "preprocess.m",
+        "run_case.m",
+        "postprocess.m",
+    ]
+    assert {item.name for item in project.result_refs} >= {
+        "run_0001",
+        "fields.ex2",
+        "residuals.dat",
+        "monitor.log",
+        "run_0000 (baseline)",
+    }
+    assert project.report.title == "HeatSink_Flow Simulation Report"
+    assert project.report.run_label == "Run 0001"
+    assert project.report.sections == ["Overview", "Key Results", "Summary"]
+
+
+def test_demo_project_boundary_rows_and_solver_settings_match_gui_mock() -> None:
+    project = create_heatsink_flow_demo_project()
+    assert project.primary_physics is not None
+
+    rows = [
+        (item.name, item.type, item.value)
+        for item in project.primary_physics.boundary_conditions
+    ]
+
+    assert rows == [
+        ("inlet", "Velocity Inlet", "3.0 m/s"),
+        ("outlet", "Pressure Outlet", "0 Pa"),
+        ("wall_heatsink", "Wall (No Slip)", "—"),
+        ("base_bottom", "Heat Flux", "1.0e5 W/m²"),
+        ("symmetry", "Symmetry", "—"),
+    ]
+    assert project.solver_config is not None
+    assert project.solver_config.solver == "chtSolver"
+    assert project.solver_config.time_scheme == "Steady-State"
+    assert project.solver_config.linear_solver == "GMRES"
+    assert project.solver_config.preconditioner == "AMG"
+    assert float(project.solver_config.convergence_tolerance) == pytest.approx(1.0e-6)
+
+
+def test_script_refs_default_to_safe_preview_for_m_files() -> None:
+    script = ScriptRef(id="script", path="scripts/run_case.m", language="matlab_octave")
+
+    assert script.safe_preview_required is True
+
+
+def test_project_validation_warns_for_native_commercial_cad_extension() -> None:
+    project = Project(
+        metadata=ProjectMetadata(name="native cad warning"),
+        geometry=[GeometryRef(id="native", path="geometry/part.sldprt", format="SLDPRT")],
+    )
+
+    report = validate_project(project)
+
+    assert report.has_warnings
+    assert any("native commercial CAD direct import" in item.message for item in report.messages)
+
+
+def test_boundary_condition_accepts_project_schema_fields() -> None:
+    boundary = BoundaryCondition(
+        name="inlet",
+        type="Velocity Inlet",
+        value="3.0 m/s",
+        unit="m/s",
+        target="inlet",
+    )
+
+    assert boundary.kind == "Velocity Inlet"
+    assert boundary.to_dict()["value"] == "3.0 m/s"

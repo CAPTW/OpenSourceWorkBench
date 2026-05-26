@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
+from osw.core.demo_project import create_heatsink_flow_demo_project
+from osw.core.project_schema import Project
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
 from osw.gui.theme import ThemeManager
 from osw.gui.widgets.top_bar import ACTION_OBJECT_NAMES, TOP_BAR_ACTION_LABELS
@@ -67,6 +69,7 @@ class MainWindow(_BaseMainWindow):
         parent: object | None = None,
         *,
         theme_manager: ThemeManager | None = None,
+        project: Project | None = None,
         **_legacy_kwargs: object,
     ) -> None:
         if QtCore is None or QtGui is None or QtWidgets is None:
@@ -79,12 +82,14 @@ class MainWindow(_BaseMainWindow):
         self.setMinimumSize(1440, 810)
 
         self.theme_manager = theme_manager or ThemeManager()
+        self.current_project = project or create_heatsink_flow_demo_project()
         self.preferences_dialog: object | None = None
         self.toolbar_actions: dict[str, object] = {}
         self.menu_actions: dict[str, object] = {}
 
         self._build_menus()
         self._build_shell()
+        self.set_project(self.current_project)
         self._build_toolbar_actions()
         self._build_status_bar()
         self._connect_theme()
@@ -101,6 +106,8 @@ class MainWindow(_BaseMainWindow):
                 self.menu_actions[action_title] = action
                 if action_title == "Exit":
                     action.triggered.connect(self.close)
+                elif action_title == "New Project":
+                    action.triggered.connect(self.new_project)
                 elif action_title == "Preferences":
                     action.triggered.connect(self.open_preferences)
                 else:
@@ -195,6 +202,9 @@ class MainWindow(_BaseMainWindow):
                 widget.set_theme_tokens(tokens)
 
     def _on_top_bar_action_triggered(self, label: str) -> None:
+        if label == "New":
+            self.new_project()
+            return
         if label == "Preferences":
             self.open_preferences()
             return
@@ -215,6 +225,19 @@ class MainWindow(_BaseMainWindow):
         self.preferences_dialog.show()
         self.preferences_dialog.raise_()
         self.preferences_dialog.activateWindow()
+
+    def set_project(self, project: Project) -> None:
+        self.current_project = project
+        if hasattr(self.project_tree_panel, "set_project"):
+            self.project_tree_panel.set_project(project)
+        if hasattr(self.properties_panel, "set_project"):
+            self.properties_panel.set_project(project)
+
+    def new_project(self) -> None:
+        """Reset to the curated demo project until full project creation is designed."""
+
+        self.set_project(create_heatsink_flow_demo_project())
+        self._placeholder_action("New Project")
 
     def _placeholder_action(self, label: str) -> None:
         if hasattr(self.run_monitor, "append_log"):

@@ -79,6 +79,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Launch the optional PySide6 GUI shell.",
         description="Launch the optional PySide6 GUI shell.",
     )
+    demo_parser = subparsers.add_parser(
+        "project-demo-json",
+        help="Write the HeatSink_Flow demo ProjectSchema JSON file.",
+    )
+    demo_parser.add_argument("--out", required=True, help="Output JSON project path.")
+    validate_parser = subparsers.add_parser(
+        "project-validate",
+        help="Validate an OSW ProjectSchema JSON/YAML file without running solvers.",
+    )
+    validate_parser.add_argument("path", help="Project file path.")
     return parser
 
 
@@ -107,6 +117,29 @@ def main(argv: Sequence[str] | None = None) -> int:
         except PySide6UnavailableError as exc:
             print(str(exc), file=sys.stderr)
             return 2
+
+    if args.command == "project-demo-json":
+        from osw.core.demo_project import create_heatsink_flow_demo_project
+        from osw.core.project_io import save_project_json
+
+        output_path = Path(args.out)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        save_project_json(create_heatsink_flow_demo_project(), output_path)
+        print(f"Wrote demo project JSON: {args.out}")
+        return 0
+
+    if args.command == "project-validate":
+        from osw.core.project_io import load_project
+        from osw.core.validation import ProjectSchemaError
+
+        try:
+            project = load_project(Path(args.path))
+        except ProjectSchemaError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        report = project.validate()
+        print(report.friendly_summary())
+        return 1 if report.has_errors else 0
 
     parser.print_help(sys.stdout)
     return 0

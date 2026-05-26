@@ -90,6 +90,21 @@ class SolverSettingsSection(_BaseWidget):
             self.solver_combo.addItem(name)
         self.solver_combo.setCurrentText(name)
 
+    def set_time_scheme(self, name: str) -> None:
+        if self.time_scheme_combo.findText(name) < 0:
+            self.time_scheme_combo.addItem(name)
+        self.time_scheme_combo.setCurrentText(name)
+
+    def set_linear_solver(self, name: str) -> None:
+        if self.linear_solver_combo.findText(name) < 0:
+            self.linear_solver_combo.addItem(name)
+        self.linear_solver_combo.setCurrentText(name)
+
+    def set_preconditioner(self, name: str) -> None:
+        if self.preconditioner_combo.findText(name) < 0:
+            self.preconditioner_combo.addItem(name)
+        self.preconditioner_combo.setCurrentText(name)
+
     def set_convergence_tolerance(self, text: str) -> None:
         self.tolerance_edit.setText(text)
 

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from osw.core.demo_project import create_heatsink_flow_demo_project
+from osw.core.project_schema import Project
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
 from osw.gui.theme_tokens import DARK_TOKENS, ThemeTokens
 from osw.gui.widgets.boundary_conditions_table import BoundaryConditionsSection
@@ -43,6 +45,7 @@ class PropertiesPanel(_BaseWidget):
         self.setMinimumWidth(390)
         self._tokens = DARK_TOKENS
         self._selection = "HeatSink_Flow"
+        self._current_project: Project | None = None
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -79,6 +82,7 @@ class PropertiesPanel(_BaseWidget):
         self.tabs.setCurrentIndex(0)
         layout.addWidget(self.tabs, 1)
         self.set_theme_tokens(self._tokens)
+        self.set_project(create_heatsink_flow_demo_project())
 
     @property
     def current_tokens(self) -> ThemeTokens:
@@ -96,6 +100,48 @@ class PropertiesPanel(_BaseWidget):
 
     def set_node_selection(self, selection: str) -> None:
         self._selection = selection or "HeatSink_Flow"
+
+    def set_project(self, project: Project) -> None:
+        self._current_project = project
+        self.refresh_from_project(project)
+
+    def current_project(self) -> Project | None:
+        return self._current_project
+
+    def refresh_from_project(self, project: Project) -> None:
+        material = project.materials[0] if project.materials else None
+        if material is not None:
+            self.material_section.set_material_library(material.library or "project")
+            self.material_section.set_material(material.name)
+
+        physics = project.primary_physics
+        if physics is not None:
+            self.boundary_conditions_section.set_boundary_rows(
+                [
+                    {
+                        "Name": boundary.name,
+                        "Type": boundary.type or boundary.kind,
+                        "Value": boundary.value or _values_summary(boundary.values),
+                    }
+                    for boundary in physics.boundary_conditions
+                ]
+            )
+
+        solver = project.solver_config
+        if solver is not None:
+            self.solver_settings_section.set_solver(solver.solver or solver.name)
+            self.solver_settings_section.set_time_scheme(solver.time_scheme)
+            self.solver_settings_section.set_linear_solver(solver.linear_solver)
+            self.solver_settings_section.set_preconditioner(solver.preconditioner)
+            self.solver_settings_section.set_convergence_tolerance(
+                _format_tolerance(solver.convergence_tolerance)
+            )
+
+        self.report_preview_panel.set_report_title(project.report.title)
+        if project.report.run_label:
+            self.report_preview_panel.set_run_label(project.report.run_label)
+        if project.report.sections:
+            self.report_preview_panel.set_sections(project.report.sections)
 
     def set_properties(self, _properties: dict[str, str]) -> None:
         return
@@ -204,3 +250,17 @@ def _workflow_step_for_selection(selection: str) -> str:
         "Results": "Inspect structured result datasets",
         "Reports": "Export an HTML report",
     }.get(selection, "Run")
+
+
+def _values_summary(values: dict[str, object]) -> str:
+    if not values:
+        return "—"
+    return ", ".join(f"{key}={value}" for key, value in values.items())
+
+
+def _format_tolerance(value: object) -> str:
+    try:
+        numeric = float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return str(value)
+    return f"{numeric:.1e}"

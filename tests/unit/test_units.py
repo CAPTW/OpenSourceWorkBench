@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from osw.core.project_schema import Project
-from osw.core.units import Quantity, UnitSystem
+from osw.core.units import Quantity, UnitSystem, default_engineering_units, default_si_units
 
 
 def test_si_unit_system_has_named_base_units() -> None:
@@ -17,6 +17,14 @@ def test_si_unit_system_has_named_base_units() -> None:
     assert units.time == "s"
     assert units.force == "N"
     assert units.stress == "Pa"
+    assert units.power == "W"
+
+
+def test_default_unit_helpers_return_named_systems() -> None:
+    assert default_si_units().name == "SI"
+    engineering = default_engineering_units()
+    assert engineering.name == "Engineering"
+    assert engineering.length == "mm"
 
 
 def test_project_missing_units_defaults_to_si_with_warning() -> None:

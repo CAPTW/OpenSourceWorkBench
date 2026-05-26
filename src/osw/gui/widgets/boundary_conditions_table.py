@@ -122,6 +122,11 @@ class BoundaryConditionsSection(_BaseWidget):
         for row in DEMO_BOUNDARY_ROWS:
             self.add_boundary_row(row)
 
+    def set_boundary_rows(self, rows: list[tuple[str, str, str]] | list[dict[str, str]]) -> None:
+        self.table.setRowCount(0)
+        for row in rows:
+            self.add_boundary_row(row)
+
     def set_theme_tokens(self, tokens: ThemeTokens) -> None:
         self._tokens = tokens
         self.setStyleSheet(
