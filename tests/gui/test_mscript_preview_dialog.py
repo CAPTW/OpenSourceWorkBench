@@ -92,6 +92,7 @@ def test_script_preview_dialog_surfaces_safety_and_plot_hints(app: object) -> No
 
 
 def test_script_preview_dialog_can_use_injected_octave_runner(app: object) -> None:
+    from osw.core.artifacts import RunArtifact
     from osw.core.diagnostics import DiagnosticReport
     from osw.gui.dialogs.script_preview_dialog import ScriptPreviewDialog
     from osw.scripts.mscript.importer import preview_mscript
@@ -105,6 +106,7 @@ def test_script_preview_dialog_can_use_injected_octave_runner(app: object) -> No
                 script_path=getattr(request, "script_path", ""),
                 workspace_dir="",
                 stdout="fake GUI Octave run\n",
+                artifacts=(RunArtifact(FIXTURES / "simple_plot.m", "octave_artifact"),),
                 diagnostics=DiagnosticReport(),
             )
 
@@ -119,6 +121,8 @@ def test_script_preview_dialog_can_use_injected_octave_runner(app: object) -> No
     assert run_result.status is OctaveRunStatus.COMPLETED
     assert "completed" in dialog.preview_panel.run_status_label.text().lower()
     assert "fake GUI Octave run" in dialog.preview_panel.run_log_preview.toPlainText()
+    assert dialog.current_figure_dataset() is not None
+    assert dialog.preview_panel.open_figures_button.objectName() == "oswOpenFigureDatasetButton"
     del app
 
 

@@ -24,6 +24,7 @@ class ScriptPreviewPanel(_BaseWidget):
         importRequested = QtCore.Signal()
         cancelRequested = QtCore.Signal()
         runCompleted = QtCore.Signal(object)
+        figureDatasetReady = QtCore.Signal(object)
 
     def __init__(
         self,
@@ -37,6 +38,7 @@ class ScriptPreviewPanel(_BaseWidget):
         self._tokens = DARK_TOKENS
         self._preview: ScriptPreview | None = None
         self._octave_runner: object | None = None
+        self._figure_dataset: object | None = None
         self._build_layout()
         self.set_theme_tokens(self._tokens)
         if preview is not None:
@@ -55,6 +57,8 @@ class ScriptPreviewPanel(_BaseWidget):
         self.run_status_label.setText(_run_status_text(preview))
         self.run_log_preview.clear()
         self.run_diagnostics_table.setRowCount(0)
+        self.open_figures_button.setEnabled(False)
+        self._figure_dataset = None
         self.run_button.setEnabled(_preview_can_run(preview))
 
     def current_preview(self) -> ScriptPreview | None:
@@ -62,6 +66,9 @@ class ScriptPreviewPanel(_BaseWidget):
 
     def set_octave_runner(self, runner: object | None) -> None:
         self._octave_runner = runner
+
+    def current_figure_dataset(self) -> object | None:
+        return self._figure_dataset
 
     def run_previewed_script_with_octave(
         self,
@@ -91,11 +98,19 @@ class ScriptPreviewPanel(_BaseWidget):
             policy=policy,
         )
         result = active_runner.run(request)
+        from osw.scripts.mscript.figure_capture import figure_dataset_from_octave_result
+
+        self._figure_dataset = figure_dataset_from_octave_result(result)
         status = getattr(result.status, "value", result.status)
-        self.run_status_label.setText(f"Octave run: {status}")
+        figure_count = len(getattr(self._figure_dataset, "figures", ()))
+        self.open_figures_button.setEnabled(figure_count > 0)
+        self.run_status_label.setText(
+            f"Octave run: {status}; captured {figure_count} figure artifact(s)."
+        )
         self.run_log_preview.setPlainText(getattr(result, "combined_log", "") or "")
         self._populate_run_diagnostics(result)
         self.runCompleted.emit(result)
+        self.figureDatasetReady.emit(self._figure_dataset)
         self.run_button.setEnabled(_preview_can_run(preview))
         return result
 
@@ -201,18 +216,27 @@ class ScriptPreviewPanel(_BaseWidget):
         self.run_button = QtWidgets.QPushButton("Run with Octave", self)
         self.run_button.setObjectName("oswScriptRunWithOctaveButton")
         self.run_button.setEnabled(False)
+        self.open_figures_button = QtWidgets.QPushButton("Open Figures", self)
+        self.open_figures_button.setObjectName("oswOpenFigureDatasetButton")
+        self.open_figures_button.setEnabled(False)
         self.import_button = QtWidgets.QPushButton("Import Preview", self)
         self.import_button.setObjectName("oswScriptPreviewImportButton")
         self.cancel_button = QtWidgets.QPushButton("Cancel", self)
         self.cancel_button.setObjectName("oswScriptPreviewCancelButton")
         button_row.addStretch(1)
         button_row.addWidget(self.run_button)
+        button_row.addWidget(self.open_figures_button)
         button_row.addWidget(self.import_button)
         button_row.addWidget(self.cancel_button)
         layout.addLayout(button_row)
         self.run_button.clicked.connect(self.run_previewed_script_with_octave)
+        self.open_figures_button.clicked.connect(self._emit_current_figure_dataset)
         self.import_button.clicked.connect(self.importRequested.emit)
         self.cancel_button.clicked.connect(self.cancelRequested.emit)
+
+    def _emit_current_figure_dataset(self) -> None:
+        if self._figure_dataset is not None:
+            self.figureDatasetReady.emit(self._figure_dataset)
 
     def _populate_safety_table(self, preview: ScriptPreview) -> None:
         self.safety_table.setRowCount(len(preview.safety_findings))

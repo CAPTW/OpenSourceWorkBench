@@ -212,6 +212,11 @@ input_formats:
 output_formats:
   - script_preview
   - script_ref
+  - figure_dataset
+  - png
+  - svg
+  - pdf
+  - csv
 requires: []
 optional_requires: []
 executable_names: []
@@ -221,6 +226,8 @@ capabilities:
   - safety_scan
   - plot_hint_detection
   - project_script_ref_binding
+  - figure_artifact_collection
+  - figure_dataset
 ```
 
 ## Future Extension Points
@@ -252,6 +259,13 @@ execution capabilities: `octave_execution`, `timeout_policy`,
 `executable_names` may include `octave` and `octave-cli`; health checks resolve
 those names only and still do not run Octave, plugin code, or scripts.
 
+`OSW-FUNC-008_FIGURE_CAPTURE_DATASET` extends the script importer metadata with
+figure artifact normalization capabilities: `figure_artifact_collection`,
+`figure_dataset`, `png_svg_pdf_artifacts`, `workspace_summary_placeholder`, and
+`report_embedding`. These capabilities describe data conversion after an
+explicit run or explicit artifact inspection; discovery and health checks still
+do not execute scripts or plugin code.
+
 ## Next Step
 
-Next functional step: `OSW-FUNC-008_FIGURE_CAPTURE_DATASET`.
+Next functional step: `OSW-FUNC-009_MAT_READER`.

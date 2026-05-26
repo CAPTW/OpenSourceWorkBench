@@ -62,3 +62,17 @@ with the M-Script safety scan, uses an isolated workspace by default, and hands
 process execution to `ExternalCommandRunner` for timeout handling,
 stdout/stderr capture, and artifact collection. GUI widgets may call the runner
 API, but must not launch subprocesses directly. See `docs/18_octave_runner.md`.
+
+## FigureDataset and Figure Artifacts
+
+Figure artifact normalization lives under `osw.scripts.mscript.figure_capture`
+and `osw.scripts.mscript.figure_dataset`. It consumes existing artifacts from
+`OctaveRunResult` workspaces or explicit artifact paths and creates serializable
+`FigureDataset` records for PNG, SVG, PDF, CSV, and workspace-summary metadata.
+The model is optional-dependency friendly: importing it does not require Octave,
+MATLAB, PySide6, matplotlib, Pillow, pandas, or `.mat` readers.
+
+Post-processing and GUI surfaces consume `FigureDataset` data without executing
+scripts. HTML reports can embed available image references and warn on missing
+artifacts, while the GUI Plot Viewer lists figures, metadata, and workspace
+variables. See `docs/19_figure_capture_dataset.md`.

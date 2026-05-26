@@ -5,9 +5,13 @@ from pathlib import Path
 
 import pytest
 
+from osw.scripts.mscript.execution_policy import OctaveExecutionPolicy
 from osw.scripts.mscript.figure_capture import capture_octave_figures
-from osw.scripts.mscript.octave_runner import OctaveRunner
-from osw.solvers.runner import RunStatus, TimeoutPolicy
+from osw.scripts.mscript.octave_runner import (
+    OctaveRunner,
+    OctaveRunRequest,
+    OctaveRunStatus,
+)
 
 pytestmark = pytest.mark.external_solver
 
@@ -33,17 +37,23 @@ def test_octave_simple_plot_can_be_captured_when_octave_is_available(tmp_path: P
         encoding="utf-8",
     )
 
-    runner = OctaveRunner(executable=octave, timeout_policy=TimeoutPolicy(seconds=20))
-    result = runner.run_script(
-        script,
-        artifact_dir=tmp_path / "artifacts",
-        allow_execution=True,
+    runner = OctaveRunner(executable=octave)
+    result = runner.run(
+        OctaveRunRequest(
+            script,
+            working_directory=tmp_path / "artifacts",
+            policy=OctaveExecutionPolicy(timeout_seconds=20),
+        )
     )
-    if result.status != RunStatus.COMPLETED:
+    if result.status is not OctaveRunStatus.COMPLETED:
         pytest.skip(f"GNU Octave plotting backend unavailable: {result.diagnostics.summary()}")
 
     dataset = capture_octave_figures(result, dataset_id="octave-figures")
 
     assert dataset.dataset_id == "octave-figures"
     assert set(dataset.formats) >= {"png", "svg"}
-    assert all(record.image_path.exists() for record in dataset.figures)
+    assert all(
+        record.primary_path is not None and record.primary_path.exists()
+        for record in dataset.figures
+    )
+    assert dataset.stdout == result.stdout

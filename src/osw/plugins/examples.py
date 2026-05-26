@@ -72,7 +72,15 @@ def builtin_mscript_preview_plugin_manifest() -> PluginManifest:
                 "surfaces safety findings without running scripts."
             ),
             "input_formats": ["m"],
-            "output_formats": ["script_preview", "script_ref"],
+            "output_formats": [
+                "script_preview",
+                "script_ref",
+                "figure_dataset",
+                "png",
+                "svg",
+                "pdf",
+                "csv",
+            ],
             "requires": [],
             "optional_requires": [],
             "executable_names": ["octave", "octave-cli"],
@@ -87,6 +95,11 @@ def builtin_mscript_preview_plugin_manifest() -> PluginManifest:
                 "stdout_stderr_capture",
                 "isolated_workspace",
                 "artifact_collection",
+                "figure_artifact_collection",
+                "figure_dataset",
+                "png_svg_pdf_artifacts",
+                "workspace_summary_placeholder",
+                "report_embedding",
             ],
             "metadata": {
                 "built_in": True,

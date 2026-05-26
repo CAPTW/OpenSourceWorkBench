@@ -7,8 +7,27 @@ from .boundary_curve_bridge import (
     boundary_curve_from_workspace_variables,
 )
 from .execution_policy import OctaveExecutionPolicy
-from .figure_capture import capture_existing_figures, capture_octave_figures
-from .figure_dataset import FigureDataset, FigureDatasetError, FigureRecord
+from .figure_capture import (
+    capture_existing_figures,
+    capture_octave_figures,
+    classify_figure_artifact,
+    discover_figure_artifacts,
+    export_figure_dataset_json,
+    figure_dataset_from_artifacts,
+    figure_dataset_from_octave_result,
+    figure_record_from_artifact,
+    generate_thumbnail,
+    load_figure_dataset_json,
+    octave_save_figures_snippet,
+)
+from .figure_dataset import (
+    AxisRecord,
+    FigureDataset,
+    FigureDatasetError,
+    FigureFormat,
+    FigureRecord,
+    WorkspaceVariableSummary,
+)
 from .importer import (
     MScriptImportError,
     MScriptPreviewResult,
@@ -50,11 +69,20 @@ from .script_model import (
     ScriptLanguage,
     ScriptPreview,
 )
-from .workspace_extractor import extract_figure_dataset, extract_figure_paths
+from .workspace_extractor import (
+    extract_figure_dataset,
+    extract_figure_paths,
+    extract_workspace_summary,
+    extract_workspace_summary_from_artifacts,
+    summarize_csv,
+    summarize_json_variables,
+)
 
 __all__ = [
+    "AxisRecord",
     "FigureDataset",
     "FigureDatasetError",
+    "FigureFormat",
     "FigureRecord",
     "MScriptImportError",
     "MScriptPreviewResult",
@@ -80,21 +108,35 @@ __all__ = [
     "ScriptKind",
     "ScriptLanguage",
     "ScriptPreview",
+    "WorkspaceVariableSummary",
     "boundary_curve_from_mat_preview",
     "boundary_curve_from_workspace_variables",
     "capture_existing_figures",
     "capture_octave_figures",
+    "classify_figure_artifact",
     "create_script_ref",
+    "discover_figure_artifacts",
+    "export_figure_dataset_json",
     "export_mat_variable_csv",
     "extract_figure_dataset",
     "extract_figure_paths",
+    "extract_workspace_summary",
+    "extract_workspace_summary_from_artifacts",
+    "figure_dataset_from_artifacts",
+    "figure_dataset_from_octave_result",
+    "figure_record_from_artifact",
     "find_octave_executable",
+    "generate_thumbnail",
     "import_mscript_preview",
+    "load_figure_dataset_json",
     "octave_available",
+    "octave_save_figures_snippet",
     "preview_mscript",
     "preview_mscript_text",
     "read_mat_file",
     "read_mscript_text",
     "scan_mscript_text",
     "strip_mscript_comment",
+    "summarize_csv",
+    "summarize_json_variables",
 ]

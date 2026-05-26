@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2">
+  <title>Simple Plot</title>
+  <line x1="0" y1="2" x2="2" y2="0" stroke="black"/>
+</svg>

@@ -188,7 +188,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="Allow blocked findings. Intended only for trusted local test fixtures.",
     )
     mscript_run_parser.add_argument("--workspace", default="", help="Optional run workspace root.")
+    mscript_run_parser.add_argument(
+        "--capture-figures",
+        action="store_true",
+        help="Normalize generated PNG/SVG/PDF/CSV artifacts into a FigureDataset.",
+    )
     mscript_run_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    figure_artifacts_parser = subparsers.add_parser(
+        "figure-artifacts-inspect",
+        help="Inspect figure artifacts in a file or directory without executing scripts.",
+    )
+    figure_artifacts_parser.add_argument("path", help="Artifact file or directory.")
+    figure_artifacts_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    figure_dataset_parser = subparsers.add_parser(
+        "figure-dataset-inspect",
+        help="Inspect a FigureDataset JSON file.",
+    )
+    figure_dataset_parser.add_argument("path", help="FigureDataset JSON path.")
+    figure_dataset_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    figure_from_run_parser = subparsers.add_parser(
+        "figure-dataset-from-run",
+        help="Convert an OctaveRunResult JSON file to a FigureDataset JSON file.",
+    )
+    figure_from_run_parser.add_argument("run_result_json", help="OctaveRunResult JSON path.")
+    figure_from_run_parser.add_argument("--out", required=True, help="Output dataset JSON path.")
     subparsers.add_parser(
         "gui",
         help="Launch the optional PySide6 GUI shell.",
@@ -473,13 +496,78 @@ def main(argv: Sequence[str] | None = None) -> int:
             policy=policy,
         )
         result = OctaveRunner().run(request)
+        dataset = None
+        if args.capture_figures:
+            from osw.scripts.mscript.figure_capture import figure_dataset_from_octave_result
+
+            dataset = figure_dataset_from_octave_result(result)
         if args.json:
             import json
 
-            print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+            if dataset is None:
+                payload = result.to_dict()
+            else:
+                payload = {"run": result.to_dict()}
+                payload["figure_dataset"] = dataset.to_dict()
+            print(json.dumps(payload, indent=2, sort_keys=True))
         else:
             _print_octave_run_result(result)
+            if dataset is not None:
+                print(
+                    "Captured "
+                    f"{len(dataset.figures)} figure artifact(s), "
+                    f"{len(dataset.workspace_variables)} workspace variable summary item(s)."
+                )
         return 0 if result.status is OctaveRunStatus.COMPLETED else 1
+
+    if args.command == "figure-artifacts-inspect":
+        from osw.scripts.mscript.figure_capture import (
+            discover_figure_artifacts,
+            figure_dataset_from_artifacts,
+        )
+
+        source = Path(args.path)
+        paths = discover_figure_artifacts(source) if source.is_dir() else (source,)
+        dataset = figure_dataset_from_artifacts(paths, source_script=str(source))
+        if args.json:
+            import json
+
+            print(json.dumps(dataset.to_dict(), indent=2, sort_keys=True))
+        else:
+            _print_figure_dataset(dataset)
+            if dataset.diagnostics.messages:
+                print(dataset.diagnostics.summary(), file=sys.stderr)
+        return 1 if dataset.diagnostics.has_errors else 0
+
+    if args.command == "figure-dataset-inspect":
+        from osw.scripts.mscript.figure_capture import load_figure_dataset_json
+
+        dataset = load_figure_dataset_json(Path(args.path))
+        if args.json:
+            import json
+
+            print(json.dumps(dataset.to_dict(), indent=2, sort_keys=True))
+        else:
+            _print_figure_dataset(dataset)
+        return 0
+
+    if args.command == "figure-dataset-from-run":
+        import json
+
+        from osw.scripts.mscript.figure_capture import (
+            export_figure_dataset_json,
+            figure_dataset_from_octave_result,
+        )
+        from osw.scripts.mscript.octave_runner import OctaveRunResult
+
+        payload = json.loads(Path(args.run_result_json).read_text(encoding="utf-8"))
+        if isinstance(payload, dict) and "run" in payload:
+            payload = payload["run"]
+        result = OctaveRunResult.from_dict(payload)
+        dataset = figure_dataset_from_octave_result(result)
+        output_path = export_figure_dataset_json(dataset, Path(args.out))
+        print(f"Wrote FigureDataset JSON: {output_path}")
+        return 0
 
     if args.command == "gui":
         from osw.gui.main_window import PySide6UnavailableError, run_gui
@@ -556,6 +644,26 @@ def _print_octave_run_result(result: object) -> None:
     diagnostics = getattr(result, "diagnostics", None)
     if diagnostics is not None and getattr(diagnostics, "messages", ()):
         print(diagnostics.summary(), file=sys.stderr)
+
+
+def _print_figure_dataset(dataset: object) -> None:
+    print(f"FigureDataset: {getattr(dataset, 'dataset_id', '')}")
+    print(f"Engine: {getattr(dataset, 'engine', 'unknown')}")
+    print(f"Figures: {len(getattr(dataset, 'figures', ())) }")
+    print(f"Workspace variables: {len(getattr(dataset, 'workspace_variables', ())) }")
+    for record in getattr(dataset, "figures", ()):
+        path = getattr(record, "primary_path", None)
+        print(
+            f"- {getattr(record, 'figure_id', '')}: "
+            f"{getattr(record, 'title', '')} "
+            f"[{getattr(record, 'image_format', '')}] {path or ''}"
+        )
+    for variable in getattr(dataset, "workspace_variables", ()):
+        shape = "x".join(str(item) for item in getattr(variable, "shape", ()))
+        print(
+            f"- variable {getattr(variable, 'name', '')}: "
+            f"{getattr(variable, 'type_name', '')} {shape}"
+        )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,29 @@
+{
+  "dataset_id": "sample-figure-dataset",
+  "engine": "imported",
+  "figures": [
+    {
+      "figure_id": "simple-plot",
+      "title": "Simple Plot",
+      "image_path": "tests/fixtures/figures/simple_plot.png",
+      "format": "png"
+    },
+    {
+      "figure_id": "simple-plot-svg",
+      "title": "Simple Plot SVG",
+      "vector_path": "tests/fixtures/figures/simple_plot.svg",
+      "format": "svg"
+    }
+  ],
+  "workspace_variables": [
+    {
+      "name": "x",
+      "type_name": "double",
+      "shape": [1, 3],
+      "dtype": "float64",
+      "size": 3,
+      "preview": "[0, 1, 2]",
+      "source": "tests/fixtures/figures/workspace_summary.json"
+    }
+  ]
+}

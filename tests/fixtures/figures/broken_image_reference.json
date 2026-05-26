@@ -1,0 +1,11 @@
+{
+  "dataset_id": "broken-image-reference",
+  "figures": [
+    {
+      "figure_id": "missing-plot",
+      "title": "Missing Plot",
+      "image_path": "missing_plot.png",
+      "format": "png"
+    }
+  ]
+}

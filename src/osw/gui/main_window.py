@@ -99,6 +99,9 @@ class MainWindow(_BaseMainWindow):
         self.plugin_discovery_result: object | None = None
         self.plugin_manager_dialog: object | None = None
         self.script_preview_dialog: object | None = None
+        self.plot_viewer_dialog: object | None = None
+        self.plot_viewer: object | None = None
+        self.last_figure_dataset: object | None = None
         self.preferences_dialog: object | None = None
         self.toolbar_actions: dict[str, object] = {}
         self.menu_actions: dict[str, object] = {}
@@ -425,6 +428,7 @@ class MainWindow(_BaseMainWindow):
 
         dialog.previewAccepted.connect(_attach)
         dialog.scriptRunCompleted.connect(self._on_script_run_completed)
+        dialog.figureDatasetReady.connect(self._on_figure_dataset_ready)
         self.script_preview_dialog = dialog
         dialog.show()
         dialog.raise_()
@@ -433,11 +437,46 @@ class MainWindow(_BaseMainWindow):
 
     def _on_script_run_completed(self, result: object) -> None:
         status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+        from osw.scripts.mscript.figure_capture import figure_dataset_from_octave_result
+
+        figure_dataset = figure_dataset_from_octave_result(result)
+        self._on_figure_dataset_ready(figure_dataset)
         if hasattr(self.run_monitor, "append_log"):
             self.run_monitor.append_log(f"Octave script run: {status}", level="info")
             combined = str(getattr(result, "combined_log", "") or "").strip()
             if combined:
                 self.run_monitor.append_log(combined.splitlines()[-1], level="info")
+            figure_count = len(getattr(figure_dataset, "figures", ()))
+            if figure_count:
+                self.run_monitor.append_log(
+                    f"Captured {figure_count} figure artifact(s).",
+                    level="info",
+                )
+
+    def _on_figure_dataset_ready(self, dataset: object) -> None:
+        self.last_figure_dataset = dataset
+        if self.plot_viewer is not None and hasattr(self.plot_viewer, "set_figure_dataset"):
+            self.plot_viewer.set_figure_dataset(dataset)
+
+    def open_plot_viewer(self, dataset: object | None = None) -> object:
+        """Open a lightweight FigureDataset viewer without running scripts."""
+
+        from osw.gui.plot_viewer import PlotViewer
+
+        active_dataset = dataset or self.last_figure_dataset
+        if self.plot_viewer_dialog is None:
+            self.plot_viewer_dialog = QtWidgets.QDialog(self)
+            self.plot_viewer_dialog.setObjectName("oswPlotViewerDialog")
+            self.plot_viewer_dialog.setWindowTitle("Plot Viewer")
+            layout = QtWidgets.QVBoxLayout(self.plot_viewer_dialog)
+            self.plot_viewer = PlotViewer(self.plot_viewer_dialog)
+            layout.addWidget(self.plot_viewer)
+        if active_dataset is not None and hasattr(self.plot_viewer, "set_figure_dataset"):
+            self.plot_viewer.set_figure_dataset(active_dataset)
+        self.plot_viewer_dialog.show()
+        self.plot_viewer_dialog.raise_()
+        self.plot_viewer_dialog.activateWindow()
+        return self.plot_viewer_dialog
 
     def _on_plugin_state_changed(self, _plugin_id: str, _enabled: bool) -> None:
         self.run_plugin_health_check(log=False)

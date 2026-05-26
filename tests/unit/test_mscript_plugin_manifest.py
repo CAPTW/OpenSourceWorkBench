@@ -19,6 +19,11 @@ def test_builtin_mscript_preview_plugin_manifest_validates() -> None:
     assert manifest.executable_names == ("octave", "octave-cli")
     assert "octave_execution" in manifest.capabilities
     assert "isolated_workspace" in manifest.capabilities
+    assert "figure_dataset" in manifest.capabilities
+    assert "figure_dataset" in manifest.output_formats
+    assert "png" in manifest.output_formats
+    assert "svg" in manifest.output_formats
+    assert "pdf" in manifest.output_formats
     assert not [
         diagnostic
         for diagnostic in manifest.validate()

@@ -186,3 +186,10 @@ to the script preview surface. The action routes through backend
 `OctaveRunner`/`ExternalCommandRunner`, uses isolated workspaces and timeout
 handling, and remains disabled for high-risk or out-of-scope safety findings by
 default. The GUI still does not launch subprocesses directly.
+
+`OSW-FUNC-008_FIGURE_CAPTURE_DATASET` adds FigureDataset viewing and report
+handoff for existing PNG/SVG/PDF/CSV/JSON run artifacts. The Plot Viewer lists
+figure metadata and workspace summaries, report previews can consume figure
+datasets, and script preview can hand off captured artifacts after an explicit
+Octave run. The GUI still does not execute scripts during import, preview, or
+figure inspection.

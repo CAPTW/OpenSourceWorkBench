@@ -87,9 +87,10 @@ patterns such as:
 - `*.dat`
 - `*.json`
 
-PNG/SVG/PDF files are generic artifacts only in this step. Figure-specific
-classification and `FigureDataset` integration are deferred to
-`OSW-FUNC-008_FIGURE_CAPTURE_DATASET`.
+After `OSW-FUNC-008_FIGURE_CAPTURE_DATASET`, PNG/SVG/PDF artifacts can be
+normalized into `FigureDataset` records. CSV and JSON artifacts can also provide
+lightweight data/workspace summaries. This handoff is data-only and does not
+execute scripts or add a second execution path around `OctaveRunner`.
 
 ## CLI
 
@@ -111,6 +112,7 @@ Useful options:
 - `--allow-high-risk`
 - `--allow-blocked`
 - `--workspace PATH`
+- `--capture-figures`
 - `--json`
 
 If Octave is not installed or configured, `mscript-run` returns a friendly
@@ -140,7 +142,8 @@ the completed GUI visual shell and theme behavior.
 
 ## Known Limitations
 
-- This step does not capture figures as `FigureDataset` records.
+- Figure capture is artifact normalization only. OSW does not reconstruct
+  MATLAB/Octave graphics commands or parse `.fig` files.
 - This step does not read `.mat` files.
 - This step does not provide MATLAB Engine or Oct2Py integration.
 - This step does not implement Simulink, `.slx`, or `.mlapp` support.
@@ -148,4 +151,4 @@ the completed GUI visual shell and theme behavior.
 
 ## Next Step
 
-Next functional step: `OSW-FUNC-008_FIGURE_CAPTURE_DATASET`.
+Next functional step: `OSW-FUNC-009_MAT_READER`.

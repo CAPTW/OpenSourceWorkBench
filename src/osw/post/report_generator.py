@@ -28,6 +28,7 @@ class ReportFigure:
     title: str
     image_path: str
     status: str
+    format: str = ""
     axes: tuple[str, ...] = field(default_factory=tuple)
     source: str = ""
 
@@ -107,7 +108,7 @@ def build_report_model(
     )
 
     figures, figure_warnings, figure_list = _report_figures(figure_datasets)
-    report_tables = _report_tables(result_tables)
+    report_tables = (*_report_tables(result_tables), *_figure_workspace_tables(figure_datasets))
     report_screenshots, screenshot_warnings = _report_screenshots(screenshots)
     warning_lines = [
         *tuple(str(warning) for warning in warnings or ()),
@@ -287,9 +288,16 @@ def _figure_section(
             ]
         )
         if figure.status == "available":
-            body.append(
-                f'      <img src="{escape(figure.image_path)}" alt="{escape(figure.title)}">'
-            )
+            if figure.format in {"png", "svg", "jpg", "jpeg"}:
+                body.append(
+                    f'      <img src="{escape(figure.image_path)}" '
+                    f'alt="{escape(figure.title)}">'
+                )
+            else:
+                body.append(
+                    f'      <p><a href="{escape(figure.image_path)}">'
+                    f"{escape(figure.format.upper() or 'artifact')} artifact</a></p>"
+                )
         else:
             body.append(
                 f"      <p class=\"warning\">Figure image not available: "
@@ -485,15 +493,16 @@ def _report_figures(
     for dataset in figure_datasets or ():
         source = str(getattr(dataset, "source", ""))
         for record in getattr(dataset, "figures", ()):
-            image_path = Path(getattr(record, "image_path", ""))
+            image_path = _figure_report_path(record)
             status = "available" if image_path.exists() else "missing"
             figure = ReportFigure(
                 figure_id=str(getattr(record, "figure_id", "figure")),
                 title=str(getattr(record, "title", "Figure")),
                 image_path=str(image_path),
                 status=status,
-                axes=tuple(str(axis) for axis in getattr(record, "axes", ())),
-                source=source,
+                format=str(getattr(record, "image_format", "")),
+                axes=tuple(_axis_display_text(axis) for axis in getattr(record, "axes", ())),
+                source=_figure_source_text(record, source),
             )
             figures.append(figure)
             if status == "missing":
@@ -507,6 +516,59 @@ def _report_figures(
         for figure in figures
     )
     return tuple(figures), tuple(warnings), figure_list
+
+
+def _figure_workspace_tables(
+    figure_datasets: Iterable[object] | None,
+) -> tuple[ReportTable, ...]:
+    tables: list[ReportTable] = []
+    for dataset in figure_datasets or ():
+        variables = tuple(getattr(dataset, "workspace_variables", ()) or ())
+        if not variables:
+            continue
+        rows = tuple(
+            (
+                str(getattr(variable, "name", "")),
+                str(getattr(variable, "type_name", "")),
+                "x".join(str(item) for item in getattr(variable, "shape", ()) or ()),
+                str(getattr(variable, "dtype", "")),
+                str(getattr(variable, "source", "")),
+            )
+            for variable in variables
+        )
+        tables.append(
+            ReportTable(
+                title=f"Workspace variables: {getattr(dataset, 'dataset_id', 'figures')}",
+                columns=("name", "type", "shape", "dtype", "source"),
+                rows=rows,
+                source=str(getattr(dataset, "source_file", "") or getattr(dataset, "source", "")),
+                notes=("Summaries are derived from exported JSON/CSV artifacts.",),
+            )
+        )
+    return tuple(tables)
+
+
+def _figure_report_path(record: object) -> Path:
+    for attribute in ("image_path", "vector_path", "pdf_path", "thumbnail_path", "data_path"):
+        value = getattr(record, attribute, None)
+        if value not in (None, ""):
+            return Path(value)
+    return Path("__missing_figure_artifact__")
+
+
+def _axis_display_text(axis: object) -> str:
+    if hasattr(axis, "display_label"):
+        return str(axis.display_label())
+    return str(axis)
+
+
+def _figure_source_text(record: object, dataset_source: str) -> str:
+    parts = [
+        dataset_source,
+        str(getattr(record, "source_script", "")),
+        str(getattr(record, "source_run_id", "")),
+    ]
+    return " | ".join(part for part in parts if part)
 
 
 def _report_screenshots(
