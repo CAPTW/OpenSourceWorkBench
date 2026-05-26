@@ -1,0 +1,62 @@
+"""Built-in manifest records for OSW preview bridges.
+
+These helpers return data-only manifests. They do not import or execute plugin
+implementations, optional dependencies, or external tools.
+"""
+
+from __future__ import annotations
+
+from osw.plugins.manifest import PluginManifest
+
+
+def builtin_meshio_plugin_manifest() -> PluginManifest:
+    """Return the data-only manifest for the meshio import bridge."""
+
+    return PluginManifest.from_dict(
+        {
+            "id": "osw.meshio",
+            "name": "meshio Mesh Import Bridge",
+            "version": "0.1.0",
+            "domain": "MESH",
+            "type": "mesh_importer",
+            "license": "MIT-compatible dependency bridge",
+            "description": (
+                "Imports standard/exported mesh metadata through the optional "
+                "meshio dependency without running external tools."
+            ),
+            "input_formats": [
+                "msh",
+                "inp",
+                "bdf",
+                "nas",
+                "fem",
+                "su2",
+                "vtk",
+                "vtu",
+                "xdmf",
+                "xmf",
+                "cgns",
+                "med",
+            ],
+            "output_formats": ["vtu", "vtk", "xdmf"],
+            "requires": [],
+            "optional_requires": ["meshio"],
+            "executable_names": [],
+            "capabilities": [
+                "mesh_info",
+                "mesh_conversion",
+                "project_mesh_ref_binding",
+            ],
+            "metadata": {
+                "built_in": True,
+                "preview_first": True,
+                "no_external_execution": True,
+            },
+        }
+    )
+
+
+def builtin_plugin_manifests() -> tuple[PluginManifest, ...]:
+    """Return built-in data-only plugin manifest records."""
+
+    return (builtin_meshio_plugin_manifest(),)

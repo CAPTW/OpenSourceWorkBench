@@ -72,6 +72,34 @@ def test_project_json_round_trip(tmp_path: Path) -> None:
     assert not loaded.validate().has_errors
 
 
+def test_mesh_ref_round_trips_mesh_info_summary(tmp_path: Path) -> None:
+    project = Project(
+        metadata=ProjectMetadata(name="mesh info"),
+        meshes=[
+            MeshRef(
+                ref_id="mesh-1",
+                path="mesh/tiny.vtu",
+                format="vtu",
+                node_count=3,
+                cell_count=1,
+                mesh_info={
+                    "node_count": 3,
+                    "element_count": 1,
+                    "cell_types": ["triangle"],
+                },
+            )
+        ],
+        results=[ResultRef(ref_id="result-1", path="results/preview.json", kind="dataset")],
+    )
+    path = tmp_path / "project.osw.json"
+
+    project.save(path)
+    loaded = Project.load(path)
+
+    assert loaded.mesh_refs[0].mesh_info is not None
+    assert loaded.mesh_refs[0].mesh_info["cell_types"] == ["triangle"]
+
+
 def test_project_yaml_round_trip(tmp_path: Path) -> None:
     pytest.importorskip("yaml")
     project = _sample_project()
@@ -190,6 +218,19 @@ def test_project_validation_warns_for_native_commercial_cad_extension() -> None:
 
     assert report.has_warnings
     assert any("native commercial CAD direct import" in item.message for item in report.messages)
+
+
+def test_project_validation_warns_for_native_commercial_mesh_path() -> None:
+    project = Project(
+        metadata=ProjectMetadata(name="native mesh warning"),
+        meshes=[MeshRef(id="native", path="mesh/native_part.sldprt", format="SLDPRT")],
+        results=[ResultRef(ref_id="result-1", path="results/preview.json", kind="dataset")],
+    )
+
+    report = validate_project(project)
+
+    assert report.has_warnings
+    assert any("standard/exported CAD and mesh formats" in item.message for item in report.messages)
 
 
 def test_boundary_condition_accepts_project_schema_fields() -> None:

@@ -46,6 +46,7 @@ class PropertiesPanel(_BaseWidget):
         self._tokens = DARK_TOKENS
         self._selection = "HeatSink_Flow"
         self._current_project: Project | None = None
+        self._mesh_by_label: dict[str, object] = {}
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -96,10 +97,16 @@ class PropertiesPanel(_BaseWidget):
             return self._selection
         if name == "Workflow step":
             return _workflow_step_for_selection(self._selection)
+        mesh = self._selected_mesh_ref()
+        if mesh is not None:
+            return _mesh_row_value(mesh, name)
         return ""
 
     def set_node_selection(self, selection: str) -> None:
         self._selection = selection or "HeatSink_Flow"
+
+    def _selected_mesh_ref(self) -> object | None:
+        return self._mesh_by_label.get(self._selection)
 
     def set_project(self, project: Project) -> None:
         self._current_project = project
@@ -109,6 +116,10 @@ class PropertiesPanel(_BaseWidget):
         return self._current_project
 
     def refresh_from_project(self, project: Project) -> None:
+        self._mesh_by_label = {
+            _mesh_label(mesh): mesh
+            for mesh in project.mesh_refs
+        }
         material = project.materials[0] if project.materials else None
         if material is not None:
             self.material_section.set_material_library(material.library or "project")
@@ -273,3 +284,75 @@ def _format_tolerance(value: object) -> str:
     except (TypeError, ValueError):
         return str(value)
     return f"{numeric:.1e}"
+
+
+def _mesh_label(mesh: object) -> str:
+    name = str(getattr(mesh, "name", "") or "")
+    path = str(getattr(mesh, "path", "") or "")
+    if name:
+        return name
+    if path:
+        from pathlib import Path
+
+        return Path(path).name
+    return str(getattr(mesh, "id", ""))
+
+
+def _mesh_info(mesh: object) -> dict[str, object]:
+    info = getattr(mesh, "mesh_info", None)
+    if isinstance(info, dict):
+        return info
+    metadata = getattr(mesh, "metadata", {})
+    if isinstance(metadata, dict) and isinstance(metadata.get("mesh_info"), dict):
+        return dict(metadata["mesh_info"])
+    return {}
+
+
+def _mesh_row_value(mesh: object, name: str) -> str:
+    info = _mesh_info(mesh)
+    if name in {"Mesh format", "Format"}:
+        return str(getattr(mesh, "format", "") or info.get("format", ""))
+    if name in {"Nodes", "Node count"}:
+        return _mesh_count(getattr(mesh, "node_count", None), info, "node_count", "nodes")
+    if name in {"Elements", "Element count", "Cells"}:
+        return _mesh_count(getattr(mesh, "cell_count", None), info, "element_count", "elements")
+    if name == "Cell types":
+        cell_types = info.get("cell_types", ())
+        if not cell_types and isinstance(info.get("cell_blocks"), list):
+            cell_types = [
+                str(block.get("cell_type", ""))
+                for block in info["cell_blocks"]
+                if isinstance(block, dict) and block.get("cell_type")
+            ]
+        if isinstance(cell_types, list | tuple):
+            return ", ".join(str(item) for item in cell_types) or "none"
+        return str(cell_types or "none")
+    if name == "Bounds":
+        bounds = info.get("bounds") or info.get("bounding_box")
+        if isinstance(bounds, dict):
+            minimum = bounds.get("minimum") or [
+                bounds.get("min_x", 0.0),
+                bounds.get("min_y", 0.0),
+                bounds.get("min_z", 0.0),
+            ]
+            maximum = bounds.get("maximum") or [
+                bounds.get("max_x", 0.0),
+                bounds.get("max_y", 0.0),
+                bounds.get("max_z", 0.0),
+            ]
+            return f"{minimum} -> {maximum}"
+        return ""
+    if name in {"Quality", "Quality summary"}:
+        return str(getattr(mesh, "quality_summary", "") or "")
+    if name == "Mesh status":
+        return str(getattr(mesh, "status", "") or "")
+    return ""
+
+
+def _mesh_count(value: object, info: dict[str, object], *keys: str) -> str:
+    if value not in (None, ""):
+        return str(value)
+    for key in keys:
+        if info.get(key) not in (None, ""):
+            return str(info[key])
+    return ""

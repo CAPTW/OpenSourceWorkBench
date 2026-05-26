@@ -113,6 +113,10 @@ def analyze_mesh_quality(
     edge_lengths: list[float] = []
     aspect_ratios: list[float] = []
     warnings: list[MeshQualityWarning] = []
+    if info.nodes == 0:
+        warnings.append(MeshQualityWarning("zero_nodes", "Mesh contains zero nodes."))
+    if info.elements == 0:
+        warnings.append(MeshQualityWarning("zero_elements", "Mesh contains zero elements."))
 
     for block in mesh_data.cells:
         for local_index, connectivity in enumerate(block.data):

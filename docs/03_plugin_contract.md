@@ -234,10 +234,14 @@ code or running executables.
 
 Later functional steps will bind this contract to:
 
-- standard mesh import bridges;
 - MATLAB/Octave preview workflows;
 - report generator binding.
 
+`OSW-FUNC-005_MESH_IMPORT_BRIDGE` adds the built-in data-only
+`osw.meshio` manifest for the standard mesh import bridge. It declares
+`mesh_importer` capabilities and the optional `meshio` dependency, but
+discovery and health checks still do not execute plugin code or external tools.
+
 ## Next Step
 
-Next functional step: `OSW-FUNC-005_MESH_IMPORT_BRIDGE`.
+Next functional step: `OSW-FUNC-006_MSCRIPT_IMPORT_PREVIEW`.

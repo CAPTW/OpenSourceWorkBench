@@ -34,3 +34,12 @@ of shell strings, capture stdout/stderr, enforce timeouts, and classify runtime
 artifacts under controlled run directories. Solver and script adapters may use
 this backend boundary in later steps; GUI widgets must not launch subprocesses
 directly.
+
+## Mesh Import Bridge
+
+Standard/exported mesh import lives under `osw.mesh` and remains independent of
+GUI and solver adapters. The meshio bridge imports meshio lazily, extracts
+`MeshInfo` metadata, can attach summaries to ProjectSchema `MeshRef` records,
+and reports unsupported, corrupt, or dependency-missing imports through
+structured diagnostics. It does not run Gmsh, solvers, shell commands, or native
+commercial CAD readers. See `docs/16_mesh_import_bridge.md`.

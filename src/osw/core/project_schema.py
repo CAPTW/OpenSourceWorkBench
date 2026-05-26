@@ -133,6 +133,7 @@ class MeshRef:
     face_count: int | None
     node_count: int | None
     quality_summary: str
+    mesh_info: dict[str, Any] | None
     metadata: dict[str, Any]
 
     def __init__(
@@ -150,6 +151,7 @@ class MeshRef:
         face_count: int | None = None,
         node_count: int | None = None,
         quality_summary: str = "",
+        mesh_info: Mapping[str, Any] | None = None,
     ) -> None:
         object.__setattr__(self, "id", str(ref_id or id))
         object.__setattr__(self, "name", str(name or Path(path).name))
@@ -161,6 +163,7 @@ class MeshRef:
         object.__setattr__(self, "face_count", _optional_int(face_count))
         object.__setattr__(self, "node_count", _optional_int(node_count))
         object.__setattr__(self, "quality_summary", str(quality_summary))
+        object.__setattr__(self, "mesh_info", dict(mesh_info) if mesh_info else None)
         object.__setattr__(self, "metadata", dict(metadata or {}))
 
     @property
@@ -180,6 +183,7 @@ class MeshRef:
             "face_count": self.face_count,
             "node_count": self.node_count,
             "quality_summary": self.quality_summary,
+            "mesh_info": dict(self.mesh_info) if self.mesh_info else None,
             "metadata": dict(self.metadata),
         }
 
@@ -199,6 +203,11 @@ class MeshRef:
             face_count=data.get("face_count"),
             node_count=data.get("node_count"),
             quality_summary=str(data.get("quality_summary", "")),
+            mesh_info=(
+                dict(data.get("mesh_info", {}))
+                if isinstance(data.get("mesh_info"), Mapping)
+                else None
+            ),
             metadata=dict(data.get("metadata", {})),
         )
 
@@ -850,6 +859,17 @@ def _validate_project_references(project: Project, report: ValidationReport) -> 
                 (
                     "OSW v0.1 supports standard exported formats; native commercial "
                     "CAD direct import is out of scope."
+                ),
+            )
+
+    for index, mesh in enumerate(project.meshes):
+        suffix = Path(mesh.path).suffix.lower()
+        if suffix in NATIVE_COMMERCIAL_CAD_EXTENSIONS:
+            report.add_warning(
+                f"meshes[{index}].path",
+                (
+                    "OSW v0.1 supports standard/exported CAD and mesh formats. "
+                    "Please export STEP/STL/OBJ or a supported mesh format."
                 ),
             )
 

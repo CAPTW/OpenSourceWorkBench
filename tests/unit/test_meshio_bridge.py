@@ -7,10 +7,12 @@ import pytest
 from osw.mesh.mesh_model import MeshCellBlock, build_mesh_info
 from osw.mesh.meshio_bridge import (
     MeshImportError,
+    MeshImportStatus,
     detect_mesh_format,
     export_vtu,
     load_mesh_info,
     mesh_data_from_meshio,
+    read_mesh,
 )
 
 
@@ -101,6 +103,11 @@ def test_missing_mesh_file_reports_friendly_error(tmp_path: Path) -> None:
     with pytest.raises(MeshImportError, match="Mesh file does not exist"):
         load_mesh_info(missing_path, meshio_module=FakeMeshio())
 
+    result = read_mesh(missing_path, meshio_module=FakeMeshio())
+
+    assert result.status is MeshImportStatus.ERROR
+    assert "Mesh file does not exist" in result.diagnostics.summary()
+
 
 def test_corrupt_mesh_reports_friendly_error(tmp_path: Path) -> None:
     mesh_path = tmp_path / "corrupt.vtu"
@@ -108,6 +115,18 @@ def test_corrupt_mesh_reports_friendly_error(tmp_path: Path) -> None:
 
     with pytest.raises(MeshImportError, match="Could not read mesh"):
         load_mesh_info(mesh_path, meshio_module=FakeMeshio(error=ValueError("bad mesh")))
+
+    result = read_mesh(mesh_path, meshio_module=FakeMeshio(error=ValueError("bad mesh")))
+
+    assert result.status is MeshImportStatus.ERROR
+    assert "Could not read mesh" in result.diagnostics.summary()
+
+
+def test_native_commercial_cad_extension_reports_v01_scope() -> None:
+    result = read_mesh("part.sldprt", meshio_module=FakeMeshio())
+
+    assert result.status is MeshImportStatus.ERROR
+    assert "v0.1 supports standard/exported CAD and mesh formats" in result.diagnostics.summary()
 
 
 def test_export_vtu_uses_meshio_writer(tmp_path: Path) -> None:

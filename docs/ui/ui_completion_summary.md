@@ -168,3 +168,9 @@ rerunning a GUI skeleton.
 and right-panel plugin registry binding on top of the frozen GUI. It reads
 manifest data, displays health diagnostics, and stores local enable/path state
 without loading plugin code or running solver executables.
+
+`OSW-FUNC-005_MESH_IMPORT_BRIDGE` adds standard/exported mesh metadata import on
+top of the existing ProjectSchema binding. Mesh refs can carry `MeshInfo`
+summaries, the project tree continues to render mesh rows, and the properties
+panel can show selected mesh metadata without replacing the mock viewport or
+running external tools.

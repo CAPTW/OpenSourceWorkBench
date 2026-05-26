@@ -84,4 +84,6 @@ def test_empty_mesh_quality_is_report_friendly() -> None:
     assert metrics.max_edge_length is None
     assert metrics.max_aspect_ratio is None
     assert metrics.to_dict()["bounding_box"]["minimum"] == [0.0, 0.0, 0.0]
+    assert any(warning.code == "zero_nodes" for warning in metrics.warnings)
+    assert any(warning.code == "zero_elements" for warning in metrics.warnings)
     assert any("nodes=0" in line for line in metrics.report_lines())

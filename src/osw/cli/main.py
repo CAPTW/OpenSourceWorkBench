@@ -135,6 +135,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Timeout in seconds for the safe smoke command.",
     )
     subparsers.add_parser(
+        "mesh-formats",
+        help="List standard/exported mesh formats recognized by OSW.",
+    )
+    mesh_info_parser = subparsers.add_parser(
+        "mesh-info",
+        help="Inspect mesh metadata through the optional meshio bridge.",
+    )
+    mesh_info_parser.add_argument("path", help="Mesh file path.")
+    mesh_convert_parser = subparsers.add_parser(
+        "mesh-convert",
+        help="Convert one standard mesh file to another through meshio.",
+    )
+    mesh_convert_parser.add_argument("input", help="Input mesh file path.")
+    mesh_convert_parser.add_argument("output", help="Output mesh file path.")
+    mesh_convert_parser.add_argument(
+        "--format",
+        dest="output_format",
+        default=None,
+        help="Optional output format override such as vtu, vtk, msh, inp, or xdmf.",
+    )
+    subparsers.add_parser(
         "gui",
         help="Launch the optional PySide6 GUI shell.",
         description="Launch the optional PySide6 GUI shell.",
@@ -275,6 +296,55 @@ def main(argv: Sequence[str] | None = None) -> int:
             if result.diagnostics.messages:
                 print(result.diagnostics.summary())
             return 0 if result.status.value == "completed" else 1
+
+    if args.command == "mesh-formats":
+        from osw.mesh.meshio_bridge import supported_mesh_extensions, supported_mesh_formats
+
+        print("OSW mesh formats")
+        print("formats: " + ", ".join(supported_mesh_formats()))
+        print("extensions: " + ", ".join(supported_mesh_extensions()))
+        print("meshio dependency: " + ("available" if _module_available("meshio") else "missing"))
+        return 0
+
+    if args.command == "mesh-info":
+        from osw.mesh.meshio_bridge import read_mesh
+
+        result = read_mesh(Path(args.path))
+        if result.mesh is None:
+            print(result.diagnostics.summary(), file=sys.stderr)
+            return 2 if result.status.value == "dependency_missing" else 1
+        info = result.mesh.info
+        print(f"Mesh: {Path(info.source_path).name}")
+        print(f"Format: {info.format}")
+        print(f"Nodes: {info.node_count}")
+        print(f"Elements: {info.element_count}")
+        print("Cell types: " + (", ".join(info.cell_types) or "none"))
+        print(f"Bounds: {info.bounds.minimum} -> {info.bounds.maximum}")
+        if info.point_data_names:
+            print("Point data: " + ", ".join(info.point_data_names))
+        if info.cell_data_names:
+            print("Cell data: " + ", ".join(info.cell_data_names))
+        if result.diagnostics.messages:
+            print(result.diagnostics.summary(), file=sys.stderr)
+        return 0
+
+    if args.command == "mesh-convert":
+        from osw.mesh.meshio_bridge import read_mesh, write_mesh
+
+        import_result = read_mesh(Path(args.input))
+        if import_result.mesh is None:
+            print(import_result.diagnostics.summary(), file=sys.stderr)
+            return 2 if import_result.status.value == "dependency_missing" else 1
+        export_result = write_mesh(
+            import_result.mesh,
+            Path(args.output),
+            file_format=args.output_format,
+        )
+        if not export_result.ok:
+            print(export_result.diagnostics.summary(), file=sys.stderr)
+            return 2 if export_result.status.value == "dependency_missing" else 1
+        print(f"Wrote mesh: {export_result.output_path}")
+        return 0
 
     if args.command == "gui":
         from osw.gui.main_window import PySide6UnavailableError, run_gui

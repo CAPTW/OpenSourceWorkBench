@@ -332,6 +332,32 @@ class MainWindow(_BaseMainWindow):
         self.set_project(create_heatsink_flow_demo_project())
         self._placeholder_action("New Project")
 
+    def import_mesh_file(self, path: str | Path) -> bool:
+        """Preview-import mesh metadata and attach it to the current project.
+
+        This method uses the meshio bridge only. It does not run external tools or
+        solver processes.
+        """
+
+        from osw.mesh.meshio_bridge import read_mesh
+
+        return self.attach_mesh_to_project(read_mesh(path))
+
+    def attach_mesh_to_project(self, mesh_result: object) -> bool:
+        from osw.mesh.meshio_bridge import mesh_to_project_ref
+
+        mesh = getattr(mesh_result, "mesh", None)
+        diagnostics = getattr(mesh_result, "diagnostics", None)
+        if mesh is None:
+            if diagnostics is not None and hasattr(diagnostics, "summary"):
+                self._placeholder_action(diagnostics.summary())
+            return False
+
+        mesh_ref = mesh_to_project_ref(mesh)
+        self.set_project(_project_with_mesh_ref(self.current_project, mesh_ref))
+        self._placeholder_action(f"Imported mesh metadata: {mesh_ref.name}")
+        return True
+
     def _on_plugin_state_changed(self, _plugin_id: str, _enabled: bool) -> None:
         self.run_plugin_health_check(log=False)
 
@@ -353,6 +379,32 @@ def _action_object_name(action_title: str) -> str:
         return plugin_action_names[action_title]
     words = "".join(part.capitalize() for part in action_title.replace("/", " ").split())
     return f"action{words}"
+
+
+def _project_with_mesh_ref(project: Project, mesh_ref: object) -> Project:
+    meshes = [
+        mesh
+        for mesh in project.mesh_refs
+        if getattr(mesh, "id", "") != getattr(mesh_ref, "id", "")
+        and getattr(mesh, "path", "") != getattr(mesh_ref, "path", "")
+    ]
+    meshes.append(mesh_ref)
+    return Project(
+        metadata=project.metadata,
+        units=project.units,
+        materials=project.materials,
+        geometry=project.geometry,
+        meshes=meshes,
+        scripts=project.scripts,
+        boundary_curves=project.boundary_curves,
+        physics=project.physics,
+        solvers=project.solvers,
+        results=project.results,
+        report=project.report,
+        schema_version=project.schema_version,
+        plugins=project.plugins,
+        warnings=project.warnings,
+    )
 
 
 def create_app(argv: Sequence[str] | None = None) -> QApplication:
