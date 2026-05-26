@@ -155,6 +155,15 @@ class PropertiesPanel(_BaseWidget):
         for row in self.plugins_section.plugin_rows():
             self.plugins_section.set_plugin_enabled(str(row["name"]), True)
 
+    def set_plugin_registry(self, registry: object | None) -> None:
+        self.plugins_section.set_plugin_registry(registry)
+
+    def set_plugin_health_map(self, health_by_id: object | None) -> None:
+        if isinstance(health_by_id, dict):
+            self.plugins_section.set_plugin_health_map(health_by_id)
+        else:
+            self.plugins_section.set_plugin_health_map({})
+
     def set_theme_tokens(self, tokens: ThemeTokens) -> None:
         self._tokens = tokens
         for child in (

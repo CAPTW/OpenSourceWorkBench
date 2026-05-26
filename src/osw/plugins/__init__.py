@@ -62,6 +62,7 @@ from osw.plugins.manifest import (
     validate_manifest_data,
 )
 from osw.plugins.registry import PluginRegistry, PluginRegistryEntry
+from osw.plugins.state import PluginStateStore
 
 __all__ = [
     "CADImporterPlugin",
@@ -90,6 +91,7 @@ __all__ = [
     "PluginManifestError",
     "PluginRegistry",
     "PluginRegistryEntry",
+    "PluginStateStore",
     "PluginType",
     "PluginValidationError",
     "PluginValidationResult",

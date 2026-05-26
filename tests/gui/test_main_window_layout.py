@@ -101,6 +101,19 @@ def test_menu_bar_contains_reference_menus(app: object) -> None:
     )
 
 
+def test_plugins_menu_contains_manager_actions(app: object) -> None:
+    from osw.gui.main_window import MainWindow
+
+    window = MainWindow()
+
+    assert window.menu_actions["Plugin Manager"].objectName() == "oswActionPluginManager"
+    assert window.menu_actions["Refresh Plugins"].objectName() == "oswActionRefreshPlugins"
+    assert (
+        window.menu_actions["Plugin Health Check"].objectName()
+        == "oswActionPluginHealthCheck"
+    )
+
+
 def test_toolbar_contains_reference_actions(app: object) -> None:
     from osw.gui.main_window import MainWindow
 

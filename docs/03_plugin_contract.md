@@ -227,13 +227,17 @@ capabilities:
 
 ## Future Extension Points
 
+`OSW-FUNC-004_PLUGIN_MANAGER_DIALOG_BINDING` adds a manifest-first Plugin
+Manager dialog. The dialog displays discovered manifests, dependency health,
+executable diagnostics, and local enable/disable state without loading plugin
+code or running executables.
+
 Later functional steps will bind this contract to:
 
-- a plugin manager dialog;
 - standard mesh import bridges;
 - MATLAB/Octave preview workflows;
 - report generator binding.
 
 ## Next Step
 
-Next functional step: `OSW-FUNC-004_PLUGIN_MANAGER_DIALOG_BINDING`.
+Next functional step: `OSW-FUNC-005_MESH_IMPORT_BRIDGE`.

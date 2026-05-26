@@ -58,6 +58,11 @@ Resolution order:
 The registry does not call `--version`, install tools, mutate the environment,
 or execute solver binaries.
 
+`OSW-FUNC-004_PLUGIN_MANAGER_DIALOG_BINDING` uses the same resolution semantics
+for plugin executable diagnostics. The Plugin Manager can store configured
+paths, but GUI health checks still only resolve paths; they do not execute the
+target executable.
+
 ## External Command Runner
 
 `ExternalCommandRunner` accepts argument lists, not shell strings. It validates
@@ -127,4 +132,4 @@ runner and is intended as a local smoke test for the runner service.
 
 ## Next Step
 
-Next functional step: `OSW-FUNC-004_PLUGIN_MANAGER_DIALOG_BINDING`.
+Next functional step: `OSW-FUNC-005_MESH_IMPORT_BRIDGE`.

@@ -163,3 +163,8 @@ generic GUI skeleton step.
 `ProjectTreePanel.set_project()`, and `PropertiesPanel.set_project()`. Future
 functional prompts should continue extending those model bindings instead of
 rerunning a GUI skeleton.
+
+`OSW-FUNC-004_PLUGIN_MANAGER_DIALOG_BINDING` adds a safe Plugin Manager dialog
+and right-panel plugin registry binding on top of the frozen GUI. It reads
+manifest data, displays health diagnostics, and stores local enable/path state
+without loading plugin code or running solver executables.
