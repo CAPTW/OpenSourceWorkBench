@@ -1,0 +1,371 @@
+"""Left project tree panel for the OpenSolver Workbench run screen."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
+from osw.gui.theme_tokens import DARK_TOKENS, ThemeTokens
+
+try:
+    from PySide6 import QtCore, QtGui, QtWidgets
+except ModuleNotFoundError:
+    QtCore = None
+    QtGui = None
+    QtWidgets = None
+
+
+@dataclass(frozen=True, slots=True)
+class ProjectTreeNode:
+    """Static demo tree record for the HeatSink_Flow reference project."""
+
+    label: str
+    kind: str = "file"
+    icon_key: str = "file"
+    complete: bool = False
+    children: tuple[ProjectTreeNode, ...] = field(default_factory=tuple)
+
+
+DEMO_PROJECT_TREE = ProjectTreeNode(
+    "HeatSink_Flow",
+    kind="project",
+    icon_key="project",
+    children=(
+        ProjectTreeNode(
+            "Geometry",
+            kind="group",
+            icon_key="geometry",
+            children=(
+                ProjectTreeNode("heatsink.step", icon_key="geometry_file"),
+                ProjectTreeNode("enclosure.stp", icon_key="geometry_file"),
+                ProjectTreeNode("fluid_domain.csg", icon_key="geometry_file"),
+            ),
+        ),
+        ProjectTreeNode(
+            "Mesh",
+            kind="group",
+            icon_key="mesh",
+            children=(
+                ProjectTreeNode("mesh.msh", icon_key="mesh_file", complete=True),
+                ProjectTreeNode("mesh_stats.txt", icon_key="mesh_file"),
+            ),
+        ),
+        ProjectTreeNode(
+            "Physics",
+            kind="group",
+            icon_key="physics",
+            children=(
+                ProjectTreeNode("heat_transfer.yaml", icon_key="config_file"),
+                ProjectTreeNode("turbulence.yaml", icon_key="config_file"),
+            ),
+        ),
+        ProjectTreeNode(
+            "Solvers",
+            kind="group",
+            icon_key="solver",
+            children=(
+                ProjectTreeNode("chtSolver", icon_key="solver_file"),
+                ProjectTreeNode("settings.json", icon_key="config_file"),
+            ),
+        ),
+        ProjectTreeNode(
+            "Scripts",
+            kind="group",
+            icon_key="script",
+            children=(
+                ProjectTreeNode("preprocess.m", icon_key="script_file"),
+                ProjectTreeNode("run_case.m", icon_key="script_file"),
+                ProjectTreeNode("postprocess.m", icon_key="script_file"),
+            ),
+        ),
+        ProjectTreeNode(
+            "Results",
+            kind="group",
+            icon_key="result",
+            children=(
+                ProjectTreeNode(
+                    "run_0001",
+                    kind="run",
+                    icon_key="result",
+                    children=(
+                        ProjectTreeNode("fields.ex2", icon_key="result_file"),
+                        ProjectTreeNode("residuals.dat", icon_key="result_file"),
+                        ProjectTreeNode("monitor.log", icon_key="log_file"),
+                    ),
+                ),
+                ProjectTreeNode("run_0000 (baseline)", kind="run", icon_key="result_file"),
+            ),
+        ),
+        ProjectTreeNode(
+            "Reports",
+            kind="group",
+            icon_key="report",
+            children=(
+                ProjectTreeNode("report.md", icon_key="report_file"),
+                ProjectTreeNode("report.pdf", icon_key="report_file"),
+            ),
+        ),
+    ),
+)
+
+
+def _walk_nodes(node: ProjectTreeNode) -> tuple[ProjectTreeNode, ...]:
+    nodes = [node]
+    for child in node.children:
+        nodes.extend(_walk_nodes(child))
+    return tuple(nodes)
+
+
+MAJOR_GROUP_LABELS = tuple(child.label for child in DEMO_PROJECT_TREE.children)
+DEMO_PROJECT_LABELS = tuple(node.label for node in _walk_nodes(DEMO_PROJECT_TREE))
+_BaseWidget: Any = QtWidgets.QWidget if QtWidgets is not None else object
+
+
+def project_tree_filter_matches(text: str) -> list[str]:
+    """Return demo tree labels that directly match a case-insensitive filter."""
+
+    query = text.strip().casefold()
+    if not query:
+        return list(DEMO_PROJECT_LABELS)
+    return [label for label in DEMO_PROJECT_LABELS if query in label.casefold()]
+
+
+class ProjectTreePanel(_BaseWidget):
+    """Theme-aware project sidebar for the HeatSink_Flow demo project."""
+
+    def __init__(self, parent: object | None = None) -> None:
+        if QtCore is None or QtGui is None or QtWidgets is None:
+            raise PySide6UnavailableError(pyside6_missing_message())
+        super().__init__(parent)
+        self.setObjectName("oswProjectTreePanel")
+        self.setMinimumWidth(300)
+        self.items_by_label: dict[str, object] = {}
+        self._icon_cache: dict[str, object] = {}
+        self._current_tokens = DARK_TOKENS
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(10, 10, 10, 8)
+        layout.setSpacing(8)
+
+        header_layout = QtWidgets.QHBoxLayout()
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(6)
+        self.header_label = QtWidgets.QLabel("PROJECTS", self)
+        self.header_label.setObjectName("oswProjectTreeHeader")
+        self.search_button = QtWidgets.QToolButton(self)
+        self.search_button.setObjectName("oswProjectTreeSearchButton")
+        self.search_button.setText("⌕")
+        self.refresh_button = QtWidgets.QToolButton(self)
+        self.refresh_button.setObjectName("oswProjectTreeRefreshButton")
+        self.refresh_button.setText("↻")
+        header_layout.addWidget(self.header_label, 1)
+        header_layout.addWidget(self.search_button)
+        header_layout.addWidget(self.refresh_button)
+
+        self.tree = QtWidgets.QTreeWidget(self)
+        self.tree.setObjectName("oswProjectTree")
+        self.tree.setColumnCount(2)
+        self.tree.setHeaderHidden(True)
+        self.tree.setRootIsDecorated(True)
+        self.tree.setIndentation(14)
+        self.tree.setUniformRowHeights(True)
+        self.tree.setAnimated(False)
+        self.tree.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
+        self.tree.header().setStretchLastSection(False)
+        self.tree.header().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.Stretch)
+        self.tree.header().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Fixed)
+        self.tree.setColumnWidth(1, 24)
+
+        self.filter_frame = QtWidgets.QFrame(self)
+        self.filter_frame.setObjectName("oswProjectTreeFilters")
+        filter_layout = QtWidgets.QVBoxLayout(self.filter_frame)
+        filter_layout.setContentsMargins(8, 8, 8, 8)
+        filter_layout.setSpacing(6)
+        self.filter_label = QtWidgets.QLabel("FILTERS", self.filter_frame)
+        self.filter_label.setObjectName("oswProjectTreeFiltersLabel")
+        self.search_field = QtWidgets.QLineEdit(self.filter_frame)
+        self.search_field.setObjectName("oswProjectTreeSearch")
+        self.search_field.setPlaceholderText("Search project tree...")
+        self.search_field.textChanged.connect(self.filter_tree)
+        filter_layout.addWidget(self.filter_label)
+        filter_layout.addWidget(self.search_field)
+
+        self.footer_label = QtWidgets.QLabel("Active Project: HeatSink_Flow", self)
+        self.footer_label.setObjectName("oswProjectTreeFooter")
+
+        layout.addLayout(header_layout)
+        layout.addWidget(self.tree, 1)
+        layout.addWidget(self.filter_frame)
+        layout.addWidget(self.footer_label)
+
+        self.set_theme_tokens(DARK_TOKENS)
+        self.populate_demo_project()
+
+    def populate_demo_project(self) -> None:
+        self.tree.clear()
+        self.items_by_label.clear()
+        root = self._build_item(DEMO_PROJECT_TREE)
+        self.tree.addTopLevelItem(root)
+        self.expand_demo_tree()
+        self.tree.setColumnWidth(1, 24)
+
+    def set_active_project(self, name: str) -> None:
+        self.footer_label.setText(f"Active Project: {name}")
+
+    def expand_demo_tree(self) -> None:
+        for item in self.items_by_label.values():
+            item.setExpanded(True)
+
+    def selected_node_path(self) -> list[str]:
+        item = self.tree.currentItem()
+        if item is None:
+            return []
+        path = []
+        while item is not None:
+            path.append(item.text(0))
+            item = item.parent()
+        return list(reversed(path))
+
+    def filter_tree(self, text: str) -> None:
+        query = text.strip().casefold()
+        for top_index in range(self.tree.topLevelItemCount()):
+            self._apply_filter_to_item(self.tree.topLevelItem(top_index), query)
+
+    def set_theme_tokens(self, tokens: ThemeTokens) -> None:
+        self._current_tokens = tokens
+        self._icon_cache = self._build_icons(tokens)
+        self.setStyleSheet(
+            "QWidget#oswProjectTreePanel {"
+            f"background-color: {tokens.bg_panel};"
+            f"border-right: 1px solid {tokens.border};"
+            "}"
+            "QLabel#oswProjectTreeHeader {"
+            f"color: {tokens.accent};"
+            "font-weight: 700;"
+            "letter-spacing: 0px;"
+            "}"
+            "QToolButton#oswProjectTreeSearchButton, "
+            "QToolButton#oswProjectTreeRefreshButton {"
+            f"background-color: {tokens.bg_panel_alt};"
+            f"color: {tokens.text_secondary};"
+            f"border: 1px solid {tokens.border};"
+            "border-radius: 3px;"
+            "padding: 2px 5px;"
+            "}"
+            "QTreeWidget#oswProjectTree {"
+            f"background-color: {tokens.bg_panel};"
+            f"color: {tokens.text_secondary};"
+            f"border: 1px solid {tokens.border};"
+            "font-size: 9pt;"
+            "outline: 0;"
+            "}"
+            "QTreeWidget#oswProjectTree::item {"
+            "min-height: 24px;"
+            "padding: 1px 3px;"
+            "}"
+            "QTreeWidget#oswProjectTree::item:selected {"
+            f"background-color: {tokens.primary};"
+            f"color: {tokens.text_primary};"
+            "}"
+            "QFrame#oswProjectTreeFilters {"
+            f"background-color: {tokens.bg_panel_alt};"
+            f"border: 1px solid {tokens.border};"
+            "border-radius: 4px;"
+            "}"
+            "QLabel#oswProjectTreeFiltersLabel {"
+            f"color: {tokens.text_muted};"
+            "font-weight: 700;"
+            "font-size: 8pt;"
+            "}"
+            "QLineEdit#oswProjectTreeSearch {"
+            f"background-color: {tokens.bg_viewport};"
+            f"color: {tokens.text_primary};"
+            f"border: 1px solid {tokens.border};"
+            "border-radius: 3px;"
+            "padding: 4px 6px;"
+            "}"
+            "QLabel#oswProjectTreeFooter {"
+            f"color: {tokens.accent};"
+            "font-size: 9pt;"
+            "font-weight: 600;"
+            "}"
+        )
+        if hasattr(self, "items_by_label"):
+            self._refresh_item_icons()
+
+    def _build_item(self, node: ProjectTreeNode) -> object:
+        item = QtWidgets.QTreeWidgetItem([node.label, "✓" if node.complete else ""])
+        item.setData(0, QtCore.Qt.ItemDataRole.UserRole, node.kind)
+        item.setData(0, QtCore.Qt.ItemDataRole.UserRole + 1, node.icon_key)
+        item.setIcon(0, self._icon_cache.get(node.icon_key, self._icon_cache["file"]))
+        if node.kind in {"project", "group", "run"}:
+            font = item.font(0)
+            font.setBold(True)
+            item.setFont(0, font)
+        if node.complete:
+            item.setForeground(1, QtGui.QBrush(QtGui.QColor(self._current_tokens.success)))
+        self.items_by_label[node.label] = item
+        for child in node.children:
+            item.addChild(self._build_item(child))
+        return item
+
+    def _apply_filter_to_item(self, item: object, query: str) -> bool:
+        if not query:
+            item.setHidden(False)
+            for index in range(item.childCount()):
+                self._apply_filter_to_item(item.child(index), query)
+            return True
+        direct_match = query in item.text(0).casefold()
+        child_match = False
+        for index in range(item.childCount()):
+            child_match = self._apply_filter_to_item(item.child(index), query) or child_match
+        visible = direct_match or child_match
+        item.setHidden(not visible)
+        if visible:
+            item.setExpanded(True)
+        return visible
+
+    def _refresh_item_icons(self) -> None:
+        for item in self.items_by_label.values():
+            icon_key = item.data(0, QtCore.Qt.ItemDataRole.UserRole + 1)
+            item.setIcon(0, self._icon_cache.get(str(icon_key), self._icon_cache["file"]))
+            if item.text(1):
+                item.setForeground(
+                    1,
+                    QtGui.QBrush(QtGui.QColor(self._current_tokens.success)),
+                )
+
+    def _build_icons(self, tokens: ThemeTokens) -> dict[str, object]:
+        # Purple/yellow are centralized category accents required by the visual spec.
+        category_colors = {
+            "project": tokens.accent,
+            "geometry": tokens.success,
+            "geometry_file": tokens.success,
+            "mesh": "#9b6dff",
+            "mesh_file": "#9b6dff",
+            "physics": tokens.warning,
+            "solver": tokens.info,
+            "solver_file": tokens.info,
+            "script": "#f6d34b",
+            "script_file": "#f6d34b",
+            "result": tokens.accent,
+            "result_file": tokens.accent,
+            "log_file": tokens.chart_axis,
+            "report": tokens.danger,
+            "report_file": tokens.danger,
+            "config_file": tokens.text_muted,
+            "file": tokens.text_muted,
+        }
+        return {key: self._make_icon(color, tokens) for key, color in category_colors.items()}
+
+    def _make_icon(self, color: str, tokens: ThemeTokens) -> object:
+        pixmap = QtGui.QPixmap(14, 14)
+        pixmap.fill(QtCore.Qt.GlobalColor.transparent)
+        painter = QtGui.QPainter(pixmap)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setPen(QtGui.QPen(QtGui.QColor(tokens.border), 1))
+        painter.setBrush(QtGui.QColor(color))
+        painter.drawRoundedRect(2, 2, 10, 10, 2, 2)
+        painter.end()
+        return QtGui.QIcon(pixmap)

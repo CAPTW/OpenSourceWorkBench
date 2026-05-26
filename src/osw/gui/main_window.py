@@ -3,29 +3,26 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .plot_viewer import build_plot_viewer
-from .project_tree import build_project_tree
-from .properties_panel import build_properties_panel
-from .qt_compat import PySide6UnavailableError, pyside6_missing_message
-from .report_panel import build_report_panel
-from .result_viewer import build_result_viewer
-from .run_monitor import build_run_monitor
-from .table_viewer import build_table_viewer
-from .workflow_service import WorkbenchItem, WorkbenchWorkflowSession, WorkflowOperation
+from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
+from osw.gui.theme import ThemeManager
+from osw.gui.widgets.top_bar import ACTION_OBJECT_NAMES, TOP_BAR_ACTION_LABELS
+from osw.gui.widgets.workflow_stepper import WORKFLOW_STEP_LABELS as _WORKFLOW_STEP_LABELS
 
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QApplication
 
 try:
-    from PySide6 import QtCore, QtWidgets
+    from PySide6 import QtCore, QtGui, QtWidgets
 except ModuleNotFoundError:
     QtCore = None
+    QtGui = None
     QtWidgets = None
 
 MENU_TITLES = ("File", "Import", "Plugins", "Run", "Reports", "Help")
+
+# Legacy import-safe contract retained for existing CLI/unit tests.
 MENU_ACTIONS = {
     "File": ("New Project", "Open Project", "Save Project"),
     "Import": ("Import",),
@@ -33,226 +30,199 @@ MENU_ACTIONS = {
     "Run": ("Run",),
     "Reports": ("Report",),
 }
+
+SHELL_MENU_ACTIONS = {
+    "File": ("New Project", "Open Project", "Save Project", "Save Project As", "Exit"),
+    "Import": ("Import Geometry", "Import Mesh", "Import MATLAB/Octave Script"),
+    "Plugins": ("Plugin Manager", "Preferences"),
+    "Run": ("Run", "Stop", "Open Results Folder"),
+    "Reports": ("Generate Report", "Export Report"),
+    "Help": ("Documentation", "About"),
+}
+
+TOOLBAR_ACTION_TITLES = TOP_BAR_ACTION_LABELS
+WORKFLOW_STEP_LABELS = _WORKFLOW_STEP_LABELS
 VIEWER_TAB_TITLES = ("3D Viewer", "Plot Viewer", "Table Viewer")
+LAYOUT_OBJECT_NAMES = {
+    "main_window": "oswMainWindow",
+    "top_region": "oswTopRegion",
+    "workflow_stepper": "oswWorkflowStepper",
+    "project_panel": "oswProjectTreePanel",
+    "viewport": "oswCentralViewportPanel",
+    "run_monitor": "oswRunMonitorPanel",
+    "properties_panel": "oswPropertiesPanel",
+    "status_bar": "oswStatusBar",
+    "menu_bar": "oswMenuBar",
+    "main_toolbar": "oswMainToolBar",
+}
+
 _BaseMainWindow: Any = QtWidgets.QMainWindow if QtWidgets is not None else object
 
 
 class MainWindow(_BaseMainWindow):
-    """OSW desktop shell with project, viewer, properties, and monitor regions."""
+    """OSW desktop visual shell with placeholder engineering workbench regions."""
 
     def __init__(
         self,
         parent: object | None = None,
         *,
-        session: WorkbenchWorkflowSession | None = None,
-        artifact_dir: str | Path | None = None,
-        report_directory: str | Path | None = None,
+        theme_manager: ThemeManager | None = None,
+        **_legacy_kwargs: object,
     ) -> None:
-        if QtCore is None or QtWidgets is None:
+        if QtCore is None or QtGui is None or QtWidgets is None:
             raise PySide6UnavailableError(pyside6_missing_message())
 
         super().__init__(parent)
-        self.setObjectName("mainWindow")
+        self.setObjectName(LAYOUT_OBJECT_NAMES["main_window"])
         self.setWindowTitle("OpenSolver Workbench")
-        self.resize(1280, 820)
-        self.workflow_session = session or WorkbenchWorkflowSession(artifact_dir=artifact_dir)
-        self._tree_items_by_workflow_id: dict[str, object] = {}
+        self.resize(2048, 1152)
+        self.setMinimumSize(1440, 810)
 
-        self.project_tree = build_project_tree(self)
-        self.properties_panel = build_properties_panel(self)
-        self.run_monitor = build_run_monitor(self)
-        self.report_panel = build_report_panel(self)
-        if report_directory is not None:
-            self.report_panel.export_directory = Path(report_directory)
-        self.viewer_tabs = self._build_viewer_tabs()
+        self.theme_manager = theme_manager or ThemeManager()
+        self.preferences_dialog: object | None = None
+        self.toolbar_actions: dict[str, object] = {}
+        self.menu_actions: dict[str, object] = {}
 
-        self.setCentralWidget(self.viewer_tabs)
         self._build_menus()
-        self._build_docks()
-        self._section_items = self._project_section_items()
-        self._sync_report_state()
-        self.project_tree.currentItemChanged.connect(self._on_project_tree_selection_changed)
-        self.project_tree.setCurrentItem(self.project_tree.topLevelItem(0))
-
-    def _build_viewer_tabs(self) -> object:
-        tabs = QtWidgets.QTabWidget(self)
-        tabs.setObjectName("viewerTabs")
-        self.result_viewer = build_result_viewer(tabs)
-        self.plot_viewer = build_plot_viewer(tabs)
-        self.table_viewer = build_table_viewer(tabs)
-        tabs.addTab(self.result_viewer, VIEWER_TAB_TITLES[0])
-        tabs.addTab(self.plot_viewer, VIEWER_TAB_TITLES[1])
-        tabs.addTab(self.table_viewer, VIEWER_TAB_TITLES[2])
-        return tabs
+        self._build_shell()
+        self._build_toolbar_actions()
+        self._build_status_bar()
+        self._connect_theme()
+        self.theme_manager.apply_to_app(QtWidgets.QApplication.instance())
 
     def _build_menus(self) -> None:
         menu_bar = self.menuBar()
+        menu_bar.setObjectName(LAYOUT_OBJECT_NAMES["menu_bar"])
         for title in MENU_TITLES:
             menu = menu_bar.addMenu(title)
-            for action_title in MENU_ACTIONS.get(title, ()):
+            for action_title in SHELL_MENU_ACTIONS[title]:
                 action = menu.addAction(action_title)
                 action.setObjectName(_action_object_name(action_title))
-                if action_title == "Plugin Manager":
-                    action.triggered.connect(self.open_plugin_manager)
-                elif action_title == "Report":
-                    action.triggered.connect(lambda _checked=False: self.export_report())
-                elif action_title == "Import":
-                    action.triggered.connect(lambda _checked=False: self.open_import_dialog())
-                elif action_title == "Run":
-                    action.triggered.connect(lambda _checked=False: self.run_workflow())
+                self.menu_actions[action_title] = action
+                if action_title == "Exit":
+                    action.triggered.connect(self.close)
+                elif action_title == "Preferences":
+                    action.triggered.connect(self.open_preferences)
                 else:
                     action.triggered.connect(
-                        lambda _checked=False, label=action_title: self.run_monitor.append_log(
-                            f"{label} action selected",
-                            level="info",
-                        )
+                        lambda _checked=False, label=action_title: self._placeholder_action(label)
                     )
 
-    def _build_docks(self) -> None:
-        self._add_dock(
-            "Project Tree",
-            self.project_tree,
-            QtCore.Qt.DockWidgetArea.LeftDockWidgetArea,
-            "projectTreeDock",
-        )
-        self._add_dock(
-            "Properties",
-            self.properties_panel,
-            QtCore.Qt.DockWidgetArea.RightDockWidgetArea,
-            "propertiesDock",
-        )
-        self._add_dock(
-            "Run Monitor",
+    def _build_shell(self) -> None:
+        from osw.gui.widgets.project_tree_panel import ProjectTreePanel
+        from osw.gui.widgets.properties_panel import PropertiesPanel
+        from osw.gui.widgets.run_monitor_panel import RunMonitorPanel
+        from osw.gui.widgets.status_bar import OswStatusBar
+        from osw.gui.widgets.top_bar import TopBar
+        from osw.gui.widgets.viewport_placeholder import CentralViewportPanel
+
+        self._status_bar_class = OswStatusBar
+        container = QtWidgets.QWidget(self)
+        container.setObjectName("oswCentralShell")
+        container_layout = QtWidgets.QVBoxLayout(container)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+        container_layout.setSpacing(0)
+
+        self.top_region = TopBar(container)
+        self.top_region.actionTriggered.connect(self._on_top_bar_action_triggered)
+        self.workflow_stepper = self.top_region.workflow_stepper
+        self.main_toolbar = self.top_region.main_toolbar
+        container_layout.addWidget(self.top_region)
+
+        self.project_tree_panel = ProjectTreePanel(container)
+        self.project_tree = self.project_tree_panel.tree
+        self.central_viewport_panel = CentralViewportPanel(container)
+        self.viewport_placeholder = self.central_viewport_panel
+        self.mock_simulation_viewport = self.central_viewport_panel.viewport
+        self.run_monitor = RunMonitorPanel(container)
+        self.properties_panel = PropertiesPanel(container)
+        self.project_tree.currentItemChanged.connect(self._on_project_tree_selection_changed)
+
+        center_splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical, container)
+        center_splitter.setObjectName("oswCenterVerticalSplitter")
+        center_splitter.addWidget(self.central_viewport_panel)
+        center_splitter.addWidget(self.run_monitor)
+        center_splitter.setStretchFactor(0, 3)
+        center_splitter.setStretchFactor(1, 2)
+        center_splitter.setSizes([690, 350])
+
+        main_splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal, container)
+        main_splitter.setObjectName("oswMainHorizontalSplitter")
+        main_splitter.addWidget(self.project_tree_panel)
+        main_splitter.addWidget(center_splitter)
+        main_splitter.addWidget(self.properties_panel)
+        main_splitter.setStretchFactor(0, 0)
+        main_splitter.setStretchFactor(1, 1)
+        main_splitter.setStretchFactor(2, 0)
+        main_splitter.setSizes([320, 1290, 438])
+
+        container_layout.addWidget(main_splitter, 1)
+        self.setCentralWidget(container)
+
+    def _build_toolbar_actions(self) -> None:
+        for title in TOOLBAR_ACTION_TITLES:
+            action = QtGui.QAction(title, self)
+            action.setObjectName(ACTION_OBJECT_NAMES[title])
+            self.main_toolbar.addAction(action)
+            self.toolbar_actions[title] = action
+            if title == "Preferences":
+                self.preferences_action = action
+                action.triggered.connect(self.open_preferences)
+            else:
+                action.triggered.connect(
+                    lambda _checked=False, label=title: self._placeholder_action(label)
+                )
+
+    def _build_status_bar(self) -> None:
+        status_bar = self._status_bar_class(self)
+        self.setStatusBar(status_bar)
+
+    def _connect_theme(self) -> None:
+        self._themed_widgets = (
+            self.top_region,
+            self.project_tree_panel,
+            self.viewport_placeholder,
             self.run_monitor,
-            QtCore.Qt.DockWidgetArea.BottomDockWidgetArea,
-            "runMonitorDock",
+            self.properties_panel,
+            self.statusBar(),
         )
-        self._add_dock(
-            "Report",
-            self.report_panel,
-            QtCore.Qt.DockWidgetArea.RightDockWidgetArea,
-            "reportDock",
-        )
+        self.theme_manager.subscribe(self._on_theme_changed)
+        self._on_theme_changed(self.theme_manager.current_tokens)
 
-    def _add_dock(self, title: str, widget: object, area: object, object_name: str) -> None:
-        dock = QtWidgets.QDockWidget(title, self)
-        dock.setObjectName(object_name)
-        dock.setWidget(widget)
-        self.addDockWidget(area, dock)
+    def _on_theme_changed(self, tokens: object) -> None:
+        for widget in self._themed_widgets:
+            if hasattr(widget, "set_theme_tokens"):
+                widget.set_theme_tokens(tokens)
 
-    def _on_project_tree_selection_changed(self, item: object | None, _previous: object) -> None:
-        if item is None:
-            self.properties_panel.set_node_selection("")
+    def _on_top_bar_action_triggered(self, label: str) -> None:
+        if label == "Preferences":
+            self.open_preferences()
             return
-        item_id = item.data(0, QtCore.Qt.ItemDataRole.UserRole)
-        workflow_item = self.workflow_session.item(str(item_id)) if item_id else None
-        if workflow_item is None:
-            self.properties_panel.set_node_selection(item.text(0))
-            return
-        self.properties_panel.set_properties(self._properties_for_workflow_item(workflow_item))
-        self._load_item_previews(workflow_item)
+        self._placeholder_action(label)
 
-    def open_plugin_manager(self) -> None:
-        from .plugin_manager_dialog import PluginManagerDialog
+    def _on_project_tree_selection_changed(self, current: object, _previous: object) -> None:
+        if current is not None and hasattr(self.properties_panel, "set_node_selection"):
+            self.properties_panel.set_node_selection(current.text(0))
 
-        dialog = PluginManagerDialog(self)
-        dialog.exec()
-        self.run_monitor.append_log("Plugin Manager closed", level="info")
+    def open_preferences(self) -> None:
+        from osw.gui.dialogs.preferences_dialog import PreferencesDialog
 
-    def open_import_dialog(self) -> None:
-        selected, _filter = QtWidgets.QFileDialog.getOpenFileName(
-            self,
-            "Import standard CAD, mesh, script, or MAT data",
-            "",
-            (
-                "OSW inputs (*.stl *.obj *.step *.stp *.iges *.igs *.brep "
-                "*.msh *.inp *.bdf *.nas *.fem *.su2 *.vtk *.vtu *.xdmf *.xmf *.cgns "
-                "*.m *.mat);;All files (*)"
-            ),
-        )
-        if selected:
-            self.import_file(selected)
-        else:
-            self.run_monitor.append_log("Import cancelled", level="info")
+        if self.preferences_dialog is None:
+            self.preferences_dialog = PreferencesDialog(
+                theme_manager=self.theme_manager,
+                parent=self,
+            )
+        self.preferences_dialog.show()
+        self.preferences_dialog.raise_()
+        self.preferences_dialog.activateWindow()
 
-    def import_file(self, path: str | Path) -> WorkflowOperation:
-        operation = self.workflow_session.import_path(path)
-        self._apply_operation(operation)
-        return operation
-
-    def run_workflow(self) -> WorkflowOperation:
-        operation = self.workflow_session.run_generate()
-        self._apply_operation(operation)
-        return operation
-
-    def export_report(self, output_path: str | Path | bool | None = None) -> Path:
-        if isinstance(output_path, bool):
-            output_path = None
-        self._sync_report_state()
-        output_path = self.report_panel.export_report(output_path)
-        self.run_monitor.append_log(f"Report exported to {output_path}", level="info")
-        return output_path
-
-    def _project_section_items(self) -> dict[str, object]:
-        root = self.project_tree.topLevelItem(0)
-        return {root.child(index).text(0): root.child(index) for index in range(root.childCount())}
-
-    def _apply_operation(self, operation: WorkflowOperation) -> None:
-        for item in operation.items:
-            self._add_or_update_tree_item(item)
-            self._load_item_previews(item)
-        for line in operation.logs:
-            if line:
-                self.run_monitor.append_log(line, level="info")
-        self._sync_report_state()
-        if operation.selected_item_id:
-            selected = self._tree_items_by_workflow_id.get(operation.selected_item_id)
-            if selected is not None:
-                self.project_tree.setCurrentItem(selected)
-
-    def _add_or_update_tree_item(self, item: WorkbenchItem) -> None:
-        existing = self._tree_items_by_workflow_id.get(item.item_id)
-        if existing is not None:
-            existing.setText(0, item.label)
-            return
-        parent = self._section_items.get(item.section)
-        if parent is None:
-            parent = self.project_tree.topLevelItem(0)
-        child = QtWidgets.QTreeWidgetItem([item.label])
-        child.setData(0, QtCore.Qt.ItemDataRole.UserRole, item.item_id)
-        parent.addChild(child)
-        parent.setExpanded(True)
-        self._tree_items_by_workflow_id[item.item_id] = child
-
-    def _load_item_previews(self, item: WorkbenchItem) -> None:
-        if item.mesh_data is not None and hasattr(self.result_viewer, "load_mesh_preview"):
-            self.result_viewer.load_mesh_preview(item.mesh_data)
-            self.viewer_tabs.setCurrentWidget(self.result_viewer)
-        if item.figure_dataset is not None and hasattr(self.plot_viewer, "load_figure_dataset"):
-            self.plot_viewer.load_figure_dataset(item.figure_dataset)
-            self.viewer_tabs.setCurrentWidget(self.plot_viewer)
-        if item.table is not None and hasattr(self.table_viewer, "load_table_preview"):
-            self.table_viewer.load_table_preview(item.table)
-            self.viewer_tabs.setCurrentWidget(self.table_viewer)
-
-    def _sync_report_state(self) -> None:
-        self.report_panel.set_report_state(
-            project=self.workflow_session.project,
-            figure_datasets=tuple(self.workflow_session.figure_datasets),
-            mesh_infos=tuple(self.workflow_session.mesh_infos),
-            result_tables=tuple(self.workflow_session.result_tables),
-            warnings=tuple(self.workflow_session.warnings),
-        )
-
-    def _properties_for_workflow_item(self, item: WorkbenchItem) -> dict[str, str]:
-        return item.property_rows(
-            project_name=self.workflow_session.project.metadata.name,
-            units_name=self.workflow_session.project.units.name,
-        )
+    def _placeholder_action(self, label: str) -> None:
+        if hasattr(self.run_monitor, "append_log"):
+            self.run_monitor.append_log(f"{label} action selected", level="info")
 
 
 def _action_object_name(action_title: str) -> str:
-    words = "".join(part.capitalize() for part in action_title.split())
+    words = "".join(part.capitalize() for part in action_title.replace("/", " ").split())
     return f"action{words}"
 
 

@@ -42,6 +42,7 @@ Desktop.ini
 
 # Logs and temporary files
 logs/
+artifacts/
 *.log
 tmp/
 temp/

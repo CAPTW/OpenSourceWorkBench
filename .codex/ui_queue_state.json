@@ -1,0 +1,19 @@
+{
+  "completed": [
+    "UI-000_REFERENCE_SPEC_DOCS",
+    "UI-001_THEME_MANAGER",
+    "UI-002_MAIN_SHELL_LAYOUT",
+    "UI-003_LEFT_PROJECT_TREE",
+    "UI-004_TOP_TOOLBAR_AND_STEPPER",
+    "UI-005_CENTRAL_VIEWPORT_MOCK",
+    "UI-006_RUN_MONITOR_AND_CHARTS",
+    "UI-007_RIGHT_PROPERTIES_PANEL",
+    "UI-008_REPORT_PREVIEW_AND_STATUS_BAR",
+    "UI-009_VISUAL_QA_AND_SCREENSHOT_CAPTURE",
+    "UI-010_FINAL_POLISH_PASS"
+  ],
+  "current_step": null,
+  "last_report": ".codex/reports/ui/UI-010_FINAL_POLISH_PASS.md",
+  "last_visual_artifact": "artifacts/ui/osw_dark_after.png",
+  "status": "complete"
+}

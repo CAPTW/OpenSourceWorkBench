@@ -32,16 +32,12 @@ def test_main_window_has_expected_shell_regions(app: object) -> None:
     window = MainWindow()
 
     assert window.windowTitle() == "OpenSolver Workbench"
-    assert window.project_tree.objectName() == "projectTree"
-    assert window.properties_panel.objectName() == "propertiesPanel"
-    assert window.run_monitor.objectName() == "runMonitor"
-    assert window.viewer_tabs.objectName() == "viewerTabs"
-    assert window.viewer_tabs.count() == 3
-    assert [window.viewer_tabs.tabText(index) for index in range(3)] == [
-        "3D Viewer",
-        "Plot Viewer",
-        "Table Viewer",
-    ]
+    assert window.project_tree_panel.objectName() == "oswProjectTreePanel"
+    assert window.project_tree.objectName() == "oswProjectTree"
+    assert window.properties_panel.objectName() == "oswPropertiesPanel"
+    assert window.run_monitor.objectName() == "oswRunMonitorPanel"
+    assert window.central_viewport_panel.objectName() == "oswCentralViewportPanel"
+    assert window.mock_simulation_viewport.objectName() == "oswMockSimulationViewport"
 
     del app
 
@@ -50,29 +46,29 @@ def test_main_window_has_expected_project_tree_sections(
     app: object,
 ) -> None:
     from osw.gui.main_window import MainWindow
-    from osw.gui.project_tree import PROJECT_SECTIONS
+    from osw.gui.widgets.project_tree_panel import MAJOR_GROUP_LABELS
 
     window = MainWindow()
     root = window.project_tree.topLevelItem(0)
 
-    assert root.text(0) == "OSW Project"
+    assert root.text(0) == "HeatSink_Flow"
     assert [root.child(index).text(0) for index in range(root.childCount())] == list(
-        PROJECT_SECTIONS
+        MAJOR_GROUP_LABELS
     )
 
     del app
 
 
 def test_main_window_has_expected_menus(app: object) -> None:
-    from osw.gui.main_window import MENU_ACTIONS, MENU_TITLES, MainWindow
+    from osw.gui.main_window import MENU_TITLES, SHELL_MENU_ACTIONS, MainWindow
 
     window = MainWindow()
 
     assert [action.text() for action in window.menuBar().actions()] == list(MENU_TITLES)
     for menu in window.menuBar().findChildren(QtWidgets.QMenu):
-        if menu.title() in MENU_ACTIONS:
+        if menu.title() in SHELL_MENU_ACTIONS:
             assert [action.text() for action in menu.actions()] == list(
-                MENU_ACTIONS[menu.title()]
+                SHELL_MENU_ACTIONS[menu.title()]
             )
 
     del app
