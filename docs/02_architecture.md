@@ -25,3 +25,12 @@ Local discovery reads manifest data only, entry point loading is explicit, and
 health checks inspect Python package availability and executable presence without
 running solver binaries. See `docs/03_plugin_contract.md` for the manifest
 schema and security rules.
+
+## Runner Diagnostics Integration
+
+External command execution is centralized behind `ExternalCommandRunner` and
+`RunManager`. These services live outside the GUI, accept argument lists instead
+of shell strings, capture stdout/stderr, enforce timeouts, and classify runtime
+artifacts under controlled run directories. Solver and script adapters may use
+this backend boundary in later steps; GUI widgets must not launch subprocesses
+directly.

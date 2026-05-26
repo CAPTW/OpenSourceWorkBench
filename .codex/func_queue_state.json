@@ -1,9 +1,10 @@
 {
   "completed": [
     "OSW-FUNC-001_PROJECT_SCHEMA_INTEGRATION",
-    "OSW-FUNC-002_PLUGIN_CONTRACT_DISCOVERY"
+    "OSW-FUNC-002_PLUGIN_CONTRACT_DISCOVERY",
+    "OSW-FUNC-003_RUNNER_DIAGNOSTICS"
   ],
   "current_step": null,
-  "next_step": "OSW-FUNC-003_RUNNER_DIAGNOSTICS",
-  "last_report": ".codex/reports/func/OSW-FUNC-002_PLUGIN_CONTRACT_DISCOVERY.md"
+  "next_step": "OSW-FUNC-004_PLUGIN_MANAGER_DIALOG_BINDING",
+  "last_report": ".codex/reports/func/OSW-FUNC-003_RUNNER_DIAGNOSTICS.md"
 }

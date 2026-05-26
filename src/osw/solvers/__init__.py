@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
-from osw.solvers.log_parser import LogSeverity, RunLogFinding, parse_run_log
+from osw.solvers.log_parser import (
+    GenericLogParser,
+    LogEvent,
+    LogSeverity,
+    RunLogFinding,
+    parse_run_log,
+)
 from osw.solvers.runner import (
     ExternalCommandRunner,
     RunArtifact,
     RunLog,
+    RunRequest,
     RunResult,
     RunStatus,
     TimeoutPolicy,
@@ -14,10 +21,13 @@ from osw.solvers.runner import (
 
 __all__ = [
     "ExternalCommandRunner",
+    "GenericLogParser",
+    "LogEvent",
     "LogSeverity",
     "RunArtifact",
     "RunLog",
     "RunLogFinding",
+    "RunRequest",
     "RunResult",
     "RunStatus",
     "TimeoutPolicy",

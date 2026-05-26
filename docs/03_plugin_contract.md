@@ -145,6 +145,11 @@ Health checks inspect manifest data only:
 Executable checks use `shutil.which()` or explicit configured paths. They do not
 run solver binaries.
 
+After `OSW-FUNC-003_RUNNER_DIAGNOSTICS`, plugin health can share
+`ExecutablePathRegistry` resolution semantics with the backend runner while
+remaining manifest-only. Health checks still do not execute plugin code or
+solver binaries.
+
 ## Security Rules
 
 - Manifest validation does not execute plugin code.
@@ -224,7 +229,6 @@ capabilities:
 
 Later functional steps will bind this contract to:
 
-- runner diagnostics and dry-run command planning;
 - a plugin manager dialog;
 - standard mesh import bridges;
 - MATLAB/Octave preview workflows;
@@ -232,4 +236,4 @@ Later functional steps will bind this contract to:
 
 ## Next Step
 
-Next functional step: `OSW-FUNC-003_RUNNER_DIAGNOSTICS`.
+Next functional step: `OSW-FUNC-004_PLUGIN_MANAGER_DIALOG_BINDING`.

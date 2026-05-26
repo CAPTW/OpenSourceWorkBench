@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import shutil
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
+
+from osw.core.executables import ExecutablePathRegistry
 
 from .discovery import iter_manifest_paths
 from .errors import PluginDiagnostic
@@ -293,12 +294,13 @@ def _executable_status(
     executable_paths: Mapping[str, str | Path],
 ) -> tuple[PluginExecutableStatus, ...]:
     statuses: list[PluginExecutableStatus] = []
+    registry = ExecutablePathRegistry()
+    for executable, path in executable_paths.items():
+        registry.register(executable, path)
     for executable in _required_executables(manifest):
-        configured_path = executable_paths.get(executable)
-        configured_path_text = str(configured_path) if configured_path is not None else ""
-        configured_exists = configured_path is not None and Path(configured_path).exists()
-        found_path = shutil.which(executable)
-        available = configured_exists or bool(found_path)
+        resolution = registry.resolve(executable)
+        configured_path_text = registry.get_configured_path(executable) or ""
+        available = resolution.found
         message = (
             f"Executable available: {executable}"
             if available

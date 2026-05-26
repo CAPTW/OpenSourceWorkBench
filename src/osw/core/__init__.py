@@ -10,7 +10,13 @@ from osw.core.boundary_curve import (
     make_source_trace,
 )
 from osw.core.demo_project import create_heatsink_flow_demo_project
-from osw.core.diagnostics import DiagnosticMessage, DiagnosticReport, DiagnosticSeverity
+from osw.core.diagnostics import (
+    DiagnosticCode,
+    DiagnosticMessage,
+    DiagnosticReport,
+    DiagnosticSeverity,
+)
+from osw.core.executables import ExecutableLookup, ExecutablePathRegistry, ExecutableResolution
 from osw.core.materials import (
     FluidProperties,
     IsotropicElastic,
@@ -43,7 +49,7 @@ from osw.core.project_schema import (
     SolverConfig,
     load_project,
 )
-from osw.core.run_manager import ExecutableLookup, ExecutablePathRegistry
+from osw.core.run_manager import RunManager
 from osw.core.units import Quantity, UnitSystem
 from osw.core.validation import (
     ProjectSchemaError,
@@ -67,8 +73,10 @@ __all__ = [
     "DiagnosticMessage",
     "DiagnosticReport",
     "DiagnosticSeverity",
+    "DiagnosticCode",
     "ExecutableLookup",
     "ExecutablePathRegistry",
+    "ExecutableResolution",
     "FluidProperties",
     "GeometryRef",
     "IsotropicElastic",
@@ -86,6 +94,7 @@ __all__ = [
     "Quantity",
     "ReportConfig",
     "ResultRef",
+    "RunManager",
     "ScriptRef",
     "SolverConfig",
     "ThermalProperties",

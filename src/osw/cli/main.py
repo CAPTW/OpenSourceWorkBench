@@ -6,10 +6,12 @@ import argparse
 import importlib.util
 import platform
 import sys
+import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 
 from osw import __version__
+from osw.core.executables import ExecutablePathRegistry
 from osw.plugins.discovery import discover_local_plugin_manifests
 from osw.plugins.errors import PluginDiagnosticSeverity
 from osw.plugins.health import (
@@ -117,6 +119,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="Local plugin directory or manifest path to scan. May be repeated.",
     )
     plugins_health_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    runner_check_parser = subparsers.add_parser(
+        "runner-check",
+        help="Resolve an executable path without executing it.",
+    )
+    runner_check_parser.add_argument("name", help="Executable name or configured path to check.")
+    runner_fake_parser = subparsers.add_parser(
+        "runner-fake-smoke",
+        help="Run a safe Python one-line smoke test through the backend runner.",
+    )
+    runner_fake_parser.add_argument(
+        "--timeout",
+        type=float,
+        default=5.0,
+        help="Timeout in seconds for the safe smoke command.",
+    )
     subparsers.add_parser(
         "gui",
         help="Launch the optional PySide6 GUI shell.",
@@ -230,6 +247,34 @@ def main(argv: Sequence[str] | None = None) -> int:
         for diagnostic in result.diagnostics:
             print(f"{diagnostic.severity.value}: {diagnostic.message}", file=sys.stderr)
         return 1 if has_errors else 0
+
+    if args.command == "runner-check":
+        resolution = ExecutablePathRegistry().resolve(args.name)
+        print(f"Executable: {args.name}")
+        print(f"Status: {'available' if resolution.found else 'missing'}")
+        print(f"Source: {resolution.source}")
+        if resolution.resolved_path:
+            print(f"Path: {resolution.resolved_path}")
+        print(resolution.diagnostics.summary())
+        return 0 if resolution.found else 1
+
+    if args.command == "runner-fake-smoke":
+        from osw.solvers.runner import ExternalCommandRunner, TimeoutPolicy
+
+        with tempfile.TemporaryDirectory(prefix="osw-runner-smoke-") as temp_dir:
+            runner = ExternalCommandRunner()
+            result = runner.run(
+                sys.executable,
+                ["-c", "print('OSW runner smoke OK')"],
+                cwd=temp_dir,
+                artifact_dir=Path(temp_dir) / "artifacts",
+                timeout_policy=TimeoutPolicy(timeout_seconds=args.timeout),
+            )
+            print(f"Status: {result.status.value}")
+            print(result.log.stdout.strip())
+            if result.diagnostics.messages:
+                print(result.diagnostics.summary())
+            return 0 if result.status.value == "completed" else 1
 
     if args.command == "gui":
         from osw.gui.main_window import PySide6UnavailableError, run_gui

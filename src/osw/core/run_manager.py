@@ -1,100 +1,68 @@
-"""Executable registry used by backend runner services."""
+"""Generic run directory and run summary management."""
 
 from __future__ import annotations
 
-import shutil
+import json
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Self
+from typing import TYPE_CHECKING
 
-from osw.core.diagnostics import DiagnosticReport
+from osw.core.executables import (
+    ExecutableLookup,
+    ExecutablePathRegistry,
+    ExecutableResolution,
+)
 
-
-@dataclass(frozen=True)
-class ExecutableLookup:
-    name: str
-    path: Path | None
-    diagnostics: DiagnosticReport = field(default_factory=DiagnosticReport)
-
-    @property
-    def found(self) -> bool:
-        return self.path is not None and not self.diagnostics.has_errors
+if TYPE_CHECKING:
+    from osw.solvers.runner import ExternalCommandRunner, RunRequest, RunResult
 
 
 @dataclass
-class ExecutablePathRegistry:
-    """Local-only executable path registry.
+class RunManager:
+    """Small manager for run IDs, directories, and result summaries."""
 
-    The registry does not install tools or edit environment variables. It only
-    resolves configured paths and PATH entries for backend runner code.
-    """
+    command_runner: ExternalCommandRunner | None = None
+    runs_directory_name: str = "runs"
+    _sequence: int = field(default=0, init=False)
 
-    _paths: dict[str, Path] = field(default_factory=dict)
+    def create_run_id(self, prefix: str = "run") -> str:
+        self._sequence += 1
+        timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+        return f"{prefix}_{timestamp}_{self._sequence:04d}"
 
-    def register(self, name: str, path: str | Path) -> Self:
-        normalized_name = self._normalize_name(name)
-        self._paths[normalized_name] = Path(path).expanduser()
-        return self
+    def create_run_dir(self, project_dir: Path, run_id: str | None = None) -> Path:
+        resolved_run_id = run_id or self.create_run_id()
+        run_dir = Path(project_dir) / self.runs_directory_name / resolved_run_id
+        run_dir.mkdir(parents=True, exist_ok=True)
+        return run_dir
 
-    def configured_path(self, name: str) -> Path | None:
-        return self._paths.get(self._normalize_name(name))
+    def run(self, request: RunRequest) -> RunResult:
+        runner = self.command_runner
+        if runner is None:
+            from osw.solvers.runner import ExternalCommandRunner
 
-    def resolve(self, name: str | Path) -> ExecutableLookup:
-        raw_name = str(name)
-        configured = self.configured_path(raw_name)
-        if configured is not None:
-            return self._resolve_configured(raw_name, configured)
+            runner = ExternalCommandRunner()
+            self.command_runner = runner
+        return runner.run(request)
 
-        direct_path = Path(raw_name).expanduser()
-        if _looks_like_path(raw_name):
-            return self._resolve_direct_path(raw_name, direct_path)
-
-        path_from_env = shutil.which(raw_name)
-        if path_from_env:
-            return ExecutableLookup(raw_name, Path(path_from_env))
-
-        report = DiagnosticReport()
-        report.add_error(
-            "executable.not_found",
-            (
-                f"Executable not found: {raw_name}. Configure it in "
-                "ExecutablePathRegistry or install it on PATH."
-            ),
+    def save_result_summary(self, result: RunResult, path: Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(result.to_dict(), indent=2, sort_keys=True),
+            encoding="utf-8",
         )
-        return ExecutableLookup(raw_name, None, report)
 
-    def _resolve_configured(self, name: str, path: Path) -> ExecutableLookup:
-        report = DiagnosticReport()
-        if path.exists():
-            return ExecutableLookup(name, path.resolve(), report)
-        report.add_error(
-            "executable.configured_missing",
-            f"Configured executable path does not exist: {path}",
-            path=str(path),
-        )
-        return ExecutableLookup(name, None, report)
+    def load_result_summary(self, path: Path) -> RunResult:
+        from osw.solvers.runner import RunResult
 
-    def _resolve_direct_path(self, name: str, path: Path) -> ExecutableLookup:
-        report = DiagnosticReport()
-        if path.exists():
-            return ExecutableLookup(name, path.resolve(), report)
-        report.add_error(
-            "executable.path_missing",
-            f"Executable path does not exist: {path}",
-            path=str(path),
-        )
-        return ExecutableLookup(name, None, report)
-
-    @staticmethod
-    def _normalize_name(name: str | Path) -> str:
-        return str(name).strip().lower()
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return RunResult.from_dict(data)
 
 
-def _looks_like_path(value: str) -> bool:
-    return (
-        "/" in value
-        or "\\" in value
-        or value.startswith(".")
-        or bool(Path(value).drive)
-    )
-
+__all__ = [
+    "ExecutableLookup",
+    "ExecutablePathRegistry",
+    "ExecutableResolution",
+    "RunManager",
+]
