@@ -51,6 +51,12 @@ The `CalculixDeckDialog` shows readiness diagnostics and deck text. Its write
 button writes the reviewed `.inp` file only. There is no `ccx` run button in
 this step.
 
+After `OSW-FUNC-014_CALCULIX_RUNNER_BINDING`, the same dialog can also submit an
+explicit run request for a written deck through `CalculiXRunner`. The run path
+uses the backend `ExternalCommandRunner`, an isolated case directory, timeout
+handling, captured stdout/stderr, and artifact metadata. The dialog still does
+not call subprocess directly and it does not parse result files.
+
 ## Security Rules
 
 - Deck generation does not call `ExternalCommandRunner`.
@@ -62,4 +68,4 @@ this step.
 
 ## Next Step
 
-Next functional step: `OSW-FUNC-014_CALCULIX_RUNNER_BINDING`.
+Next functional step: `OSW-FUNC-015_CALCULIX_RESULT_PARSER`.

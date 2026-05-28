@@ -683,6 +683,10 @@ class MainWindow(_BaseMainWindow):
             theme_tokens=self.theme_manager.current_tokens,
         )
         self.calculix_deck_dialog.deckWritten.connect(self._on_calculix_deck_written)
+        if hasattr(self.calculix_deck_dialog, "calculixRunCompleted"):
+            self.calculix_deck_dialog.calculixRunCompleted.connect(
+                self._on_calculix_run_completed
+            )
         self.calculix_deck_dialog.show()
         self.calculix_deck_dialog.raise_()
         self.calculix_deck_dialog.activateWindow()
@@ -691,6 +695,23 @@ class MainWindow(_BaseMainWindow):
     def _on_calculix_deck_written(self, path: str) -> None:
         if hasattr(self.run_monitor, "append_log"):
             self.run_monitor.append_log(f"Generated CalculiX input deck: {path}", level="info")
+
+    def _on_calculix_run_completed(self, result: object) -> None:
+        status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+        if not hasattr(self.run_monitor, "append_log"):
+            return
+        self.run_monitor.append_log(f"CalculiX run: {status}", level="info")
+        case_dir = getattr(result, "case_dir", "")
+        if case_dir:
+            self.run_monitor.append_log(f"CalculiX case directory: {case_dir}", level="info")
+        combined = str(getattr(result, "combined_log", "") or "").strip()
+        if combined:
+            self.run_monitor.append_log(combined.splitlines()[-1], level="info")
+        artifact_count = len(getattr(result, "artifacts", ()) or ())
+        self.run_monitor.append_log(
+            f"Collected {artifact_count} CalculiX artifact(s).",
+            level="info",
+        )
 
     def _on_script_run_completed(self, result: object) -> None:
         status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))

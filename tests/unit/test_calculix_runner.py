@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import importlib
+import json
 import os
 import stat
 import sys
@@ -7,125 +9,182 @@ import time
 from pathlib import Path
 
 from osw.core.run_manager import ExecutablePathRegistry
-from osw.solvers.calculix.ccx_runner import CalculixCcxRunner
-from osw.solvers.runner import RunStatus, TimeoutPolicy
+from osw.solvers.calculix.runner import (
+    CalculiXRunner,
+    CalculiXRunPolicy,
+    CalculiXRunRequest,
+    CalculiXRunResult,
+    CalculiXRunStatus,
+    find_ccx_executable,
+)
+
+FIXTURE_DIR = Path(__file__).parents[1] / "fixtures" / "calculix"
+SIMPLE_DECK = FIXTURE_DIR / "simple_valid.inp"
+FAKE_CCX = FIXTURE_DIR / "fake_ccx.py"
 
 
-def write_input_deck(tmp_path: Path) -> Path:
-    path = tmp_path / "cantilever.inp"
-    path.write_text(
-        "\n".join(
-            [
-                "*HEADING",
-                "fake ccx test deck",
-                "*NODE",
-                "1, 0, 0, 0",
-                "*END STEP",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    return path
-
-
-def write_fake_ccx(tmp_path: Path, *, slow: bool = False, exit_code: int = 0) -> Path:
+def fake_ccx_wrapper(tmp_path: Path, mode: str) -> Path:
     if os.name == "nt":
-        fake_path = tmp_path / "fake-ccx.cmd"
-        body = [
-            "@echo off",
-            "echo fake ccx stdout for %1",
-            "echo fake ccx stderr for %1 1>&2",
-        ]
-        if slow:
-            body.append(f'"{sys.executable}" -c "import time; time.sleep(5)"')
-        body.extend(
-            [
-                "echo fake dat>%1.dat",
-                "echo fake frd>%1.frd",
-                "echo fake sta>%1.sta",
-                f"exit /b {exit_code}",
-            ]
-        )
-        fake_path.write_text("\n".join(body), encoding="utf-8")
-    else:
-        fake_path = tmp_path / "fake-ccx"
-        sleep_line = f'"{sys.executable}" -c "import time; time.sleep(5)"' if slow else ":"
-        fake_path.write_text(
+        wrapper = tmp_path / f"fake-ccx-{mode}.cmd"
+        wrapper.write_text(
             "\n".join(
                 [
-                    "#!/usr/bin/env sh",
-                    "echo fake ccx stdout for \"$1\"",
-                    "echo fake ccx stderr for \"$1\" >&2",
-                    sleep_line,
-                    "echo fake dat > \"$1.dat\"",
-                    "echo fake frd > \"$1.frd\"",
-                    "echo fake sta > \"$1.sta\"",
-                    f"exit {exit_code}",
+                    "@echo off",
+                    f"set OSW_FAKE_CCX_MODE={mode}",
+                    f'"{sys.executable}" "{FAKE_CCX}" %*',
                 ]
             ),
             encoding="utf-8",
         )
-        fake_path.chmod(fake_path.stat().st_mode | stat.S_IXUSR)
-    return fake_path
-
-
-def test_fake_ccx_runs_in_case_directory_and_records_artifacts(tmp_path: Path) -> None:
-    deck = write_input_deck(tmp_path)
-    runner = CalculixCcxRunner(executable=write_fake_ccx(tmp_path))
-
-    result = runner.run_input_deck(deck, artifact_dir=tmp_path / "artifacts")
-
-    assert result.status == RunStatus.COMPLETED
-    assert result.cwd == tmp_path.resolve()
-    assert result.returncode == 0
-    assert result.command[-1] == "cantilever"
-    assert "fake ccx stdout" in result.log.stdout
-    assert "fake ccx stderr" in result.log.stderr
-    assert (tmp_path / "cantilever.dat").exists()
-    assert (tmp_path / "cantilever.frd").exists()
-    assert (tmp_path / "cantilever.sta").exists()
-    assert (result.artifact_dir / "stdout.txt").exists()
-    assert (result.artifact_dir / "stderr.txt").exists()
-    assert any(artifact.kind == "calculix_dat" for artifact in result.artifacts)
-    assert any(artifact.kind == "calculix_frd" for artifact in result.artifacts)
-    assert any(artifact.kind == "calculix_sta" for artifact in result.artifacts)
-
-
-def test_missing_ccx_executable_has_friendly_diagnostic(tmp_path: Path) -> None:
-    deck = write_input_deck(tmp_path)
-    runner = CalculixCcxRunner(executable="osw-missing-ccx-for-test")
-
-    result = runner.run_input_deck(deck, artifact_dir=tmp_path / "artifacts")
-
-    assert result.status == RunStatus.MISSING_EXECUTABLE
-    assert result.diagnostics.has_errors
-    assert "CalculiX ccx executable was not found" in result.diagnostics.summary()
-    assert "ExecutablePathRegistry" in result.diagnostics.summary()
-
-
-def test_ccx_timeout_is_reported_and_process_is_terminated(tmp_path: Path) -> None:
-    deck = write_input_deck(tmp_path)
-    runner = CalculixCcxRunner(
-        executable=write_fake_ccx(tmp_path, slow=True),
-        timeout_policy=TimeoutPolicy(seconds=0.2),
+        return wrapper
+    wrapper = tmp_path / f"fake-ccx-{mode}"
+    wrapper.write_text(
+        "\n".join(
+            [
+                "#!/usr/bin/env sh",
+                f'OSW_FAKE_CCX_MODE={mode} "{sys.executable}" "{FAKE_CCX}" "$@"',
+            ]
+        ),
+        encoding="utf-8",
     )
+    wrapper.chmod(wrapper.stat().st_mode | stat.S_IXUSR)
+    return wrapper
+
+
+def runner_with_fake_ccx(tmp_path: Path, mode: str) -> CalculiXRunner:
+    registry = ExecutablePathRegistry().register("ccx", fake_ccx_wrapper(tmp_path, mode))
+    return CalculiXRunner(executable_registry=registry)
+
+
+def test_module_imports_without_ccx_or_pyside6() -> None:
+    module = importlib.import_module("osw.solvers.calculix.runner")
+
+    assert hasattr(module, "CalculiXRunner")
+
+
+def test_find_ccx_executable_missing_has_friendly_diagnostic(tmp_path: Path) -> None:
+    registry = ExecutablePathRegistry().register("ccx", tmp_path / "missing-ccx")
+
+    resolution = find_ccx_executable(registry)
+
+    assert not resolution.found
+    assert resolution.diagnostics.has_errors
+    assert "CalculiX executable `ccx` was not found" in resolution.diagnostics.summary()
+    assert "Plugin Manager" in resolution.diagnostics.summary()
+
+
+def test_fake_ccx_success_uses_isolated_case_dir_and_collects_artifacts(
+    tmp_path: Path,
+) -> None:
+    case_dir = tmp_path / "case"
+    runner = runner_with_fake_ccx(tmp_path, "success")
+
+    result = runner.run_input_deck(SIMPLE_DECK, case_dir=case_dir)
+
+    assert result.status is CalculiXRunStatus.COMPLETED
+    assert result.case_dir == case_dir.resolve()
+    assert result.input_deck_path == SIMPLE_DECK
+    assert result.return_code == 0
+    assert result.command[-1] == "simple_valid"
+    assert "fake ccx stdout" in result.stdout
+    assert "fake ccx stderr" in result.stderr
+    assert (case_dir / "simple_valid.inp").exists()
+    assert (case_dir / "simple_valid.dat").exists()
+    assert (case_dir / "simple_valid.frd").exists()
+    assert (case_dir / "simple_valid.sta").exists()
+    assert not (SIMPLE_DECK.parent / "simple_valid.dat").exists()
+    roles = {artifact.role for artifact in result.artifacts}
+    assert {"input_deck", "dat_result", "frd_result", "status"} <= roles
+    assert {"stdout_log", "stderr_log", "run_summary"} <= roles
+
+
+def test_fake_ccx_failure_captures_stderr_and_nonzero_return_code(tmp_path: Path) -> None:
+    runner = runner_with_fake_ccx(tmp_path, "fail")
+
+    result = runner.run_input_deck(SIMPLE_DECK, case_dir=tmp_path / "case")
+
+    assert result.status is CalculiXRunStatus.FAILED
+    assert result.return_code == 7
+    assert "fake ccx stderr" in result.stderr
+    assert result.diagnostics.has_errors
+    assert "ccx-run-failed" in result.diagnostics.summary()
+
+
+def test_fake_ccx_timeout_returns_timed_out(tmp_path: Path) -> None:
+    runner = runner_with_fake_ccx(tmp_path, "sleep")
     started = time.monotonic()
 
-    result = runner.run_input_deck(deck, artifact_dir=tmp_path / "artifacts")
+    result = runner.run_input_deck(
+        SIMPLE_DECK,
+        case_dir=tmp_path / "case",
+        policy=CalculiXRunPolicy(timeout_seconds=0.2, kill_grace_seconds=0.1),
+    )
 
-    assert result.status == RunStatus.TIMED_OUT
-    assert time.monotonic() - started < 3
+    assert result.status is CalculiXRunStatus.TIMED_OUT
+    assert time.monotonic() - started < 4
     assert result.diagnostics.has_errors
     assert "timed out" in result.diagnostics.summary().lower()
 
 
-def test_configured_registry_path_is_used_for_ccx(tmp_path: Path) -> None:
-    deck = write_input_deck(tmp_path)
-    fake_ccx = write_fake_ccx(tmp_path)
-    registry = ExecutablePathRegistry().register("ccx", fake_ccx)
-    runner = CalculixCcxRunner(registry=registry)
+def test_fake_ccx_partial_artifacts_warns_without_crashing(tmp_path: Path) -> None:
+    runner = runner_with_fake_ccx(tmp_path, "partial")
 
-    result = runner.run_input_deck(deck, artifact_dir=tmp_path / "artifacts")
+    result = runner.run_input_deck(SIMPLE_DECK, case_dir=tmp_path / "case")
 
-    assert result.status == RunStatus.COMPLETED
-    assert result.command[0] == str(fake_ccx.resolve())
+    assert result.status is CalculiXRunStatus.COMPLETED
+    assert any(artifact.role == "status" for artifact in result.artifacts)
+    assert result.diagnostics.has_warnings
+    assert "expected artifact is missing" in result.diagnostics.summary()
+
+
+def test_missing_input_deck_gives_friendly_diagnostic(tmp_path: Path) -> None:
+    runner = runner_with_fake_ccx(tmp_path, "success")
+
+    result = runner.run_input_deck(tmp_path / "missing.inp", case_dir=tmp_path / "case")
+
+    assert result.status is CalculiXRunStatus.MISSING_INPUT_DECK
+    assert result.diagnostics.has_errors
+    assert "does not exist" in result.diagnostics.summary()
+
+
+def test_invalid_extension_gives_friendly_diagnostic(tmp_path: Path) -> None:
+    deck = tmp_path / "simple.txt"
+    deck.write_text("*HEADING\n", encoding="utf-8")
+    runner = runner_with_fake_ccx(tmp_path, "success")
+
+    result = runner.run_input_deck(deck, case_dir=tmp_path / "case")
+
+    assert result.status is CalculiXRunStatus.FAILED
+    assert result.diagnostics.has_errors
+    assert "expects a .inp input deck" in result.diagnostics.summary()
+
+
+def test_missing_ccx_run_result_is_serializable(tmp_path: Path) -> None:
+    registry = ExecutablePathRegistry().register("ccx", tmp_path / "missing-ccx")
+    runner = CalculiXRunner(executable_registry=registry)
+
+    result = runner.run_input_deck(SIMPLE_DECK, case_dir=tmp_path / "case")
+    payload = result.to_dict()
+    restored = CalculiXRunResult.from_dict(payload)
+
+    assert result.status is CalculiXRunStatus.MISSING_EXECUTABLE
+    assert restored.status is CalculiXRunStatus.MISSING_EXECUTABLE
+    assert restored.job_name == "simple_valid"
+    assert json.loads(json.dumps(payload))["status"] == "missing_executable"
+
+
+def test_request_round_trip_and_no_shell_command(tmp_path: Path) -> None:
+    request = CalculiXRunRequest(
+        SIMPLE_DECK,
+        case_dir=tmp_path / "case",
+        policy=CalculiXRunPolicy(timeout_seconds=3.0),
+    )
+    restored = CalculiXRunRequest.from_dict(request.to_dict())
+    runner = runner_with_fake_ccx(tmp_path, "success")
+
+    result = runner.run(restored)
+
+    assert result.status is CalculiXRunStatus.COMPLETED
+    assert result.run_result is not None
+    assert result.run_result.command[0] == result.command[0]
+    assert "shell" not in " ".join(result.command).lower()

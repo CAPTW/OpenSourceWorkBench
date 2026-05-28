@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from importlib import import_module
 from pathlib import Path
 from typing import Any
 
@@ -18,10 +19,11 @@ _BaseDialog: Any = QtWidgets.QDialog if QtWidgets is not None else object
 
 
 class CalculixDeckDialog(_BaseDialog):
-    """Preview and write CalculiX `.inp` text without running `ccx`."""
+    """Preview, write, and explicitly run CalculiX `.inp` text through a runner."""
 
     if QtCore is not None:
         deckWritten = QtCore.Signal(str)
+        calculixRunCompleted = QtCore.Signal(object)
 
     def __init__(
         self,
@@ -30,6 +32,9 @@ class CalculixDeckDialog(_BaseDialog):
         result: object | None = None,
         theme_tokens: ThemeTokens | None = None,
         output_path: str | Path = Path("artifacts") / "calculix" / "cantilever.inp",
+        runner: object | None = None,
+        run_policy: object | None = None,
+        run_case_dir: str | Path | None = None,
     ) -> None:
         if QtCore is None or QtWidgets is None:
             raise PySide6UnavailableError(pyside6_missing_message())
@@ -40,6 +45,10 @@ class CalculixDeckDialog(_BaseDialog):
         self._tokens = theme_tokens or DARK_TOKENS
         self.output_path = Path(output_path)
         self.result = result
+        self.runner = runner
+        self.run_policy = run_policy
+        self.run_case_dir = Path(run_case_dir) if run_case_dir is not None else None
+        self.run_result: object | None = None
 
         layout = QtWidgets.QVBoxLayout(self)
         self.deck_preview = QtWidgets.QPlainTextEdit(self)
@@ -51,17 +60,45 @@ class CalculixDeckDialog(_BaseDialog):
         self.diagnostics_list.setObjectName("oswCalculixReadinessDiagnostics")
         layout.addWidget(self.diagnostics_list)
 
+        self.run_status_label = QtWidgets.QLabel("Run status: not run", self)
+        self.run_status_label.setObjectName("oswCalculixRunStatusLabel")
+        layout.addWidget(self.run_status_label)
+
+        self.case_dir_label = QtWidgets.QLabel("Case directory: -", self)
+        self.case_dir_label.setObjectName("oswCalculixCaseDirLabel")
+        layout.addWidget(self.case_dir_label)
+
+        self.run_log_preview = QtWidgets.QPlainTextEdit(self)
+        self.run_log_preview.setObjectName("oswCalculixRunLogPreview")
+        self.run_log_preview.setReadOnly(True)
+        self.run_log_preview.setMaximumHeight(120)
+        layout.addWidget(self.run_log_preview)
+
+        self.run_artifacts_list = QtWidgets.QListWidget(self)
+        self.run_artifacts_list.setObjectName("oswCalculixRunArtifactsList")
+        self.run_artifacts_list.setMaximumHeight(90)
+        layout.addWidget(self.run_artifacts_list)
+
+        self.run_diagnostics_list = QtWidgets.QListWidget(self)
+        self.run_diagnostics_list.setObjectName("oswCalculixRunDiagnosticsList")
+        self.run_diagnostics_list.setMaximumHeight(90)
+        layout.addWidget(self.run_diagnostics_list)
+
         buttons = QtWidgets.QHBoxLayout()
         buttons.addStretch(1)
         self.write_deck_button = QtWidgets.QPushButton("Write Deck", self)
         self.write_deck_button.setObjectName("oswCalculixWriteDeckButton")
+        self.run_button = QtWidgets.QPushButton("Run with CalculiX", self)
+        self.run_button.setObjectName("oswCalculixRunButton")
         self.close_button = QtWidgets.QPushButton("Close", self)
         self.close_button.setObjectName("oswCalculixCloseButton")
         buttons.addWidget(self.write_deck_button)
+        buttons.addWidget(self.run_button)
         buttons.addWidget(self.close_button)
         layout.addLayout(buttons)
 
         self.write_deck_button.clicked.connect(self.write_deck)
+        self.run_button.clicked.connect(self.run_calculix)
         self.close_button.clicked.connect(self.close)
         self.set_theme_tokens(self._tokens)
         if self.result is not None:
@@ -70,6 +107,7 @@ class CalculixDeckDialog(_BaseDialog):
             self.deck_preview.setPlainText("")
             self.diagnostics_list.addItem("INFO project: No CalculiX deck preview loaded.")
             self.write_deck_button.setEnabled(False)
+            self.run_button.setEnabled(False)
 
     def set_deck_result(self, result: object) -> None:
         self.result = result
@@ -82,6 +120,7 @@ class CalculixDeckDialog(_BaseDialog):
                 message = str(item.get("message", ""))
                 self.diagnostics_list.addItem(f"{severity} {path}: {message}")
         self.write_deck_button.setEnabled(bool(getattr(result, "input_text", "")))
+        self.run_button.setEnabled(bool(getattr(result, "input_text", "")))
 
     def write_deck(self) -> Path | None:
         text = str(self.deck_preview.toPlainText())
@@ -93,6 +132,49 @@ class CalculixDeckDialog(_BaseDialog):
         self.deckWritten.emit(str(output_path))
         return output_path
 
+    def run_calculix(self) -> object | None:
+        """Run the written deck through the backend CalculiX runner."""
+
+        deck_path = self.write_deck()
+        if deck_path is None:
+            return None
+        self.run_status_label.setText("Run status: running")
+        runner = self.runner
+        policy = self.run_policy
+        if runner is None:
+            runner_module = import_module("osw.solvers.calculix.runner")
+            runner = runner_module.CalculiXRunner()
+            if policy is None:
+                policy = runner_module.CalculiXRunPolicy(timeout_seconds=30.0)
+        result = runner.run_input_deck(
+            deck_path,
+            policy=policy,
+            case_dir=self.run_case_dir,
+        )
+        self.set_run_result(result)
+        self.calculixRunCompleted.emit(result)
+        return result
+
+    def set_run_result(self, result: object) -> None:
+        self.run_result = result
+        status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+        self.run_status_label.setText(f"Run status: {status or 'unknown'}")
+        self.case_dir_label.setText(f"Case directory: {getattr(result, 'case_dir', '-')}")
+        self.run_log_preview.setPlainText(str(getattr(result, "combined_log", "") or ""))
+        self.run_artifacts_list.clear()
+        for artifact in getattr(result, "artifacts", ()) or ():
+            role = str(getattr(artifact, "role", getattr(artifact, "kind", "")))
+            path = str(getattr(artifact, "path", ""))
+            self.run_artifacts_list.addItem(f"{role}: {path}")
+        self.run_diagnostics_list.clear()
+        diagnostics = getattr(result, "diagnostics", None)
+        messages = getattr(diagnostics, "messages", ()) if diagnostics is not None else ()
+        for message in messages:
+            severity = str(getattr(getattr(message, "severity", ""), "value", ""))
+            code = str(getattr(message, "code", ""))
+            text = str(getattr(message, "message", ""))
+            self.run_diagnostics_list.addItem(f"{severity.upper()} {code}: {text}")
+
     def set_theme_tokens(self, tokens: ThemeTokens) -> None:
         self._tokens = tokens
         self.setStyleSheet(
@@ -100,10 +182,11 @@ class CalculixDeckDialog(_BaseDialog):
             f"background-color: {tokens.bg_panel};"
             f"color: {tokens.text_primary};"
             "}"
-            "QPlainTextEdit, QListWidget {"
+            "QPlainTextEdit, QListWidget, QLabel {"
             f"background-color: {tokens.bg_panel_alt};"
             f"color: {tokens.text_primary};"
             f"border: 1px solid {tokens.border};"
+            "padding: 4px;"
             "}"
             "QPushButton {"
             f"background-color: {tokens.accent};"

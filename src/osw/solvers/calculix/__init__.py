@@ -42,6 +42,16 @@ from .model import (
     CalculiXSurfaceSet,
 )
 from .result_parser import parse_calculix_dat, parse_calculix_results
+from .runner import (
+    CalculiXRunner,
+    CalculiXRunPolicy,
+    CalculiXRunRequest,
+    CalculiXRunResult,
+    CalculiXRunStatus,
+    ccx_available,
+    collect_calculix_artifacts,
+    find_ccx_executable,
+)
 from .validation import validate_calculix_case, validate_calculix_readiness
 
 __all__ = [
@@ -57,6 +67,11 @@ __all__ = [
     "CalculiXMaterial",
     "CalculiXNode",
     "CalculiXNodeSet",
+    "CalculiXRunPolicy",
+    "CalculiXRunRequest",
+    "CalculiXRunResult",
+    "CalculiXRunStatus",
+    "CalculiXRunner",
     "CalculiXStep",
     "CalculiXSurfaceSet",
     "CalculixBoundaryCondition",
@@ -69,11 +84,14 @@ __all__ = [
     "CalculixNodeSet",
     "CalculixSurface",
     "case_to_input_deck",
+    "ccx_available",
+    "collect_calculix_artifacts",
     "create_calculix_deck",
     "create_cantilever_demo_case",
     "create_cantilever_demo_material",
     "create_cantilever_demo_mesh",
     "deck_result_from_case",
+    "find_ccx_executable",
     "generate_input_deck_text",
     "generate_calculix_input_deck",
     "load_mesh_model_json",

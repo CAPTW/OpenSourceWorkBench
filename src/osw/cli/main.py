@@ -232,6 +232,47 @@ def build_parser() -> argparse.ArgumentParser:
         help="Validate CalculiX deck readiness without running ccx.",
     )
     calculix_validate_parser.add_argument("project", help="Project JSON/YAML path.")
+    subparsers.add_parser(
+        "calculix-check",
+        help="Resolve the CalculiX ccx executable without executing it.",
+    )
+    calculix_run_parser = subparsers.add_parser(
+        "calculix-run-inp",
+        help="Explicitly run a CalculiX .inp deck through the backend runner.",
+    )
+    calculix_run_parser.add_argument("path", help="CalculiX .inp deck path.")
+    calculix_run_parser.add_argument(
+        "--timeout",
+        type=float,
+        default=30.0,
+        help="Timeout seconds.",
+    )
+    calculix_run_parser.add_argument(
+        "--case-dir",
+        default="",
+        help="Isolated CalculiX run directory.",
+    )
+    calculix_demo_run_parser = subparsers.add_parser(
+        "calculix-run-demo",
+        help="Generate the cantilever demo deck and explicitly attempt a ccx run.",
+    )
+    calculix_demo_run_parser.add_argument(
+        "--demo",
+        choices=("cantilever",),
+        default="cantilever",
+        help="Built-in demo deck to run.",
+    )
+    calculix_demo_run_parser.add_argument(
+        "--out-dir",
+        required=True,
+        help="Output run directory.",
+    )
+    calculix_demo_run_parser.add_argument(
+        "--timeout",
+        type=float,
+        default=30.0,
+        help="Timeout seconds.",
+    )
     mscript_preview_parser = subparsers.add_parser(
         "mscript-preview",
         help="Preview a MATLAB/Octave .m file without executing it.",
@@ -658,6 +699,61 @@ def main(argv: Sequence[str] | None = None) -> int:
         report = validate_calculix_readiness(project, base_path=project_path.parent)
         print(report.friendly_summary())
         return 1 if report.has_errors else 0
+
+    if args.command == "calculix-check":
+        from osw.solvers.calculix.runner import find_ccx_executable
+
+        resolution = find_ccx_executable()
+        print("CalculiX ccx check")
+        print(f"Executable: {resolution.resolved_path or 'not found'}")
+        print(f"Source: {resolution.source}")
+        if resolution.diagnostics.messages:
+            print(resolution.diagnostics.summary(), file=sys.stderr)
+        return 0 if resolution.found else 1
+
+    if args.command == "calculix-run-inp":
+        from osw.solvers.calculix.runner import (
+            CalculiXRunner,
+            CalculiXRunPolicy,
+        )
+
+        policy = CalculiXRunPolicy(timeout_seconds=args.timeout)
+        result = CalculiXRunner().run_input_deck(
+            Path(args.path),
+            case_dir=Path(args.case_dir) if args.case_dir else None,
+            policy=policy,
+        )
+        _print_calculix_run_result(result)
+        status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+        return 0 if status == "completed" else 2 if status == "missing_executable" else 1
+
+    if args.command == "calculix-run-demo":
+        from osw.solvers.calculix.adapter import create_cantilever_demo_case
+        from osw.solvers.calculix.input_deck import (
+            CalculixInputDeckGenerator,
+            write_input_deck,
+        )
+        from osw.solvers.calculix.runner import (
+            CalculiXRunner,
+            CalculiXRunPolicy,
+        )
+
+        out_dir = Path(args.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        case = create_cantilever_demo_case()
+        input_deck = write_input_deck(
+            CalculixInputDeckGenerator().generate(case),
+            out_dir / "cantilever.inp",
+        )
+        print(f"Wrote CalculiX input deck: {input_deck}")
+        result = CalculiXRunner().run_input_deck(
+            input_deck,
+            case_dir=out_dir,
+            policy=CalculiXRunPolicy(timeout_seconds=args.timeout),
+        )
+        _print_calculix_run_result(result)
+        status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+        return 0 if status == "completed" else 2 if status == "missing_executable" else 1
 
     if args.command == "mscript-preview":
         from osw.scripts.mscript.importer import preview_mscript
@@ -1147,6 +1243,33 @@ def _print_calculix_diagnostics(
             path = str(item.get("path", ""))
             message = str(item.get("message", ""))
             print(f"{severity} {path}: {message}", file=stream)
+
+
+def _print_calculix_run_result(result: object) -> None:
+    status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+    print(f"CalculiX run status: {status}")
+    print(f"Case directory: {getattr(result, 'case_dir', '')}")
+    print(f"Job name: {getattr(result, 'job_name', '')}")
+    return_code = getattr(result, "return_code", None)
+    if return_code is not None:
+        print(f"Return code: {return_code}")
+    stdout = str(getattr(result, "stdout", "") or "").strip()
+    stderr = str(getattr(result, "stderr", "") or "").strip()
+    if stdout:
+        print("stdout:")
+        print(stdout)
+    if stderr:
+        print("stderr:", file=sys.stderr)
+        print(stderr, file=sys.stderr)
+    artifacts = getattr(result, "artifacts", ()) or ()
+    if artifacts:
+        print("Artifacts:")
+        for artifact in artifacts:
+            role = getattr(artifact, "role", getattr(artifact, "kind", "artifact"))
+            print(f"  - {role}: {getattr(artifact, 'path', '')}")
+    diagnostics = getattr(result, "diagnostics", None)
+    if diagnostics is not None and getattr(diagnostics, "messages", ()):
+        print(diagnostics.summary(), file=sys.stderr)
 
 
 def _print_mscript_preview(preview: object) -> None:

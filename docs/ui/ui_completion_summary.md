@@ -222,3 +222,9 @@ replace the shell, or add solver adapter behavior.
 Run menu hook. The dialog previews readiness diagnostics and writes reviewed
 `.inp` text only; it does not run `ccx`, parse results, replace the shell, or
 call subprocesses from the GUI.
+
+`OSW-FUNC-014_CALCULIX_RUNNER_BINDING` extends that dialog with an explicit
+`Run with CalculiX` path backed by `CalculiXRunner` and `ExternalCommandRunner`.
+The GUI shows run status, logs, artifacts, and diagnostics, and the run monitor
+receives a compact summary. The GUI still does not call subprocess directly or
+parse CalculiX result files.

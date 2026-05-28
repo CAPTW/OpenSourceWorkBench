@@ -130,6 +130,20 @@ runner and is intended as a local smoke test for the runner service.
 - No CalculiX, OpenFOAM, SU2, Octave, MATLAB, Cantera, or CoolProp concrete
   runner binding is added by this step.
 
+## CalculiX Runner Binding
+
+`OSW-FUNC-014_CALCULIX_RUNNER_BINDING` adds a bounded CalculiX `ccx` binding on
+top of this backend runner. The binding resolves `ccx` through
+`ExecutablePathRegistry` without executing it, copies an explicit `.inp` deck
+into an isolated case directory by default, runs `ccx jobname` through
+`ExternalCommandRunner`, captures stdout/stderr, applies the configured timeout,
+and records CalculiX artifacts such as `.dat`, `.frd`, `.sta`, `.cvg`, `.12d`,
+`.log`, and the copied `.inp`.
+
+The binding does not parse CalculiX result files or add nonlinear/contact
+features. Missing `ccx`, missing decks, timeouts, nonzero return codes, and
+missing expected artifacts are surfaced as structured diagnostics.
+
 ## Next Step
 
-Next functional step: `OSW-FUNC-005_MESH_IMPORT_BRIDGE`.
+Next functional step: `OSW-FUNC-015_CALCULIX_RESULT_PARSER`.
