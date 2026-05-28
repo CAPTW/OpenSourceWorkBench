@@ -209,16 +209,21 @@ type: script_importer
 license: GPL-compatible
 input_formats:
   - m
+  - mat
 output_formats:
   - script_preview
   - script_ref
   - figure_dataset
+  - workspace_summary
   - png
   - svg
   - pdf
   - csv
 requires: []
-optional_requires: []
+optional_requires:
+  - scipy
+  - hdf5storage
+  - h5py
 executable_names: []
 capabilities:
   - m_file_preview
@@ -228,6 +233,9 @@ capabilities:
   - project_script_ref_binding
   - figure_artifact_collection
   - figure_dataset
+  - mat_file_import
+  - workspace_variable_summary
+  - csv_export
 ```
 
 ## Future Extension Points
@@ -266,6 +274,13 @@ figure artifact normalization capabilities: `figure_artifact_collection`,
 explicit run or explicit artifact inspection; discovery and health checks still
 do not execute scripts or plugin code.
 
+`OSW-FUNC-009_MAT_READER` extends the same manifest with preview-only MAT data
+capabilities: `mat_file_import`, `scipy_loadmat_v4_to_v72`,
+`hdf5_mat_v73_optional`, `workspace_variable_summary`, and `csv_export`. SciPy,
+`hdf5storage`, and `h5py` are optional dependencies; plugin discovery and health
+checks may report their availability but do not import MAT data, execute
+scripts, or launch MATLAB/Octave.
+
 ## Next Step
 
-Next functional step: `OSW-FUNC-009_MAT_READER`.
+Next functional step: `OSW-FUNC-010_BOUNDARY_CURVE_BRIDGE`.

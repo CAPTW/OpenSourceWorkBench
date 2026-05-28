@@ -76,3 +76,12 @@ Post-processing and GUI surfaces consume `FigureDataset` data without executing
 scripts. HTML reports can embed available image references and warn on missing
 artifacts, while the GUI Plot Viewer lists figures, metadata, and workspace
 variables. See `docs/19_figure_capture_dataset.md`.
+
+## MAT Data Reader
+
+MATLAB `.mat` data import lives under `osw.scripts.mscript.mat_reader` and is a
+data-preview boundary. It detects MAT versions, imports SciPy and HDF5 helpers
+lazily, summarizes variables, exports simple real numeric 1D/2D arrays to CSV,
+and converts variable summaries into `WorkspaceVariableSummary` records for
+FigureDataset/report surfaces. It does not run `.m` files, MATLAB, Octave, or
+external commands. See `docs/20_mat_reader.md`.

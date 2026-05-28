@@ -905,13 +905,16 @@ def _validate_project_references(project: Project, report: ValidationReport) -> 
         _validate_solver_config(solver, report, path=f"solvers[{index}]")
 
     for index, script in enumerate(project.scripts):
-        if Path(script.path).suffix.lower() == ".m" and not script.safe_preview_required:
+        suffix = Path(script.path).suffix.lower()
+        if suffix == ".m" and not script.safe_preview_required:
             report.add_warning(
                 f"scripts[{index}].safe_preview_required",
                 "MATLAB/Octave scripts require safe preview before execution.",
             )
-        if Path(script.path).suffix.lower() == ".m":
+        if suffix == ".m":
             _validate_mscript_preview_metadata(script, report, path=f"scripts[{index}]")
+        if suffix == ".mat":
+            _validate_mat_preview_metadata(script, report, path=f"scripts[{index}]")
 
 
 def _validate_solver_config(
@@ -968,6 +971,29 @@ def _validate_mscript_preview_metadata(
                     f"safety finding: {finding.get('message', finding.get('token', 'script'))}"
                 ),
             )
+
+
+def _validate_mat_preview_metadata(
+    script: ScriptRef,
+    report: ValidationReport,
+    *,
+    path: str,
+) -> None:
+    if not script.safe_preview_required:
+        report.add_warning(
+            f"{path}.safe_preview_required",
+            "MAT data references should be previewed before project mutation.",
+        )
+    metadata = script.metadata if isinstance(script.metadata, dict) else {}
+    if not (
+        metadata.get("mat_summary")
+        or metadata.get("variable_count") is not None
+        or metadata.get("variables")
+    ):
+        report.add_warning(
+            f"{path}.metadata",
+            "MAT data reference has no variable summary yet.",
+        )
 
 
 def _physics_list(value: Sequence[PhysicsSetup] | PhysicsSetup | None) -> list[PhysicsSetup]:

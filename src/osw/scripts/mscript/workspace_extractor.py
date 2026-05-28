@@ -58,6 +58,12 @@ def extract_workspace_summary_from_artifacts(
     return extract_workspace_summary(paths).variables
 
 
+def mat_summary_to_workspace_variables(summary: object) -> tuple[WorkspaceVariableSummary, ...]:
+    from .mat_reader import mat_summary_to_workspace_variables as _convert
+
+    return _convert(summary)
+
+
 def extract_workspace_summary(paths: Iterable[str | Path]) -> WorkspaceSummaryResult:
     diagnostics = DiagnosticReport()
     variables: list[WorkspaceVariableSummary] = []

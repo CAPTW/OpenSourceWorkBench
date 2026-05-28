@@ -212,6 +212,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     figure_from_run_parser.add_argument("run_result_json", help="OctaveRunResult JSON path.")
     figure_from_run_parser.add_argument("--out", required=True, help="Output dataset JSON path.")
+    mat_info_parser = subparsers.add_parser(
+        "mat-info",
+        help="Inspect MATLAB MAT-file variables without running MATLAB or Octave.",
+    )
+    mat_info_parser.add_argument("path", help="MAT file path.")
+    mat_info_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    mat_vars_parser = subparsers.add_parser(
+        "mat-vars",
+        help="List MATLAB MAT-file variable names without loading script code.",
+    )
+    mat_vars_parser.add_argument("path", help="MAT file path.")
+    mat_vars_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    mat_export_parser = subparsers.add_parser(
+        "mat-export-csv",
+        help="Export a real numeric 1D/2D MAT variable to CSV.",
+    )
+    mat_export_parser.add_argument("path", help="MAT file path.")
+    mat_export_parser.add_argument("variable", help="Variable name to export.")
+    mat_export_parser.add_argument("--out", required=True, help="Output CSV path.")
     subparsers.add_parser(
         "gui",
         help="Launch the optional PySide6 GUI shell.",
@@ -569,6 +588,66 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Wrote FigureDataset JSON: {output_path}")
         return 0
 
+    if args.command == "mat-info":
+        from osw.scripts.mscript.mat_model import MatReadStatus
+        from osw.scripts.mscript.mat_reader import read_mat_file
+
+        result = read_mat_file(Path(args.path))
+        if args.json:
+            import json
+
+            print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        elif result.ok:
+            _print_mat_summary(result)
+            if result.diagnostics.messages:
+                print(result.diagnostics.summary(), file=sys.stderr)
+        else:
+            print(result.diagnostics.summary(), file=sys.stderr)
+        if result.ok:
+            return 0
+        return 2 if result.status == MatReadStatus.DEPENDENCY_MISSING.value else 1
+
+    if args.command == "mat-vars":
+        from osw.scripts.mscript.mat_model import MatReadStatus
+        from osw.scripts.mscript.mat_reader import read_mat_file
+
+        result = read_mat_file(Path(args.path))
+        if args.json:
+            import json
+
+            print(
+                json.dumps(
+                    {
+                        "status": result.status,
+                        "variables": list(result.variable_names),
+                        "diagnostics": result.diagnostics.to_dict(),
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        elif result.ok:
+            for name in result.variable_names:
+                print(name)
+        else:
+            print(result.diagnostics.summary(), file=sys.stderr)
+        if result.ok:
+            return 0
+        return 2 if result.status == MatReadStatus.DEPENDENCY_MISSING.value else 1
+
+    if args.command == "mat-export-csv":
+        from osw.scripts.mscript.mat_model import MatReadStatus
+        from osw.scripts.mscript.mat_reader import export_variable_to_csv
+
+        result = export_variable_to_csv(Path(args.path), args.variable, Path(args.out))
+        if not result.ok:
+            print(result.diagnostics.summary(), file=sys.stderr)
+            return 2 if result.status == MatReadStatus.DEPENDENCY_MISSING.value else 1
+        print(f"Wrote MAT variable CSV: {result.output_path}")
+        if result.diagnostics.messages:
+            print(result.diagnostics.summary(), file=sys.stderr)
+        return 0
+
     if args.command == "gui":
         from osw.gui.main_window import PySide6UnavailableError, run_gui
 
@@ -663,6 +742,22 @@ def _print_figure_dataset(dataset: object) -> None:
         print(
             f"- variable {getattr(variable, 'name', '')}: "
             f"{getattr(variable, 'type_name', '')} {shape}"
+        )
+
+
+def _print_mat_summary(result: object) -> None:
+    summary = getattr(result, "summary", None)
+    print(f"MAT file: {getattr(result, 'source_path', '')}")
+    print(f"Version: {getattr(summary, 'version', 'unknown')}")
+    variables = tuple(getattr(summary, "variables", ()))
+    print(f"Variables: {len(variables)}")
+    for variable in variables:
+        shape = "x".join(str(item) for item in getattr(variable, "shape", ())) or "scalar"
+        print(
+            f"- {getattr(variable, 'name', '')}: "
+            f"{getattr(variable, 'kind', '')} "
+            f"{shape} "
+            f"{getattr(variable, 'dtype', '')}"
         )
 
 

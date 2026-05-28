@@ -250,6 +250,22 @@ def test_project_validation_warns_for_high_risk_mscript_findings() -> None:
     assert any("high-risk or blocked" in item.message for item in report.messages)
 
 
+def test_project_validation_warns_when_mat_preview_metadata_is_missing() -> None:
+    project = Project(
+        metadata=ProjectMetadata(name="mat warning"),
+        scripts=[ScriptRef(id="mat-data", path="scripts/data.mat", language="matlab_mat")],
+        results=[ResultRef(ref_id="result-1", path="results/preview.json", kind="dataset")],
+    )
+
+    report = validate_project(project)
+
+    assert report.has_warnings
+    assert any(
+        "MAT data reference has no variable summary" in item.message
+        for item in report.messages
+    )
+
+
 def test_project_validation_warns_for_native_commercial_cad_extension() -> None:
     project = Project(
         metadata=ProjectMetadata(name="native cad warning"),

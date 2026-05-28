@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-__all__ = ["ExecutablePathDialog", "PluginManagerDialog", "ScriptPreviewDialog"]
+__all__ = [
+    "ExecutablePathDialog",
+    "MatPreviewDialog",
+    "PluginManagerDialog",
+    "ScriptPreviewDialog",
+]
 
 
 def __getattr__(name: str) -> object:
@@ -20,4 +25,8 @@ def __getattr__(name: str) -> object:
         from osw.gui.dialogs.script_preview_dialog import ScriptPreviewDialog
 
         return ScriptPreviewDialog
+    if name == "MatPreviewDialog":
+        from osw.gui.dialogs.mat_preview_dialog import MatPreviewDialog
+
+        return MatPreviewDialog
     raise AttributeError(name)

@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from osw.scripts.mscript.mat_model import MatFileSummary, MatVariableSummary
 from osw.scripts.mscript.workspace_extractor import (
     extract_workspace_summary,
     extract_workspace_summary_from_artifacts,
+    mat_summary_to_workspace_variables,
     summarize_csv,
     summarize_json_variables,
 )
@@ -59,3 +61,25 @@ def test_large_csv_summary_only_keeps_preview_rows(tmp_path: Path) -> None:
     assert summary.shape == (50, 2)
     assert summary.metadata["preview_row_count"] == 3
     assert "49" not in summary.preview
+
+
+def test_mat_summary_converts_to_workspace_variables() -> None:
+    mat_summary = MatFileSummary(
+        source_path="data.mat",
+        variables=(
+            MatVariableSummary(
+                "temperature",
+                shape=(3,),
+                dtype="float64",
+                is_numeric=True,
+                kind="numeric",
+                preview="[300, 325, 350]",
+            ),
+        ),
+    )
+
+    variables = mat_summary_to_workspace_variables(mat_summary)
+
+    assert variables[0].name == "temperature"
+    assert variables[0].type_name == "numeric"
+    assert variables[0].metadata["is_numeric"] is True

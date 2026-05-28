@@ -11,7 +11,7 @@ def test_builtin_mscript_preview_plugin_manifest_validates() -> None:
     assert manifest.name == "MATLAB/Octave Script Preview Importer"
     assert manifest.type is PluginType.SCRIPT_IMPORTER
     assert manifest.domain == PluginDomain.MATH.value
-    assert manifest.input_formats == ("m",)
+    assert manifest.input_formats == ("m", "mat")
     assert "script_preview" in manifest.output_formats
     assert "m_file_preview" in manifest.capabilities
     assert "safety_scan" in manifest.capabilities
@@ -21,6 +21,11 @@ def test_builtin_mscript_preview_plugin_manifest_validates() -> None:
     assert "isolated_workspace" in manifest.capabilities
     assert "figure_dataset" in manifest.capabilities
     assert "figure_dataset" in manifest.output_formats
+    assert "workspace_summary" in manifest.output_formats
+    assert "mat_file_import" in manifest.capabilities
+    assert "workspace_variable_summary" in manifest.capabilities
+    assert "csv_export" in manifest.capabilities
+    assert "scipy" in manifest.optional_requires
     assert "png" in manifest.output_formats
     assert "svg" in manifest.output_formats
     assert "pdf" in manifest.output_formats

@@ -39,7 +39,12 @@ MENU_ACTIONS = {
 
 SHELL_MENU_ACTIONS = {
     "File": ("New Project", "Open Project", "Save Project", "Save Project As", "Exit"),
-    "Import": ("Import Geometry", "Import Mesh", "Import MATLAB/Octave Script"),
+    "Import": (
+        "Import Geometry",
+        "Import Mesh",
+        "Import MATLAB/Octave Script",
+        "Import MATLAB MAT Data",
+    ),
     "Plugins": ("Plugin Manager", "Refresh Plugins", "Plugin Health Check", "Preferences"),
     "Run": ("Run", "Stop", "Open Results Folder"),
     "Reports": ("Generate Report", "Export Report"),
@@ -99,6 +104,7 @@ class MainWindow(_BaseMainWindow):
         self.plugin_discovery_result: object | None = None
         self.plugin_manager_dialog: object | None = None
         self.script_preview_dialog: object | None = None
+        self.mat_preview_dialog: object | None = None
         self.plot_viewer_dialog: object | None = None
         self.plot_viewer: object | None = None
         self.last_figure_dataset: object | None = None
@@ -239,6 +245,11 @@ class MainWindow(_BaseMainWindow):
             "set_theme_tokens",
         ):
             self.script_preview_dialog.set_theme_tokens(tokens)
+        if self.mat_preview_dialog is not None and hasattr(
+            self.mat_preview_dialog,
+            "set_theme_tokens",
+        ):
+            self.mat_preview_dialog.set_theme_tokens(tokens)
 
     def _on_top_bar_action_triggered(self, label: str) -> None:
         if label == "New":
@@ -435,6 +446,62 @@ class MainWindow(_BaseMainWindow):
         dialog.activateWindow()
         return dialog
 
+    def preview_mat_file(self, path: str | Path, *, show_dialog: bool = False) -> bool:
+        """Preview MATLAB MAT data and attach metadata without executing code."""
+
+        from osw.gui.dialogs.mat_preview_dialog import MatPreviewDialog
+        from osw.scripts.mscript.mat_reader import create_mat_script_ref, read_mat_file
+
+        result = read_mat_file(path)
+        if show_dialog:
+            self.mat_preview_dialog = MatPreviewDialog(
+                result=result,
+                parent=self,
+                theme_tokens=self.theme_manager.current_tokens,
+            )
+            accepted = self.mat_preview_dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted
+            if not accepted:
+                return False
+        if result.diagnostics.has_errors:
+            self._placeholder_action(result.diagnostics.summary())
+            return False
+        mat_ref = create_mat_script_ref(result)
+        self.set_project(_project_with_script_ref(self.current_project, mat_ref))
+        self._placeholder_action(f"Previewed MAT metadata: {mat_ref.name}")
+        return True
+
+    def open_mat_preview_dialog(self, path: str | Path) -> object | None:
+        """Open the MAT preview dialog without running MATLAB, Octave, or scripts."""
+
+        from osw.gui.dialogs.mat_preview_dialog import MatPreviewDialog
+        from osw.scripts.mscript.mat_reader import create_mat_script_ref, read_mat_file
+
+        result = read_mat_file(path)
+        dialog = MatPreviewDialog(
+            result=result,
+            parent=self,
+            theme_tokens=self.theme_manager.current_tokens,
+        )
+
+        def _attach(mat_result: object) -> None:
+            diagnostics = getattr(mat_result, "diagnostics", None)
+            if diagnostics is not None and diagnostics.has_errors:
+                self._placeholder_action(mat_result.diagnostics.summary())
+                return
+            self.set_project(
+                _project_with_script_ref(self.current_project, create_mat_script_ref(mat_result))
+            )
+            self._placeholder_action(
+                f"Previewed MAT metadata: {Path(getattr(mat_result, 'source_path', '')).name}"
+            )
+
+        dialog.matPreviewAccepted.connect(_attach)
+        self.mat_preview_dialog = dialog
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+        return dialog
+
     def _on_script_run_completed(self, result: object) -> None:
         status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
         from osw.scripts.mscript.figure_capture import figure_dataset_from_octave_result
@@ -494,6 +561,7 @@ def _action_object_name(action_title: str) -> str:
         "Plugin Manager": "oswActionPluginManager",
         "Refresh Plugins": "oswActionRefreshPlugins",
         "Plugin Health Check": "oswActionPluginHealthCheck",
+        "Import MATLAB MAT Data": "oswActionImportMatData",
     }
     if action_title in plugin_action_names:
         return plugin_action_names[action_title]

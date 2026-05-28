@@ -93,10 +93,12 @@ manifest:
 - id: `osw.mscript_preview`
 - domain: `MATH`
 - type: `script_importer`
-- input format: `m`
-- output formats: `script_preview`, `script_ref`
+- input formats: `m`, `mat`
+- output formats: `script_preview`, `script_ref`, `figure_dataset`,
+  `workspace_summary`, and `csv`
 - capabilities: `m_file_preview`, `function_signature_detection`,
-  `safety_scan`, `plot_hint_detection`, `project_script_ref_binding`
+  `safety_scan`, `plot_hint_detection`, `project_script_ref_binding`,
+  `mat_file_import`, `workspace_variable_summary`, and `csv_export`
 
 The preview importer requires no executable names and does not load plugin code
 during discovery or health display.
@@ -136,7 +138,7 @@ blocked findings by default, and routes through `OctaveRunner` and
 - GNU Octave execution, when explicitly requested later, must use the backend
   Octave runner and remain blocked for out-of-scope `.slx` or `.mlapp`
   findings by default.
-- Simulink, `.slx`, `.mlapp`, `.fig`, `.mat`, and figure capture are deferred
+- Simulink, `.slx`, `.mlapp`, `.fig`, and figure capture are deferred
   or out of scope for this step.
 - Scanner findings are conservative and may false-positive on complex MATLAB
   syntax; users must review findings before any future execution workflow.
@@ -147,8 +149,10 @@ blocked findings by default, and routes through `OctaveRunner` and
 - Nested functions, package/class method signatures, line continuations, and
   unusual command syntax may be summarized imperfectly.
 - Plot hints do not reconstruct figures.
-- `.mat`, `.fig`, Simulink, and App Designer workflows are not implemented.
+- `.fig`, Simulink, and App Designer workflows are not implemented.
+- `.mat` import is handled by the later preview-only MAT reader and does not
+  execute MATLAB or Octave.
 
 ## Next Step
 
-Next functional step: `OSW-FUNC-008_FIGURE_CAPTURE_DATASET`.
+Next functional step: `OSW-FUNC-010_BOUNDARY_CURVE_BRIDGE`.

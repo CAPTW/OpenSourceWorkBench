@@ -388,10 +388,30 @@ def _script_info(script: object) -> dict[str, object]:
 
 def _script_row_value(script: object, name: str) -> str:
     info = _script_info(script)
+    mat_summary = info.get("mat_summary")
+    mat_info = mat_summary if isinstance(mat_summary, dict) else {}
     preview = info.get("preview")
     preview_info = preview if isinstance(preview, dict) else {}
+    if name in {"MAT version", "Format"} and mat_info:
+        return str(mat_info.get("version", ""))
+    if name in {"Variables", "Variable count"}:
+        variable_count = info.get("variable_count")
+        if variable_count not in (None, ""):
+            return str(variable_count)
+        variables = mat_info.get("variables", ())
+        if isinstance(variables, list | tuple):
+            return str(len(variables))
+    if name in {"Variable names", "MAT variables"}:
+        variables = mat_info.get("variables", info.get("variables", ()))
+        if isinstance(variables, list | tuple):
+            names = [
+                str(variable.get("name", ""))
+                for variable in variables
+                if isinstance(variable, dict) and variable.get("name")
+            ]
+            return ", ".join(names)
     if name in {"Script kind", "Kind"}:
-        return str(info.get("kind", preview_info.get("kind", "")))
+        return str(info.get("kind", info.get("data_type", preview_info.get("kind", ""))))
     if name in {"Lines", "Line count"}:
         return str(info.get("line_count", preview_info.get("line_count", "")))
     if name in {"Safety", "Safety summary"}:

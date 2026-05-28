@@ -129,6 +129,55 @@ def test_main_window_can_attach_script_preview_without_running_file(
     del app
 
 
+def test_project_tree_and_properties_can_display_mat_metadata(app: object) -> None:
+    from osw.core.demo_project import create_heatsink_flow_demo_project
+    from osw.core.project_schema import Project
+    from osw.gui.widgets.properties_panel import PropertiesPanel
+    from osw.scripts.mscript.mat_model import (
+        MatFileSummary,
+        MatReadResult,
+        MatReadStatus,
+        MatVariableSummary,
+    )
+    from osw.scripts.mscript.mat_reader import create_mat_script_ref
+
+    summary = MatFileSummary(
+        source_path="workspace/numeric_arrays.mat",
+        version="v4",
+        variables=(
+            MatVariableSummary("x", shape=(3,), dtype="float64", is_numeric=True, kind="numeric"),
+        ),
+    )
+    mat_ref = create_mat_script_ref(MatReadResult(MatReadStatus.OK, summary))
+    project = create_heatsink_flow_demo_project()
+    project = Project(
+        metadata=project.metadata,
+        units=project.units,
+        materials=project.materials,
+        geometry=project.geometry,
+        meshes=project.meshes,
+        scripts=[*project.scripts, mat_ref],
+        boundary_curves=project.boundary_curves,
+        physics=project.physics,
+        solvers=project.solvers,
+        results=project.results,
+        report=project.report,
+        schema_version=project.schema_version,
+        plugins=project.plugins,
+        warnings=project.warnings,
+    )
+    panel = PropertiesPanel()
+    panel.set_project(project)
+    panel.set_node_selection("numeric_arrays.mat")
+
+    assert panel.row_value("Kind") == "matlab_mat"
+    assert panel.row_value("MAT version") == "v4"
+    assert panel.row_value("Variable count") == "1"
+    assert panel.row_value("Variable names") == "x"
+
+    del app
+
+
 def test_theme_switching_still_works_after_script_binding(app: object) -> None:
     from osw.gui.main_window import MainWindow
 

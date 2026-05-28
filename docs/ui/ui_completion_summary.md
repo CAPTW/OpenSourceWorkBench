@@ -193,3 +193,9 @@ figure metadata and workspace summaries, report previews can consume figure
 datasets, and script preview can hand off captured artifacts after an explicit
 Octave run. The GUI still does not execute scripts during import, preview, or
 figure inspection.
+
+`OSW-FUNC-009_MAT_READER` adds preview-only MATLAB MAT data inspection. MAT
+preview dialogs show version, variable summaries, table previews, diagnostics,
+and safe CSV export for compatible numeric variables. The ProjectSchema binding
+stores MAT metadata through safe preview references, and the GUI still does not
+invoke MATLAB, Octave, or external commands.

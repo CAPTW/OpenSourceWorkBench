@@ -7,9 +7,10 @@
     "OSW-FUNC-005_MESH_IMPORT_BRIDGE",
     "OSW-FUNC-006_MSCRIPT_IMPORT_PREVIEW",
     "OSW-FUNC-007_OCTAVE_RUNNER",
-    "OSW-FUNC-008_FIGURE_CAPTURE_DATASET"
+    "OSW-FUNC-008_FIGURE_CAPTURE_DATASET",
+    "OSW-FUNC-009_MAT_READER"
   ],
   "current_step": null,
-  "next_step": "OSW-FUNC-009_MAT_READER",
-  "last_report": ".codex/reports/func/OSW-FUNC-008_FIGURE_CAPTURE_DATASET.md"
+  "next_step": "OSW-FUNC-010_BOUNDARY_CURVE_BRIDGE",
+  "last_report": ".codex/reports/func/OSW-FUNC-009_MAT_READER.md"
 }

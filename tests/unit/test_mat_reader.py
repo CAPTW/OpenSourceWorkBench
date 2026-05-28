@@ -5,7 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from osw.scripts.mscript.mat_reader import MatReader, export_mat_variable_csv, read_mat_file
+from osw.scripts.mscript.mat_model import MatFileVersion
+from osw.scripts.mscript.mat_reader import (
+    MatReader,
+    detect_mat_version,
+    export_mat_variable_csv,
+    is_hdf5_mat_v73,
+    read_mat_file,
+)
 
 
 def scipy_available() -> bool:
@@ -95,3 +102,28 @@ def test_invalid_extension_returns_friendly_error(tmp_path: Path) -> None:
 
     assert preview.diagnostics.has_errors
     assert "Only .mat files" in preview.diagnostics.summary()
+
+
+def test_missing_file_returns_friendly_error(tmp_path: Path) -> None:
+    preview = read_mat_file(tmp_path / "missing.mat")
+
+    assert preview.diagnostics.has_errors
+    assert "does not exist" in preview.diagnostics.summary()
+
+
+def test_corrupt_tiny_file_returns_friendly_error(tmp_path: Path) -> None:
+    path = tmp_path / "corrupt.mat"
+    path.write_bytes(b"bad")
+
+    preview = read_mat_file(path)
+
+    assert preview.diagnostics.has_errors
+    assert "too small" in preview.diagnostics.summary()
+
+
+def test_hdf5_v73_detection(tmp_path: Path) -> None:
+    path = tmp_path / "v73.mat"
+    path.write_bytes(b"\x89HDF\r\n\x1a\nplaceholder")
+
+    assert is_hdf5_mat_v73(path) is True
+    assert detect_mat_version(path) is MatFileVersion.V73

@@ -68,21 +68,22 @@ def builtin_mscript_preview_plugin_manifest() -> PluginManifest:
             "type": "script_importer",
             "license": "GPL-compatible",
             "description": (
-                "Reads MATLAB/Octave .m files as text, extracts metadata, and "
-                "surfaces safety findings without running scripts."
+                "Reads MATLAB/Octave .m files as text and MATLAB .mat files as "
+                "data previews without running scripts or launching MATLAB/Octave."
             ),
-            "input_formats": ["m"],
+            "input_formats": ["m", "mat"],
             "output_formats": [
                 "script_preview",
                 "script_ref",
                 "figure_dataset",
+                "workspace_summary",
                 "png",
                 "svg",
                 "pdf",
                 "csv",
             ],
             "requires": [],
-            "optional_requires": [],
+            "optional_requires": ["scipy", "hdf5storage", "h5py"],
             "executable_names": ["octave", "octave-cli"],
             "capabilities": [
                 "m_file_preview",
@@ -100,6 +101,11 @@ def builtin_mscript_preview_plugin_manifest() -> PluginManifest:
                 "png_svg_pdf_artifacts",
                 "workspace_summary_placeholder",
                 "report_embedding",
+                "mat_file_import",
+                "scipy_loadmat_v4_to_v72",
+                "hdf5_mat_v73_optional",
+                "workspace_variable_summary",
+                "csv_export",
             ],
             "metadata": {
                 "built_in": True,
