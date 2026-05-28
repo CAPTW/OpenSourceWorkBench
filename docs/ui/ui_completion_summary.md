@@ -234,3 +234,10 @@ the same CalculiX dialog. The dialog displays parsed max displacement, max
 stress, and parser diagnostics from existing artifacts only, while the run
 monitor can receive a compact result summary. The GUI still does not run `ccx`,
 parse full FRD fields, or call subprocesses directly.
+
+`OSW-FUNC-016_OPENFOAM_TEMPLATE_BINDING` adds a safe OpenFOAM template dialog
+and Run menu hook. The dialog can generate bounded cavity or duct case files
+without OpenFOAM installed, and an explicit run action delegates to
+`OpenFOAMRunner`/`ExternalCommandRunner`. The GUI shows diagnostics and residual
+summaries but does not provide a full OpenFOAM editor, multiphase workflow, or
+direct subprocess path.

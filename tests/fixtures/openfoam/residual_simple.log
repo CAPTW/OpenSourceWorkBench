@@ -1,0 +1,6 @@
+Time = 1
+smoothSolver:  Solving for Ux, Initial residual = 0.1, Final residual = 0.01, No Iterations 2
+smoothSolver:  Solving for Uy, Initial residual = 0.2, Final residual = 0.02, No Iterations 2
+smoothSolver:  Solving for Uz, Initial residual = 0.3, Final residual = 0.03, No Iterations 2
+GAMG:  Solving for p, Initial residual = 0.4, Final residual = 0.04, No Iterations 3
+End

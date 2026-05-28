@@ -322,6 +322,55 @@ def build_parser() -> argparse.ArgumentParser:
         default=0.05,
         help="Allowed relative error fraction.",
     )
+    subparsers.add_parser(
+        "openfoam-check",
+        help="Resolve OpenFOAM executables without executing them.",
+    )
+    openfoam_write_parser = subparsers.add_parser(
+        "openfoam-write-case",
+        help="Write a bounded OpenFOAM cavity or duct template case without running OpenFOAM.",
+    )
+    openfoam_write_parser.add_argument(
+        "--template",
+        choices=("cavity", "duct"),
+        default="cavity",
+        help="Template kind.",
+    )
+    openfoam_write_parser.add_argument("--out-dir", required=True, help="Output directory.")
+    openfoam_write_parser.add_argument(
+        "--inlet-velocity",
+        type=float,
+        default=1.0,
+        help="Duct inlet x velocity.",
+    )
+    openfoam_write_parser.add_argument(
+        "--outlet-pressure",
+        type=float,
+        default=0.0,
+        help="Duct outlet pressure.",
+    )
+    openfoam_run_parser = subparsers.add_parser(
+        "openfoam-run-case",
+        help="Explicitly run an OpenFOAM template case through the backend runner.",
+    )
+    openfoam_run_parser.add_argument("case_dir", help="OpenFOAM case directory.")
+    openfoam_run_parser.add_argument(
+        "--solver",
+        default="icoFoam",
+        choices=("icoFoam", "simpleFoam"),
+        help="OpenFOAM solver executable.",
+    )
+    openfoam_run_parser.add_argument("--timeout", type=float, default=30.0)
+    openfoam_parse_log_parser = subparsers.add_parser(
+        "openfoam-parse-log",
+        help="Parse an OpenFOAM log file without running OpenFOAM.",
+    )
+    openfoam_parse_log_parser.add_argument("path", help="OpenFOAM log file path.")
+    openfoam_results_summary_parser = subparsers.add_parser(
+        "openfoam-results-summary",
+        help="Parse residual summaries from an OpenFOAM case directory.",
+    )
+    openfoam_results_summary_parser.add_argument("case_dir", help="Case directory.")
     mscript_preview_parser = subparsers.add_parser(
         "mscript-preview",
         help="Preview a MATLAB/Octave .m file without executing it.",
@@ -869,6 +918,85 @@ def main(argv: Sequence[str] | None = None) -> int:
         for diagnostic in validation.diagnostics:
             print(f"WARNING: {diagnostic}", file=sys.stderr)
         return 0 if validation.passed else 1
+
+    if args.command == "openfoam-check":
+        from osw.solvers.openfoam.runner import OPENFOAM_EXECUTABLES, find_openfoam_executable
+
+        print("OpenFOAM executable check")
+        missing = False
+        for executable in OPENFOAM_EXECUTABLES:
+            resolution = find_openfoam_executable(executable)
+            print(f"{executable}: {resolution.resolved_path or 'not found'}")
+            print(f"  source: {resolution.source}")
+            if not resolution.found:
+                missing = True
+                if resolution.diagnostics.messages:
+                    print(resolution.diagnostics.summary(), file=sys.stderr)
+        return 1 if missing else 0
+
+    if args.command == "openfoam-write-case":
+        from osw.solvers.openfoam.case_generator import (
+            default_cavity_request,
+            default_duct_request,
+            generate_openfoam_case,
+        )
+
+        target_dir = Path(args.out_dir)
+        if args.template == "duct":
+            request = default_duct_request(
+                target_dir.parent,
+                inlet_velocity=args.inlet_velocity,
+                outlet_pressure=args.outlet_pressure,
+            )
+        else:
+            request = default_cavity_request(target_dir.parent)
+        request = request.__class__(
+            template_kind=request.template_kind,
+            solver=request.solver,
+            case_name=target_dir.name,
+            output_dir=request.output_dir,
+            dimensions=request.dimensions,
+            mesh_settings=request.mesh_settings,
+            boundaries=request.boundaries,
+            transport=request.transport,
+            control=request.control,
+            metadata=request.metadata,
+        )
+        result = generate_openfoam_case(request)
+        print(f"OpenFOAM case status: {result.status}")
+        print(f"Case directory: {result.case_dir}")
+        for path in result.generated_files:
+            print(f"  - {path.relative_to(result.case_dir)}")
+        if result.diagnostics.messages:
+            print(result.diagnostics.summary(), file=sys.stderr)
+        return 1 if result.status == "error" else 0
+
+    if args.command == "openfoam-run-case":
+        from osw.solvers.openfoam.model import OpenFOAMRunPolicy
+        from osw.solvers.openfoam.runner import OpenFOAMRunner
+
+        result = OpenFOAMRunner().run_case(
+            Path(args.case_dir),
+            args.solver,
+            OpenFOAMRunPolicy(timeout_seconds=args.timeout),
+        )
+        _print_openfoam_run_result(result)
+        status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+        return 0 if status == "completed" else 2 if status == "missing_executable" else 1
+
+    if args.command == "openfoam-parse-log":
+        from osw.solvers.openfoam.residual_parser import parse_openfoam_log
+
+        summary = parse_openfoam_log(Path(args.path))
+        _print_openfoam_residual_summary(summary)
+        return 1 if summary.diagnostics.has_errors else 0
+
+    if args.command == "openfoam-results-summary":
+        from osw.solvers.openfoam.residual_parser import parse_openfoam_case_logs
+
+        summary = parse_openfoam_case_logs(Path(args.case_dir))
+        _print_openfoam_residual_summary(summary)
+        return 1 if summary.diagnostics.has_errors else 0
 
     if args.command == "mscript-preview":
         from osw.scripts.mscript.importer import preview_mscript
@@ -1453,6 +1581,51 @@ def _print_calculix_parsed_results(parsed: object) -> None:
         for artifact in artifacts:
             print(f"  - {getattr(artifact, 'role', 'artifact')}: {getattr(artifact, 'path', '')}")
     diagnostics = getattr(parsed, "diagnostics", None)
+    if diagnostics is not None and getattr(diagnostics, "messages", ()):
+        print(diagnostics.summary(), file=sys.stderr)
+
+
+def _print_openfoam_run_result(result: object) -> None:
+    status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+    print(f"OpenFOAM run status: {status}")
+    print(f"Case directory: {getattr(result, 'case_dir', '')}")
+    print(f"Solver: {getattr(result, 'solver', '')}")
+    return_code = getattr(result, "return_code", None)
+    if return_code is not None:
+        print(f"Return code: {return_code}")
+    stdout = str(getattr(result, "stdout", "") or "").strip()
+    stderr = str(getattr(result, "stderr", "") or "").strip()
+    if stdout:
+        print("stdout:")
+        print(stdout)
+    if stderr:
+        print("stderr:", file=sys.stderr)
+        print(stderr, file=sys.stderr)
+    summary = getattr(result, "residual_summary", None)
+    if summary is not None:
+        _print_openfoam_residual_summary(summary)
+    artifacts = getattr(result, "artifacts", ()) or ()
+    if artifacts:
+        print("Artifacts:")
+        for artifact in artifacts:
+            role = getattr(artifact, "role", getattr(artifact, "kind", "artifact"))
+            print(f"  - {role}: {getattr(artifact, 'path', '')}")
+    diagnostics = getattr(result, "diagnostics", None)
+    if diagnostics is not None and getattr(diagnostics, "messages", ()):
+        print(diagnostics.summary(), file=sys.stderr)
+
+
+def _print_openfoam_residual_summary(summary: object) -> None:
+    print("OpenFOAM residual summary")
+    print(f"Iterations: {getattr(summary, 'iteration_count', 0)}")
+    final_residuals = dict(getattr(summary, "final_residuals", {}) or {})
+    if final_residuals:
+        print("Final residuals:")
+        for field, value in sorted(final_residuals.items()):
+            print(f"  - {field}: {value:.12g}")
+    else:
+        print("Final residuals: not available")
+    diagnostics = getattr(summary, "diagnostics", None)
     if diagnostics is not None and getattr(diagnostics, "messages", ()):
         print(diagnostics.summary(), file=sys.stderr)
 

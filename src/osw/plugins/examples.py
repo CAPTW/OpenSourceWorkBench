@@ -211,6 +211,53 @@ def builtin_calculix_plugin_manifest() -> PluginManifest:
     )
 
 
+def builtin_openfoam_plugin_manifest() -> PluginManifest:
+    """Return the data-only manifest for OpenFOAM template binding."""
+
+    return PluginManifest.from_dict(
+        {
+            "id": "osw.openfoam",
+            "name": "OpenFOAM Template Adapter",
+            "version": "0.1.0",
+            "domain": "CFD",
+            "type": "solver_adapter",
+            "license": "GPL-compatible external solver",
+            "description": (
+                "Generates bounded cavity and duct OpenFOAM template cases, can "
+                "run explicitly requested local solvers through the backend "
+                "runner, and parses residual logs into reportable summaries."
+            ),
+            "input_formats": [
+                "internal_project_schema",
+                "openfoam_case",
+            ],
+            "output_formats": [
+                "openfoam_case",
+                "residual_summary",
+                "vtk_placeholder",
+            ],
+            "requires": [],
+            "optional_requires": [],
+            "executable_names": ["blockMesh", "icoFoam", "simpleFoam"],
+            "capabilities": [
+                "cavity_template",
+                "duct_template",
+                "incompressible_placeholder",
+                "residual_parser",
+                "case_generation",
+                "explicit_solver_run",
+            ],
+            "metadata": {
+                "built_in": True,
+                "preview_first": True,
+                "template_based": True,
+                "requires_explicit_execution_request": True,
+                "no_full_openfoam_editor": True,
+            },
+        }
+    )
+
+
 def builtin_plugin_manifests() -> tuple[PluginManifest, ...]:
     """Return built-in data-only plugin manifest records."""
 
@@ -219,4 +266,5 @@ def builtin_plugin_manifests() -> tuple[PluginManifest, ...]:
         builtin_mscript_preview_plugin_manifest(),
         builtin_gmsh_plugin_manifest(),
         builtin_calculix_plugin_manifest(),
+        builtin_openfoam_plugin_manifest(),
     )

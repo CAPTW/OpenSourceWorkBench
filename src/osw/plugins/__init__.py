@@ -38,6 +38,7 @@ from osw.plugins.examples import (
     builtin_gmsh_plugin_manifest,
     builtin_meshio_plugin_manifest,
     builtin_mscript_preview_plugin_manifest,
+    builtin_openfoam_plugin_manifest,
     builtin_plugin_manifests,
 )
 from osw.plugins.health import (
@@ -114,6 +115,7 @@ __all__ = [
     "builtin_gmsh_plugin_manifest",
     "builtin_meshio_plugin_manifest",
     "builtin_mscript_preview_plugin_manifest",
+    "builtin_openfoam_plugin_manifest",
     "builtin_plugin_manifests",
     "check_manifest_health",
     "collect_plugin_health_records",

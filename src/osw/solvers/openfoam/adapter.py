@@ -13,7 +13,10 @@ from .case_generator import (
     OpenFoamCavityConfig,
     OpenFoamDuctCaseGenerator,
     OpenFoamDuctConfig,
+    default_cavity_request,
+    default_duct_request,
 )
+from .model import OpenFOAMCaseRequest, OpenFOAMTemplateKind
 
 
 class OpenFoamCavityTemplateAdapter(SolverAdapterPlugin):
@@ -112,3 +115,32 @@ class OpenFoamDuctTemplateAdapter(SolverAdapterPlugin):
                 "This adapter does not execute OpenFOAM or manage arbitrary OpenFOAM cases.",
             ],
         }
+
+
+def openfoam_case_request_from_project(
+    project: object,
+    *,
+    output_dir: str | Path,
+) -> OpenFOAMCaseRequest:
+    """Create a bounded OpenFOAM template request from explicit solver metadata."""
+
+    for solver in getattr(project, "solvers", ()) or ():
+        solver_name = str(getattr(solver, "solver", "") or getattr(solver, "name", ""))
+        parameters = dict(getattr(solver, "parameters", {}) or {})
+        settings = dict(getattr(solver, "settings", {}) or {})
+        metadata = {**settings, **parameters}
+        template = str(metadata.get("openfoam_template", metadata.get("template", ""))).lower()
+        if "openfoam" not in solver_name.lower() and template not in {
+            OpenFOAMTemplateKind.CAVITY.value,
+            OpenFOAMTemplateKind.DUCT.value,
+        }:
+            continue
+        if template == OpenFOAMTemplateKind.DUCT.value:
+            return default_duct_request(
+                output_dir,
+                inlet_velocity=float(metadata.get("inlet_velocity", 1.0)),
+                outlet_pressure=float(metadata.get("outlet_pressure", 0.0)),
+            )
+        if template == OpenFOAMTemplateKind.CAVITY.value:
+            return default_cavity_request(output_dir)
+    return default_cavity_request(output_dir)

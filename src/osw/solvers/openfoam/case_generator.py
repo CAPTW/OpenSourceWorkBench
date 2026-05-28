@@ -8,7 +8,18 @@ from pathlib import Path
 from string import Template
 from typing import Literal
 
+from osw.core.diagnostics import DiagnosticReport
 from osw.core.validation import ValidationReport
+from osw.solvers.openfoam.model import (
+    OpenFOAMBoundaryPatch,
+    OpenFOAMBoundaryType,
+    OpenFOAMCaseRequest,
+    OpenFOAMCaseResult,
+    OpenFOAMControlSettings,
+    OpenFOAMSolverKind,
+    OpenFOAMTemplateKind,
+    OpenFOAMTransportProperties,
+)
 
 DuctSolver = Literal["icoFoam", "simpleFoam"]
 
@@ -163,7 +174,7 @@ class OpenFoamCaseGenerator:
             text = template_path.read_text(encoding="utf-8")
         else:
             text = _EMBEDDED_TEMPLATES[relative_path]
-        return Template(text).safe_substitute(context)
+        return _with_generated_header(Template(text).safe_substitute(context))
 
 
 def generate_cavity_case(
@@ -254,7 +265,7 @@ class OpenFoamDuctCaseGenerator:
             text = template_path.read_text(encoding="utf-8")
         else:
             text = _EMBEDDED_DUCT_TEMPLATES[relative_path]
-        return Template(text).safe_substitute(context)
+        return _with_generated_header(Template(text).safe_substitute(context))
 
 
 def generate_duct_case(
@@ -262,6 +273,174 @@ def generate_duct_case(
     output_dir: str | Path,
 ) -> OpenFoamGeneratedCase:
     return OpenFoamDuctCaseGenerator().generate(config, output_dir)
+
+
+def default_cavity_request(output_dir: str | Path = ".") -> OpenFOAMCaseRequest:
+    """Return a serializable default cavity template request."""
+
+    return OpenFOAMCaseRequest(
+        template_kind=OpenFOAMTemplateKind.CAVITY,
+        solver=OpenFOAMSolverKind.ICOFOAM,
+        case_name="cavity",
+        output_dir=output_dir,
+        dimensions={"length": 0.1, "z_thickness": 0.01},
+        mesh_settings={"cells": [20, 20, 1]},
+        boundaries=(
+            OpenFOAMBoundaryPatch(
+                name="movingWall",
+                boundary_type=OpenFOAMBoundaryType.MOVING_WALL_VELOCITY.value,
+                field_values={"U": [1.0, 0.0, 0.0]},
+                role="moving_wall",
+            ),
+            OpenFOAMBoundaryPatch(
+                name="fixedWalls",
+                boundary_type=OpenFOAMBoundaryType.WALL.value,
+                field_values={"U": [0.0, 0.0, 0.0]},
+                role="wall",
+            ),
+            OpenFOAMBoundaryPatch(
+                name="frontAndBack",
+                boundary_type=OpenFOAMBoundaryType.EMPTY.value,
+                role="empty",
+            ),
+        ),
+        transport=OpenFOAMTransportProperties(nu=0.01),
+        control=OpenFOAMControlSettings(end_time=1.0, delta_t=0.005, write_interval=0.1),
+        metadata={"template": "lid_driven_cavity"},
+    )
+
+
+def default_duct_request(
+    output_dir: str | Path = ".",
+    *,
+    inlet_velocity: float = 1.0,
+    outlet_pressure: float = 0.0,
+) -> OpenFOAMCaseRequest:
+    """Return a serializable default duct/internal-flow template request."""
+
+    return OpenFOAMCaseRequest(
+        template_kind=OpenFOAMTemplateKind.DUCT,
+        solver=OpenFOAMSolverKind.SIMPLEFOAM,
+        case_name="duct",
+        output_dir=output_dir,
+        dimensions={"length": 1.0, "height": 0.1, "depth": 0.01},
+        mesh_settings={"cells": [40, 8, 1]},
+        boundaries=(
+            OpenFOAMBoundaryPatch(
+                name="inlet",
+                boundary_type=OpenFOAMBoundaryType.VELOCITY_INLET.value,
+                field_values={"U": [float(inlet_velocity), 0.0, 0.0]},
+                role="inlet",
+            ),
+            OpenFOAMBoundaryPatch(
+                name="outlet",
+                boundary_type=OpenFOAMBoundaryType.PRESSURE_OUTLET.value,
+                field_values={"p": float(outlet_pressure)},
+                role="outlet",
+            ),
+            OpenFOAMBoundaryPatch(
+                name="walls",
+                boundary_type=OpenFOAMBoundaryType.NO_SLIP.value,
+                role="wall",
+            ),
+            OpenFOAMBoundaryPatch(
+                name="frontAndBack",
+                boundary_type=OpenFOAMBoundaryType.EMPTY.value,
+                role="empty",
+            ),
+        ),
+        transport=OpenFOAMTransportProperties(nu=1.0e-5),
+        control=OpenFOAMControlSettings(end_time=100.0, delta_t=1.0, write_interval=20.0),
+        metadata={"template": "internal_duct"},
+    )
+
+
+def generate_openfoam_case(request: OpenFOAMCaseRequest) -> OpenFOAMCaseResult:
+    """Generate a deterministic OpenFOAM template case from a request model."""
+
+    diagnostics = validate_case_request(request)
+    if diagnostics.has_errors:
+        return OpenFOAMCaseResult(
+            status="error",
+            request=request,
+            case_dir=request.output_dir / request.case_name,
+            diagnostics=diagnostics,
+        )
+    try:
+        if request.template_kind == OpenFOAMTemplateKind.DUCT.value:
+            generated = generate_duct_case(_duct_config_from_request(request), request.output_dir)
+        elif request.template_kind == OpenFOAMTemplateKind.CAVITY.value:
+            generated = generate_cavity_case(
+                _cavity_config_from_request(request),
+                request.output_dir,
+            )
+        else:
+            diagnostics.add_error(
+                "openfoam-template-unsupported",
+                f"Unsupported OpenFOAM template: {request.template_kind}",
+                hint="Use cavity or duct for v0.1 OpenFOAM templates.",
+            )
+            return OpenFOAMCaseResult(
+                status="error",
+                request=request,
+                case_dir=request.output_dir / request.case_name,
+                diagnostics=diagnostics,
+            )
+    except OpenFoamCaseTemplateError as exc:
+        diagnostics.add_error(
+            "openfoam-case-generation-failed",
+            str(exc),
+            hint="Check template dimensions, solver choice, and patch names.",
+        )
+        return OpenFOAMCaseResult(
+            status="error",
+            request=request,
+            case_dir=request.output_dir / request.case_name,
+            diagnostics=diagnostics,
+        )
+    for warning in generated.warnings:
+        diagnostics.add_warning("openfoam-template-warning", warning, path=generated.root)
+    return OpenFOAMCaseResult(
+        status="warning" if diagnostics.has_warnings else "ok",
+        request=request,
+        case_dir=generated.root,
+        generated_files=generated.files,
+        diagnostics=diagnostics,
+        metadata={"relative_paths": list(generated.relative_paths)},
+    )
+
+
+def write_openfoam_case(request: OpenFOAMCaseRequest) -> OpenFOAMCaseResult:
+    """Compatibility wrapper for callers that name generation as a write operation."""
+
+    return generate_openfoam_case(request)
+
+
+def validate_case_request(request: OpenFOAMCaseRequest) -> DiagnosticReport:
+    diagnostics = DiagnosticReport()
+    if request.template_kind not in {
+        OpenFOAMTemplateKind.CAVITY.value,
+        OpenFOAMTemplateKind.DUCT.value,
+    }:
+        diagnostics.add_error(
+            "openfoam-template-unsupported",
+            f"Unsupported OpenFOAM template: {request.template_kind}",
+            hint="Use cavity or duct for this bounded v0.1 adapter.",
+        )
+        return diagnostics
+    if request.template_kind == OpenFOAMTemplateKind.DUCT.value:
+        roles = {patch.role for patch in request.boundaries}
+        for required in ("inlet", "outlet", "wall"):
+            if required not in roles:
+                diagnostics.add_warning(
+                    "openfoam-required-patch-missing",
+                    (
+                        f"Duct template is missing an explicit {required} patch role; "
+                        "defaults will be used."
+                    ),
+                    field=required,
+                )
+    return diagnostics
 
 
 def _validate_boundary_config(
@@ -279,6 +458,91 @@ def _validate_boundary_config(
         report.add_error("boundaries.front_and_back", "Front/back patch name is required.")
     if len(boundaries.lid_velocity) != 3:
         report.add_error("boundaries.lid_velocity", "Lid velocity must have three components.")
+
+
+def _cavity_config_from_request(request: OpenFOAMCaseRequest) -> OpenFoamCavityConfig:
+    moving_wall = _patch_by_role(request, "moving_wall")
+    fixed_wall = _patch_by_role(request, "wall")
+    empty = _patch_by_role(request, "empty")
+    cells = _int_tuple(request.mesh_settings.get("cells"), default=(20, 20, 1))
+    return OpenFoamCavityConfig(
+        case_name=request.case_name or "cavity",
+        length=float(request.dimensions.get("length", 0.1)),
+        z_thickness=float(request.dimensions.get("z_thickness", 0.01)),
+        cells=cells,
+        viscosity=request.transport.nu,
+        end_time=request.control.end_time,
+        delta_t=request.control.delta_t,
+        write_interval=request.control.write_interval,
+        boundaries=OpenFoamBoundaryConfig(
+            moving_wall=moving_wall.name if moving_wall else "movingWall",
+            fixed_walls=(fixed_wall.name if fixed_wall else "fixedWalls",),
+            front_and_back=empty.name if empty else "frontAndBack",
+            lid_velocity=_velocity_tuple(
+                (moving_wall.field_values.get("U") if moving_wall else None),
+                default=(1.0, 0.0, 0.0),
+            ),
+        ),
+    )
+
+
+def _duct_config_from_request(request: OpenFOAMCaseRequest) -> OpenFoamDuctConfig:
+    inlet = _patch_by_role(request, "inlet")
+    outlet = _patch_by_role(request, "outlet")
+    wall = _patch_by_role(request, "wall")
+    empty = _patch_by_role(request, "empty")
+    cells = _int_tuple(request.mesh_settings.get("cells"), default=(40, 8, 1))
+    return OpenFoamDuctConfig(
+        case_name=request.case_name or "duct",
+        solver=request.solver or OpenFOAMSolverKind.SIMPLEFOAM.value,
+        length=float(request.dimensions.get("length", 1.0)),
+        height=float(request.dimensions.get("height", 0.1)),
+        depth=float(request.dimensions.get("depth", 0.01)),
+        cells=cells,
+        inlet_velocity=_velocity_tuple(
+            (inlet.field_values.get("U") if inlet else None),
+            default=(1.0, 0.0, 0.0),
+        ),
+        outlet_pressure=float(
+            (outlet.field_values.get("p") if outlet else 0.0) or 0.0
+        ),
+        viscosity=request.transport.nu,
+        end_time=request.control.end_time,
+        delta_t=request.control.delta_t,
+        write_interval=request.control.write_interval,
+        patches=OpenFoamDuctPatchConfig(
+            inlet=inlet.name if inlet else "inlet",
+            outlet=outlet.name if outlet else "outlet",
+            walls=(wall.name if wall else "walls",),
+            front_and_back=empty.name if empty else "frontAndBack",
+        ),
+    )
+
+
+def _patch_by_role(
+    request: OpenFOAMCaseRequest,
+    role: str,
+) -> OpenFOAMBoundaryPatch | None:
+    for patch in request.boundaries:
+        if patch.role == role:
+            return patch
+    return None
+
+
+def _int_tuple(value: object, *, default: tuple[int, int, int]) -> tuple[int, int, int]:
+    if isinstance(value, (list, tuple)) and len(value) == 3:
+        return (int(value[0]), int(value[1]), int(value[2]))
+    return default
+
+
+def _velocity_tuple(
+    value: object,
+    *,
+    default: tuple[float, float, float],
+) -> tuple[float, float, float]:
+    if isinstance(value, (list, tuple)) and len(value) == 3:
+        return (float(value[0]), float(value[1]), float(value[2]))
+    return default
 
 
 def _validate_duct_patch_config(
@@ -421,6 +685,13 @@ def _format_vector(values: tuple[float, float, float]) -> str:
 
 def _format_float(value: float) -> str:
     return f"{float(value):.12g}"
+
+
+def _with_generated_header(text: str) -> str:
+    header = "// Generated by OpenSolver Workbench OpenFOAM template adapter.\n"
+    if text.startswith(header):
+        return text
+    return f"{header}{text}"
 
 
 _SAFE_CASE_NAME = re.compile(r"^[A-Za-z0-9_-]+$")

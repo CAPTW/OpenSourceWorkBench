@@ -138,6 +138,10 @@ def test_run_menu_contains_calculix_deck_preview_action(app: object) -> None:
         window.menu_actions["Generate CalculiX Input Deck..."].objectName()
         == "oswActionGenerateCalculixDeck"
     )
+    assert (
+        window.menu_actions["Generate OpenFOAM Template Case..."].objectName()
+        == "oswActionGenerateOpenFOAMTemplate"
+    )
 
 
 def test_toolbar_contains_reference_actions(app: object) -> None:

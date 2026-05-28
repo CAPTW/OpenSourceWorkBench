@@ -1,0 +1,28 @@
+{
+  "template_kind": "cavity",
+  "solver": "icoFoam",
+  "case_name": "cavity",
+  "output_dir": ".",
+  "dimensions": {
+    "length": 0.1,
+    "z_thickness": 0.01
+  },
+  "mesh_settings": {
+    "cells": [20, 20, 1]
+  },
+  "boundaries": [],
+  "transport": {
+    "nu": 0.01,
+    "rho": null,
+    "metadata": {}
+  },
+  "control": {
+    "start_time": 0.0,
+    "end_time": 1.0,
+    "delta_t": 0.005,
+    "write_interval": 0.1,
+    "purge_write": 0,
+    "metadata": {}
+  },
+  "metadata": {}
+}

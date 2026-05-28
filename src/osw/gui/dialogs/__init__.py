@@ -8,6 +8,7 @@ __all__ = [
     "ExecutablePathDialog",
     "GmshMeshDialog",
     "MatPreviewDialog",
+    "OpenFOAMTemplateDialog",
     "PluginManagerDialog",
     "ReportExportDialog",
     "ScriptPreviewDialog",
@@ -45,6 +46,10 @@ def __getattr__(name: str) -> object:
         from osw.gui.dialogs.calculix_deck_dialog import CalculixDeckDialog
 
         return CalculixDeckDialog
+    if name == "OpenFOAMTemplateDialog":
+        from osw.gui.dialogs.openfoam_template_dialog import OpenFOAMTemplateDialog
+
+        return OpenFOAMTemplateDialog
     if name == "ReportExportDialog":
         from osw.gui.dialogs.report_export_dialog import ReportExportDialog
 

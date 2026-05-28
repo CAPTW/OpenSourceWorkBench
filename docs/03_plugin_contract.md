@@ -230,6 +230,39 @@ capabilities:
 Deck generation is prepare-only and does not execute `ccx`; missing executable
 health remains a warning for workflows that only generate input decks.
 
+Current built-in OpenFOAM template manifest:
+
+```yaml
+id: osw.openfoam
+name: OpenFOAM Template Adapter
+version: "0.1.0"
+domain: CFD
+type: solver_adapter
+license: GPL-compatible external solver
+input_formats:
+  - internal_project_schema
+  - openfoam_case
+output_formats:
+  - openfoam_case
+  - residual_summary
+  - vtk_placeholder
+executable_names:
+  - blockMesh
+  - icoFoam
+  - simpleFoam
+capabilities:
+  - cavity_template
+  - duct_template
+  - incompressible_placeholder
+  - residual_parser
+  - case_generation
+  - explicit_solver_run
+```
+
+Case generation is template-only and does not execute OpenFOAM. Solver runs are
+explicit backend runner requests, while plugin discovery and health checks only
+resolve executable presence.
+
 MATLAB/Octave script importer:
 
 ```yaml

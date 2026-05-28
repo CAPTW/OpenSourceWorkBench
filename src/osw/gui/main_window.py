@@ -47,7 +47,13 @@ SHELL_MENU_ACTIONS = {
         "Import MATLAB MAT Data",
     ),
     "Plugins": ("Plugin Manager", "Refresh Plugins", "Plugin Health Check", "Preferences"),
-    "Run": ("Run", "Stop", "Generate CalculiX Input Deck...", "Open Results Folder"),
+    "Run": (
+        "Run",
+        "Stop",
+        "Generate CalculiX Input Deck...",
+        "Generate OpenFOAM Template Case...",
+        "Open Results Folder",
+    ),
     "Reports": ("Generate Report", "Export Report"),
     "Help": ("Documentation", "About"),
 }
@@ -109,9 +115,11 @@ class MainWindow(_BaseMainWindow):
         self.boundary_curve_dialog: object | None = None
         self.gmsh_mesh_dialog: object | None = None
         self.calculix_deck_dialog: object | None = None
+        self.openfoam_template_dialog: object | None = None
         self.plot_viewer_dialog: object | None = None
         self.plot_viewer: object | None = None
         self.last_figure_dataset: object | None = None
+        self.last_result_datasets: tuple[object, ...] = ()
         self.preferences_dialog: object | None = None
         self.toolbar_actions: dict[str, object] = {}
         self.menu_actions: dict[str, object] = {}
@@ -154,6 +162,8 @@ class MainWindow(_BaseMainWindow):
                     action.triggered.connect(self.open_gmsh_mesh_dialog)
                 elif action_title == "Generate CalculiX Input Deck...":
                     action.triggered.connect(self.open_calculix_deck_dialog)
+                elif action_title == "Generate OpenFOAM Template Case...":
+                    action.triggered.connect(self.open_openfoam_template_dialog)
                 else:
                     action.triggered.connect(
                         lambda _checked=False, label=action_title: self._placeholder_action(label)
@@ -280,6 +290,11 @@ class MainWindow(_BaseMainWindow):
             "set_theme_tokens",
         ):
             self.calculix_deck_dialog.set_theme_tokens(tokens)
+        if self.openfoam_template_dialog is not None and hasattr(
+            self.openfoam_template_dialog,
+            "set_theme_tokens",
+        ):
+            self.openfoam_template_dialog.set_theme_tokens(tokens)
 
     def _on_top_bar_action_triggered(self, label: str) -> None:
         if label == "New":
@@ -396,6 +411,7 @@ class MainWindow(_BaseMainWindow):
             self.current_project,
             figure_datasets=figure_datasets,
             plugin_health=self.plugin_health_map,
+            result_tables=_result_tables_from_datasets(self.last_result_datasets),
         )
 
     def generate_report_preview(self, _checked: bool = False, *, log: bool = True) -> object:
@@ -732,6 +748,68 @@ class MainWindow(_BaseMainWindow):
         summary = ", ".join(parts) if parts else "no scalar summaries found"
         self.run_monitor.append_log(f"Parsed CalculiX results: {summary}.", level="info")
 
+    def open_openfoam_template_dialog(self, _checked: bool = False) -> object:
+        """Open the safe OpenFOAM template dialog."""
+
+        from importlib import import_module
+
+        from osw.gui.dialogs.openfoam_template_dialog import OpenFOAMTemplateDialog
+
+        runner_module = import_module("osw.solvers.openfoam.runner")
+
+        if self.openfoam_template_dialog is None:
+            self.openfoam_template_dialog = OpenFOAMTemplateDialog(
+                parent=self,
+                runner=runner_module.OpenFOAMRunner(
+                    executable_registry=self.executable_registry
+                ),
+                theme_tokens=self.theme_manager.current_tokens,
+            )
+            self.openfoam_template_dialog.caseGenerated.connect(
+                self._on_openfoam_case_generated
+            )
+            self.openfoam_template_dialog.openfoamRunCompleted.connect(
+                self._on_openfoam_run_completed
+            )
+        else:
+            self.openfoam_template_dialog.set_theme_tokens(self.theme_manager.current_tokens)
+        self.openfoam_template_dialog.show()
+        self.openfoam_template_dialog.raise_()
+        self.openfoam_template_dialog.activateWindow()
+        return self.openfoam_template_dialog
+
+    def _on_openfoam_case_generated(self, result: object) -> None:
+        if hasattr(self.run_monitor, "append_log"):
+            self.run_monitor.append_log(
+                f"Generated OpenFOAM template case: {getattr(result, 'case_dir', '')}",
+                level="info",
+            )
+
+    def _on_openfoam_run_completed(self, result: object) -> None:
+        status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+        if hasattr(self.run_monitor, "append_log"):
+            self.run_monitor.append_log(f"OpenFOAM run: {status}", level="info")
+            summary = getattr(result, "residual_summary", None)
+            if summary is not None and getattr(summary, "final_residuals", None):
+                residuals = ", ".join(
+                    f"{field} {float(value):.3g}"
+                    for field, value in sorted(summary.final_residuals.items())
+                )
+                self.run_monitor.append_log(
+                    f"OpenFOAM residuals: {residuals}",
+                    level="info",
+                )
+        try:
+            result_module = __import__(
+                "osw.solvers.openfoam.results",
+                fromlist=["result_dataset_from_openfoam_run"],
+            )
+            dataset = result_module.result_dataset_from_openfoam_run(result)
+        except Exception:
+            return
+        self.last_result_datasets = (*self.last_result_datasets, dataset)
+        self.generate_report_preview(log=False)
+
     def _on_script_run_completed(self, result: object) -> None:
         status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
         from osw.scripts.mscript.figure_capture import figure_dataset_from_octave_result
@@ -795,6 +873,7 @@ def _action_object_name(action_title: str) -> str:
         "Import MATLAB MAT Data": "oswActionImportMatData",
         "Generate Mesh with Gmsh...": "oswActionGenerateGmshMesh",
         "Generate CalculiX Input Deck...": "oswActionGenerateCalculixDeck",
+        "Generate OpenFOAM Template Case...": "oswActionGenerateOpenFOAMTemplate",
     }
     if action_title in plugin_action_names:
         return plugin_action_names[action_title]
@@ -877,6 +956,15 @@ def _project_with_boundary_curve(project: Project, curve: object) -> Project:
         plugins=project.plugins,
         warnings=project.warnings,
     )
+
+
+def _result_tables_from_datasets(datasets: Sequence[object]) -> tuple[object, ...]:
+    tables: list[object] = []
+    for dataset in datasets:
+        to_report_tables = getattr(dataset, "to_report_tables", None)
+        if callable(to_report_tables):
+            tables.extend(to_report_tables())
+    return tuple(tables)
 
 
 def _default_report_export_path(project: Project) -> Path:

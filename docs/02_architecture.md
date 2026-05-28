@@ -127,3 +127,14 @@ sets, fixed supports, and simple loads into deterministic linear static `.inp`
 text. It does not run `ccx`, parse results, implement nonlinear/contact
 features, or call external commands from the GUI. See
 `docs/24_calculix_input_deck.md`.
+
+## OpenFOAM Template Binding
+
+OpenFOAM support lives under `osw.solvers.openfoam` as a bounded template
+adapter. It generates deterministic cavity and duct case directories without
+requiring OpenFOAM installed, resolves `blockMesh`, `icoFoam`, and `simpleFoam`
+through `ExecutablePathRegistry` without executing them, and runs only explicit
+`OpenFOAMRunRequest` operations through `ExternalCommandRunner`. Residual log
+summaries can be bridged into `ResultDataset` and reports, but OSW v0.1 does
+not provide a full OpenFOAM case editor, multiphase/reacting flow support, or
+field visualization pipeline. See `docs/27_openfoam_template_binding.md`.

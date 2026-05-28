@@ -31,6 +31,8 @@ from osw.post.report_generator import (
 from osw.post.report_model import ReportBuildRequest
 from osw.post.table_model import TablePreview
 from osw.scripts.mscript.figure_dataset import FigureDataset, FigureRecord
+from osw.solvers.openfoam.residual_parser import parse_openfoam_residuals_from_text
+from osw.solvers.openfoam.results import openfoam_residuals_to_result_dataset
 
 
 def minimal_project() -> Project:
@@ -309,6 +311,24 @@ def test_build_report_summary_generates_full_html_and_json_summary(tmp_path: Pat
     assert "Figure artifact missing" in html
     assert result.output_path.endswith("summary.json")
     assert result.summary.title == "Cantilever Report"
+
+
+def test_build_report_summary_accepts_openfoam_residual_dataset(tmp_path: Path) -> None:
+    residuals = parse_openfoam_residuals_from_text(
+        "Time = 1\n"
+        "Solving for Ux, Initial residual = 0.1, Final residual = 0.01, No Iterations 2\n"
+        "Solving for p, Initial residual = 0.2, Final residual = 0.02, No Iterations 2\n"
+    )
+    dataset = openfoam_residuals_to_result_dataset(residuals, solver="icoFoam")
+
+    summary = build_report_summary(
+        rich_project(),
+        result_tables=dataset.to_report_tables(),
+    )
+    html = render_report_summary_html(summary, output_path=tmp_path / "report.html")
+
+    assert "icoFoam result summary" in html
+    assert "final_residual_p" in html
 
 
 def test_summary_html_escapes_user_strings_and_handles_missing_image(tmp_path: Path) -> None:

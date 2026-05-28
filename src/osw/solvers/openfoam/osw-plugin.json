@@ -1,13 +1,28 @@
 {
-  "id": "osw.solvers.openfoam.cavity_template",
-  "name": "OpenFOAM Cavity Template Adapter",
+  "id": "osw.openfoam",
+  "name": "OpenFOAM Template Adapter",
   "version": "0.1.0",
-  "domain": "solver",
+  "domain": "CFD",
   "type": "solver_adapter",
-  "license": "GPL-3.0-or-later",
-  "input_formats": ["osw.project.cfd_template"],
-  "output_formats": ["openfoam.case_directory"],
+  "license": "GPL-compatible external solver",
+  "input_formats": ["internal_project_schema", "openfoam_case"],
+  "output_formats": ["openfoam_case", "residual_summary", "vtk_placeholder"],
   "requires": [],
   "optional_requires": [],
-  "capabilities": ["validate", "prepare_case", "cavity_template", "dry_run"]
+  "executable_names": ["blockMesh", "icoFoam", "simpleFoam"],
+  "capabilities": [
+    "cavity_template",
+    "duct_template",
+    "incompressible_placeholder",
+    "residual_parser",
+    "case_generation",
+    "explicit_solver_run"
+  ],
+  "metadata": {
+    "built_in": true,
+    "preview_first": true,
+    "template_based": true,
+    "requires_explicit_execution_request": true,
+    "no_full_openfoam_editor": true
+  }
 }

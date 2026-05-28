@@ -1,0 +1,29 @@
+{
+  "template_kind": "duct",
+  "solver": "simpleFoam",
+  "case_name": "duct",
+  "output_dir": ".",
+  "dimensions": {
+    "length": 1.0,
+    "height": 0.1,
+    "depth": 0.01
+  },
+  "mesh_settings": {
+    "cells": [40, 8, 1]
+  },
+  "boundaries": [],
+  "transport": {
+    "nu": 1e-05,
+    "rho": null,
+    "metadata": {}
+  },
+  "control": {
+    "start_time": 0.0,
+    "end_time": 100.0,
+    "delta_t": 1.0,
+    "write_interval": 20.0,
+    "purge_write": 0,
+    "metadata": {}
+  },
+  "metadata": {}
+}
