@@ -122,7 +122,53 @@ def builtin_mscript_preview_plugin_manifest() -> PluginManifest:
     )
 
 
+def builtin_gmsh_plugin_manifest() -> PluginManifest:
+    """Return the data-only manifest for the Gmsh mesh generator bridge."""
+
+    return PluginManifest.from_dict(
+        {
+            "id": "osw.gmsh",
+            "name": "Gmsh Mesh Generator",
+            "version": "0.1.0",
+            "domain": "MESH",
+            "type": "mesh_generator",
+            "license": "GPL-compatible external tool",
+            "description": (
+                "Generates bounded primitive Gmsh .geo scripts and can run the "
+                "local Gmsh executable through the OSW backend runner when "
+                "explicitly requested."
+            ),
+            "input_formats": [
+                "geo",
+                "primitive_geometry",
+                "step_placeholder",
+            ],
+            "output_formats": ["msh", "vtu"],
+            "requires": [],
+            "optional_requires": ["meshio"],
+            "executable_names": ["gmsh"],
+            "capabilities": [
+                "primitive_geometry_meshing",
+                "mesh_size_control",
+                "physical_group_metadata",
+                "meshio_conversion",
+                "project_mesh_ref_binding",
+            ],
+            "metadata": {
+                "built_in": True,
+                "preview_first": True,
+                "requires_explicit_execution_request": True,
+                "no_native_commercial_cad_import": True,
+            },
+        }
+    )
+
+
 def builtin_plugin_manifests() -> tuple[PluginManifest, ...]:
     """Return built-in data-only plugin manifest records."""
 
-    return (builtin_meshio_plugin_manifest(), builtin_mscript_preview_plugin_manifest())
+    return (
+        builtin_meshio_plugin_manifest(),
+        builtin_mscript_preview_plugin_manifest(),
+        builtin_gmsh_plugin_manifest(),
+    )

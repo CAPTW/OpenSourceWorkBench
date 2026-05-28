@@ -54,6 +54,30 @@ def doctor_lines() -> list[str]:
     return lines
 
 
+def _add_gmsh_geometry_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--kind",
+        default="box",
+        choices=("rectangle", "box", "cylinder", "sphere", "plate_with_hole"),
+        help="Primitive geometry kind.",
+    )
+    parser.add_argument("--length", type=float, default=1.0, help="Box length.")
+    parser.add_argument("--width", type=float, default=1.0, help="Box/rectangle width.")
+    parser.add_argument("--height", type=float, default=1.0, help="Box/cylinder height.")
+    parser.add_argument("--radius", type=float, default=0.5, help="Cylinder/sphere radius.")
+    parser.add_argument("--hole-radius", type=float, default=0.1, help="Plate hole radius.")
+    parser.add_argument("--center-x", type=float, default=None, help="Plate hole center x.")
+    parser.add_argument("--center-y", type=float, default=None, help="Plate hole center y.")
+    parser.add_argument("--mesh-size", type=float, default=0.1, help="Global mesh size.")
+    parser.add_argument(
+        "--dimension",
+        default="",
+        choices=("", "dim2", "dim3", "2", "3"),
+        help="Optional mesh dimension override.",
+    )
+    parser.add_argument("--units", default="", help="Geometry units metadata.")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="osw", description="OpenSolver Workbench CLI")
     parser.add_argument("--version", action="version", version=f"osw {__version__}")
@@ -154,6 +178,38 @@ def build_parser() -> argparse.ArgumentParser:
         dest="output_format",
         default=None,
         help="Optional output format override such as vtu, vtk, msh, inp, or xdmf.",
+    )
+    subparsers.add_parser(
+        "gmsh-check",
+        help="Resolve the Gmsh executable without executing it.",
+    )
+    subparsers.add_parser(
+        "gmsh-formats",
+        help="List bounded Gmsh primitive geometry templates.",
+    )
+    gmsh_write_parser = subparsers.add_parser(
+        "gmsh-write-geo",
+        help="Write a deterministic primitive Gmsh .geo script without running Gmsh.",
+    )
+    _add_gmsh_geometry_arguments(gmsh_write_parser)
+    gmsh_write_parser.add_argument("--out", required=True, help="Output .geo path.")
+    gmsh_generate_parser = subparsers.add_parser(
+        "gmsh-generate",
+        help="Explicitly run Gmsh through the backend runner for a primitive mesh.",
+    )
+    _add_gmsh_geometry_arguments(gmsh_generate_parser)
+    gmsh_generate_parser.add_argument("--out-dir", required=True, help="Output directory.")
+    gmsh_generate_parser.add_argument("--output-name", default="gmsh_mesh", help="Output stem.")
+    gmsh_generate_parser.add_argument(
+        "--timeout",
+        type=float,
+        default=30.0,
+        help="Timeout seconds.",
+    )
+    gmsh_generate_parser.add_argument(
+        "--convert-to-vtu",
+        action="store_true",
+        help="Attempt meshio VTU conversion after .msh generation.",
     )
     mscript_preview_parser = subparsers.add_parser(
         "mscript-preview",
@@ -484,6 +540,56 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 2 if export_result.status.value == "dependency_missing" else 1
         print(f"Wrote mesh: {export_result.output_path}")
         return 0
+
+    if args.command == "gmsh-check":
+        from osw.mesh.gmsh_adapter import find_gmsh_executable
+
+        resolution = find_gmsh_executable()
+        print("Gmsh")
+        print(f"Status: {'available' if resolution.found else 'missing'}")
+        print(f"Source: {resolution.source}")
+        if resolution.resolved_path:
+            print(f"Path: {resolution.resolved_path}")
+        print(resolution.diagnostics.summary())
+        return 0 if resolution.found else 1
+
+    if args.command == "gmsh-formats":
+        from osw.mesh.gmsh_adapter import find_gmsh_executable
+
+        resolution = find_gmsh_executable()
+        print("OSW Gmsh primitive templates")
+        print("geometry kinds: rectangle, box, cylinder, sphere, plate_with_hole")
+        print("mesh dimensions: dim2, dim3")
+        print("outputs: geo, msh, optional vtu via meshio")
+        print("Gmsh executable: " + ("available" if resolution.found else "missing"))
+        print("meshio dependency: " + ("available" if _module_available("meshio") else "missing"))
+        return 0
+
+    if args.command == "gmsh-write-geo":
+        from osw.mesh.gmsh_geometry import write_geo_script
+
+        request = _gmsh_request_from_args(args, output_dir=Path(args.out).parent)
+        output_path = write_geo_script(request, Path(args.out))
+        print(f"Wrote Gmsh .geo script: {output_path}")
+        return 0
+
+    if args.command == "gmsh-generate":
+        from osw.mesh.gmsh_adapter import GmshAdapter, GmshMeshStatus
+
+        request = _gmsh_request_from_args(
+            args,
+            output_dir=Path(args.out_dir),
+            output_name=args.output_name,
+            convert_to_vtu=args.convert_to_vtu,
+            timeout_seconds=args.timeout,
+        )
+        result = GmshAdapter().generate_mesh(request)
+        _print_gmsh_result(result)
+        if result.status is GmshMeshStatus.OK:
+            return 0
+        if result.status is GmshMeshStatus.WARNING and result.msh_path and result.msh_path.exists():
+            return 0
+        return 2 if result.status is GmshMeshStatus.DEPENDENCY_MISSING else 1
 
     if args.command == "mscript-preview":
         from osw.scripts.mscript.importer import preview_mscript
@@ -880,6 +986,86 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     parser.print_help(sys.stdout)
     return 0
+
+
+def _gmsh_request_from_args(
+    args: argparse.Namespace,
+    *,
+    output_dir: Path,
+    output_name: str | None = None,
+    convert_to_vtu: bool = False,
+    timeout_seconds: float = 30.0,
+) -> object:
+    from osw.mesh.gmsh_model import (
+        GmshGeometryKind,
+        GmshGeometrySpec,
+        GmshMeshDimension,
+        GmshMeshRequest,
+        GmshMeshSizeField,
+    )
+
+    kind = GmshGeometryKind(args.kind)
+    if kind is GmshGeometryKind.BOX:
+        parameters = {"length": args.length, "width": args.width, "height": args.height}
+        default_dimension = GmshMeshDimension.DIM3
+    elif kind is GmshGeometryKind.RECTANGLE:
+        parameters = {"width": args.width, "height": args.height}
+        default_dimension = GmshMeshDimension.DIM2
+    elif kind is GmshGeometryKind.CYLINDER:
+        parameters = {"radius": args.radius, "height": args.height}
+        default_dimension = GmshMeshDimension.DIM3
+    elif kind is GmshGeometryKind.SPHERE:
+        parameters = {"radius": args.radius}
+        default_dimension = GmshMeshDimension.DIM3
+    else:
+        center = None
+        if args.center_x is not None and args.center_y is not None:
+            center = (args.center_x, args.center_y)
+        parameters = {
+            "width": args.width,
+            "height": args.height,
+            "hole_radius": args.hole_radius,
+        }
+        if center is not None:
+            parameters["center"] = center
+        default_dimension = GmshMeshDimension.DIM2
+    dimension = args.dimension or default_dimension
+    resolved_output_name = output_name or Path(getattr(args, "out", "gmsh_mesh.geo")).stem
+    return GmshMeshRequest(
+        geometry=GmshGeometrySpec(
+            kind,
+            parameters,
+            geometry_id=f"{kind.value}_primitive",
+            units=args.units,
+        ),
+        mesh_dimension=dimension,
+        mesh_size=GmshMeshSizeField(global_size=args.mesh_size),
+        output_dir=output_dir,
+        output_name=resolved_output_name,
+        convert_to_vtu=convert_to_vtu,
+        timeout_seconds=timeout_seconds,
+    )
+
+
+def _print_gmsh_result(result: object) -> None:
+    status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+    print(f"Gmsh mesh status: {status}")
+    geo_path = getattr(result, "geo_path", None)
+    msh_path = getattr(result, "msh_path", None)
+    converted = getattr(result, "converted_mesh_path", None)
+    if geo_path:
+        print(f"Geo: {geo_path}")
+    if msh_path:
+        print(f"MSH: {msh_path}")
+    if converted:
+        print(f"Converted: {converted}")
+    mesh_info = getattr(result, "mesh_info", None)
+    if mesh_info is not None:
+        print(f"Nodes: {getattr(mesh_info, 'node_count', 0)}")
+        print(f"Elements: {getattr(mesh_info, 'element_count', 0)}")
+    diagnostics = getattr(result, "diagnostics", None)
+    if diagnostics is not None and getattr(diagnostics, "messages", ()):
+        print(diagnostics.summary(), file=sys.stderr)
 
 
 def _print_mscript_preview(preview: object) -> None:

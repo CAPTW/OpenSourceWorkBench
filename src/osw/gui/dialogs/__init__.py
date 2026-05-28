@@ -5,6 +5,7 @@ from __future__ import annotations
 __all__ = [
     "BoundaryCurveDialog",
     "ExecutablePathDialog",
+    "GmshMeshDialog",
     "MatPreviewDialog",
     "PluginManagerDialog",
     "ReportExportDialog",
@@ -35,6 +36,10 @@ def __getattr__(name: str) -> object:
         from osw.gui.dialogs.boundary_curve_dialog import BoundaryCurveDialog
 
         return BoundaryCurveDialog
+    if name == "GmshMeshDialog":
+        from osw.gui.dialogs.gmsh_mesh_dialog import GmshMeshDialog
+
+        return GmshMeshDialog
     if name == "ReportExportDialog":
         from osw.gui.dialogs.report_export_dialog import ReportExportDialog
 

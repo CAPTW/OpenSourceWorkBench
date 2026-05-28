@@ -211,3 +211,9 @@ to real `ReportSummary` data. The panel can show generated report sections,
 figure counts, and warning counts, while MainWindow report actions export
 deterministic HTML through `osw.post` without running solvers, scripts, MATLAB,
 Octave, or GUI subprocess calls.
+
+`OSW-FUNC-012_GMSH_ADAPTER` adds a safe Gmsh primitive meshing dialog and menu
+hook. The dialog can preview `.geo` text without Gmsh installed and can submit
+an explicit mesh generation request through the backend Gmsh adapter and
+`ExternalCommandRunner`. The GUI still does not call subprocess directly,
+replace the shell, or add solver adapter behavior.

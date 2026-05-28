@@ -10,9 +10,10 @@
     "OSW-FUNC-008_FIGURE_CAPTURE_DATASET",
     "OSW-FUNC-009_MAT_READER",
     "OSW-FUNC-010_BOUNDARY_CURVE_BRIDGE",
-    "OSW-FUNC-011_REPORT_GENERATOR_BINDING"
+    "OSW-FUNC-011_REPORT_GENERATOR_BINDING",
+    "OSW-FUNC-012_GMSH_ADAPTER"
   ],
   "current_step": null,
-  "next_step": "OSW-FUNC-012_GMSH_ADAPTER",
-  "last_report": ".codex/reports/func/OSW-FUNC-011_REPORT_GENERATOR_BINDING.md"
+  "next_step": "OSW-FUNC-013_CALCULIX_INPUT_DECK",
+  "last_report": ".codex/reports/func/OSW-FUNC-012_GMSH_ADAPTER.md"
 }

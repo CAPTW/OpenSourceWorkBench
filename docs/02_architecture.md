@@ -107,3 +107,14 @@ standalone HTML without importing GUI modules or executing solvers/scripts. The
 GUI report preview reads this summary data through a safe binding, and CLI
 `report-export`/`report-summary` commands operate on ProjectSchema files only.
 See `docs/22_report_generator_binding.md`.
+
+## Gmsh Adapter
+
+Gmsh primitive meshing lives under `osw.mesh.gmsh_*`. It can generate
+deterministic `.geo` scripts without Gmsh installed, and it resolves the local
+`gmsh` executable through `ExecutablePathRegistry` without running it. Mesh
+generation is explicit through `GmshMeshRequest` and `ExternalCommandRunner`;
+GUI code may open the Gmsh dialog and call the adapter API, but it does not call
+subprocess directly. Generated `.msh` artifacts can be converted through the
+existing optional meshio bridge and attached as ProjectSchema `MeshRef`
+metadata. See `docs/23_gmsh_adapter.md`.

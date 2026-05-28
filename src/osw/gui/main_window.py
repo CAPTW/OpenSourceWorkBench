@@ -42,6 +42,7 @@ SHELL_MENU_ACTIONS = {
     "Import": (
         "Import Geometry",
         "Import Mesh",
+        "Generate Mesh with Gmsh...",
         "Import MATLAB/Octave Script",
         "Import MATLAB MAT Data",
     ),
@@ -106,6 +107,7 @@ class MainWindow(_BaseMainWindow):
         self.script_preview_dialog: object | None = None
         self.mat_preview_dialog: object | None = None
         self.boundary_curve_dialog: object | None = None
+        self.gmsh_mesh_dialog: object | None = None
         self.plot_viewer_dialog: object | None = None
         self.plot_viewer: object | None = None
         self.last_figure_dataset: object | None = None
@@ -147,6 +149,8 @@ class MainWindow(_BaseMainWindow):
                     action.triggered.connect(self.generate_report_preview)
                 elif action_title == "Export Report":
                     action.triggered.connect(self.export_current_report)
+                elif action_title == "Generate Mesh with Gmsh...":
+                    action.triggered.connect(self.open_gmsh_mesh_dialog)
                 else:
                     action.triggered.connect(
                         lambda _checked=False, label=action_title: self._placeholder_action(label)
@@ -263,6 +267,11 @@ class MainWindow(_BaseMainWindow):
             "set_theme_tokens",
         ):
             self.boundary_curve_dialog.set_theme_tokens(tokens)
+        if self.gmsh_mesh_dialog is not None and hasattr(
+            self.gmsh_mesh_dialog,
+            "set_theme_tokens",
+        ):
+            self.gmsh_mesh_dialog.set_theme_tokens(tokens)
 
     def _on_top_bar_action_triggered(self, label: str) -> None:
         if label == "New":
@@ -604,6 +613,53 @@ class MainWindow(_BaseMainWindow):
         dialog.activateWindow()
         return dialog
 
+    def open_gmsh_mesh_dialog(self, _checked: bool = False) -> object:
+        """Open the safe Gmsh request preview dialog."""
+
+        from osw.gui.dialogs.gmsh_mesh_dialog import GmshMeshDialog
+        from osw.mesh.gmsh_adapter import GmshAdapter
+
+        if self.gmsh_mesh_dialog is None:
+            self.gmsh_mesh_dialog = GmshMeshDialog(
+                parent=self,
+                adapter=GmshAdapter(executable_registry=self.executable_registry),
+                theme_tokens=self.theme_manager.current_tokens,
+            )
+            self.gmsh_mesh_dialog.meshGenerated.connect(self.attach_gmsh_mesh_result)
+        else:
+            self.gmsh_mesh_dialog.set_theme_tokens(self.theme_manager.current_tokens)
+        self.gmsh_mesh_dialog.show()
+        self.gmsh_mesh_dialog.raise_()
+        self.gmsh_mesh_dialog.activateWindow()
+        return self.gmsh_mesh_dialog
+
+    def generate_gmsh_mesh_from_request(self, request: object) -> object:
+        """Run an explicit Gmsh request through the backend adapter."""
+
+        from osw.mesh.gmsh_adapter import GmshAdapter
+
+        result = GmshAdapter(executable_registry=self.executable_registry).generate_mesh(request)
+        self.attach_gmsh_mesh_result(result)
+        return result
+
+    def attach_gmsh_mesh_result(self, result: object) -> bool:
+        """Attach generated mesh metadata when a Gmsh result produced an artifact."""
+
+        from osw.mesh.gmsh_adapter import convert_result_to_mesh_ref
+
+        status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+        msh_path = getattr(result, "msh_path", None)
+        converted = getattr(result, "converted_mesh_path", None)
+        if converted is None and (msh_path is None or not Path(msh_path).exists()):
+            diagnostics = getattr(result, "diagnostics", None)
+            if diagnostics is not None and hasattr(diagnostics, "summary"):
+                self._placeholder_action(diagnostics.summary())
+            return False
+        mesh_ref = convert_result_to_mesh_ref(result)
+        self.set_project(_project_with_mesh_ref(self.current_project, mesh_ref))
+        self._placeholder_action(f"Gmsh mesh generation: {status}")
+        return True
+
     def _on_script_run_completed(self, result: object) -> None:
         status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
         from osw.scripts.mscript.figure_capture import figure_dataset_from_octave_result
@@ -665,6 +721,7 @@ def _action_object_name(action_title: str) -> str:
         "Refresh Plugins": "oswActionRefreshPlugins",
         "Plugin Health Check": "oswActionPluginHealthCheck",
         "Import MATLAB MAT Data": "oswActionImportMatData",
+        "Generate Mesh with Gmsh...": "oswActionGenerateGmshMesh",
     }
     if action_title in plugin_action_names:
         return plugin_action_names[action_title]

@@ -119,11 +119,23 @@ v0.1 supports standard/exported CAD and mesh formats. Please export STEP/STL/OBJ
 
 No native SolidWorks, CATIA, NX, Creo, or similar direct import is implemented.
 
+## Gmsh Generated Mesh Handoff
+
+`OSW-FUNC-012_GMSH_ADAPTER` adds a separate Gmsh generation boundary on top of
+this bridge. The Gmsh adapter writes deterministic `.geo` scripts for bounded
+primitive geometry, runs the `gmsh` executable only through
+`ExternalCommandRunner` after an explicit request, and then hands generated
+`.msh` files back to this meshio bridge for optional MeshModel/MeshInfo
+conversion. If meshio is unavailable, the `.msh` artifact remains usable as a
+ProjectSchema `MeshRef` with a friendly conversion diagnostic.
+
 ## Security Rules
 
 - Mesh import uses library parsing only and does not execute external programs.
 - GUI mesh import helpers do not call `ExternalCommandRunner`.
-- Mesh conversion does not run Gmsh, solvers, or shell commands.
+- Mesh import/conversion does not run Gmsh, solvers, or shell commands.
+- Gmsh generation, when explicitly requested, is owned by the separate Gmsh
+  adapter and must use `ExternalCommandRunner`.
 - meshio remains optional and lazily imported.
 - Runtime/generated mesh artifacts must not be committed unless intentionally
   added as small fixtures.
@@ -132,7 +144,7 @@ No native SolidWorks, CATIA, NX, Creo, or similar direct import is implemented.
 
 - Full mesh quality analysis is deferred; current summaries are counts, cell
   distribution, bounds, data names, and cheap warnings.
-- Gmsh mesh generation is not part of this bridge.
+- Complex Gmsh CAD healing and solver-specific meshing are outside this bridge.
 - PyVista viewer binding is not part of this bridge.
 - Solver-specific mesh parsing and repair are deferred.
 

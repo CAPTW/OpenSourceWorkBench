@@ -244,6 +244,34 @@ capabilities:
   - csv_to_boundary_curve
 ```
 
+Gmsh mesh generator:
+
+```yaml
+id: osw.gmsh
+name: Gmsh Mesh Generator
+version: "0.1.0"
+domain: MESH
+type: mesh_generator
+license: GPL-compatible external tool
+input_formats:
+  - geo
+  - primitive_geometry
+  - step_placeholder
+output_formats:
+  - msh
+  - vtu
+optional_requires:
+  - meshio
+executable_names:
+  - gmsh
+capabilities:
+  - primitive_geometry_meshing
+  - mesh_size_control
+  - physical_group_metadata
+  - meshio_conversion
+  - project_mesh_ref_binding
+```
+
 ## Future Extension Points
 
 `OSW-FUNC-004_PLUGIN_MANAGER_DIALOG_BINDING` adds a manifest-first Plugin
@@ -295,6 +323,11 @@ explicitly supplied numeric data into ProjectSchema `BoundaryCurve` records.
 They do not generate solver boundary files or execute scripts, MATLAB, Octave,
 or solver binaries.
 
+`OSW-FUNC-012_GMSH_ADAPTER` adds the built-in `osw.gmsh` mesh generator
+manifest. Discovery and health checks resolve the `gmsh` executable name only;
+they do not run Gmsh, import the optional Gmsh Python module, generate meshes,
+or load plugin implementation code.
+
 ## Next Step
 
-Next functional step: `OSW-FUNC-011_REPORT_GENERATOR_BINDING`.
+Next functional step: `OSW-FUNC-013_CALCULIX_INPUT_DECK`.

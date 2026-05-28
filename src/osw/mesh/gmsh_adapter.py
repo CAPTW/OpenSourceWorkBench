@@ -1,85 +1,50 @@
-"""Dependency-guarded Gmsh adapter for small educational mesh templates."""
+"""Runner-backed Gmsh adapter for bounded primitive mesh generation."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from importlib import import_module
+import os
+import uuid
 from pathlib import Path
-from types import ModuleType
-from typing import Any, Literal
+from typing import Any
 
+from osw.core.artifacts import RunArtifact
+from osw.core.diagnostics import DiagnosticCode, DiagnosticReport
+from osw.core.executables import ExecutablePathRegistry, ExecutableResolution
+from osw.core.project_schema import MeshRef
+from osw.solvers.runner import ExternalCommandRunner, RunRequest, RunStatus, TimeoutPolicy
+
+from .gmsh_geometry import (
+    GmshGeometryError,
+    default_box_request,
+    default_physical_groups,
+    generate_geo_script,
+    geometry_spec_from_project,
+    write_geo_script,
+)
+from .gmsh_model import (
+    GmshGeometryKind,
+    GmshGeometrySpec,
+    GmshMeshDimension,
+    GmshMeshRequest,
+    GmshMeshResult,
+    GmshMeshSizeField,
+    GmshMeshStatus,
+    GmshPhysicalGroup,
+)
 from .mesh_model import MeshData, MeshInfo
-from .meshio_bridge import export_vtu, load_mesh, load_mesh_info
-
-PrimitiveKind = Literal["plate", "box"]
-Point3D = tuple[float, float, float]
+from .meshio_bridge import MeshImportStatus, export_vtu, load_mesh, load_mesh_info, read_mesh
 
 
 class GmshAdapterError(RuntimeError):
-    """Raised when Gmsh mesh generation cannot proceed safely."""
+    """Raised by legacy compatibility helpers when Gmsh cannot proceed."""
 
 
-@dataclass(frozen=True)
-class MeshSizeControl:
-    """Small mesh size control model for v0.1 Gmsh templates."""
-
-    target_size: float = 1.0
-    min_size: float | None = None
-    max_size: float | None = None
-
-    def __post_init__(self) -> None:
-        for label, value in (
-            ("target mesh size", self.target_size),
-            ("minimum mesh size", self.min_size),
-            ("maximum mesh size", self.max_size),
-        ):
-            if value is not None and value <= 0:
-                msg = f"{label} must be positive."
-                raise GmshAdapterError(msg)
-        if (
-            self.min_size is not None
-            and self.max_size is not None
-            and self.min_size > self.max_size
-        ):
-            msg = "minimum mesh size must be less than or equal to maximum mesh size."
-            raise GmshAdapterError(msg)
-
-    @property
-    def effective_min(self) -> float:
-        return self.min_size if self.min_size is not None else self.target_size
-
-    @property
-    def effective_max(self) -> float:
-        return self.max_size if self.max_size is not None else self.target_size
-
-    def to_dict(self) -> dict[str, float | None]:
-        return {
-            "target_size": self.target_size,
-            "min_size": self.min_size,
-            "max_size": self.max_size,
-        }
+MeshSizeControl = GmshMeshSizeField
+PhysicalGroupMetadata = GmshPhysicalGroup
 
 
-@dataclass(frozen=True)
-class GmshPrimitive:
-    """Primitive geometry template used when CAD bridge input is unavailable."""
-
-    kind: PrimitiveKind
-    dimensions: tuple[float, float, float]
-    origin: Point3D = (0.0, 0.0, 0.0)
-    name: str = "domain"
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "origin", _point3d(self.origin, label="origin"))
-        object.__setattr__(
-            self,
-            "dimensions",
-            _point3d(self.dimensions, label="dimensions"),
-        )
-        _validate_primitive(self.kind, self.dimensions)
-        if not self.name:
-            msg = "Gmsh primitive name is required."
-            raise GmshAdapterError(msg)
+class GmshPrimitive(GmshGeometrySpec):
+    """Compatibility wrapper for primitive geometry specs."""
 
     @classmethod
     def plate(
@@ -87,135 +52,408 @@ class GmshPrimitive:
         *,
         width: float,
         height: float,
-        origin: Point3D = (0.0, 0.0, 0.0),
         name: str = "plate",
+        units: str = "",
     ) -> GmshPrimitive:
-        return cls(kind="plate", dimensions=(width, height, 0.0), origin=origin, name=name)
+        return cls(
+            GmshGeometryKind.RECTANGLE,
+            {"width": width, "height": height},
+            geometry_id=name,
+            units=units,
+        )
+
+    @classmethod
+    def rectangle(
+        cls,
+        *,
+        width: float,
+        height: float,
+        name: str = "rectangle",
+        units: str = "",
+    ) -> GmshPrimitive:
+        return cls.plate(width=width, height=height, name=name, units=units)
 
     @classmethod
     def box(
         cls,
         *,
         width: float,
-        depth: float,
+        depth: float | None = None,
         height: float,
-        origin: Point3D = (0.0, 0.0, 0.0),
+        length: float | None = None,
         name: str = "box",
+        units: str = "",
     ) -> GmshPrimitive:
-        return cls(kind="box", dimensions=(width, depth, height), origin=origin, name=name)
-
-    @property
-    def mesh_dimension(self) -> int:
-        return 2 if self.kind == "plate" else 3
-
-
-@dataclass(frozen=True)
-class PhysicalGroupMetadata:
-    """Placeholder metadata for physical groups exported by Gmsh."""
-
-    name: str
-    dimension: int
-    tag: int
-    entities: tuple[int, ...]
-    role: str = "domain"
-
-    def to_dict(self) -> dict[str, object]:
-        return {
-            "name": self.name,
-            "dimension": self.dimension,
-            "tag": self.tag,
-            "entities": list(self.entities),
-            "role": self.role,
-        }
-
-
-@dataclass(frozen=True)
-class GmshMeshResult:
-    msh_path: Path
-    mesh_size: MeshSizeControl
-    primitive: GmshPrimitive
-    physical_groups: tuple[PhysicalGroupMetadata, ...]
-    mesh_info: MeshInfo | None = None
-    vtu_path: Path | None = None
-
-
-def is_gmsh_available() -> bool:
-    try:
-        _load_gmsh()
-    except GmshAdapterError:
-        return False
-    return True
-
-
-def generate_primitive_mesh(
-    primitive: GmshPrimitive,
-    output_path: str | Path,
-    *,
-    mesh_size: MeshSizeControl | None = None,
-    gmsh_module: Any | None = None,
-    meshio_module: Any | None = None,
-    vtu_path: str | Path | None = None,
-) -> GmshMeshResult:
-    """Generate a small primitive mesh with Gmsh and optional meshio conversion."""
-
-    target = _msh_path(output_path)
-    control = mesh_size or MeshSizeControl()
-    gmsh = gmsh_module if gmsh_module is not None else _load_gmsh()
-    target.parent.mkdir(parents=True, exist_ok=True)
-
-    initialized = False
-    physical_groups: tuple[PhysicalGroupMetadata, ...]
-    try:
-        gmsh.initialize()
-        initialized = True
-        gmsh.model.add(primitive.name)
-        _apply_mesh_size(gmsh, control)
-        entity_tag = _add_primitive(gmsh, primitive)
-        gmsh.model.occ.synchronize()
-        physical_groups = (_add_domain_physical_group(gmsh, primitive, entity_tag),)
-        gmsh.model.mesh.generate(primitive.mesh_dimension)
-        gmsh.write(str(target))
-    except GmshAdapterError:
-        raise
-    except Exception as exc:
-        msg = f"Could not generate Gmsh mesh '{target}': {exc}"
-        raise GmshAdapterError(msg) from exc
-    finally:
-        if initialized:
-            gmsh.finalize()
-
-    mesh_info = None
-    converted_vtu = None
-    if meshio_module is not None:
-        mesh_info = load_gmsh_mesh_info(target, meshio_module=meshio_module)
-    if vtu_path is not None:
-        converted_vtu = convert_gmsh_msh_to_vtu(
-            target,
-            vtu_path,
-            meshio_module=meshio_module,
+        resolved_length = float(length if length is not None else width)
+        resolved_width = float(depth if depth is not None else width)
+        return cls(
+            GmshGeometryKind.BOX,
+            {"length": resolved_length, "width": resolved_width, "height": height},
+            geometry_id=name,
+            units=units,
         )
-        if mesh_info is None and meshio_module is not None:
-            mesh_info = load_gmsh_mesh_info(target, meshio_module=meshio_module)
 
-    return GmshMeshResult(
-        msh_path=target,
-        mesh_size=control,
-        primitive=primitive,
-        physical_groups=physical_groups,
+
+def find_gmsh_executable(
+    registry: ExecutablePathRegistry | None = None,
+) -> ExecutableResolution:
+    """Resolve Gmsh without executing it."""
+
+    resolver = registry or ExecutablePathRegistry()
+    names = ("gmsh", "gmsh.exe") if os.name == "nt" else ("gmsh",)
+    resolution = resolver.resolve_any(names)
+    if resolution.found:
+        return resolution
+    report = DiagnosticReport()
+    report.add_error(
+        "gmsh-executable-not-found",
+        "Gmsh executable was not found.",
+        hint="Install Gmsh or configure the executable path in Plugin Manager.",
+        field="gmsh",
+    )
+    return ExecutableResolution("gmsh", None, "missing", report)
+
+
+def gmsh_available(registry: ExecutablePathRegistry | None = None) -> bool:
+    return find_gmsh_executable(registry).found
+
+
+def is_gmsh_available(registry: ExecutablePathRegistry | None = None) -> bool:
+    return gmsh_available(registry)
+
+
+class GmshAdapter:
+    """Generate primitive Gmsh cases and run Gmsh through ExternalCommandRunner."""
+
+    def __init__(
+        self,
+        executable_registry: ExecutablePathRegistry | None = None,
+        command_runner: ExternalCommandRunner | None = None,
+        *,
+        executable_name: str = "gmsh",
+        command_prefix: tuple[str, ...] = (),
+    ) -> None:
+        self.executable_registry = executable_registry or ExecutablePathRegistry()
+        self.command_runner = command_runner or ExternalCommandRunner(
+            registry=self.executable_registry
+        )
+        self.executable_name = executable_name
+        self.command_prefix = tuple(str(part) for part in command_prefix)
+
+    def validate_request(self, request: GmshMeshRequest) -> DiagnosticReport:
+        report = DiagnosticReport()
+        if request.timeout_seconds <= 0:
+            report.add_error(
+                "gmsh-timeout-invalid",
+                "Gmsh timeout must be greater than zero seconds.",
+                hint="Use a positive timeout value.",
+            )
+        if request.geometry.kind is GmshGeometryKind.UNKNOWN:
+            report.add_error(
+                "gmsh-geometry-kind-unsupported",
+                "Gmsh geometry kind is unknown.",
+                hint="Choose rectangle, box, cylinder, sphere, or plate_with_hole.",
+            )
+        return report
+
+    def build_gmsh_command(
+        self,
+        request: GmshMeshRequest,
+        geo_path: str | Path,
+        output_msh_path: str | Path,
+    ) -> list[str]:
+        return [
+            self.executable_name,
+            *self.command_prefix,
+            str(geo_path),
+            f"-{request.mesh_dimension.numeric}",
+            "-format",
+            "msh2",
+            "-o",
+            str(output_msh_path),
+        ]
+
+    def generate_mesh(self, request: GmshMeshRequest) -> GmshMeshResult:
+        """Generate a mesh explicitly through the backend runner boundary."""
+
+        diagnostics = self.validate_request(request)
+        output_dir = request.output_dir.expanduser()
+        output_dir.mkdir(parents=True, exist_ok=True)
+        geo_path = output_dir / request.geo_filename
+        msh_path = output_dir / request.msh_filename
+        run_id = request.run_id or f"gmsh-{uuid.uuid4().hex[:12]}"
+        physical_groups = _physical_groups_for_request(request)
+
+        try:
+            if request.write_geo:
+                write_geo_script(request, geo_path)
+            else:
+                geo_path.write_text(generate_geo_script(request), encoding="utf-8", newline="\n")
+        except (GmshGeometryError, ValueError) as exc:
+            diagnostics.add_error(
+                "gmsh-geo-generation-failed",
+                str(exc),
+                hint="Check primitive geometry parameters before running Gmsh.",
+                path=geo_path,
+            )
+            return GmshMeshResult(
+                GmshMeshStatus.ERROR,
+                request,
+                geo_path=geo_path if geo_path.exists() else None,
+                physical_groups=physical_groups,
+                diagnostics=diagnostics,
+            )
+
+        resolution = find_gmsh_executable(self.executable_registry)
+        if not resolution.found:
+            diagnostics.extend(resolution.diagnostics)
+            artifacts = (RunArtifact(geo_path, "geo", "Generated Gmsh script.", "geo"),)
+            return GmshMeshResult(
+                GmshMeshStatus.DEPENDENCY_MISSING,
+                request,
+                geo_path=geo_path,
+                physical_groups=physical_groups,
+                diagnostics=diagnostics,
+                artifacts=artifacts,
+            )
+
+        command = self.build_gmsh_command(request, geo_path, msh_path)
+        run_result = self.command_runner.run(
+            RunRequest(
+                command,
+                cwd=output_dir,
+                timeout_policy=TimeoutPolicy(timeout_seconds=request.timeout_seconds),
+                artifact_patterns=(request.geo_filename, request.msh_filename),
+                run_id=run_id,
+                metadata={"adapter": "osw.gmsh", "request": request.to_dict()},
+                artifact_dir=output_dir,
+            )
+        )
+        diagnostics.extend(run_result.diagnostics)
+
+        if run_result.status is RunStatus.TIMED_OUT:
+            return _result(
+                GmshMeshStatus.TIMED_OUT,
+                request,
+                geo_path,
+                msh_path,
+                physical_groups,
+                diagnostics,
+                run_result,
+            )
+        if run_result.status is RunStatus.MISSING_EXECUTABLE:
+            return _result(
+                GmshMeshStatus.DEPENDENCY_MISSING,
+                request,
+                geo_path,
+                msh_path,
+                physical_groups,
+                diagnostics,
+                run_result,
+            )
+        if run_result.status is not RunStatus.COMPLETED:
+            return _result(
+                GmshMeshStatus.ERROR,
+                request,
+                geo_path,
+                msh_path,
+                physical_groups,
+                diagnostics,
+                run_result,
+            )
+        if not msh_path.exists():
+            diagnostics.add_error(
+                "gmsh-msh-artifact-missing",
+                "Gmsh completed but the expected .msh artifact was not produced.",
+                hint="Inspect stdout/stderr and the requested output path.",
+                path=msh_path,
+            )
+            return _result(
+                GmshMeshStatus.ERROR,
+                request,
+                geo_path,
+                msh_path,
+                physical_groups,
+                diagnostics,
+                run_result,
+            )
+
+        mesh_model = None
+        mesh_info = None
+        converted_path = None
+        status = GmshMeshStatus.OK
+        if request.convert_to_vtu:
+            read_result = read_mesh(msh_path)
+            diagnostics.extend(read_result.diagnostics)
+            if read_result.mesh is None:
+                status = GmshMeshStatus.WARNING
+            else:
+                mesh_model = read_result.mesh
+                mesh_info = read_result.mesh.info
+                export_result = _write_converted_vtu(
+                    mesh_model.to_mesh_data(),
+                    output_dir / request.vtu_filename,
+                )
+                diagnostics.extend(export_result[1])
+                converted_path = export_result[0]
+                if converted_path is None:
+                    status = GmshMeshStatus.WARNING
+        else:
+            read_result = read_mesh(msh_path)
+            if read_result.mesh is not None:
+                mesh_model = read_result.mesh
+                mesh_info = read_result.mesh.info
+            elif read_result.status is MeshImportStatus.DEPENDENCY_MISSING:
+                diagnostics.extend(read_result.diagnostics)
+                status = GmshMeshStatus.WARNING
+
+        artifacts = _dedupe_artifacts(
+            (
+                *run_result.artifacts,
+                RunArtifact(geo_path, "geo", "Generated Gmsh script.", "geo"),
+                RunArtifact(msh_path, "msh", "Generated Gmsh mesh artifact.", "msh"),
+                *(
+                    (RunArtifact(converted_path, "vtu", "Converted mesh preview.", "vtu"),)
+                    if converted_path is not None
+                    else ()
+                ),
+            )
+        )
+        return GmshMeshResult(
+            status,
+            request,
+            geo_path=geo_path,
+            msh_path=msh_path,
+            converted_mesh_path=converted_path,
+            mesh_model=mesh_model,
+            mesh_info=mesh_info,
+            physical_groups=physical_groups,
+            diagnostics=diagnostics,
+            run_result=run_result,
+            artifacts=artifacts,
+        )
+
+    def generate_mesh_from_project(
+        self,
+        project: object,
+        request_overrides: dict[str, Any] | None = None,
+    ) -> GmshMeshResult:
+        spec, report = geometry_spec_from_project(project)
+        overrides = dict(request_overrides or {})
+        output_dir = overrides.pop("output_dir", Path("artifacts") / "mesh")
+        request = default_box_request(output_dir) if spec is None else GmshMeshRequest(
+            geometry=spec,
+            output_dir=output_dir,
+            output_name=overrides.pop("output_name", spec.geometry_id or "gmsh_mesh"),
+            **overrides,
+        )
+        result = self.generate_mesh(request)
+        result.diagnostics.extend(report)
+        return result
+
+    def convert_result_to_mesh_ref(
+        self,
+        result: GmshMeshResult,
+        project_relative_path: str | None = None,
+    ) -> MeshRef:
+        return convert_result_to_mesh_ref(result, project_relative_path=project_relative_path)
+
+
+def convert_result_to_mesh_ref(
+    result: GmshMeshResult,
+    project_relative_path: str | None = None,
+) -> MeshRef:
+    path = result.converted_mesh_path or result.msh_path or result.geo_path or Path("")
+    mesh_info = result.mesh_info.to_dict() if result.mesh_info is not None else None
+    metadata = {
+        "generated_by": "osw.gmsh",
+        "generation": result.request.to_dict(),
+        "physical_groups": [group.to_dict() for group in result.physical_groups],
+        "diagnostics": result.diagnostics.to_dict(),
+    }
+    if mesh_info is not None:
+        metadata["mesh_info"] = mesh_info
+    return MeshRef(
+        id=result.request.output_name,
+        name=Path(path).name,
+        path=project_relative_path or str(path),
+        format=Path(path).suffix.lstrip("."),
+        status=(
+            "generated"
+            if result.status in {GmshMeshStatus.OK, GmshMeshStatus.WARNING}
+            else result.status.value
+        ),
+        cell_count=result.mesh_info.element_count if result.mesh_info else None,
+        node_count=result.mesh_info.node_count if result.mesh_info else None,
+        quality_summary=_quality_summary(result.mesh_info),
         mesh_info=mesh_info,
-        vtu_path=converted_vtu,
+        metadata=metadata,
     )
 
 
-def load_gmsh_mesh(path: str | Path, *, meshio_module: Any | None = None) -> MeshData:
-    """Load a Gmsh `.msh` file through the existing meshio bridge."""
+def generate_primitive_mesh(
+    primitive: GmshGeometrySpec,
+    output_path: str | Path,
+    *,
+    mesh_size: GmshMeshSizeField | None = None,
+    vtu_path: str | Path | None = None,
+    executable_registry: ExecutablePathRegistry | None = None,
+    command_runner: ExternalCommandRunner | None = None,
+    **_deprecated: Any,
+) -> GmshMeshResult:
+    """Compatibility helper that now uses the runner-backed adapter."""
 
+    target = Path(output_path)
+    request = GmshMeshRequest(
+        geometry=primitive,
+        mesh_dimension=(
+            GmshMeshDimension.DIM2
+            if primitive.kind in {GmshGeometryKind.RECTANGLE, GmshGeometryKind.PLATE_WITH_HOLE}
+            else GmshMeshDimension.DIM3
+        ),
+        mesh_size=mesh_size or GmshMeshSizeField(),
+        output_dir=target.parent if str(target.parent) else Path("."),
+        output_name=target.stem,
+        convert_to_vtu=vtu_path is not None,
+    )
+    result = GmshAdapter(
+        executable_registry=executable_registry,
+        command_runner=command_runner,
+    ).generate_mesh(request)
+    if vtu_path is not None and result.converted_mesh_path is not None:
+        requested_vtu = Path(vtu_path)
+        requested_vtu.parent.mkdir(parents=True, exist_ok=True)
+        requested_vtu.write_bytes(result.converted_mesh_path.read_bytes())
+        result = GmshMeshResult(
+            result.status,
+            result.request,
+            geo_path=result.geo_path,
+            msh_path=result.msh_path,
+            converted_mesh_path=requested_vtu,
+            mesh_model=result.mesh_model,
+            mesh_info=result.mesh_info,
+            physical_groups=result.physical_groups,
+            diagnostics=result.diagnostics,
+            run_result=result.run_result,
+            artifacts=(
+                *result.artifacts,
+                RunArtifact(requested_vtu, "vtu", "Converted mesh preview.", "vtu"),
+            ),
+        )
+    if result.status in {
+        GmshMeshStatus.ERROR,
+        GmshMeshStatus.DEPENDENCY_MISSING,
+        GmshMeshStatus.TIMED_OUT,
+    }:
+        raise GmshAdapterError(result.diagnostics.summary())
+    return result
+
+
+def load_gmsh_mesh(path: str | Path, *, meshio_module: Any | None = None) -> MeshData:
     return load_mesh(_msh_path(path), meshio_module=meshio_module)
 
 
 def load_gmsh_mesh_info(path: str | Path, *, meshio_module: Any | None = None) -> MeshInfo:
-    """Load preview-safe mesh metadata from a Gmsh `.msh` file."""
-
     return load_mesh_info(_msh_path(path), meshio_module=meshio_module)
 
 
@@ -225,21 +463,80 @@ def convert_gmsh_msh_to_vtu(
     *,
     meshio_module: Any | None = None,
 ) -> Path:
-    """Convert a Gmsh `.msh` output to VTU via meshio."""
-
     mesh_data = load_gmsh_mesh(msh_path, meshio_module=meshio_module)
     return export_vtu(mesh_data, vtu_path, meshio_module=meshio_module)
 
 
-def _load_gmsh() -> ModuleType:
+def _physical_groups_for_request(request: GmshMeshRequest) -> tuple[GmshPhysicalGroup, ...]:
+    if request.geometry.physical_groups:
+        return request.geometry.physical_groups
+    return default_physical_groups(request.geometry.kind, request.mesh_dimension)
+
+
+def _result(
+    status: GmshMeshStatus,
+    request: GmshMeshRequest,
+    geo_path: Path,
+    msh_path: Path,
+    physical_groups: tuple[GmshPhysicalGroup, ...],
+    diagnostics: DiagnosticReport,
+    run_result: object | None,
+) -> GmshMeshResult:
+    artifacts = (
+        RunArtifact(geo_path, "geo", "Generated Gmsh script.", "geo"),
+        RunArtifact(msh_path, "msh", "Generated Gmsh mesh artifact.", "msh"),
+    )
+    if hasattr(run_result, "artifacts"):
+        artifacts = _dedupe_artifacts((*run_result.artifacts, *artifacts))
+    return GmshMeshResult(
+        status,
+        request,
+        geo_path=geo_path,
+        msh_path=msh_path,
+        physical_groups=physical_groups,
+        diagnostics=diagnostics,
+        run_result=run_result if hasattr(run_result, "to_dict") else None,
+        artifacts=artifacts,
+    )
+
+
+def _write_converted_vtu(
+    mesh_data: MeshData,
+    target: Path,
+) -> tuple[Path | None, DiagnosticReport]:
+    report = DiagnosticReport()
     try:
-        return import_module("gmsh")
-    except ImportError as exc:
-        msg = (
-            "gmsh is not installed. Install the optional mesh extra, for example "
-            "`pip install open-solver-workbench[mesh]`, before generating Gmsh meshes."
+        converted = export_vtu(mesh_data, target)
+    except Exception as exc:
+        report.add_warning(
+            DiagnosticCode.DEPENDENCY_UNAVAILABLE,
+            f"Could not convert Gmsh .msh artifact to VTU: {exc}",
+            hint="Install meshio or keep the generated .msh artifact.",
+            path=target,
         )
-        raise GmshAdapterError(msg) from exc
+        return None, report
+    return converted, report
+
+
+def _dedupe_artifacts(artifacts: tuple[RunArtifact, ...]) -> tuple[RunArtifact, ...]:
+    seen: set[tuple[str, str]] = set()
+    unique: list[RunArtifact] = []
+    for artifact in artifacts:
+        key = (str(artifact.path), artifact.role)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(artifact)
+    return tuple(unique)
+
+
+def _quality_summary(info: MeshInfo | None) -> str:
+    if info is None:
+        return ""
+    return (
+        f"{info.node_count} nodes, {info.element_count} elements, "
+        f"cell types: {', '.join(info.cell_types) or 'none'}"
+    )
 
 
 def _msh_path(path: str | Path) -> Path:
@@ -248,58 +545,3 @@ def _msh_path(path: str | Path) -> Path:
         msg = "Gmsh mesh path must use the .msh extension."
         raise GmshAdapterError(msg)
     return target
-
-
-def _apply_mesh_size(gmsh: Any, control: MeshSizeControl) -> None:
-    gmsh.option.setNumber("Mesh.CharacteristicLengthMin", control.effective_min)
-    gmsh.option.setNumber("Mesh.CharacteristicLengthMax", control.effective_max)
-
-
-def _add_primitive(gmsh: Any, primitive: GmshPrimitive) -> int:
-    x, y, z = primitive.origin
-    dx, dy, dz = primitive.dimensions
-    if primitive.kind == "plate":
-        return int(gmsh.model.occ.addRectangle(x, y, z, dx, dy))
-    if primitive.kind == "box":
-        return int(gmsh.model.occ.addBox(x, y, z, dx, dy, dz))
-    msg = f"Unsupported Gmsh primitive kind: {primitive.kind}"
-    raise GmshAdapterError(msg)
-
-
-def _add_domain_physical_group(
-    gmsh: Any,
-    primitive: GmshPrimitive,
-    entity_tag: int,
-) -> PhysicalGroupMetadata:
-    physical_tag = 1
-    gmsh.model.addPhysicalGroup(primitive.mesh_dimension, [entity_tag], physical_tag)
-    gmsh.model.setPhysicalName(primitive.mesh_dimension, physical_tag, primitive.name)
-    return PhysicalGroupMetadata(
-        name=primitive.name,
-        dimension=primitive.mesh_dimension,
-        tag=physical_tag,
-        entities=(entity_tag,),
-    )
-
-
-def _point3d(values: tuple[float, float, float], *, label: str) -> Point3D:
-    if len(values) != 3:
-        msg = f"Gmsh primitive {label} must contain exactly three values."
-        raise GmshAdapterError(msg)
-    return (float(values[0]), float(values[1]), float(values[2]))
-
-
-def _validate_primitive(kind: PrimitiveKind, dimensions: Point3D) -> None:
-    dx, dy, dz = dimensions
-    if kind == "plate":
-        if dx <= 0 or dy <= 0:
-            msg = "Gmsh plate width and height must be positive."
-            raise GmshAdapterError(msg)
-        return
-    if kind == "box":
-        if dx <= 0 or dy <= 0 or dz <= 0:
-            msg = "Gmsh box width, depth, and height must be positive."
-            raise GmshAdapterError(msg)
-        return
-    msg = f"Unsupported Gmsh primitive kind: {kind}"
-    raise GmshAdapterError(msg)
