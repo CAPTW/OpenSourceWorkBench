@@ -116,8 +116,11 @@ class MainWindow(_BaseMainWindow):
         self.gmsh_mesh_dialog: object | None = None
         self.calculix_deck_dialog: object | None = None
         self.openfoam_template_dialog: object | None = None
+        self.result_viewer_dialog: object | None = None
+        self.result_viewer: object | None = None
         self.plot_viewer_dialog: object | None = None
         self.plot_viewer: object | None = None
+        self.result_catalog: object | None = None
         self.last_figure_dataset: object | None = None
         self.last_result_datasets: tuple[object, ...] = ()
         self.preferences_dialog: object | None = None
@@ -295,6 +298,11 @@ class MainWindow(_BaseMainWindow):
             "set_theme_tokens",
         ):
             self.openfoam_template_dialog.set_theme_tokens(tokens)
+        if self.result_viewer is not None and hasattr(
+            self.result_viewer,
+            "set_theme_tokens",
+        ):
+            self.result_viewer.set_theme_tokens(tokens)
 
     def _on_top_bar_action_triggered(self, label: str) -> None:
         if label == "New":
@@ -395,6 +403,7 @@ class MainWindow(_BaseMainWindow):
             self.project_tree_panel.set_project(project)
         if hasattr(self.properties_panel, "set_project"):
             self.properties_panel.set_project(project)
+        self.refresh_results_from_project(update_report=False)
         self.generate_report_preview(log=False)
 
     def build_current_report_summary(self) -> object:
@@ -411,7 +420,7 @@ class MainWindow(_BaseMainWindow):
             self.current_project,
             figure_datasets=figure_datasets,
             plugin_health=self.plugin_health_map,
-            result_tables=_result_tables_from_datasets(self.last_result_datasets),
+            result_tables=_result_tables_from_datasets(self._result_datasets_for_report()),
         )
 
     def generate_report_preview(self, _checked: bool = False, *, log: bool = True) -> object:
@@ -448,6 +457,7 @@ class MainWindow(_BaseMainWindow):
             ReportBuildRequest(project=self.current_project, output_path=target, format="html"),
             figure_datasets=figure_datasets,
             plugin_health=self.plugin_health_map,
+            result_tables=_result_tables_from_datasets(self._result_datasets_for_report()),
         )
         if hasattr(self.properties_panel.report_preview_panel, "set_report_summary"):
             self.properties_panel.report_preview_panel.set_report_summary(result.summary)
@@ -747,6 +757,14 @@ class MainWindow(_BaseMainWindow):
             parts.append(f"max stress {float(max_stress):.6g}")
         summary = ", ".join(parts) if parts else "no scalar summaries found"
         self.run_monitor.append_log(f"Parsed CalculiX results: {summary}.", level="info")
+        try:
+            parser_module = __import__(
+                "osw.solvers.calculix.result_parser",
+                fromlist=["calculix_results_to_result_dataset"],
+            )
+            self.add_result_dataset(parser_module.calculix_results_to_result_dataset(parsed))
+        except Exception:
+            return
 
     def open_openfoam_template_dialog(self, _checked: bool = False) -> object:
         """Open the safe OpenFOAM template dialog."""
@@ -807,8 +825,7 @@ class MainWindow(_BaseMainWindow):
             dataset = result_module.result_dataset_from_openfoam_run(result)
         except Exception:
             return
-        self.last_result_datasets = (*self.last_result_datasets, dataset)
-        self.generate_report_preview(log=False)
+        self.add_result_dataset(dataset)
 
     def _on_script_run_completed(self, result: object) -> None:
         status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
@@ -832,7 +849,82 @@ class MainWindow(_BaseMainWindow):
         self.last_figure_dataset = dataset
         if self.plot_viewer is not None and hasattr(self.plot_viewer, "set_figure_dataset"):
             self.plot_viewer.set_figure_dataset(dataset)
+        self.refresh_results_from_project(update_report=False)
         self.generate_report_preview(log=False)
+
+    def set_result_catalog(self, catalog: object) -> None:
+        """Set the current result catalog without executing solvers or scripts."""
+
+        self.result_catalog = catalog
+        if self.result_viewer is not None and hasattr(self.result_viewer, "set_result_catalog"):
+            self.result_viewer.set_result_catalog(catalog)
+        self.generate_report_preview(log=False)
+
+    def current_result_catalog(self) -> object | None:
+        return self.result_catalog
+
+    def add_result_dataset(self, dataset: object) -> None:
+        """Append a structured ResultDataset and refresh safe viewer/report state."""
+
+        self.last_result_datasets = (*self.last_result_datasets, dataset)
+        catalog = self.refresh_results_from_project(update_report=False)
+        if hasattr(catalog, "to_dict"):
+            from osw.core.result_dataset import ResultCatalog
+
+            catalog = ResultCatalog(
+                catalog_id=getattr(catalog, "catalog_id", ""),
+                project_name=getattr(catalog, "project_name", ""),
+                datasets=getattr(catalog, "datasets", ()),
+                selected_dataset_id=str(getattr(dataset, "dataset_id", "")),
+                diagnostics=getattr(catalog, "diagnostics", ()),
+                metadata=getattr(catalog, "metadata", {}),
+            )
+        self.set_result_catalog(catalog)
+
+    def refresh_results_from_project(self, *, update_report: bool = True) -> object:
+        """Refresh the result catalog from project summaries and cached datasets."""
+
+        from osw.post.result_view_model import result_catalog_from_project
+
+        figure_datasets = (
+            (self.last_figure_dataset,)
+            if self.last_figure_dataset is not None
+            else ()
+        )
+        catalog = result_catalog_from_project(
+            self.current_project,
+            extra_datasets=self.last_result_datasets,
+            figure_datasets=figure_datasets,
+        )
+        self.result_catalog = catalog
+        if self.result_viewer is not None and hasattr(self.result_viewer, "set_result_catalog"):
+            self.result_viewer.set_result_catalog(catalog)
+        if update_report:
+            self.generate_report_preview(log=False)
+        return catalog
+
+    def open_result_viewer(self, _checked: bool = False) -> object:
+        """Open the unified result viewer without executing external tools."""
+
+        from osw.gui.result_viewer import ResultViewer
+
+        if self.result_catalog is None:
+            self.refresh_results_from_project(update_report=False)
+        if self.result_viewer_dialog is None:
+            self.result_viewer_dialog = QtWidgets.QDialog(self)
+            self.result_viewer_dialog.setObjectName("oswResultViewerDialog")
+            self.result_viewer_dialog.setWindowTitle("Result Viewer")
+            layout = QtWidgets.QVBoxLayout(self.result_viewer_dialog)
+            self.result_viewer = ResultViewer(self.result_viewer_dialog)
+            layout.addWidget(self.result_viewer)
+            if hasattr(self.result_viewer, "set_theme_tokens"):
+                self.result_viewer.set_theme_tokens(self.theme_manager.current_tokens)
+        if self.result_catalog is not None and hasattr(self.result_viewer, "set_result_catalog"):
+            self.result_viewer.set_result_catalog(self.result_catalog)
+        self.result_viewer_dialog.show()
+        self.result_viewer_dialog.raise_()
+        self.result_viewer_dialog.activateWindow()
+        return self.result_viewer_dialog
 
     def open_plot_viewer(self, dataset: object | None = None) -> object:
         """Open a lightweight FigureDataset viewer without running scripts."""
@@ -863,6 +955,13 @@ class MainWindow(_BaseMainWindow):
     def _placeholder_action(self, label: str) -> None:
         if hasattr(self.run_monitor, "append_log"):
             self.run_monitor.append_log(f"{label} action selected", level="info")
+
+    def _result_datasets_for_report(self) -> tuple[object, ...]:
+        if self.result_catalog is not None:
+            datasets = getattr(self.result_catalog, "datasets", ())
+            if datasets:
+                return tuple(datasets)
+        return tuple(self.last_result_datasets)
 
 
 def _action_object_name(action_title: str) -> str:

@@ -1,0 +1,44 @@
+{
+  "diagnostics": {
+    "messages": []
+  },
+  "metadata": {},
+  "source_path": "tests/fixtures/mat/numeric_arrays.mat",
+  "variables": [
+    {
+      "dtype": "float64",
+      "is_complex": false,
+      "is_numeric": true,
+      "is_sparse": false,
+      "kind": "numeric",
+      "max_value": 3.0,
+      "mean_value": 2.0,
+      "metadata": {},
+      "min_value": 1.0,
+      "name": "time",
+      "preview": "[1, 2, 3]",
+      "shape": [3],
+      "size": 3,
+      "source_file": "tests/fixtures/mat/numeric_arrays.mat",
+      "type_name": "numeric"
+    },
+    {
+      "dtype": "float64",
+      "is_complex": false,
+      "is_numeric": true,
+      "is_sparse": false,
+      "kind": "numeric",
+      "max_value": 330.0,
+      "mean_value": 320.0,
+      "metadata": {},
+      "min_value": 310.0,
+      "name": "temperature",
+      "preview": "[310, 320, 330]",
+      "shape": [3],
+      "size": 3,
+      "source_file": "tests/fixtures/mat/numeric_arrays.mat",
+      "type_name": "numeric"
+    }
+  ],
+  "version": "v7"
+}

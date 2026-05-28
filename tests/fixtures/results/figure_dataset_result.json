@@ -1,0 +1,49 @@
+{
+  "artifacts": [],
+  "created_at": "2026-01-01T00:00:00Z",
+  "dataset_id": "figure-fixture",
+  "diagnostics": {
+    "messages": []
+  },
+  "engine": "fixture",
+  "figures": [
+    {
+      "axes": [],
+      "created_at": "2026-01-01T00:00:00Z",
+      "data_path": "",
+      "diagnostics": {
+        "messages": []
+      },
+      "figure_id": "fig-1",
+      "format": "png",
+      "image_path": "tests/fixtures/figures/simple_plot.png",
+      "metadata": {},
+      "pdf_path": "",
+      "raw_plot_data": null,
+      "reproducible_python": null,
+      "source_run_id": "run-figure",
+      "source_script": "plot_fixture.m",
+      "thumbnail_path": "",
+      "title": "Simple Plot",
+      "vector_path": ""
+    }
+  ],
+  "metadata": {},
+  "source_run_id": "run-figure",
+  "source_script": "plot_fixture.m",
+  "stderr": "",
+  "stdout": "",
+  "warnings": [],
+  "workspace_variables": [
+    {
+      "dtype": "float64",
+      "metadata": {},
+      "name": "temperature",
+      "preview": "[300, 310]",
+      "shape": [2],
+      "size": 2,
+      "source": "workspace_summary.json",
+      "type_name": "numeric"
+    }
+  ]
+}

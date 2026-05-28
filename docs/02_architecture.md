@@ -138,3 +138,15 @@ through `ExecutablePathRegistry` without executing them, and runs only explicit
 summaries can be bridged into `ResultDataset` and reports, but OSW v0.1 does
 not provide a full OpenFOAM case editor, multiphase/reacting flow support, or
 field visualization pipeline. See `docs/27_openfoam_template_binding.md`.
+
+## Result Viewer Dataset Binding
+
+Unified result viewer binding lives across `osw.core.result_dataset`,
+`osw.post.result_view_model`, and PySide6 viewer widgets. Core/post models
+remain GUI-free and optional-dependency-light; GUI widgets consume
+`ResultCatalog` and `ResultDataset` summaries without running solvers, scripts,
+external commands, or heavy 3D renderers. CalculiX parsed summaries, OpenFOAM
+residuals, FigureDataset records, MAT workspace variables, BoundaryCurve series,
+and MeshInfo summaries can be normalized into scalar, series, table, figure,
+artifact, and diagnostic records. See
+`docs/28_result_viewer_dataset_binding.md`.

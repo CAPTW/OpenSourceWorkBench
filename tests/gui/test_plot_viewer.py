@@ -76,3 +76,21 @@ def test_plot_viewer_theme_updates(app: object) -> None:
 
     assert viewer.styleSheet()
     del app
+
+
+def test_result_viewer_hands_figure_dataset_to_plot_viewer(app: object) -> None:
+    from osw.gui.plot_viewer import PlotViewer
+    from osw.gui.result_viewer import ResultViewer
+    from osw.scripts.mscript.figure_capture import figure_dataset_from_artifacts
+
+    dataset = figure_dataset_from_artifacts((FIXTURES / "simple_plot.png",), dataset_id="handoff")
+    result_viewer = ResultViewer()
+    plot_viewer = PlotViewer()
+
+    result_viewer.set_figure_dataset(dataset)
+    transferred = result_viewer.handoff_to_plot_viewer(plot_viewer)
+
+    assert transferred
+    assert plot_viewer.current_dataset() is dataset
+    assert plot_viewer.figure_list.count() == 1
+    del app

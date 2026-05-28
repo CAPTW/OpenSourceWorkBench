@@ -1,0 +1,19 @@
+{
+  "analysis_type": "generic",
+  "dataset_id": "broken-artifact",
+  "fields": [],
+  "metadata": {
+    "artifacts": [
+      {
+        "format": "png",
+        "path": "tests/fixtures/results/missing_image.png",
+        "role": "figure"
+      }
+    ],
+    "kind": "generic_table"
+  },
+  "solver": "fixture",
+  "source": "tests/fixtures/results/missing_image.png",
+  "summaries": {},
+  "warnings": []
+}

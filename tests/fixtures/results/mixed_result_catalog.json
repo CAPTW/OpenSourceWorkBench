@@ -1,0 +1,56 @@
+{
+  "catalog_id": "mixed-results",
+  "datasets": [
+    {
+      "analysis_type": "linear_static",
+      "dataset_id": "cantilever-summary",
+      "fields": [],
+      "metadata": {
+        "kind": "calculix_summary"
+      },
+      "solver": "CalculiX",
+      "source": "tests/fixtures/calculix/results/simple_success.dat",
+      "summaries": {
+        "max_displacement": {
+          "name": "max_displacement",
+          "source_field": "calculix.dat",
+          "unit": "m",
+          "value": 0.001234
+        }
+      },
+      "warnings": []
+    },
+    {
+      "analysis_type": "incompressible_cfd_residuals",
+      "dataset_id": "duct-residuals",
+      "fields": [
+        {
+          "components": ["Ux", "p"],
+          "location": "global",
+          "name": "residuals",
+          "rows": [
+            {
+              "entity_id": 1,
+              "values": {
+                "Ux": 0.001,
+                "p": 0.004
+              }
+            }
+          ],
+          "unit": ""
+        }
+      ],
+      "metadata": {
+        "kind": "openfoam_residuals"
+      },
+      "solver": "OpenFOAM",
+      "source": "tests/fixtures/openfoam/residual_simple.log",
+      "summaries": {},
+      "warnings": []
+    }
+  ],
+  "diagnostics": [],
+  "metadata": {},
+  "project_name": "MixedResults",
+  "selected_dataset_id": "cantilever-summary"
+}

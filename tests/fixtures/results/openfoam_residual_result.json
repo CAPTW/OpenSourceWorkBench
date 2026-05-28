@@ -1,0 +1,53 @@
+{
+  "analysis_type": "incompressible_cfd_residuals",
+  "dataset_id": "duct-residuals",
+  "fields": [
+    {
+      "components": ["Ux", "Uy", "Uz", "p"],
+      "location": "global",
+      "name": "residuals",
+      "rows": [
+        {
+          "entity_id": 1,
+          "values": {
+            "Ux": 0.001,
+            "Uy": 0.002,
+            "Uz": 0.003,
+            "p": 0.004
+          }
+        },
+        {
+          "entity_id": 2,
+          "values": {
+            "Ux": 1e-06,
+            "Uy": 2e-06,
+            "Uz": 3e-06,
+            "p": 4e-06
+          }
+        }
+      ],
+      "unit": ""
+    }
+  ],
+  "metadata": {
+    "iteration_count": 2,
+    "kind": "openfoam_residuals"
+  },
+  "solver": "OpenFOAM",
+  "source": "tests/fixtures/openfoam/residual_simple.log",
+  "summaries": {
+    "final_residual_Ux": {
+      "name": "final_residual_Ux",
+      "source_field": "Ux",
+      "unit": "",
+      "value": 1e-06
+    },
+    "final_residual_p": {
+      "name": "final_residual_p",
+      "source_field": "p",
+      "unit": "",
+      "value": 4e-06
+    }
+  },
+  "warnings": []
+}

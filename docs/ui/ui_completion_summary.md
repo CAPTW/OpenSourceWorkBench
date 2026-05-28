@@ -241,3 +241,10 @@ without OpenFOAM installed, and an explicit run action delegates to
 `OpenFOAMRunner`/`ExternalCommandRunner`. The GUI shows diagnostics and residual
 summaries but does not provide a full OpenFOAM editor, multiphase workflow, or
 direct subprocess path.
+
+`OSW-FUNC-017_RESULT_VIEWER_DATASET_BINDING` binds existing result summaries to
+a unified ResultViewer surface. The viewer accepts ResultCatalog/ResultDataset
+records, shows scalar cards, residual series, workspace tables, figures,
+artifacts, and diagnostics, and keeps the original QPainter viewport as the
+default fallback. The GUI still does not run solvers, scripts, external
+commands, or mandatory heavy visualization dependencies.

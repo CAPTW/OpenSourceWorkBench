@@ -371,6 +371,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="Parse residual summaries from an OpenFOAM case directory.",
     )
     openfoam_results_summary_parser.add_argument("case_dir", help="Case directory.")
+    result_dataset_parser = subparsers.add_parser(
+        "result-dataset-inspect",
+        help="Inspect a ResultDataset/FigureDataset/MAT/BoundaryCurve JSON file.",
+    )
+    result_dataset_parser.add_argument("path", help="Dataset JSON path.")
+    result_dataset_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    result_catalog_parser = subparsers.add_parser(
+        "result-catalog-inspect",
+        help="Inspect a ResultCatalog JSON file.",
+    )
+    result_catalog_parser.add_argument("path", help="ResultCatalog JSON path.")
+    result_catalog_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    result_catalog_from_project_parser = subparsers.add_parser(
+        "result-catalog-from-project",
+        help="Build a ResultCatalog from ProjectSchema summaries without execution.",
+    )
+    result_catalog_from_project_parser.add_argument("project", help="Project JSON/YAML path.")
+    result_catalog_from_project_parser.add_argument("--out", required=True, help="Output JSON.")
+    result_dataset_export_parser = subparsers.add_parser(
+        "result-dataset-export-json",
+        help="Normalize supported result JSON input to ResultDataset JSON.",
+    )
+    result_dataset_export_parser.add_argument("input", help="Input JSON path.")
+    result_dataset_export_parser.add_argument("--out", required=True, help="Output JSON path.")
     mscript_preview_parser = subparsers.add_parser(
         "mscript-preview",
         help="Preview a MATLAB/Octave .m file without executing it.",
@@ -997,6 +1021,59 @@ def main(argv: Sequence[str] | None = None) -> int:
         summary = parse_openfoam_case_logs(Path(args.case_dir))
         _print_openfoam_residual_summary(summary)
         return 1 if summary.diagnostics.has_errors else 0
+
+    if args.command == "result-dataset-inspect":
+        dataset = _load_result_dataset_source(Path(args.path))
+        if args.json:
+            import json
+
+            print(json.dumps(dataset.to_dict(), indent=2, sort_keys=True))
+        else:
+            _print_result_dataset_summary(dataset)
+        return 0
+
+    if args.command == "result-catalog-inspect":
+        import json
+
+        from osw.core.result_dataset import ResultCatalog
+
+        payload = json.loads(Path(args.path).read_text(encoding="utf-8"))
+        catalog = ResultCatalog.from_dict(payload)
+        if args.json:
+            print(json.dumps(catalog.to_dict(), indent=2, sort_keys=True))
+        else:
+            _print_result_catalog_summary(catalog)
+        return 0
+
+    if args.command == "result-catalog-from-project":
+        from osw.core.project_io import load_project
+        from osw.core.validation import ProjectSchemaError
+        from osw.post.result_view_model import result_catalog_from_project
+
+        try:
+            project = load_project(Path(args.project))
+        except ProjectSchemaError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        catalog = result_catalog_from_project(project)
+        output = Path(args.out)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        import json
+
+        output.write_text(json.dumps(catalog.to_dict(), indent=2, sort_keys=True), encoding="utf-8")
+        print(f"Wrote ResultCatalog JSON: {output}")
+        _print_result_catalog_summary(catalog)
+        return 0
+
+    if args.command == "result-dataset-export-json":
+        import json
+
+        dataset = _load_result_dataset_source(Path(args.input))
+        output = Path(args.out)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(dataset.to_dict(), indent=2, sort_keys=True), encoding="utf-8")
+        print(f"Wrote ResultDataset JSON: {output}")
+        return 0
 
     if args.command == "mscript-preview":
         from osw.scripts.mscript.importer import preview_mscript
@@ -1628,6 +1705,95 @@ def _print_openfoam_residual_summary(summary: object) -> None:
     diagnostics = getattr(summary, "diagnostics", None)
     if diagnostics is not None and getattr(diagnostics, "messages", ()):
         print(diagnostics.summary(), file=sys.stderr)
+
+
+def _load_result_dataset_source(path: Path) -> object:
+    import json
+
+    from osw.core.boundary_curve import BoundaryCurve
+    from osw.core.result_dataset import ResultCatalog, ResultDataset
+    from osw.post.result_view_model import (
+        boundary_curve_to_view_dataset,
+        figure_dataset_to_view_dataset,
+        mat_summary_to_view_dataset,
+    )
+    from osw.scripts.mscript.figure_dataset import FigureDataset
+    from osw.scripts.mscript.mat_model import MatFileSummary, MatReadResult
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        msg = f"Could not read result dataset JSON: {path}"
+        raise SystemExit(msg) from exc
+    except json.JSONDecodeError as exc:
+        msg = f"Invalid JSON result dataset: {path}: {exc}"
+        raise SystemExit(msg) from exc
+    if not isinstance(payload, dict):
+        msg = "Result dataset JSON must contain an object."
+        raise SystemExit(msg)
+    if "datasets" in payload:
+        selected = ResultCatalog.from_dict(payload).selected_dataset()
+        if selected is None:
+            msg = "ResultCatalog does not contain datasets."
+            raise SystemExit(msg)
+        return selected
+    if "fields" in payload or "summaries" in payload:
+        return ResultDataset.from_dict(payload)
+    if "figures" in payload and "workspace_variables" in payload:
+        return figure_dataset_to_view_dataset(FigureDataset.from_dict(payload))
+    if "curve_id" in payload:
+        return boundary_curve_to_view_dataset(BoundaryCurve.from_dict(payload))
+    if "summary" in payload:
+        return mat_summary_to_view_dataset(MatReadResult.from_dict(payload))
+    if "variables" in payload and "version" in payload:
+        return mat_summary_to_view_dataset(MatFileSummary.from_dict(payload))
+    return ResultDataset.from_dict(payload)
+
+
+def _print_result_dataset_summary(dataset: object) -> None:
+    from osw.post.result_view_model import result_dataset_summary, result_dataset_to_view_model
+
+    summary = result_dataset_summary(dataset)
+    view_model = result_dataset_to_view_model(dataset)
+    print(f"ResultDataset: {summary.dataset_id}")
+    print(f"Title: {summary.title}")
+    print(f"Kind: {summary.kind}")
+    print(f"Source: {summary.source or 'Not recorded'}")
+    print(f"Scalars: {summary.scalar_count}")
+    for scalar in view_model.scalars:
+        print(f"  - {scalar.name}: {scalar.value} {scalar.unit}".rstrip())
+    print(f"Series: {summary.series_count}")
+    for series in view_model.series:
+        print(f"  - {series.name}: {len(series.y_values)} point(s)")
+    print(f"Tables: {summary.table_count}")
+    print(f"Figures: {summary.figure_count}")
+    print(f"Artifacts: {summary.artifact_count}")
+    for artifact in view_model.artifacts:
+        state = "exists" if artifact.exists else "missing"
+        print(f"  - {artifact.role}: {artifact.path} [{state}]")
+    if view_model.diagnostics:
+        print("Diagnostics:", file=sys.stderr)
+        for diagnostic in view_model.diagnostics:
+            print(f"  - {diagnostic}", file=sys.stderr)
+
+
+def _print_result_catalog_summary(catalog: object) -> None:
+    from osw.post.result_view_model import result_dataset_summary
+
+    datasets = tuple(getattr(catalog, "datasets", ()) or ())
+    print(f"ResultCatalog: {getattr(catalog, 'catalog_id', '')}")
+    print(f"Project: {getattr(catalog, 'project_name', '') or 'Not recorded'}")
+    print(f"Datasets: {len(datasets)}")
+    selected = getattr(catalog, "selected_dataset_id", "")
+    if selected:
+        print(f"Selected: {selected}")
+    for dataset in datasets:
+        summary = result_dataset_summary(dataset)
+        print(
+            f"- {summary.dataset_id}: {summary.title} "
+            f"({summary.kind}, {summary.scalar_count} scalar(s), "
+            f"{summary.series_count} series)"
+        )
 
 
 def _print_mscript_preview(preview: object) -> None:

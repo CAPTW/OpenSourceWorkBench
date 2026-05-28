@@ -48,6 +48,28 @@ class TableViewer(_BaseWidget):
         )
         self.table.resizeColumnsToContents()
 
+    def load_result_table(self, table: object) -> None:
+        """Load a core ResultTable-like object without requiring report modules."""
+
+        columns = tuple(str(item) for item in getattr(table, "columns", ()) or ())
+        rows = tuple(
+            tuple(str(cell) for cell in row)
+            for row in getattr(table, "rows", ()) or ()
+        )
+        self.table.clear()
+        self.table.setColumnCount(len(columns))
+        self.table.setRowCount(len(rows))
+        self.table.setHorizontalHeaderLabels(list(columns))
+        for row_index, row in enumerate(rows):
+            for column_index, value in enumerate(row):
+                self.table.setItem(row_index, column_index, QtWidgets.QTableWidgetItem(value))
+        title = str(getattr(table, "title", "") or "Result table")
+        truncated = " (truncated)" if getattr(table, "truncated", False) else ""
+        self.summary_label.setText(
+            f"{title}: {len(rows)} row(s), {len(columns)} column(s){truncated}"
+        )
+        self.table.resizeColumnsToContents()
+
 
 def build_table_viewer(parent: object | None = None) -> object:
     return TableViewer(parent)

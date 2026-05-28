@@ -144,6 +144,30 @@ def test_run_menu_contains_calculix_deck_preview_action(app: object) -> None:
     )
 
 
+def test_main_window_result_catalog_api_is_safe(app: object) -> None:
+    from osw.core.result_dataset import ResultDataset, ResultSummaryValue
+    from osw.gui.main_window import MainWindow
+
+    window = MainWindow()
+    dataset = ResultDataset(
+        dataset_id="manual-result",
+        source="manual",
+        solver="fixture",
+        analysis_type="summary",
+        summaries=(ResultSummaryValue("value", 1.0, "", "test"),),
+    )
+
+    window.add_result_dataset(dataset)
+    catalog = window.current_result_catalog()
+    dialog = window.open_result_viewer()
+
+    assert catalog is not None
+    assert any(item.dataset_id == "manual-result" for item in catalog.datasets)
+    assert dialog.objectName() == "oswResultViewerDialog"
+    assert window.result_viewer is not None
+    assert window.result_viewer.objectName() == "oswResultViewer"
+
+
 def test_toolbar_contains_reference_actions(app: object) -> None:
     from osw.gui.main_window import MainWindow
 
