@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from .boundary_curve_bridge import (
+    boundary_curve_from_csv_file,
+    boundary_curve_from_figure_dataset,
     boundary_curve_from_mat_preview,
+    boundary_curve_from_mat_summary,
     boundary_curve_from_workspace_variables,
 )
 from .execution_policy import OctaveExecutionPolicy
@@ -136,7 +139,10 @@ __all__ = [
     "ScriptLanguage",
     "ScriptPreview",
     "WorkspaceVariableSummary",
+    "boundary_curve_from_csv_file",
+    "boundary_curve_from_figure_dataset",
     "boundary_curve_from_mat_preview",
+    "boundary_curve_from_mat_summary",
     "boundary_curve_from_workspace_variables",
     "capture_existing_figures",
     "capture_octave_figures",

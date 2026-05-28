@@ -48,6 +48,7 @@ class PropertiesPanel(_BaseWidget):
         self._current_project: Project | None = None
         self._mesh_by_label: dict[str, object] = {}
         self._script_by_label: dict[str, object] = {}
+        self._curve_by_label: dict[str, object] = {}
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -104,6 +105,9 @@ class PropertiesPanel(_BaseWidget):
         script = self._selected_script_ref()
         if script is not None:
             return _script_row_value(script, name)
+        curve = self._selected_boundary_curve()
+        if curve is not None:
+            return _curve_row_value(curve, name)
         return ""
 
     def set_node_selection(self, selection: str) -> None:
@@ -114,6 +118,9 @@ class PropertiesPanel(_BaseWidget):
 
     def _selected_script_ref(self) -> object | None:
         return self._script_by_label.get(self._selection)
+
+    def _selected_boundary_curve(self) -> object | None:
+        return self._curve_by_label.get(self._selection)
 
     def set_project(self, project: Project) -> None:
         self._current_project = project
@@ -131,6 +138,10 @@ class PropertiesPanel(_BaseWidget):
             _script_label(script): script
             for script in project.script_refs
         }
+        self._curve_by_label = {
+            _curve_label(curve): curve
+            for curve in project.boundary_curves
+        }
         material = project.materials[0] if project.materials else None
         if material is not None:
             self.material_section.set_material_library(material.library or "project")
@@ -143,7 +154,7 @@ class PropertiesPanel(_BaseWidget):
                     {
                         "Name": boundary.name,
                         "Type": boundary.type or boundary.kind,
-                        "Value": boundary.value or _values_summary(boundary.values),
+                        "Value": _boundary_value_summary(boundary),
                     }
                     for boundary in physics.boundary_conditions
                 ]
@@ -289,6 +300,13 @@ def _values_summary(values: dict[str, object]) -> str:
     return ", ".join(f"{key}={value}" for key, value in values.items())
 
 
+def _boundary_value_summary(boundary: object) -> str:
+    curve_id = str(getattr(boundary, "curve_id", "") or "")
+    if curve_id:
+        return f"Curve: {curve_id}"
+    return str(getattr(boundary, "value", "") or _values_summary(getattr(boundary, "values", {})))
+
+
 def _format_tolerance(value: object) -> str:
     try:
         numeric = float(value)  # type: ignore[arg-type]
@@ -430,4 +448,33 @@ def _script_row_value(script: object, name: str) -> str:
         return str(getattr(script, "status", "") or "")
     if name == "Safe preview required":
         return str(getattr(script, "safe_preview_required", True))
+    return ""
+
+
+def _curve_label(curve: object) -> str:
+    return str(getattr(curve, "name", "") or getattr(curve, "curve_id", ""))
+
+
+def _curve_row_value(curve: object, name: str) -> str:
+    if name in {"Curve", "Name"}:
+        return _curve_label(curve)
+    if name in {"Curve kind", "Kind"}:
+        return str(getattr(curve, "kind", ""))
+    if name in {"Points", "Point count"}:
+        return str(getattr(curve, "point_count", ""))
+    if name in {"X unit", "Independent unit"}:
+        return str(getattr(curve, "x_unit", ""))
+    if name in {"Y unit", "Dependent unit"}:
+        return str(getattr(curve, "y_unit", ""))
+    if name == "Interpolation":
+        return str(getattr(curve, "interpolation", ""))
+    if name == "Source":
+        source = getattr(curve, "source", None)
+        if source is None:
+            return ""
+        return str(
+            getattr(source, "source_file", "")
+            or getattr(source, "source_dataset_id", "")
+            or getattr(source, "source_run_id", "")
+        )
     return ""

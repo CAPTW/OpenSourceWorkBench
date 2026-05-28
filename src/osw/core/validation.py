@@ -378,7 +378,8 @@ def _check_boundary_condition(
     if not str(getattr(boundary_condition, "target", "") or ""):
         report.add_error(f"{path}.target", "Boundary condition target is required.")
     values = getattr(boundary_condition, "values", {}) or {}
-    if not values:
+    curve_id = str(getattr(boundary_condition, "curve_id", "") or "")
+    if not values and not curve_id:
         report.add_warning(
             f"{path}.values",
             "Boundary condition has no values; verify the constraint or load definition.",

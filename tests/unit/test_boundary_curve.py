@@ -5,9 +5,15 @@ from pathlib import Path
 import pytest
 
 from osw.core.boundary_curve import (
+    BoundaryCurve,
     BoundaryCurveError,
+    BoundaryCurveKind,
+    BoundaryCurveSource,
     BoundaryCurveSourceTrace,
+    CurveAxis,
+    CurveInterpolation,
     boundary_curve_from_xy,
+    curve_preview,
 )
 from osw.core.project_schema import Project, ProjectMetadata
 from osw.scripts.mscript.boundary_curve_bridge import (
@@ -37,6 +43,7 @@ def test_workspace_arrays_create_boundary_curve() -> None:
     assert curve.x_unit == "s"
     assert curve.y_unit == "N"
     assert curve.source == BoundaryCurveSourceTrace(
+        source_type="workspace_variable",
         source_file="scripts/load_profile.mat",
         variable_names=("time", "load"),
         created_at="2026-05-12T00:00:00Z",
@@ -66,6 +73,34 @@ def test_missing_units_warn_without_blocking_curve() -> None:
     assert "y unit is missing" in report.friendly_summary()
 
 
+def test_boundary_curve_models_serialize_deserialize() -> None:
+    source = BoundaryCurveSource(
+        source_type="csv",
+        source_file="curves.csv",
+        x_variable="time",
+        y_variable="temperature",
+        created_at="2026-05-28T00:00:00Z",
+    )
+    curve = BoundaryCurve(
+        curve_id="time-temperature",
+        name="Time Temperature",
+        kind=BoundaryCurveKind.TEMPERATURE_PROFILE,
+        x_axis=CurveAxis("time", unit="s", role="independent"),
+        y_axis=CurveAxis("temperature", unit="degC", role="dependent"),
+        x_values=[0, 1, 2],
+        y_values=[20, 30, 40],
+        interpolation=CurveInterpolation.LINEAR,
+        source=source,
+    )
+
+    loaded = BoundaryCurve.from_dict(curve.to_dict())
+
+    assert loaded == curve
+    assert loaded.source == source
+    assert loaded.x_axis.unit == "s"
+    assert loaded.y_axis.unit == "degC"
+
+
 def test_length_mismatch_errors_clearly() -> None:
     with pytest.raises(BoundaryCurveError, match="same length"):
         boundary_curve_from_workspace_variables(
@@ -78,6 +113,68 @@ def test_length_mismatch_errors_clearly() -> None:
             y_unit="N",
             source_file="workspace",
         )
+
+
+def test_non_finite_values_error() -> None:
+    curve = BoundaryCurve(
+        curve_id="bad",
+        name="Bad curve",
+        x_values=[0, 1],
+        y_values=[10, float("nan")],
+        x_unit="s",
+        y_unit="K",
+        source=BoundaryCurveSource(source_file="manual", variable_names=("x", "y")),
+    )
+
+    report = curve.validate()
+
+    assert report.has_errors
+    assert "finite" in report.friendly_summary()
+
+
+def test_duplicate_and_non_monotonic_x_warn() -> None:
+    duplicate_curve = BoundaryCurve(
+        curve_id="duplicate",
+        name="Duplicate x",
+        kind="time_series",
+        x_values=[0, 1, 1],
+        y_values=[0, 1, 2],
+        x_unit="s",
+        y_unit="K",
+        source=BoundaryCurveSource(source_file="manual", variable_names=("time", "temperature")),
+    )
+    non_monotonic_curve = BoundaryCurve(
+        curve_id="non-monotonic",
+        name="Non monotonic x",
+        kind="time_series",
+        x_values=[0, 2, 1],
+        y_values=[0, 1, 2],
+        x_unit="s",
+        y_unit="K",
+        source=BoundaryCurveSource(source_file="manual", variable_names=("time", "temperature")),
+    )
+
+    assert duplicate_curve.validate().has_warnings
+    assert "duplicate x values" in duplicate_curve.validate().friendly_summary()
+    assert non_monotonic_curve.validate().has_warnings
+    assert "monotonic increasing" in non_monotonic_curve.validate().friendly_summary()
+
+
+def test_curve_preview_truncates_large_curves() -> None:
+    curve = boundary_curve_from_xy(
+        range(100),
+        range(100),
+        "Large curve",
+        curve_id="large",
+        x_unit="s",
+        y_unit="K",
+        source=BoundaryCurveSource(source_file="manual", variable_names=("x", "y")),
+    )
+
+    preview = curve_preview(curve, max_rows=5)
+
+    assert len(preview) == 5
+    assert preview[-1] == {"x": 4.0, "y": 4.0}
 
 
 def test_boundary_curve_round_trips_through_project_schema(tmp_path: Path) -> None:

@@ -91,8 +91,10 @@ standard library and does not require pandas.
 MAT variable summaries into a FigureDataset-compatible workspace table for plot
 viewer and report surfaces.
 
-This step does not convert variables into boundary curves; that is the next
-functional step.
+`OSW-FUNC-010_BOUNDARY_CURVE_BRIDGE` can convert already-loaded numeric MAT
+variables into ProjectSchema `BoundaryCurve` records. Summary-only MAT metadata
+remains preview-safe and reports a friendly diagnostic when full values are not
+available for curve conversion.
 
 ## ProjectSchema Binding
 
@@ -163,4 +165,4 @@ return nonzero for commands that require parsing.
 
 ## Next Step
 
-Next functional step: `OSW-FUNC-010_BOUNDARY_CURVE_BRIDGE`.
+Next functional step: `OSW-FUNC-011_REPORT_GENERATOR_BINDING`.

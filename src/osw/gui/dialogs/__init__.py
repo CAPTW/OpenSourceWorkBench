@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 __all__ = [
+    "BoundaryCurveDialog",
     "ExecutablePathDialog",
     "MatPreviewDialog",
     "PluginManagerDialog",
@@ -29,4 +30,8 @@ def __getattr__(name: str) -> object:
         from osw.gui.dialogs.mat_preview_dialog import MatPreviewDialog
 
         return MatPreviewDialog
+    if name == "BoundaryCurveDialog":
+        from osw.gui.dialogs.boundary_curve_dialog import BoundaryCurveDialog
+
+        return BoundaryCurveDialog
     raise AttributeError(name)

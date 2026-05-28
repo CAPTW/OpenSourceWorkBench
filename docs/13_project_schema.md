@@ -12,6 +12,7 @@ The schema lives under `src/osw/core/` and includes:
 - `Material`, `MaterialDB`, and `builtin_materials()`
 - `Project`, `ProjectMetadata`, `GeometryRef`, `MeshRef`, `ScriptRef`
 - `PhysicsSetup`, `BoundaryCondition`, and `SolverConfig`
+- `BoundaryCurve`, `CurveAxis`, and `BoundaryCurveSource`
 - `ResultRef`, `ReportConfig`, `PluginRef`, and `ProjectWarning`
 
 Core modules do not import PySide6. GUI modules may import the core schema.
@@ -49,9 +50,15 @@ These commands do not require PySide6 and do not run solvers.
 
 Validation checks metadata, units, materials, boundary rows, solver tolerance,
 safe-preview requirements for `.m` scripts, missing mesh/result references, and
-native commercial CAD extension warnings. OSW v0.1 supports standard exported
+warnings for proprietary CAD extensions. OSW v0.1 supports standard exported
 formats and does not implement native SolidWorks, CATIA, NX, or Creo direct
 import.
+
+Boundary curve validation checks x/y length, at least two points for
+interpolation, finite numeric values, missing unit metadata, monotonic x values
+for time/spatial profiles, and source traceability. Boundary conditions can
+reference a `curve_id`; ProjectSchema warns when the referenced curve is missing
+or when the curve kind appears inconsistent with the boundary type.
 
 ## GUI Binding
 

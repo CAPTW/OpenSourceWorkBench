@@ -25,6 +25,12 @@ def test_builtin_mscript_preview_plugin_manifest_validates() -> None:
     assert "mat_file_import" in manifest.capabilities
     assert "workspace_variable_summary" in manifest.capabilities
     assert "csv_export" in manifest.capabilities
+    assert "boundary_curve_export" in manifest.capabilities
+    assert "mat_variable_to_boundary_curve" in manifest.capabilities
+    assert "workspace_variable_to_boundary_curve" in manifest.capabilities
+    assert "csv_to_boundary_curve" in manifest.capabilities
+    assert "boundary_curve" in manifest.output_formats
+    assert "curve_json" in manifest.output_formats
     assert "scipy" in manifest.optional_requires
     assert "png" in manifest.output_formats
     assert "svg" in manifest.output_formats

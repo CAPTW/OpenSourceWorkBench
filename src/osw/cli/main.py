@@ -231,6 +231,40 @@ def build_parser() -> argparse.ArgumentParser:
     mat_export_parser.add_argument("path", help="MAT file path.")
     mat_export_parser.add_argument("variable", help="Variable name to export.")
     mat_export_parser.add_argument("--out", required=True, help="Output CSV path.")
+    curve_from_csv_parser = subparsers.add_parser(
+        "curve-from-csv",
+        help="Create a BoundaryCurve JSON file from numeric CSV x/y columns.",
+    )
+    curve_from_csv_parser.add_argument("path", help="CSV file path.")
+    curve_from_csv_parser.add_argument("--x-column", required=True, help="Independent column.")
+    curve_from_csv_parser.add_argument("--y-column", required=True, help="Dependent column.")
+    curve_from_csv_parser.add_argument("--x-unit", default="", help="Independent axis unit.")
+    curve_from_csv_parser.add_argument("--y-unit", default="", help="Dependent axis unit.")
+    curve_from_csv_parser.add_argument("--kind", default="generic_xy", help="Boundary curve kind.")
+    curve_from_csv_parser.add_argument("--out", required=True, help="Output curve JSON path.")
+    curve_from_mat_parser = subparsers.add_parser(
+        "curve-from-mat",
+        help="Create a BoundaryCurve JSON file from MAT variables when values are available.",
+    )
+    curve_from_mat_parser.add_argument("path", help="MAT file path.")
+    curve_from_mat_parser.add_argument("--x", required=True, help="Independent MAT variable.")
+    curve_from_mat_parser.add_argument("--y", required=True, help="Dependent MAT variable.")
+    curve_from_mat_parser.add_argument("--x-unit", default="", help="Independent axis unit.")
+    curve_from_mat_parser.add_argument("--y-unit", default="", help="Dependent axis unit.")
+    curve_from_mat_parser.add_argument("--kind", default="generic_xy", help="Boundary curve kind.")
+    curve_from_mat_parser.add_argument("--out", required=True, help="Output curve JSON path.")
+    curve_inspect_parser = subparsers.add_parser(
+        "curve-inspect",
+        help="Inspect a BoundaryCurve JSON file.",
+    )
+    curve_inspect_parser.add_argument("path", help="BoundaryCurve JSON path.")
+    curve_inspect_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    curve_export_parser = subparsers.add_parser(
+        "curve-export-csv",
+        help="Export a BoundaryCurve JSON file to CSV.",
+    )
+    curve_export_parser.add_argument("path", help="BoundaryCurve JSON path.")
+    curve_export_parser.add_argument("--out", required=True, help="Output CSV path.")
     subparsers.add_parser(
         "gui",
         help="Launch the optional PySide6 GUI shell.",
@@ -648,6 +682,80 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(result.diagnostics.summary(), file=sys.stderr)
         return 0
 
+    if args.command == "curve-from-csv":
+        from osw.core.boundary_curve import (
+            BoundaryCurveError,
+            boundary_curve_from_csv,
+            save_boundary_curve_json,
+        )
+
+        try:
+            curve = boundary_curve_from_csv(
+                Path(args.path),
+                args.x_column,
+                args.y_column,
+                x_unit=args.x_unit,
+                y_unit=args.y_unit,
+                kind=args.kind,
+            )
+        except BoundaryCurveError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        save_boundary_curve_json(curve, Path(args.out))
+        _print_boundary_curve(curve)
+        print(f"Wrote BoundaryCurve JSON: {args.out}")
+        return 0
+
+    if args.command == "curve-from-mat":
+        from osw.core.boundary_curve import BoundaryCurveError, save_boundary_curve_json
+        from osw.scripts.mscript.boundary_curve_bridge import boundary_curve_from_mat_summary
+        from osw.scripts.mscript.mat_model import MatReadStatus
+        from osw.scripts.mscript.mat_reader import read_mat_file
+
+        result = read_mat_file(Path(args.path), variable_names=(args.x, args.y))
+        if not result.ok:
+            print(result.diagnostics.summary(), file=sys.stderr)
+            return 2 if result.status == MatReadStatus.DEPENDENCY_MISSING.value else 1
+        try:
+            curve = boundary_curve_from_mat_summary(
+                result,
+                args.x,
+                args.y,
+                x_unit=args.x_unit,
+                y_unit=args.y_unit,
+                kind=args.kind,
+            )
+        except BoundaryCurveError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        save_boundary_curve_json(curve, Path(args.out))
+        _print_boundary_curve(curve)
+        print(f"Wrote BoundaryCurve JSON: {args.out}")
+        return 0
+
+    if args.command == "curve-inspect":
+        from osw.core.boundary_curve import load_boundary_curve_json
+
+        curve = load_boundary_curve_json(Path(args.path))
+        if args.json:
+            import json
+
+            print(json.dumps(curve.to_dict(), indent=2, sort_keys=True))
+        else:
+            _print_boundary_curve(curve)
+            report = curve.validate()
+            if report.messages:
+                print(report.friendly_summary(), file=sys.stderr)
+        return 1 if curve.validate().has_errors else 0
+
+    if args.command == "curve-export-csv":
+        from osw.core.boundary_curve import export_boundary_curve_csv, load_boundary_curve_json
+
+        curve = load_boundary_curve_json(Path(args.path))
+        output_path = export_boundary_curve_csv(curve, Path(args.out))
+        print(f"Wrote BoundaryCurve CSV: {output_path}")
+        return 0
+
     if args.command == "gui":
         from osw.gui.main_window import PySide6UnavailableError, run_gui
 
@@ -758,6 +866,23 @@ def _print_mat_summary(result: object) -> None:
             f"{getattr(variable, 'kind', '')} "
             f"{shape} "
             f"{getattr(variable, 'dtype', '')}"
+        )
+
+
+def _print_boundary_curve(curve: object) -> None:
+    print(f"BoundaryCurve: {getattr(curve, 'name', '')}")
+    print(f"ID: {getattr(curve, 'curve_id', '')}")
+    print(f"Kind: {getattr(curve, 'kind', '')}")
+    print(f"Points: {getattr(curve, 'point_count', 0)}")
+    print(f"X unit: {getattr(curve, 'x_unit', '') or '<missing>'}")
+    print(f"Y unit: {getattr(curve, 'y_unit', '') or '<missing>'}")
+    print(f"Interpolation: {getattr(curve, 'interpolation', '')}")
+    source = getattr(curve, "source", None)
+    if source is not None:
+        print(
+            "Source: "
+            f"{getattr(source, 'source_type', '')} "
+            f"{getattr(source, 'source_file', '')}"
         )
 
 

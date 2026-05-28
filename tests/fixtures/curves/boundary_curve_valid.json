@@ -1,0 +1,25 @@
+{
+  "curve_id": "time-temperature",
+  "name": "Time Temperature",
+  "kind": "temperature_profile",
+  "x_axis": {
+    "name": "time_s",
+    "unit": "s",
+    "role": "independent"
+  },
+  "y_axis": {
+    "name": "temperature_C",
+    "unit": "degC",
+    "role": "dependent"
+  },
+  "x_values": [0, 1, 2, 3],
+  "y_values": [20, 35, 50, 65],
+  "interpolation": "linear",
+  "source": {
+    "source_type": "csv",
+    "source_file": "tests/fixtures/curves/time_temperature.csv",
+    "x_variable": "time_s",
+    "y_variable": "temperature_C",
+    "created_at": "2026-05-28T00:00:00Z"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "curve_id": "missing-units",
+  "name": "Missing units",
+  "kind": "generic_xy",
+  "x_values": [0, 1, 2],
+  "y_values": [10, 20, 30],
+  "interpolation": "linear",
+  "source": {
+    "source_type": "manual",
+    "created_at": "2026-05-28T00:00:00Z"
+  }
+}

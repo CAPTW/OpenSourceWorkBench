@@ -178,6 +178,57 @@ def test_project_tree_and_properties_can_display_mat_metadata(app: object) -> No
     del app
 
 
+def test_project_tree_and_properties_can_display_boundary_curve(app: object) -> None:
+    from osw.core.boundary_curve import BoundaryCurveSource, boundary_curve_from_xy
+    from osw.core.demo_project import create_heatsink_flow_demo_project
+    from osw.core.project_schema import Project
+    from osw.gui.widgets.project_tree_panel import ProjectTreePanel
+    from osw.gui.widgets.properties_panel import PropertiesPanel
+
+    curve = boundary_curve_from_xy(
+        [0, 1, 2],
+        [20, 30, 40],
+        "Temperature curve",
+        curve_id="temperature-curve",
+        x_unit="s",
+        y_unit="degC",
+        kind="temperature_profile",
+        source=BoundaryCurveSource(source_file="curves.csv", variable_names=("time", "temp")),
+    )
+    project = create_heatsink_flow_demo_project()
+    project = Project(
+        metadata=project.metadata,
+        units=project.units,
+        materials=project.materials,
+        geometry=project.geometry,
+        meshes=project.meshes,
+        scripts=project.scripts,
+        boundary_curves=[curve],
+        physics=project.physics,
+        solvers=project.solvers,
+        results=project.results,
+        report=project.report,
+        schema_version=project.schema_version,
+        plugins=project.plugins,
+        warnings=project.warnings,
+    )
+    tree = ProjectTreePanel()
+    tree.set_project(project)
+    labels = _tree_labels(tree.tree)
+    panel = PropertiesPanel()
+    panel.set_project(project)
+    panel.set_node_selection("Temperature curve")
+
+    assert "Boundary Curves" in labels
+    assert "Temperature curve" in labels
+    assert panel.row_value("Kind") == "temperature_profile"
+    assert panel.row_value("Point count") == "3"
+    assert panel.row_value("X unit") == "s"
+    assert panel.row_value("Y unit") == "degC"
+
+    del app
+
+
 def test_theme_switching_still_works_after_script_binding(app: object) -> None:
     from osw.gui.main_window import MainWindow
 

@@ -105,6 +105,7 @@ class MainWindow(_BaseMainWindow):
         self.plugin_manager_dialog: object | None = None
         self.script_preview_dialog: object | None = None
         self.mat_preview_dialog: object | None = None
+        self.boundary_curve_dialog: object | None = None
         self.plot_viewer_dialog: object | None = None
         self.plot_viewer: object | None = None
         self.last_figure_dataset: object | None = None
@@ -250,6 +251,11 @@ class MainWindow(_BaseMainWindow):
             "set_theme_tokens",
         ):
             self.mat_preview_dialog.set_theme_tokens(tokens)
+        if self.boundary_curve_dialog is not None and hasattr(
+            self.boundary_curve_dialog,
+            "set_theme_tokens",
+        ):
+            self.boundary_curve_dialog.set_theme_tokens(tokens)
 
     def _on_top_bar_action_triggered(self, label: str) -> None:
         if label == "New":
@@ -502,6 +508,38 @@ class MainWindow(_BaseMainWindow):
         dialog.activateWindow()
         return dialog
 
+    def attach_boundary_curve_to_project(self, curve: object) -> bool:
+        """Attach a validated BoundaryCurve to the current project without solver binding."""
+
+        validate = getattr(curve, "validate", None)
+        if callable(validate):
+            report = validate()
+            if getattr(report, "has_errors", False):
+                self._placeholder_action(report.friendly_summary())
+                return False
+        self.set_project(_project_with_boundary_curve(self.current_project, curve))
+        self._placeholder_action(
+            f"Attached boundary curve: {getattr(curve, 'name', getattr(curve, 'curve_id', ''))}"
+        )
+        return True
+
+    def open_boundary_curve_dialog(self, curve: object) -> object:
+        """Open a safe BoundaryCurve preview dialog without executing external tools."""
+
+        from osw.gui.dialogs.boundary_curve_dialog import BoundaryCurveDialog
+
+        dialog = BoundaryCurveDialog(
+            curve=curve,
+            parent=self,
+            theme_tokens=self.theme_manager.current_tokens,
+        )
+        dialog.boundaryCurveAccepted.connect(self.attach_boundary_curve_to_project)
+        self.boundary_curve_dialog = dialog
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+        return dialog
+
     def _on_script_run_completed(self, result: object) -> None:
         status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
         from osw.scripts.mscript.figure_capture import figure_dataset_from_octave_result
@@ -611,6 +649,31 @@ def _project_with_script_ref(project: Project, script_ref: object) -> Project:
         meshes=project.meshes,
         scripts=scripts,
         boundary_curves=project.boundary_curves,
+        physics=project.physics,
+        solvers=project.solvers,
+        results=project.results,
+        report=project.report,
+        schema_version=project.schema_version,
+        plugins=project.plugins,
+        warnings=project.warnings,
+    )
+
+
+def _project_with_boundary_curve(project: Project, curve: object) -> Project:
+    curves = [
+        item
+        for item in project.boundary_curves
+        if getattr(item, "curve_id", "") != getattr(curve, "curve_id", "")
+    ]
+    curves.append(curve)
+    return Project(
+        metadata=project.metadata,
+        units=project.units,
+        materials=project.materials,
+        geometry=project.geometry,
+        meshes=project.meshes,
+        scripts=project.scripts,
+        boundary_curves=curves,
         physics=project.physics,
         solvers=project.solvers,
         results=project.results,

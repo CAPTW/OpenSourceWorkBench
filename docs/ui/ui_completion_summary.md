@@ -199,3 +199,9 @@ preview dialogs show version, variable summaries, table previews, diagnostics,
 and safe CSV export for compatible numeric variables. The ProjectSchema binding
 stores MAT metadata through safe preview references, and the GUI still does not
 invoke MATLAB, Octave, or external commands.
+
+`OSW-FUNC-010_BOUNDARY_CURVE_BRIDGE` adds reusable BoundaryCurve previews on top
+of the same frozen shell. Project trees can show boundary curves when a project
+has them, the properties panel can show curve summaries and boundary-condition
+curve references, and the BoundaryCurve dialog previews x/y data and validation
+messages without generating solver files or running external tools.

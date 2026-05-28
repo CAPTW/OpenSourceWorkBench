@@ -85,3 +85,15 @@ lazily, summarizes variables, exports simple real numeric 1D/2D arrays to CSV,
 and converts variable summaries into `WorkspaceVariableSummary` records for
 FigureDataset/report surfaces. It does not run `.m` files, MATLAB, Octave, or
 external commands. See `docs/20_mat_reader.md`.
+
+## BoundaryCurve Bridge
+
+Reusable boundary curves live in `osw.core.boundary_curve` and remain
+solver-agnostic. The bridge can normalize explicit numeric x/y arrays, CSV
+columns, already-loaded MAT variable values, workspace summaries, and
+FigureDataset workspace metadata into serializable `BoundaryCurve` records with
+axis units, interpolation policy, source traceability, and validation
+diagnostics. ProjectSchema stores these curves separately from solver adapters;
+boundary conditions may reference a curve id, but no CalculiX, OpenFOAM, SU2, or
+other solver boundary file generation is implemented in this layer. See
+`docs/21_boundary_curve_bridge.md`.

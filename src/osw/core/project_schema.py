@@ -286,6 +286,8 @@ class BoundaryCondition:
     value: str
     unit: str
     target: str
+    curve_id: str
+    curve_role: str
     metadata: dict[str, Any]
     kind: str
     values: dict[str, Any]
@@ -297,6 +299,8 @@ class BoundaryCondition:
         value: str = "",
         unit: str = "",
         target: str = "",
+        curve_id: str = "",
+        curve_role: str = "",
         metadata: Mapping[str, Any] | None = None,
         *,
         kind: str = "",
@@ -308,6 +312,8 @@ class BoundaryCondition:
         object.__setattr__(self, "value", str(value))
         object.__setattr__(self, "unit", str(unit))
         object.__setattr__(self, "target", str(target))
+        object.__setattr__(self, "curve_id", str(curve_id))
+        object.__setattr__(self, "curve_role", str(curve_role))
         object.__setattr__(self, "metadata", dict(metadata or {}))
         object.__setattr__(self, "kind", str(kind or resolved_type))
         object.__setattr__(self, "values", dict(values or {}))
@@ -319,6 +325,8 @@ class BoundaryCondition:
             "value": self.value,
             "unit": self.unit,
             "target": self.target,
+            "curve_id": self.curve_id,
+            "curve_role": self.curve_role,
             "metadata": dict(self.metadata),
             "kind": self.kind,
             "values": dict(self.values),
@@ -335,6 +343,8 @@ class BoundaryCondition:
             value=str(data.get("value", "")),
             unit=str(data.get("unit", "")),
             target=str(data.get("target", "")),
+            curve_id=str(data.get("curve_id", "")),
+            curve_role=str(data.get("curve_role", "")),
             metadata=dict(data.get("metadata", {})),
             kind=str(data.get("kind", "")),
             values=dict(data.get("values", {})),
@@ -850,6 +860,9 @@ def _validate_project_references(project: Project, report: ValidationReport) -> 
     builtin = builtin_materials()
     builtin_ids = {material.material_id for material in builtin.materials}
     builtin_names = {material.name for material in builtin.materials}
+    boundary_curves_by_id = {
+        curve.curve_id: curve for curve in project.boundary_curves if curve.curve_id
+    }
 
     for index, geometry in enumerate(project.geometry):
         suffix = Path(geometry.path).suffix.lower()
@@ -893,11 +906,26 @@ def _validate_project_references(project: Project, report: ValidationReport) -> 
                 report.add_error(f"{boundary_path}.name", "Boundary condition name is required.")
             if not (boundary.type or boundary.kind):
                 report.add_error(f"{boundary_path}.type", "Boundary condition type is required.")
-            if not (boundary.value or boundary.values):
+            if not (boundary.value or boundary.values or boundary.curve_id):
                 report.add_error(
                     f"{boundary_path}.value",
                     "Boundary condition value is required.",
                 )
+            if boundary.curve_id:
+                curve = boundary_curves_by_id.get(boundary.curve_id)
+                if curve is None:
+                    report.add_warning(
+                        f"{boundary_path}.curve_id",
+                        f"Boundary condition references missing curve_id: {boundary.curve_id}",
+                    )
+                elif _curve_kind_mismatch(boundary, curve):
+                    report.add_warning(
+                        f"{boundary_path}.curve_id",
+                        (
+                            f"Boundary condition type {boundary.type or boundary.kind!r} "
+                            f"may not match curve kind {curve.kind!r}."
+                        ),
+                    )
         if setup.solver_config is not None:
             _validate_solver_config(setup.solver_config, report, path=f"{setup_path}.solver_config")
 
@@ -994,6 +1022,20 @@ def _validate_mat_preview_metadata(
             f"{path}.metadata",
             "MAT data reference has no variable summary yet.",
         )
+
+
+def _curve_kind_mismatch(boundary: BoundaryCondition, curve: BoundaryCurve) -> bool:
+    boundary_text = f"{boundary.type} {boundary.kind} {boundary.curve_role}".casefold()
+    kind = curve.kind.casefold()
+    if "temperature" in kind:
+        return not any(token in boundary_text for token in ("temperature", "thermal"))
+    if "pressure" in kind:
+        return "pressure" not in boundary_text
+    if "velocity" in kind:
+        return "velocity" not in boundary_text
+    if "heat_flux" in kind or "heat flux" in kind:
+        return not any(token in boundary_text for token in ("heat flux", "flux"))
+    return False
 
 
 def _physics_list(value: Sequence[PhysicsSetup] | PhysicsSetup | None) -> list[PhysicsSetup]:

@@ -215,6 +215,8 @@ output_formats:
   - script_ref
   - figure_dataset
   - workspace_summary
+  - boundary_curve
+  - curve_json
   - png
   - svg
   - pdf
@@ -236,6 +238,10 @@ capabilities:
   - mat_file_import
   - workspace_variable_summary
   - csv_export
+  - boundary_curve_export
+  - mat_variable_to_boundary_curve
+  - workspace_variable_to_boundary_curve
+  - csv_to_boundary_curve
 ```
 
 ## Future Extension Points
@@ -281,6 +287,14 @@ capabilities: `mat_file_import`, `scipy_loadmat_v4_to_v72`,
 checks may report their availability but do not import MAT data, execute
 scripts, or launch MATLAB/Octave.
 
+`OSW-FUNC-010_BOUNDARY_CURVE_BRIDGE` extends the same manifest with data-only
+curve bridge capabilities: `boundary_curve_export`,
+`mat_variable_to_boundary_curve`, `workspace_variable_to_boundary_curve`, and
+`csv_to_boundary_curve`. These capabilities normalize already-previewed or
+explicitly supplied numeric data into ProjectSchema `BoundaryCurve` records.
+They do not generate solver boundary files or execute scripts, MATLAB, Octave,
+or solver binaries.
+
 ## Next Step
 
-Next functional step: `OSW-FUNC-010_BOUNDARY_CURVE_BRIDGE`.
+Next functional step: `OSW-FUNC-011_REPORT_GENERATOR_BINDING`.

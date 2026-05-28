@@ -135,7 +135,6 @@ def project_tree_filter_matches(text: str) -> list[str]:
 
 
 def _project_to_tree_node(project: Project) -> ProjectTreeNode:
-    physics = project.primary_physics
     solver = project.solver_config
     return ProjectTreeNode(
         project.metadata.name,
@@ -168,10 +167,7 @@ def _project_to_tree_node(project: Project) -> ProjectTreeNode:
                 "Physics",
                 kind="group",
                 icon_key="physics",
-                children=tuple(
-                    ProjectTreeNode(label, icon_key="config_file")
-                    for label in (physics.files if physics is not None else ())
-                ),
+                children=tuple(_physics_nodes(project)),
             ),
             ProjectTreeNode(
                 "Solvers",
@@ -233,6 +229,30 @@ def _mesh_is_complete(ref: object) -> bool:
     label = _ref_label(ref)
     status = str(getattr(ref, "status", "") or "").casefold()
     return label == "mesh.msh" or status in {"complete", "completed"}
+
+
+def _physics_nodes(project: Project) -> list[ProjectTreeNode]:
+    physics = project.primary_physics
+    nodes = [
+        ProjectTreeNode(label, icon_key="config_file")
+        for label in (physics.files if physics is not None else ())
+    ]
+    if project.boundary_curves:
+        nodes.append(
+            ProjectTreeNode(
+                "Boundary Curves",
+                kind="group",
+                icon_key="curve",
+                children=tuple(
+                    ProjectTreeNode(
+                        str(getattr(curve, "name", "") or getattr(curve, "curve_id", "")),
+                        icon_key="curve_file",
+                    )
+                    for curve in project.boundary_curves
+                ),
+            )
+        )
+    return nodes
 
 
 def _result_nodes(project: Project) -> list[ProjectTreeNode]:
@@ -490,6 +510,8 @@ class ProjectTreePanel(_BaseWidget):
             "mesh": "#9b6dff",
             "mesh_file": "#9b6dff",
             "physics": tokens.warning,
+            "curve": tokens.info,
+            "curve_file": tokens.info,
             "solver": tokens.info,
             "solver_file": tokens.info,
             "script": "#f6d34b",
