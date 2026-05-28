@@ -217,3 +217,8 @@ hook. The dialog can preview `.geo` text without Gmsh installed and can submit
 an explicit mesh generation request through the backend Gmsh adapter and
 `ExternalCommandRunner`. The GUI still does not call subprocess directly,
 replace the shell, or add solver adapter behavior.
+
+`OSW-FUNC-013_CALCULIX_INPUT_DECK` adds a safe CalculiX input deck dialog and
+Run menu hook. The dialog previews readiness diagnostics and writes reviewed
+`.inp` text only; it does not run `ccx`, parse results, replace the shell, or
+call subprocesses from the GUI.

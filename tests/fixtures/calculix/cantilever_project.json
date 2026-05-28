@@ -1,0 +1,164 @@
+{
+  "geometry": [],
+  "materials": [
+    {
+      "density": {
+        "unit": "kg/m^3",
+        "value": 7850.0
+      },
+      "elastic": {
+        "poisson_ratio": 0.3,
+        "type": "isotropic_elastic",
+        "young_modulus": {
+          "unit": "Pa",
+          "value": 210000000000.0
+        }
+      },
+      "library": "fixture",
+      "material_id": "steel",
+      "metadata": {},
+      "name": "Steel"
+    }
+  ],
+  "meshes": [
+    {
+      "format": "internal_mesh_model",
+      "id": "cantilever_mesh",
+      "metadata": {
+        "mesh_model_path": "cantilever_mesh.json"
+      },
+      "name": "cantilever_mesh",
+      "path": "cantilever_mesh.json",
+      "role": "analysis_mesh",
+      "status": "ready"
+    }
+  ],
+  "metadata": {
+    "author": "OpenSolver Workbench",
+    "description": "Small prepare-only CalculiX cantilever fixture.",
+    "name": "CalculiX_Cantilever",
+    "tags": [
+      "demo",
+      "calculix",
+      "linear-static"
+    ]
+  },
+  "physics": [
+    {
+      "analysis_type": "linear_static",
+      "boundary_conditions": [
+        {
+          "metadata": {
+            "target_set": "FIXED"
+          },
+          "name": "fixed-left",
+          "target": "FIXED",
+          "type": "Fixed Support",
+          "value": "0"
+        },
+        {
+          "metadata": {
+            "dof": 2,
+            "target_set": "TIP"
+          },
+          "name": "tip-force",
+          "target": "TIP",
+          "type": "Force",
+          "unit": "N",
+          "value": "-100"
+        }
+      ],
+      "domain": "CAE",
+      "files": [],
+      "material_assignments": {
+        "solid": "steel"
+      },
+      "materials": [
+        "steel"
+      ],
+      "name": "Linear static cantilever",
+      "setup_id": "linear-static-cantilever"
+    }
+  ],
+  "plugins": [],
+  "report": null,
+  "results": [],
+  "schema_version": "0.1",
+  "scripts": [],
+  "solvers": [
+    {
+      "convergence_tolerance": 1e-06,
+      "execution_mode": "prepare_only",
+      "linear_solver": "direct",
+      "max_iterations": null,
+      "name": "CalculiX",
+      "parameters": {},
+      "preconditioner": "",
+      "settings": {
+        "calculix": {
+          "boundary_conditions": [
+            {
+              "dof_end": 3,
+              "dof_start": 1,
+              "kind": "fixed",
+              "name": "fixed-left",
+              "set_name": "FIXED",
+              "value": 0.0
+            }
+          ],
+          "case_id": "cantilever",
+          "loads": [
+            {
+              "dof": 2,
+              "kind": "force",
+              "name": "tip-force",
+              "node_set": "TIP",
+              "value": -100.0
+            }
+          ],
+          "material_id": "steel",
+          "mesh_model_path": "cantilever_mesh.json",
+          "node_sets": [
+            {
+              "name": "FIXED",
+              "node_ids": [
+                1,
+                4,
+                5,
+                8
+              ]
+            },
+            {
+              "name": "TIP",
+              "node_ids": [
+                2,
+                3,
+                6,
+                7
+              ]
+            }
+          ],
+          "step_name": "linear_static"
+        }
+      },
+      "solver": "CalculiX",
+      "solver_id": "calculix-linear-static",
+      "time_scheme": "static"
+    }
+  ],
+  "units": {
+    "amount": "mol",
+    "current": "A",
+    "energy": "J",
+    "force": "N",
+    "length": "m",
+    "mass": "kg",
+    "name": "SI",
+    "power": "W",
+    "pressure": "Pa",
+    "stress": "Pa",
+    "temperature": "K",
+    "time": "s"
+  },
+  "warnings": []
+}

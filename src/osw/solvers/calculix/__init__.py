@@ -1,6 +1,15 @@
 """CalculiX prepare-only adapter for OSW v0.1 linear static demos."""
 
-from .adapter import CalculixLinearStaticAdapter
+from .adapter import (
+    CalculixLinearStaticAdapter,
+    create_calculix_deck,
+    create_cantilever_demo_case,
+    create_cantilever_demo_material,
+    create_cantilever_demo_mesh,
+    load_mesh_model_json,
+    project_to_calculix_case,
+    project_to_calculix_deck,
+)
 from .ccx_runner import CalculixCcxRunner
 from .input_deck import (
     CalculixBoundaryCondition,
@@ -10,12 +19,46 @@ from .input_deck import (
     CalculixLoad,
     CalculixNodeSet,
     CalculixSurface,
+    case_to_input_deck,
+    deck_result_from_case,
     generate_calculix_input_deck,
+    generate_input_deck_text,
+    write_input_deck,
+)
+from .model import (
+    CalculiXAnalysisType,
+    CalculiXBoundary,
+    CalculiXDeckResult,
+    CalculiXDeckStatus,
+    CalculiXElement,
+    CalculiXElementSet,
+    CalculiXElementType,
+    CalculiXInputDeck,
+    CalculiXLoad,
+    CalculiXMaterial,
+    CalculiXNode,
+    CalculiXNodeSet,
+    CalculiXStep,
+    CalculiXSurfaceSet,
 )
 from .result_parser import parse_calculix_dat, parse_calculix_results
-from .validation import validate_calculix_case
+from .validation import validate_calculix_case, validate_calculix_readiness
 
 __all__ = [
+    "CalculiXAnalysisType",
+    "CalculiXBoundary",
+    "CalculiXDeckResult",
+    "CalculiXDeckStatus",
+    "CalculiXElement",
+    "CalculiXElementSet",
+    "CalculiXElementType",
+    "CalculiXInputDeck",
+    "CalculiXLoad",
+    "CalculiXMaterial",
+    "CalculiXNode",
+    "CalculiXNodeSet",
+    "CalculiXStep",
+    "CalculiXSurfaceSet",
     "CalculixBoundaryCondition",
     "CalculixCcxRunner",
     "CalculixInputDeckError",
@@ -25,8 +68,20 @@ __all__ = [
     "CalculixLoad",
     "CalculixNodeSet",
     "CalculixSurface",
+    "case_to_input_deck",
+    "create_calculix_deck",
+    "create_cantilever_demo_case",
+    "create_cantilever_demo_material",
+    "create_cantilever_demo_mesh",
+    "deck_result_from_case",
+    "generate_input_deck_text",
     "generate_calculix_input_deck",
+    "load_mesh_model_json",
     "parse_calculix_dat",
     "parse_calculix_results",
+    "project_to_calculix_case",
+    "project_to_calculix_deck",
     "validate_calculix_case",
+    "validate_calculix_readiness",
+    "write_input_deck",
 ]

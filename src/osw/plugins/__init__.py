@@ -34,6 +34,7 @@ from osw.plugins.errors import (
     PluginValidationError,
 )
 from osw.plugins.examples import (
+    builtin_calculix_plugin_manifest,
     builtin_gmsh_plugin_manifest,
     builtin_meshio_plugin_manifest,
     builtin_mscript_preview_plugin_manifest,
@@ -109,6 +110,7 @@ __all__ = [
     "WorkbenchPlugin",
     "ZipPathTraversalError",
     "build_plugin_health_record",
+    "builtin_calculix_plugin_manifest",
     "builtin_gmsh_plugin_manifest",
     "builtin_meshio_plugin_manifest",
     "builtin_mscript_preview_plugin_manifest",

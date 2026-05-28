@@ -1,0 +1,43 @@
+{
+  "materials": [
+    {
+      "elastic": {
+        "poisson_ratio": 0.3,
+        "young_modulus": {
+          "unit": "Pa",
+          "value": 210000000000.0
+        }
+      },
+      "material_id": "steel",
+      "name": "Steel"
+    }
+  ],
+  "meshes": [
+    {
+      "format": "internal_mesh_model",
+      "id": "cantilever_mesh",
+      "metadata": {
+        "mesh_model_path": "cantilever_mesh.json"
+      },
+      "name": "cantilever_mesh",
+      "path": "cantilever_mesh.json"
+    }
+  ],
+  "metadata": {
+    "name": "MissingBoundaryCondition"
+  },
+  "schema_version": "0.1",
+  "solvers": [
+    {
+      "name": "CalculiX",
+      "settings": {
+        "calculix": {
+          "case_id": "missing-bc",
+          "material_id": "steel",
+          "mesh_model_path": "cantilever_mesh.json"
+        }
+      },
+      "solver": "CalculiX"
+    }
+  ]
+}

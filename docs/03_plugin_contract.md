@@ -198,6 +198,38 @@ capabilities:
   - thermal_placeholder
 ```
 
+Current built-in CalculiX deck-generation manifest:
+
+```yaml
+id: osw.calculix
+name: CalculiX Linear Static Adapter
+version: "0.1.0"
+domain: CAE
+type: solver_adapter
+license: GPL-compatible external solver
+input_formats:
+  - internal_project_schema
+  - mesh_model
+  - inp
+output_formats:
+  - inp
+  - dat
+  - frd
+  - vtk_placeholder
+executable_names:
+  - ccx
+capabilities:
+  - linear_static
+  - isotropic_elastic
+  - fixed_support
+  - nodal_force
+  - pressure_placeholder
+  - input_deck_generation
+```
+
+Deck generation is prepare-only and does not execute `ccx`; missing executable
+health remains a warning for workflows that only generate input decks.
+
 MATLAB/Octave script importer:
 
 ```yaml

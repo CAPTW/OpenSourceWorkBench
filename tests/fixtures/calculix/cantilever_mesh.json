@@ -1,0 +1,99 @@
+{
+  "cells": [
+    {
+      "cell_type": "hexahedron",
+      "count": 1,
+      "data": [
+        [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      ],
+      "metadata": {},
+      "order": null
+    }
+  ],
+  "id": "cantilever_mesh",
+  "info": {
+    "bounds": {
+      "maximum": [
+        1.0,
+        0.2,
+        0.2
+      ],
+      "minimum": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "cell_blocks": [
+      {
+        "cell_type": "hexahedron",
+        "count": 1,
+        "metadata": {},
+        "order": null
+      }
+    ],
+    "cell_types": [
+      "hexahedron"
+    ],
+    "element_count": 1,
+    "format": "internal_mesh_model",
+    "metadata": {},
+    "node_count": 8,
+    "physical_groups": {},
+    "source_path": "cantilever_mesh.json",
+    "warnings": []
+  },
+  "name": "cantilever_mesh",
+  "points": [
+    [
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      1.0,
+      0.2,
+      0.0
+    ],
+    [
+      0.0,
+      0.2,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.2
+    ],
+    [
+      1.0,
+      0.0,
+      0.2
+    ],
+    [
+      1.0,
+      0.2,
+      0.2
+    ],
+    [
+      0.0,
+      0.2,
+      0.2
+    ]
+  ],
+  "source_path": "cantilever_mesh.json"
+}

@@ -164,6 +164,53 @@ def builtin_gmsh_plugin_manifest() -> PluginManifest:
     )
 
 
+def builtin_calculix_plugin_manifest() -> PluginManifest:
+    """Return the data-only manifest for CalculiX deck generation."""
+
+    return PluginManifest.from_dict(
+        {
+            "id": "osw.calculix",
+            "name": "CalculiX Linear Static Adapter",
+            "version": "0.1.0",
+            "domain": "CAE",
+            "type": "solver_adapter",
+            "license": "GPL-compatible external solver",
+            "description": (
+                "Prepares deterministic CalculiX linear static .inp decks from "
+                "ProjectSchema and MeshModel data without running ccx."
+            ),
+            "input_formats": [
+                "internal_project_schema",
+                "mesh_model",
+                "inp",
+            ],
+            "output_formats": [
+                "inp",
+                "dat",
+                "frd",
+                "vtk_placeholder",
+            ],
+            "requires": [],
+            "optional_requires": [],
+            "executable_names": ["ccx"],
+            "capabilities": [
+                "linear_static",
+                "isotropic_elastic",
+                "fixed_support",
+                "nodal_force",
+                "pressure_placeholder",
+                "input_deck_generation",
+            ],
+            "metadata": {
+                "built_in": True,
+                "preview_first": True,
+                "prepare_only": True,
+                "no_solver_execution_during_deck_generation": True,
+            },
+        }
+    )
+
+
 def builtin_plugin_manifests() -> tuple[PluginManifest, ...]:
     """Return built-in data-only plugin manifest records."""
 
@@ -171,4 +218,5 @@ def builtin_plugin_manifests() -> tuple[PluginManifest, ...]:
         builtin_meshio_plugin_manifest(),
         builtin_mscript_preview_plugin_manifest(),
         builtin_gmsh_plugin_manifest(),
+        builtin_calculix_plugin_manifest(),
     )

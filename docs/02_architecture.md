@@ -118,3 +118,12 @@ GUI code may open the Gmsh dialog and call the adapter API, but it does not call
 subprocess directly. Generated `.msh` artifacts can be converted through the
 existing optional meshio bridge and attached as ProjectSchema `MeshRef`
 metadata. See `docs/23_gmsh_adapter.md`.
+
+## CalculiX Input Deck
+
+CalculiX deck preparation lives under `osw.solvers.calculix`. The bounded v0.1
+adapter maps full `MeshModel` topology, isotropic elastic material data, node
+sets, fixed supports, and simple loads into deterministic linear static `.inp`
+text. It does not run `ccx`, parse results, implement nonlinear/contact
+features, or call external commands from the GUI. See
+`docs/24_calculix_input_deck.md`.

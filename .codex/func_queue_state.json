@@ -11,9 +11,10 @@
     "OSW-FUNC-009_MAT_READER",
     "OSW-FUNC-010_BOUNDARY_CURVE_BRIDGE",
     "OSW-FUNC-011_REPORT_GENERATOR_BINDING",
-    "OSW-FUNC-012_GMSH_ADAPTER"
+    "OSW-FUNC-012_GMSH_ADAPTER",
+    "OSW-FUNC-013_CALCULIX_INPUT_DECK"
   ],
   "current_step": null,
-  "next_step": "OSW-FUNC-013_CALCULIX_INPUT_DECK",
-  "last_report": ".codex/reports/func/OSW-FUNC-012_GMSH_ADAPTER.md"
+  "next_step": "OSW-FUNC-014_CALCULIX_RUNNER_BINDING",
+  "last_report": ".codex/reports/func/OSW-FUNC-013_CALCULIX_INPUT_DECK.md"
 }

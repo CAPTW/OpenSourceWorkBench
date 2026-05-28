@@ -4,15 +4,17 @@
   "version": "0.1.0",
   "domain": "CAE",
   "type": "solver_adapter",
-  "license": "GPL-compatible",
+  "license": "GPL-compatible external solver",
   "input_formats": [
     "internal_project_schema",
+    "mesh_model",
     "inp"
   ],
   "output_formats": [
+    "inp",
     "frd",
     "dat",
-    "vtk"
+    "vtk_placeholder"
   ],
   "requires": [],
   "optional_requires": [],
@@ -21,6 +23,10 @@
   ],
   "capabilities": [
     "linear_static",
-    "thermal_placeholder"
+    "isotropic_elastic",
+    "fixed_support",
+    "nodal_force",
+    "pressure_placeholder",
+    "input_deck_generation"
   ]
 }

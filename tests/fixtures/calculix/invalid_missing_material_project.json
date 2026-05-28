@@ -1,0 +1,35 @@
+{
+  "materials": [],
+  "meshes": [
+    {
+      "format": "internal_mesh_model",
+      "id": "cantilever_mesh",
+      "metadata": {
+        "mesh_model_path": "cantilever_mesh.json"
+      },
+      "name": "cantilever_mesh",
+      "path": "cantilever_mesh.json"
+    }
+  ],
+  "metadata": {
+    "name": "MissingMaterial"
+  },
+  "schema_version": "0.1",
+  "solvers": [
+    {
+      "name": "CalculiX",
+      "settings": {
+        "calculix": {
+          "case_id": "missing-material",
+          "mesh_model_path": "cantilever_mesh.json",
+          "node_sets": {
+            "FIXED": [
+              1
+            ]
+          }
+        }
+      },
+      "solver": "CalculiX"
+    }
+  ]
+}

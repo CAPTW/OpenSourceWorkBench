@@ -211,6 +211,27 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Attempt meshio VTU conversion after .msh generation.",
     )
+    calculix_write_parser = subparsers.add_parser(
+        "calculix-write-inp",
+        help="Write a deterministic CalculiX .inp deck without running ccx.",
+    )
+    calculix_write_parser.add_argument(
+        "--demo",
+        choices=("cantilever",),
+        default="cantilever",
+        help="Built-in demo deck to write.",
+    )
+    calculix_write_parser.add_argument("--out", required=True, help="Output .inp path.")
+    calculix_preview_parser = subparsers.add_parser(
+        "calculix-deck-preview",
+        help="Preview a CalculiX input deck from ProjectSchema without running ccx.",
+    )
+    calculix_preview_parser.add_argument("project", help="Project JSON/YAML path.")
+    calculix_validate_parser = subparsers.add_parser(
+        "calculix-validate-project",
+        help="Validate CalculiX deck readiness without running ccx.",
+    )
+    calculix_validate_parser.add_argument("project", help="Project JSON/YAML path.")
     mscript_preview_parser = subparsers.add_parser(
         "mscript-preview",
         help="Preview a MATLAB/Octave .m file without executing it.",
@@ -590,6 +611,53 @@ def main(argv: Sequence[str] | None = None) -> int:
         if result.status is GmshMeshStatus.WARNING and result.msh_path and result.msh_path.exists():
             return 0
         return 2 if result.status is GmshMeshStatus.DEPENDENCY_MISSING else 1
+
+    if args.command == "calculix-write-inp":
+        from osw.solvers.calculix.adapter import create_cantilever_demo_case
+        from osw.solvers.calculix.input_deck import (
+            CalculixInputDeckGenerator,
+            write_input_deck,
+        )
+
+        case = create_cantilever_demo_case()
+        text = CalculixInputDeckGenerator().generate(case)
+        output_path = write_input_deck(text, Path(args.out))
+        print(f"Wrote CalculiX input deck: {output_path}")
+        print("Execution: not run")
+        return 0
+
+    if args.command == "calculix-deck-preview":
+        from osw.core.project_io import load_project
+        from osw.core.validation import ProjectSchemaError
+        from osw.solvers.calculix.adapter import project_to_calculix_deck
+
+        project_path = Path(args.project)
+        try:
+            project = load_project(project_path)
+        except ProjectSchemaError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        result = project_to_calculix_deck(project, base_path=project_path.parent)
+        if result.input_text:
+            print(result.input_text, end="")
+        if result.diagnostics:
+            _print_calculix_diagnostics(result.diagnostics, stream=sys.stderr)
+        return 1 if result.status == "error" else 0
+
+    if args.command == "calculix-validate-project":
+        from osw.core.project_io import load_project
+        from osw.core.validation import ProjectSchemaError
+        from osw.solvers.calculix.validation import validate_calculix_readiness
+
+        project_path = Path(args.project)
+        try:
+            project = load_project(project_path)
+        except ProjectSchemaError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        report = validate_calculix_readiness(project, base_path=project_path.parent)
+        print(report.friendly_summary())
+        return 1 if report.has_errors else 0
 
     if args.command == "mscript-preview":
         from osw.scripts.mscript.importer import preview_mscript
@@ -1066,6 +1134,19 @@ def _print_gmsh_result(result: object) -> None:
     diagnostics = getattr(result, "diagnostics", None)
     if diagnostics is not None and getattr(diagnostics, "messages", ()):
         print(diagnostics.summary(), file=sys.stderr)
+
+
+def _print_calculix_diagnostics(
+    diagnostics: Sequence[object],
+    *,
+    stream: object = sys.stderr,
+) -> None:
+    for item in diagnostics:
+        if isinstance(item, dict):
+            severity = str(item.get("severity", "")).upper()
+            path = str(item.get("path", ""))
+            message = str(item.get("message", ""))
+            print(f"{severity} {path}: {message}", file=stream)
 
 
 def _print_mscript_preview(preview: object) -> None:

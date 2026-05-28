@@ -2,19 +2,16 @@
 
 ## Goal
 
-Prepare a small linear static cantilever input deck and connect the result
-summary to OSW report and validation surfaces.
+Prepare a small linear static cantilever input deck for review. This tutorial
+does not run `ccx`.
 
 ## Prerequisites
 
 - Base OSW development install for input deck generation.
 - A small mesh represented as `MeshData` or imported through the mesh tutorial.
 - One isotropic elastic material with explicit units.
-- Optional `ccx` executable only if the user chooses to run CalculiX outside the
-  GUI workflow.
 
-OSW v0.1 keeps CalculiX bounded to linear static educational handoff and result
-summary parsing.
+OSW v0.1 keeps this step bounded to linear static input deck generation.
 
 ## Steps
 
@@ -24,20 +21,19 @@ summary parsing.
 3. Generate the `.inp` deck through the CalculiX input deck generator.
 4. Review validation warnings for missing material, missing boundary condition,
    unsupported cell type, or missing load.
-5. Optionally run `ccx` outside the GUI through the reviewed runner boundary and
-   keep runtime outputs out of the repository unless they are curated fixtures.
-6. Parse a small `.dat` result summary and include max displacement, max stress,
-   assumptions, and validation notes in the report.
+5. Write the reviewed `.inp` deck to `artifacts/calculix` or another explicit
+   output directory.
+6. Keep runtime solver outputs out of the repository; solver execution and
+   result parsing are owned by later functional steps.
 
 ## Expected Output
 
 - A deterministic CalculiX `.inp` deck for a linear static cantilever.
 - Clear validation messages when material, boundary conditions, or supported
   element types are missing.
-- Optional run artifacts tracked as `.dat`, `.frd`, `.sta`, and logs when the
-  backend runner is explicitly used.
 - Cantilever validation can compare max displacement against `F L^3 / 3 E I`
-  within the documented tolerance.
+  within the documented tolerance once a later runner/parser step supplies
+  reviewed result data.
 
 ## Troubleshooting
 

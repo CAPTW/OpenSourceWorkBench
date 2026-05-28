@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+from osw.core.demo_project import create_heatsink_flow_demo_project
 from osw.core.materials import IsotropicElastic, Material
+from osw.core.project_io import load_project
 from osw.core.units import Quantity
 from osw.mesh.mesh_model import MeshCellBlock, MeshData
 from osw.solvers.calculix.input_deck import (
@@ -8,7 +12,10 @@ from osw.solvers.calculix.input_deck import (
     CalculixLinearStaticCase,
     CalculixNodeSet,
 )
-from osw.solvers.calculix.validation import validate_calculix_case
+from osw.solvers.calculix.validation import (
+    validate_calculix_case,
+    validate_calculix_readiness,
+)
 
 
 def sample_mesh() -> MeshData:
@@ -119,3 +126,37 @@ def test_boundary_condition_node_ids_must_exist_in_mesh() -> None:
         "Node set FIXED references node id 99 outside mesh node range"
         in report.friendly_summary()
     )
+
+
+def test_project_readiness_uses_project_fixture_topology() -> None:
+    fixture = Path(__file__).parents[1] / "fixtures" / "calculix" / "cantilever_project.json"
+    project = load_project(fixture)
+
+    report = validate_calculix_readiness(project, base_path=fixture.parent)
+
+    assert not report.has_errors
+    assert "No validation messages" in report.friendly_summary()
+
+
+def test_project_readiness_reports_missing_material() -> None:
+    fixture = (
+        Path(__file__).parents[1]
+        / "fixtures"
+        / "calculix"
+        / "invalid_missing_material_project.json"
+    )
+    project = load_project(fixture)
+
+    report = validate_calculix_readiness(project, base_path=fixture.parent)
+
+    assert report.has_errors
+    assert "Material is required" in report.friendly_summary()
+
+
+def test_heatsink_flow_boundaries_are_not_silently_mapped_to_calculix() -> None:
+    project = create_heatsink_flow_demo_project()
+
+    report = validate_calculix_readiness(project)
+
+    assert report.has_errors
+    assert "Full MeshModel topology is required" in report.friendly_summary()

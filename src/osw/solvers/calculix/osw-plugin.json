@@ -1,13 +1,21 @@
 {
-  "id": "osw.solvers.calculix.linear_static",
+  "id": "osw.calculix",
   "name": "CalculiX Linear Static Adapter",
   "version": "0.1.0",
-  "domain": "solver",
+  "domain": "CAE",
   "type": "solver_adapter",
-  "license": "GPL-3.0-or-later",
-  "input_formats": ["osw.mesh", "osw.project.material"],
-  "output_formats": ["calculix.inp"],
+  "license": "GPL-compatible external solver",
+  "input_formats": ["internal_project_schema", "mesh_model", "inp"],
+  "output_formats": ["inp", "dat", "frd", "vtk_placeholder"],
   "requires": [],
   "optional_requires": [],
-  "capabilities": ["validate", "prepare_case", "linear_static", "dry_run"]
+  "executable_names": ["ccx"],
+  "capabilities": [
+    "linear_static",
+    "isotropic_elastic",
+    "fixed_support",
+    "nodal_force",
+    "pressure_placeholder",
+    "input_deck_generation"
+  ]
 }

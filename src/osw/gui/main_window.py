@@ -47,7 +47,7 @@ SHELL_MENU_ACTIONS = {
         "Import MATLAB MAT Data",
     ),
     "Plugins": ("Plugin Manager", "Refresh Plugins", "Plugin Health Check", "Preferences"),
-    "Run": ("Run", "Stop", "Open Results Folder"),
+    "Run": ("Run", "Stop", "Generate CalculiX Input Deck...", "Open Results Folder"),
     "Reports": ("Generate Report", "Export Report"),
     "Help": ("Documentation", "About"),
 }
@@ -108,6 +108,7 @@ class MainWindow(_BaseMainWindow):
         self.mat_preview_dialog: object | None = None
         self.boundary_curve_dialog: object | None = None
         self.gmsh_mesh_dialog: object | None = None
+        self.calculix_deck_dialog: object | None = None
         self.plot_viewer_dialog: object | None = None
         self.plot_viewer: object | None = None
         self.last_figure_dataset: object | None = None
@@ -151,6 +152,8 @@ class MainWindow(_BaseMainWindow):
                     action.triggered.connect(self.export_current_report)
                 elif action_title == "Generate Mesh with Gmsh...":
                     action.triggered.connect(self.open_gmsh_mesh_dialog)
+                elif action_title == "Generate CalculiX Input Deck...":
+                    action.triggered.connect(self.open_calculix_deck_dialog)
                 else:
                     action.triggered.connect(
                         lambda _checked=False, label=action_title: self._placeholder_action(label)
@@ -272,6 +275,11 @@ class MainWindow(_BaseMainWindow):
             "set_theme_tokens",
         ):
             self.gmsh_mesh_dialog.set_theme_tokens(tokens)
+        if self.calculix_deck_dialog is not None and hasattr(
+            self.calculix_deck_dialog,
+            "set_theme_tokens",
+        ):
+            self.calculix_deck_dialog.set_theme_tokens(tokens)
 
     def _on_top_bar_action_triggered(self, label: str) -> None:
         if label == "New":
@@ -660,6 +668,30 @@ class MainWindow(_BaseMainWindow):
         self._placeholder_action(f"Gmsh mesh generation: {status}")
         return True
 
+    def open_calculix_deck_dialog(self, _checked: bool = False) -> object:
+        """Open a safe CalculiX deck preview dialog without running ccx."""
+
+        from importlib import import_module
+
+        from osw.gui.dialogs.calculix_deck_dialog import CalculixDeckDialog
+
+        adapter = import_module("osw.solvers.calculix.adapter")
+        result = adapter.project_to_calculix_deck(self.current_project)
+        self.calculix_deck_dialog = CalculixDeckDialog(
+            parent=self,
+            result=result,
+            theme_tokens=self.theme_manager.current_tokens,
+        )
+        self.calculix_deck_dialog.deckWritten.connect(self._on_calculix_deck_written)
+        self.calculix_deck_dialog.show()
+        self.calculix_deck_dialog.raise_()
+        self.calculix_deck_dialog.activateWindow()
+        return self.calculix_deck_dialog
+
+    def _on_calculix_deck_written(self, path: str) -> None:
+        if hasattr(self.run_monitor, "append_log"):
+            self.run_monitor.append_log(f"Generated CalculiX input deck: {path}", level="info")
+
     def _on_script_run_completed(self, result: object) -> None:
         status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
         from osw.scripts.mscript.figure_capture import figure_dataset_from_octave_result
@@ -722,6 +754,7 @@ def _action_object_name(action_title: str) -> str:
         "Plugin Health Check": "oswActionPluginHealthCheck",
         "Import MATLAB MAT Data": "oswActionImportMatData",
         "Generate Mesh with Gmsh...": "oswActionGenerateGmshMesh",
+        "Generate CalculiX Input Deck...": "oswActionGenerateCalculixDeck",
     }
     if action_title in plugin_action_names:
         return plugin_action_names[action_title]

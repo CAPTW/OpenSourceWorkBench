@@ -129,6 +129,17 @@ def test_reports_menu_contains_safe_report_actions(app: object, tmp_path) -> Non
     assert "HeatSink_Flow Simulation Report" in output.read_text(encoding="utf-8")
 
 
+def test_run_menu_contains_calculix_deck_preview_action(app: object) -> None:
+    from osw.gui.main_window import MainWindow
+
+    window = MainWindow()
+
+    assert (
+        window.menu_actions["Generate CalculiX Input Deck..."].objectName()
+        == "oswActionGenerateCalculixDeck"
+    )
+
+
 def test_toolbar_contains_reference_actions(app: object) -> None:
     from osw.gui.main_window import MainWindow
 

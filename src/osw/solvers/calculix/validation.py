@@ -137,6 +137,24 @@ def validate_calculix_case(case: object) -> ValidationReport:
     return report
 
 
+def validate_calculix_readiness(
+    project: object,
+    *,
+    mesh_model: object | None = None,
+    base_path: object | None = None,
+) -> ValidationReport:
+    """Validate ProjectSchema readiness for deck generation without running ccx."""
+
+    from .adapter import project_to_calculix_case
+
+    _, report = project_to_calculix_case(
+        project,  # type: ignore[arg-type]
+        mesh_model=mesh_model,  # type: ignore[arg-type]
+        base_path=base_path,  # type: ignore[arg-type]
+    )
+    return report
+
+
 def _validate_mesh(mesh: object, report: ValidationReport) -> None:
     points = tuple(getattr(mesh, "points", ()))
     cells = tuple(getattr(mesh, "cells", ()))
