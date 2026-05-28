@@ -2,24 +2,28 @@
 
 from __future__ import annotations
 
+import json
+import os
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from html import escape
 from pathlib import Path
 from typing import Any
 
+from osw.core.diagnostics import DiagnosticReport
 from osw.core.project_schema import Project
 from osw.core.validation import ValidationReport, validate_project_sanity
+from osw.post.report_model import (
+    ReportBuildRequest,
+    ReportBuildResult,
+    ReportFormat,
+    ReportSection,
+    ReportSummary,
+)
+from osw.post.report_sections import REPORT_KNOWN_LIMITATIONS, build_report_summary
 
 DEFAULT_REPORT_FILENAME = "report.html"
-DEFAULT_REPORT_LIMITATIONS = (
-    "OSW v0.1 reports are an educational/research artifact and must not be "
-    "read as Industrial certification or production CAE claims.",
-    "Inputs, assumptions, units, validation status, and external tool availability "
-    "must be reviewed before using report content.",
-    "Figures, result tables, screenshots, and validation sections summarize "
-    "structured preview data when provided; missing optional artifacts are reported.",
-)
+DEFAULT_REPORT_LIMITATIONS = REPORT_KNOWN_LIMITATIONS
 
 
 @dataclass(frozen=True)
@@ -138,7 +142,9 @@ def build_report_model(
     )
 
 
-def render_report_html(model: ReportModel) -> str:
+def render_report_html(model: ReportModel | ReportSummary) -> str:
+    if isinstance(model, ReportSummary):
+        return render_report_summary_html(model)
     return "\n".join(
         [
             "<!doctype html>",
@@ -212,19 +218,166 @@ def export_report_html(
     warnings: Iterable[str] | None = None,
 ) -> Path:
     target = _resolve_output_path(project, output)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    model = build_report_model(
-        project,
+    result = build_report(
+        ReportBuildRequest(project=project, output_path=target, format=ReportFormat.HTML),
         figure_datasets=figure_datasets,
         mesh_infos=mesh_infos,
         result_tables=result_tables,
-        screenshots=screenshots,
         validation_report=validation_report,
         sanity_report=sanity_report,
         warnings=warnings,
+        metadata={"screenshots": tuple(str(item) for item in screenshots or ())},
     )
-    target.write_text(render_report_html(model), encoding="utf-8")
-    return target
+    return Path(result.output_path)
+
+
+def build_report(
+    request: ReportBuildRequest,
+    *,
+    figure_datasets: Iterable[object] | None = None,
+    mesh_infos: Iterable[object] | None = None,
+    mat_summaries: Iterable[object] | None = None,
+    plugin_health: Iterable[object] | Mapping[str, object] | None = None,
+    run_results: Iterable[object] | None = None,
+    result_tables: Iterable[object] | None = None,
+    validation_report: ValidationReport | None = None,
+    sanity_report: ValidationReport | None = None,
+    warnings: Iterable[str] | None = None,
+    metadata: Mapping[str, Any] | None = None,
+) -> ReportBuildResult:
+    """Build and write a deterministic report without executing tools."""
+
+    summary = build_report_summary(
+        request.project,
+        figure_datasets=figure_datasets if request.include_figures else (),
+        mesh_infos=mesh_infos,
+        mat_summaries=mat_summaries,
+        plugin_health=plugin_health,
+        run_results=run_results,
+        result_tables=result_tables if request.include_tables else (),
+        validation_report=validation_report,
+        sanity_report=sanity_report,
+        warnings=warnings if request.include_warnings else (),
+        created_at=str(request.metadata.get("created_at", "")),
+    )
+    if not request.include_known_limitations:
+        summary = _summary_without_known_limitations(summary)
+    output_path = _resolve_build_output_path(request)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    diagnostics = DiagnosticReport()
+    report_format = str(request.format)
+    if report_format == ReportFormat.JSON_SUMMARY.value:
+        output_path.write_text(
+            f"{json.dumps(summary.to_dict(), indent=2, sort_keys=True)}\n",
+            encoding="utf-8",
+        )
+    elif report_format == ReportFormat.MARKDOWN.value:
+        output_path.write_text(render_report_markdown(summary), encoding="utf-8")
+    elif report_format in {ReportFormat.HTML.value, ReportFormat.PDF_OPTIONAL.value}:
+        if report_format == ReportFormat.PDF_OPTIONAL.value:
+            diagnostics.add_warning(
+                "report-pdf-deferred",
+                "PDF report export is optional and not enabled by default.",
+                hint="Export HTML or Markdown without adding a mandatory PDF dependency.",
+            )
+        output_path.write_text(
+            render_report_summary_html(summary, output_path=output_path),
+            encoding="utf-8",
+        )
+    else:
+        diagnostics.add_error(
+            "report-format-unsupported",
+            f"Unsupported report format: {request.format}",
+            hint="Use html, markdown, or json_summary.",
+        )
+    diagnostics.extend(summary.diagnostics)
+    status = (
+        "error"
+        if diagnostics.has_errors
+        else ("warning" if diagnostics.has_warnings else "ok")
+    )
+    return ReportBuildResult(
+        status=status,
+        output_path=output_path,
+        summary=summary,
+        diagnostics=diagnostics,
+        assets=summary.assets,
+    )
+
+
+def render_report_summary_html(
+    summary: ReportSummary,
+    *,
+    output_path: str | Path | None = None,
+) -> str:
+    """Render a ReportSummary to deterministic standalone HTML."""
+
+    section_html = "\n".join(
+        _render_summary_section(section, summary) for section in summary.sections
+    )
+    table_html = "\n".join(_render_summary_table(table) for table in summary.tables)
+    figure_html = _render_summary_figures(summary, output_path=output_path)
+    warnings = summary.warnings or ("No report warnings.",)
+    return "\n".join(
+        [
+            "<!doctype html>",
+            '<html lang="en">',
+            "<head>",
+            '  <meta charset="utf-8">',
+            f"  <title>{escape(summary.title)}</title>",
+            "  <style>",
+            "    body { font-family: system-ui, sans-serif; margin: 2rem; "
+            "line-height: 1.5; color: #1f2933; }",
+            "    main { max-width: 1180px; }",
+            "    section { margin-block: 1.4rem; }",
+            "    table { border-collapse: collapse; margin: 0.75rem 0 1.25rem; width: 100%; }",
+            "    th, td { border: 1px solid #b9c2cf; padding: 0.4rem 0.55rem; "
+            "vertical-align: top; }",
+            "    th { text-align: left; background: #eef2f6; }",
+            "    figure { margin: 1rem 0; }",
+            "    img { max-width: 100%; height: auto; border: 1px solid #c8d0da; }",
+            "    code { background: #f2f4f7; padding: 0.05rem 0.2rem; }",
+            "    .warning { color: #7a3b00; font-weight: 650; }",
+            "    .muted { color: #56616f; }",
+            "  </style>",
+            "</head>",
+            "<body>",
+            "  <main>",
+            f"    <h1>{escape(summary.title)}</h1>",
+            f"    <p class=\"muted\">Project: {escape(summary.project_name)}"
+            f" | Run: {escape(summary.run_label or 'Not recorded')}</p>",
+            section_html,
+            table_html,
+            figure_html,
+            "    <section id=\"report-warnings\">",
+            "      <h2>Report Warnings</h2>",
+            "      <ul>",
+            *[f"        <li>{escape(item)}</li>" for item in warnings],
+            "      </ul>",
+            "    </section>",
+            "  </main>",
+            "</body>",
+            "</html>",
+            "",
+        ]
+    )
+
+
+def render_report_markdown(summary: ReportSummary) -> str:
+    """Render a lightweight Markdown report summary."""
+
+    lines = [
+        f"# {summary.title}",
+        "",
+        f"Project: {summary.project_name}",
+        f"Run: {summary.run_label or 'Not recorded'}",
+        "",
+    ]
+    for section in summary.sections:
+        lines.extend([f"## {section.title}", ""])
+        lines.extend(f"- {item}" for item in section.content_blocks)
+        lines.append("")
+    return "\n".join(lines)
 
 
 def _resolve_output_path(project: Project, output: str | Path | None) -> Path:
@@ -234,6 +387,159 @@ def _resolve_output_path(project: Project, output: str | Path | None) -> Path:
     if target.suffix.lower() != ".html":
         return target / DEFAULT_REPORT_FILENAME
     return target
+
+
+def _resolve_build_output_path(request: ReportBuildRequest) -> Path:
+    if request.output_path:
+        target = Path(request.output_path)
+    else:
+        target = Path(request.project.report.path)
+    if target.suffix:
+        return target
+    suffix = {
+        ReportFormat.HTML.value: ".html",
+        ReportFormat.MARKDOWN.value: ".md",
+        ReportFormat.JSON_SUMMARY.value: ".json",
+        ReportFormat.PDF_OPTIONAL.value: ".html",
+    }.get(str(request.format), ".html")
+    return target / f"report{suffix}"
+
+
+def _summary_without_known_limitations(summary: ReportSummary) -> ReportSummary:
+    filtered_sections: list[ReportSection] = []
+    for section in summary.sections:
+        if section.section_id != "warnings-known-limitations":
+            filtered_sections.append(section)
+            continue
+        blocks = tuple(
+            block
+            for block in section.content_blocks
+            if block not in DEFAULT_REPORT_LIMITATIONS
+        )
+        filtered_sections.append(
+            ReportSection(
+                section.section_id,
+                section.title,
+                section.level,
+                blocks or ("No report warnings.",),
+                section.diagnostics,
+                section.metadata,
+            )
+        )
+    metadata = dict(summary.metadata)
+    metadata["known_limitations"] = []
+    return ReportSummary(
+        title=summary.title,
+        project_name=summary.project_name,
+        run_label=summary.run_label,
+        created_at=summary.created_at,
+        sections=tuple(filtered_sections),
+        tables=summary.tables,
+        figures=summary.figures,
+        assets=summary.assets,
+        warnings=summary.warnings,
+        diagnostics=summary.diagnostics,
+        metadata=metadata,
+    )
+
+
+def _render_summary_section(section: ReportSection, summary: ReportSummary) -> str:
+    heading_level = min(max(section.level, 2), 6)
+    body = [
+        f'    <section id="{escape(section.section_id)}">',
+        f"      <h{heading_level}>{escape(section.title)}</h{heading_level}>",
+        "      <ul>",
+    ]
+    for item in section.content_blocks or ("No data registered yet.",):
+        body.append(f"        <li>{escape(item)}</li>")
+    body.append("      </ul>")
+    for table_id in section.metadata.get("table_ids", ()):
+        if any(table.table_id == table_id for table in summary.tables):
+            body.append(f'      <p class="muted">Table: <code>{escape(str(table_id))}</code></p>')
+    body.append("    </section>")
+    return "\n".join(body)
+
+
+def _render_summary_table(table: object) -> str:
+    title = str(getattr(table, "title", "Report table"))
+    table_id = str(getattr(table, "table_id", title))
+    columns = tuple(str(item) for item in getattr(table, "columns", ()) or ())
+    rows = tuple(tuple(str(cell) for cell in row) for row in getattr(table, "rows", ()) or ())
+    if not columns:
+        return ""
+    body = [
+        f'    <section id="table-{escape(table_id)}">',
+        f"      <h3>{escape(title)}</h3>",
+        "      <table>",
+        "        <thead>",
+        "          <tr>" + "".join(f"<th>{escape(column)}</th>" for column in columns) + "</tr>",
+        "        </thead>",
+        "        <tbody>",
+    ]
+    if rows:
+        for row in rows:
+            cells = "".join(f"<td>{escape(cell)}</td>" for cell in row)
+            body.append(f"          <tr>{cells}</tr>")
+    else:
+        body.append(
+            f"          <tr><td colspan=\"{len(columns)}\" class=\"muted\">"
+            "No data registered yet.</td></tr>"
+        )
+    body.extend(["        </tbody>", "      </table>", "    </section>"])
+    return "\n".join(body)
+
+
+def _render_summary_figures(
+    summary: ReportSummary,
+    *,
+    output_path: str | Path | None,
+) -> str:
+    body = ['    <section id="report-figures">', "      <h2>Report Figure Assets</h2>"]
+    if not summary.figures:
+        body.extend(["      <p>No figure datasets registered yet.</p>", "    </section>"])
+        return "\n".join(body)
+    for figure in summary.figures:
+        body.extend(
+            [
+                "      <figure>",
+                f"        <figcaption>{escape(figure.figure_id)}: "
+                f"{escape(figure.title or 'Figure')}</figcaption>",
+            ]
+        )
+        path = figure.primary_path
+        if path and Path(path).exists():
+            href = _relative_report_href(path, output_path)
+            if figure.format in {"png", "jpg", "jpeg", "svg"}:
+                body.append(
+                    f'        <img src="{escape(href)}" '
+                    f'alt="{escape(figure.title or figure.figure_id)}">'
+                )
+            else:
+                body.append(f'        <p><a href="{escape(href)}">Figure artifact</a></p>')
+        else:
+            body.append(
+                f'        <p class="warning">Figure artifact missing: '
+                f'{escape(path or "<none>")}</p>'
+            )
+        if figure.source_script or figure.source_run_id:
+            body.append(
+                f'        <p class="muted">Source: '
+                f'{escape(figure.source_script or "not recorded")} '
+                f'{escape(figure.source_run_id or "")}</p>'
+            )
+        body.append("      </figure>")
+    body.append("    </section>")
+    return "\n".join(body)
+
+
+def _relative_report_href(path: str | Path, output_path: str | Path | None) -> str:
+    source = Path(path)
+    if output_path:
+        try:
+            return os.path.relpath(source, Path(output_path).parent).replace("\\", "/")
+        except ValueError:
+            return str(source).replace("\\", "/")
+    return str(source).replace("\\", "/")
 
 
 def _combined_validation_report(

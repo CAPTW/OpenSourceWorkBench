@@ -193,6 +193,7 @@ or full solver parity.
 | --- | --- | --- |
 | Release documentation links `docs/known_limitations.md`. | `PASS` | README and release checklist link known limitations. |
 | Reports and demo evidence include known limitations or link to the known limitations page. | `PASS` | Demo smoke checklist points reviewers to known limitations. |
+| HTML report export is deterministic and data-only. | `PASS` | `OSW-FUNC-011_REPORT_GENERATOR_BINDING` exports ProjectSchema-backed HTML summaries without executing solvers, scripts, MATLAB, Octave, or external commands. |
 | External solver availability is not guaranteed. | `PASS` | README, install guide, known limitations, and demo smoke checklist state external solvers are optional. |
 | Results without validation evidence remain marked as preview, template-based, fixture-backed, or educational. | `PASS` | Validation matrix and known limitations use this language. |
 

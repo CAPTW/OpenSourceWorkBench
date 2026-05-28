@@ -143,6 +143,10 @@ class MainWindow(_BaseMainWindow):
                     action.triggered.connect(self.refresh_plugins)
                 elif action_title == "Plugin Health Check":
                     action.triggered.connect(self.run_plugin_health_check)
+                elif action_title == "Generate Report":
+                    action.triggered.connect(self.generate_report_preview)
+                elif action_title == "Export Report":
+                    action.triggered.connect(self.export_current_report)
                 else:
                     action.triggered.connect(
                         lambda _checked=False, label=action_title: self._placeholder_action(label)
@@ -178,6 +182,9 @@ class MainWindow(_BaseMainWindow):
         self.properties_panel = PropertiesPanel(container)
         self.properties_panel.plugins_section.manage_plugins_requested.connect(
             self.open_plugin_manager
+        )
+        self.properties_panel.report_preview_panel.exportRequested.connect(
+            self.export_current_report
         )
         self.project_tree.currentItemChanged.connect(self._on_project_tree_selection_changed)
 
@@ -356,6 +363,63 @@ class MainWindow(_BaseMainWindow):
             self.project_tree_panel.set_project(project)
         if hasattr(self.properties_panel, "set_project"):
             self.properties_panel.set_project(project)
+        self.generate_report_preview(log=False)
+
+    def build_current_report_summary(self) -> object:
+        """Build report summary data without executing tools."""
+
+        from osw.post.report_sections import build_report_summary
+
+        figure_datasets = (
+            (self.last_figure_dataset,)
+            if self.last_figure_dataset is not None
+            else ()
+        )
+        return build_report_summary(
+            self.current_project,
+            figure_datasets=figure_datasets,
+            plugin_health=self.plugin_health_map,
+        )
+
+    def generate_report_preview(self, _checked: bool = False, *, log: bool = True) -> object:
+        """Refresh the right-panel report preview from current project data."""
+
+        summary = self.build_current_report_summary()
+        report_panel = self.properties_panel.report_preview_panel
+        if hasattr(report_panel, "set_report_summary"):
+            report_panel.set_report_summary(summary)
+        if log:
+            self._placeholder_action("Generate Report")
+        return summary
+
+    def export_current_report(
+        self,
+        _checked: bool = False,
+        *,
+        output_path: str | Path | None = None,
+    ) -> Path:
+        """Export the current report through post/report services only."""
+
+        from osw.post.report_generator import build_report
+        from osw.post.report_model import ReportBuildRequest
+
+        target = Path(output_path) if output_path is not None else _default_report_export_path(
+            self.current_project
+        )
+        figure_datasets = (
+            (self.last_figure_dataset,)
+            if self.last_figure_dataset is not None
+            else ()
+        )
+        result = build_report(
+            ReportBuildRequest(project=self.current_project, output_path=target, format="html"),
+            figure_datasets=figure_datasets,
+            plugin_health=self.plugin_health_map,
+        )
+        if hasattr(self.properties_panel.report_preview_panel, "set_report_summary"):
+            self.properties_panel.report_preview_panel.set_report_summary(result.summary)
+        self._placeholder_action(f"Exported report: {result.output_path}")
+        return Path(result.output_path)
 
     def new_project(self) -> None:
         """Reset to the curated demo project until full project creation is designed."""
@@ -562,6 +626,7 @@ class MainWindow(_BaseMainWindow):
         self.last_figure_dataset = dataset
         if self.plot_viewer is not None and hasattr(self.plot_viewer, "set_figure_dataset"):
             self.plot_viewer.set_figure_dataset(dataset)
+        self.generate_report_preview(log=False)
 
     def open_plot_viewer(self, dataset: object | None = None) -> object:
         """Open a lightweight FigureDataset viewer without running scripts."""
@@ -682,6 +747,12 @@ def _project_with_boundary_curve(project: Project, curve: object) -> Project:
         plugins=project.plugins,
         warnings=project.warnings,
     )
+
+
+def _default_report_export_path(project: Project) -> Path:
+    name = project.metadata.name or "osw_project"
+    safe_name = "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in name)
+    return Path("artifacts") / "report" / f"{safe_name}_report.html"
 
 
 def create_app(argv: Sequence[str] | None = None) -> QApplication:

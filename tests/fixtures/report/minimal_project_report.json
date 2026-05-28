@@ -1,0 +1,45 @@
+{
+  "schema_version": "0.1",
+  "metadata": {
+    "name": "Minimal Report Fixture",
+    "description": "Small report fixture.",
+    "author": "OSW tests",
+    "tags": []
+  },
+  "units": {
+    "name": "SI",
+    "length": "m",
+    "mass": "kg",
+    "time": "s",
+    "temperature": "K",
+    "amount": "mol",
+    "current": "A",
+    "force": "N",
+    "stress": "Pa",
+    "energy": "J",
+    "pressure": "Pa",
+    "defaulted": false
+  },
+  "materials": [],
+  "geometry": [],
+  "meshes": [],
+  "scripts": [],
+  "boundary_curves": [],
+  "physics": [],
+  "solvers": [],
+  "results": [],
+  "report": {
+    "path": "reports/report.html",
+    "title": "Minimal Fixture Report",
+    "include_validation": true,
+    "run_label": "",
+    "sections": [],
+    "export_formats": ["html"],
+    "include_figures": true,
+    "include_tables": true,
+    "include_warnings": true,
+    "artifacts": []
+  },
+  "plugins": [],
+  "warnings": []
+}

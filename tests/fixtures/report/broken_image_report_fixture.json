@@ -1,0 +1,14 @@
+{
+  "dataset_id": "broken-image-fixture",
+  "figures": [
+    {
+      "figure_id": "missing-image",
+      "title": "Missing image fixture",
+      "image_path": "tests/fixtures/report/does_not_exist.png",
+      "format": "png"
+    }
+  ],
+  "engine": "imported",
+  "workspace_variables": [],
+  "warnings": []
+}

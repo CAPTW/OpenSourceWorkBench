@@ -75,6 +75,23 @@ def test_report_preview_export_button_is_safe_placeholder(app: object) -> None:
     assert panel.last_export_request == "placeholder"
 
 
+def test_report_preview_panel_accepts_real_report_summary(app: object) -> None:
+    from osw.core.demo_project import create_heatsink_flow_demo_project
+    from osw.gui.widgets.report_preview_panel import ReportPreviewPanel
+    from osw.post.report_sections import build_report_summary
+
+    panel = ReportPreviewPanel()
+    summary = build_report_summary(create_heatsink_flow_demo_project())
+
+    panel.set_report_summary(summary)
+
+    assert panel.report_title() == "HeatSink_Flow Simulation Report"
+    assert panel.run_label() == "Run 0001"
+    assert "Project Metadata" in panel.report_sections()
+    assert "Figures:" in panel.report_status_text()
+    assert panel.last_report_summary is summary
+
+
 def test_status_bar_contains_reference_values_and_ratios(app: object) -> None:
     from osw.gui.widgets.status_bar import OswStatusBar
 
@@ -140,6 +157,8 @@ def test_main_window_contains_enriched_status_bar_and_major_regions(app: object)
     assert window.properties_panel.objectName() == "oswPropertiesPanel"
     assert window.statusBar().objectName() == "oswStatusBar"
     assert window.statusBar().solver_name() == "chtSolver"
+    assert "Generate Report" in window.menu_actions
+    assert "Export Report" in window.menu_actions
 
 
 def test_thumbnail_and_status_bar_render_non_null_pixmaps(app: object) -> None:

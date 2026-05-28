@@ -114,6 +114,21 @@ def test_plugins_menu_contains_manager_actions(app: object) -> None:
     )
 
 
+def test_reports_menu_contains_safe_report_actions(app: object, tmp_path) -> None:
+    from osw.gui.main_window import MainWindow
+
+    window = MainWindow()
+
+    assert window.menu_actions["Generate Report"].objectName() == "actionGenerateReport"
+    assert window.menu_actions["Export Report"].objectName() == "actionExportReport"
+    summary = window.generate_report_preview()
+    output = window.export_current_report(output_path=tmp_path / "report.html")
+
+    assert "Project Metadata" in summary.section_titles
+    assert output.exists()
+    assert "HeatSink_Flow Simulation Report" in output.read_text(encoding="utf-8")
+
+
 def test_toolbar_contains_reference_actions(app: object) -> None:
     from osw.gui.main_window import MainWindow
 

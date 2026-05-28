@@ -94,6 +94,9 @@ class ReportPreviewThumbnail(_BaseWidget):
 class ReportPreviewPanel(_BaseWidget):
     """Static report preview card with a safe placeholder export action."""
 
+    if QtCore is not None:
+        exportRequested = QtCore.Signal()
+
     def __init__(self, parent: object | None = None) -> None:
         if QtCore is None or QtWidgets is None:
             raise PySide6UnavailableError(pyside6_missing_message())
@@ -103,6 +106,7 @@ class ReportPreviewPanel(_BaseWidget):
         self._tokens = DARK_TOKENS
         self._sections = list(DEFAULT_REPORT_SECTIONS)
         self.last_export_request: str | None = None
+        self.last_report_summary: object | None = None
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(8, 7, 8, 8)
@@ -113,6 +117,8 @@ class ReportPreviewPanel(_BaseWidget):
         self.title_label.setObjectName("oswReportPreviewTitle")
         self.run_label_widget = QtWidgets.QLabel(DEFAULT_REPORT_RUN_LABEL, self)
         self.run_label_widget.setObjectName("oswReportPreviewRunLabel")
+        self.summary_status_label = QtWidgets.QLabel("Figures: 0 · Warnings: 0", self)
+        self.summary_status_label.setObjectName("oswReportPreviewStatus")
 
         preview_row = QtWidgets.QHBoxLayout()
         preview_row.setContentsMargins(0, 0, 0, 0)
@@ -133,6 +139,7 @@ class ReportPreviewPanel(_BaseWidget):
         layout.addWidget(self.header_label)
         layout.addWidget(self.title_label)
         layout.addWidget(self.run_label_widget)
+        layout.addWidget(self.summary_status_label)
         layout.addLayout(preview_row)
         layout.addWidget(self.export_button)
         self.set_sections(self._sections)
@@ -151,6 +158,9 @@ class ReportPreviewPanel(_BaseWidget):
     def report_sections(self) -> list[str]:
         return list(self._sections)
 
+    def report_status_text(self) -> str:
+        return self.summary_status_label.text()
+
     def set_report_title(self, title: str) -> None:
         self.title_label.setText(title)
 
@@ -165,6 +175,27 @@ class ReportPreviewPanel(_BaseWidget):
 
     def set_export_enabled(self, enabled: bool) -> None:
         self.export_button.setEnabled(enabled)
+
+    def set_report_summary(self, summary: object) -> None:
+        """Bind a report summary without executing solver or script workflows."""
+
+        self.last_report_summary = summary
+        title = str(getattr(summary, "title", "") or DEFAULT_REPORT_TITLE)
+        run_label = str(getattr(summary, "run_label", "") or DEFAULT_REPORT_RUN_LABEL)
+        sections = [
+            str(getattr(section, "title", section))
+            for section in getattr(summary, "sections", ()) or ()
+        ]
+        figure_count = int(
+            getattr(summary, "figure_count", len(getattr(summary, "figures", ())))
+        )
+        warning_count = int(
+            getattr(summary, "warning_count", len(getattr(summary, "warnings", ())))
+        )
+        self.set_report_title(title)
+        self.set_run_label(run_label)
+        self.set_sections(sections or list(DEFAULT_REPORT_SECTIONS))
+        self.summary_status_label.setText(f"Figures: {figure_count} · Warnings: {warning_count}")
 
     def set_theme_tokens(self, tokens: ThemeTokens) -> None:
         self._tokens = tokens
@@ -192,6 +223,12 @@ class ReportPreviewPanel(_BaseWidget):
             "background: transparent;"
             "border: none;"
             "}"
+            "QLabel#oswReportPreviewStatus {"
+            f"color: {tokens.text_muted};"
+            "background: transparent;"
+            "border: none;"
+            "font-size: 8pt;"
+            "}"
             "QListWidget#oswReportPreviewSections {"
             f"background-color: {tokens.bg_panel};"
             f"color: {tokens.text_secondary};"
@@ -202,3 +239,5 @@ class ReportPreviewPanel(_BaseWidget):
 
     def _record_export_request(self) -> None:
         self.last_export_request = "placeholder"
+        if hasattr(self, "exportRequested"):
+            self.exportRequested.emit()

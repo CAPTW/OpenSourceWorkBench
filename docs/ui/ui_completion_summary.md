@@ -205,3 +205,9 @@ of the same frozen shell. Project trees can show boundary curves when a project
 has them, the properties panel can show curve summaries and boundary-condition
 curve references, and the BoundaryCurve dialog previews x/y data and validation
 messages without generating solver files or running external tools.
+
+`OSW-FUNC-011_REPORT_GENERATOR_BINDING` binds the existing report preview card
+to real `ReportSummary` data. The panel can show generated report sections,
+figure counts, and warning counts, while MainWindow report actions export
+deterministic HTML through `osw.post` without running solvers, scripts, MATLAB,
+Octave, or GUI subprocess calls.

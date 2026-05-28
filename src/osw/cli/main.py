@@ -280,6 +280,35 @@ def build_parser() -> argparse.ArgumentParser:
         help="Validate an OSW ProjectSchema JSON/YAML file without running solvers.",
     )
     validate_parser.add_argument("path", help="Project file path.")
+    report_export_parser = subparsers.add_parser(
+        "report-export",
+        help="Export a deterministic project report without running solvers or scripts.",
+    )
+    report_export_parser.add_argument("project", help="Project JSON/YAML path.")
+    report_export_parser.add_argument("--out", required=True, help="Output report path.")
+    report_export_parser.add_argument(
+        "--format",
+        default="html",
+        choices=("html", "markdown", "json_summary"),
+        help="Report export format.",
+    )
+    report_summary_parser = subparsers.add_parser(
+        "report-summary",
+        help="Print a project report summary without writing report artifacts.",
+    )
+    report_summary_parser.add_argument("project", help="Project JSON/YAML path.")
+    report_summary_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    report_export_demo_parser = subparsers.add_parser(
+        "report-export-demo",
+        help="Export the HeatSink_Flow demo report without running solvers.",
+    )
+    report_export_demo_parser.add_argument("--out", required=True, help="Output report path.")
+    report_export_demo_parser.add_argument(
+        "--format",
+        default="html",
+        choices=("html", "markdown", "json_summary"),
+        help="Report export format.",
+    )
     return parser
 
 
@@ -788,6 +817,67 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(report.friendly_summary())
         return 1 if report.has_errors else 0
 
+    if args.command == "report-export":
+        from osw.core.project_io import load_project
+        from osw.core.validation import ProjectSchemaError
+        from osw.post.report_generator import build_report
+        from osw.post.report_model import ReportBuildRequest
+
+        try:
+            project = load_project(Path(args.project))
+        except ProjectSchemaError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        result = build_report(
+            ReportBuildRequest(
+                project=project,
+                output_path=Path(args.out),
+                format=args.format,
+            )
+        )
+        print(f"Report status: {result.status}")
+        print(f"Wrote report: {result.output_path}")
+        if result.diagnostics.messages:
+            print(result.diagnostics.summary(), file=sys.stderr)
+        return 1 if result.diagnostics.has_errors else 0
+
+    if args.command == "report-summary":
+        from osw.core.project_io import load_project
+        from osw.core.validation import ProjectSchemaError
+        from osw.post.report_sections import build_report_summary
+
+        try:
+            project = load_project(Path(args.project))
+        except ProjectSchemaError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        summary = build_report_summary(project)
+        if args.json:
+            import json
+
+            print(json.dumps(summary.to_dict(), indent=2, sort_keys=True))
+        else:
+            _print_report_summary(summary)
+        return 0
+
+    if args.command == "report-export-demo":
+        from osw.core.demo_project import create_heatsink_flow_demo_project
+        from osw.post.report_generator import build_report
+        from osw.post.report_model import ReportBuildRequest
+
+        result = build_report(
+            ReportBuildRequest(
+                project=create_heatsink_flow_demo_project(),
+                output_path=Path(args.out),
+                format=args.format,
+            )
+        )
+        print(f"Report status: {result.status}")
+        print(f"Wrote report: {result.output_path}")
+        if result.diagnostics.messages:
+            print(result.diagnostics.summary(), file=sys.stderr)
+        return 1 if result.diagnostics.has_errors else 0
+
     parser.print_help(sys.stdout)
     return 0
 
@@ -884,6 +974,17 @@ def _print_boundary_curve(curve: object) -> None:
             f"{getattr(source, 'source_type', '')} "
             f"{getattr(source, 'source_file', '')}"
         )
+
+
+def _print_report_summary(summary: object) -> None:
+    print(f"Report: {getattr(summary, 'title', '')}")
+    print(f"Project: {getattr(summary, 'project_name', '')}")
+    print(f"Run label: {getattr(summary, 'run_label', '') or 'Not recorded'}")
+    print(f"Sections: {len(getattr(summary, 'sections', ())) }")
+    for section in getattr(summary, "sections", ()):
+        print(f"- {getattr(section, 'title', '')}")
+    print(f"Figures: {len(getattr(summary, 'figures', ())) }")
+    print(f"Warnings: {len(getattr(summary, 'warnings', ())) }")
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ __all__ = [
     "ExecutablePathDialog",
     "MatPreviewDialog",
     "PluginManagerDialog",
+    "ReportExportDialog",
     "ScriptPreviewDialog",
 ]
 
@@ -34,4 +35,8 @@ def __getattr__(name: str) -> object:
         from osw.gui.dialogs.boundary_curve_dialog import BoundaryCurveDialog
 
         return BoundaryCurveDialog
+    if name == "ReportExportDialog":
+        from osw.gui.dialogs.report_export_dialog import ReportExportDialog
+
+        return ReportExportDialog
     raise AttributeError(name)

@@ -97,3 +97,13 @@ diagnostics. ProjectSchema stores these curves separately from solver adapters;
 boundary conditions may reference a curve id, but no CalculiX, OpenFOAM, SU2, or
 other solver boundary file generation is implemented in this layer. See
 `docs/21_boundary_curve_bridge.md`.
+
+## Report Generator Binding
+
+Report generation lives under `osw.post` and consumes existing project,
+diagnostic, mesh, script, MAT, FigureDataset, BoundaryCurve, plugin-health, and
+runner summaries. It builds deterministic `ReportSummary` data and exports
+standalone HTML without importing GUI modules or executing solvers/scripts. The
+GUI report preview reads this summary data through a safe binding, and CLI
+`report-export`/`report-summary` commands operate on ProjectSchema files only.
+See `docs/22_report_generator_binding.md`.

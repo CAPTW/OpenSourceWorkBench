@@ -5,7 +5,8 @@ from pathlib import Path
 from helpers import assert_text_matches_golden
 
 from osw.core.project_schema import MeshRef, Project, ProjectMetadata, ReportConfig, ResultRef
-from osw.post.report_generator import build_report_model, render_report_html
+from osw.post.report_generator import render_report_summary_html
+from osw.post.report_sections import build_report_summary
 from osw.post.table_model import TablePreview
 
 
@@ -22,7 +23,7 @@ def test_report_html_contains_required_sections_in_stable_order() -> None:
         title="Golden result table",
     )
 
-    html = render_report_html(build_report_model(project, result_tables=(table,)))
+    html = render_report_summary_html(build_report_summary(project, result_tables=(table,)))
     expected = (Path(__file__).with_name("required_sections.txt")).read_text(encoding="utf-8")
     markers = tuple(line for line in expected.splitlines() if line)
 

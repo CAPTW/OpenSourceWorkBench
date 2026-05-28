@@ -21,10 +21,14 @@ from osw.mesh.mesh_model import MeshBoundingBox, MeshInfo
 from osw.post.exporters import export_html_report
 from osw.post.report_generator import (
     DEFAULT_REPORT_LIMITATIONS,
+    build_report,
     build_report_model,
+    build_report_summary,
     export_report_html,
     render_report_html,
+    render_report_summary_html,
 )
+from osw.post.report_model import ReportBuildRequest
 from osw.post.table_model import TablePreview
 from osw.scripts.mscript.figure_dataset import FigureDataset, FigureRecord
 
@@ -281,3 +285,49 @@ def test_exporters_wrapper_generates_html_report(tmp_path: Path) -> None:
 
     assert output_path == tmp_path / "report.html"
     assert "Tip displacement" in output_path.read_text(encoding="utf-8")
+
+
+def test_build_report_summary_generates_full_html_and_json_summary(tmp_path: Path) -> None:
+    project = rich_project()
+    summary = build_report_summary(
+        project,
+        figure_datasets=(sample_figure_dataset(tmp_path),),
+        mesh_infos=(sample_mesh_info(),),
+        result_tables=(sample_result_table(),),
+    )
+
+    html = render_report_summary_html(summary, output_path=tmp_path / "report.html")
+    result = build_report(
+        ReportBuildRequest(project=project, output_path=tmp_path / "summary.json", format="json")
+    )
+
+    assert "Project Metadata" in html
+    assert "Boundary Curves" in html
+    assert "MAT / Workspace Variables" in html
+    assert "FigureDataset / Figures" in html
+    assert "Solver / Plugin / Execution Environment" in html
+    assert "Figure artifact missing" in html
+    assert result.output_path.endswith("summary.json")
+    assert result.summary.title == "Cantilever Report"
+
+
+def test_summary_html_escapes_user_strings_and_handles_missing_image(tmp_path: Path) -> None:
+    project = Project(
+        metadata=ProjectMetadata(name="<Unsafe>", description="A&B"),
+        report=ReportConfig(title="Report <Title>"),
+    )
+    dataset = FigureDataset(
+        dataset_id="figures",
+        figures=(FigureRecord("bad", "<Plot>", image_path=tmp_path / "missing.png"),),
+    )
+
+    html = render_report_summary_html(
+        build_report_summary(project, figure_datasets=(dataset,)),
+        output_path=tmp_path / "report.html",
+    )
+
+    assert "Report &lt;Title&gt;" in html
+    assert "&lt;Unsafe&gt;" in html
+    assert "&lt;Plot&gt;" in html
+    assert "Figure artifact missing" in html
+    assert "<Unsafe>" not in html

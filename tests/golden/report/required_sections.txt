@@ -1,13 +1,16 @@
-Project Summary
-Input Conditions
+Overview
+Project Metadata
 Unit System
 Materials
-Mesh Info
-Solver Settings
-Warnings
-Figures
-3D Screenshots
-Result Tables
-Result Summary
+Geometry References
+Mesh Summary
+Physics / Boundary Conditions
+Solver / Plugin / Execution Environment
+Scripts and M-Script Preview
+Run Logs and Diagnostics
+MAT / Workspace Variables
+FigureDataset / Figures
+Boundary Curves
+Results Summary
 Validation Summary
-Known Limitations
+Warnings and Known Limitations
