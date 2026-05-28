@@ -1,0 +1,7 @@
+{
+  "force": 100.0,
+  "length": 1.0,
+  "elastic_modulus": 210000000000.0,
+  "second_moment_area": 0.0000000008333333333,
+  "tolerance_fraction": 0.05
+}

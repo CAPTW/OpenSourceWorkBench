@@ -17,8 +17,9 @@ The runner supports explicit execution of an existing `.inp` deck only. It:
 - reports missing executable, missing input deck, timeout, nonzero return code,
   and missing artifact diagnostics.
 
-The runner does not parse `.frd` or `.dat` contents, generate contours, run
-nonlinear/contact/plasticity analyses, or bypass the backend runner.
+The runner does not generate contours, run nonlinear/contact/plasticity
+analyses, or bypass the backend runner. Parsed result summaries are handled by
+`OSW-FUNC-015_CALCULIX_RESULT_PARSER` after artifacts already exist.
 
 ## CLI
 
@@ -49,13 +50,20 @@ and `MainWindow` appends a compact run summary to the existing run monitor.
 - Runtime artifacts belong under temporary directories or `artifacts/calculix`
   and should not be committed.
 
+## Parser Handoff
+
+`OSW-FUNC-015_CALCULIX_RESULT_PARSER` can consume the artifacts recorded by
+`CalculiXRunResult` and produce `CalculiXParsedResults` plus a lightweight
+`ResultDataset`. This is a read-only post-processing step and does not change
+runner execution behavior.
+
 ## Known Limitations
 
-- Result parsing is deferred to `OSW-FUNC-015_CALCULIX_RESULT_PARSER`.
+- Full FRD field parsing and contour visualization are deferred.
 - The runner does not validate physical correctness of a CalculiX solution.
 - Partial/missing result artifacts after a zero return code are warnings, not
   proof of solver correctness.
 
 ## Next Step
 
-Next functional step: `OSW-FUNC-015_CALCULIX_RESULT_PARSER`.
+Next functional step: `OSW-FUNC-016_OPENFOAM_TEMPLATE_BINDING`.

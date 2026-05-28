@@ -687,6 +687,10 @@ class MainWindow(_BaseMainWindow):
             self.calculix_deck_dialog.calculixRunCompleted.connect(
                 self._on_calculix_run_completed
             )
+        if hasattr(self.calculix_deck_dialog, "calculixResultsParsed"):
+            self.calculix_deck_dialog.calculixResultsParsed.connect(
+                self._on_calculix_results_parsed
+            )
         self.calculix_deck_dialog.show()
         self.calculix_deck_dialog.raise_()
         self.calculix_deck_dialog.activateWindow()
@@ -712,6 +716,21 @@ class MainWindow(_BaseMainWindow):
             f"Collected {artifact_count} CalculiX artifact(s).",
             level="info",
         )
+
+    def _on_calculix_results_parsed(self, parsed: object) -> None:
+        if not hasattr(self.run_monitor, "append_log"):
+            return
+        displacement = getattr(parsed, "displacement_summary", None)
+        stress = getattr(parsed, "stress_summary", None)
+        max_displacement = getattr(displacement, "max_magnitude", None)
+        max_stress = getattr(stress, "max_von_mises", None)
+        parts = []
+        if max_displacement is not None:
+            parts.append(f"max displacement {float(max_displacement):.6g}")
+        if max_stress is not None:
+            parts.append(f"max stress {float(max_stress):.6g}")
+        summary = ", ".join(parts) if parts else "no scalar summaries found"
+        self.run_monitor.append_log(f"Parsed CalculiX results: {summary}.", level="info")
 
     def _on_script_run_completed(self, result: object) -> None:
         status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))

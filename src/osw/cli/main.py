@@ -273,6 +273,55 @@ def build_parser() -> argparse.ArgumentParser:
         default=30.0,
         help="Timeout seconds.",
     )
+    calculix_parse_results_parser = subparsers.add_parser(
+        "calculix-parse-results",
+        help="Parse existing CalculiX result artifacts without running ccx.",
+    )
+    calculix_parse_results_parser.add_argument("path", help="Case directory or run result JSON.")
+    calculix_parse_dat_parser = subparsers.add_parser(
+        "calculix-parse-dat",
+        help="Parse a CalculiX .dat artifact without running ccx.",
+    )
+    calculix_parse_dat_parser.add_argument("path", help="CalculiX .dat path.")
+    calculix_parse_sta_parser = subparsers.add_parser(
+        "calculix-parse-sta",
+        help="Parse a CalculiX .sta status artifact without running ccx.",
+    )
+    calculix_parse_sta_parser.add_argument("path", help="CalculiX .sta path.")
+    calculix_results_summary_parser = subparsers.add_parser(
+        "calculix-results-summary",
+        help="Print parsed CalculiX result summaries without running ccx.",
+    )
+    calculix_results_summary_parser.add_argument(
+        "path",
+        help="Case directory, run result JSON, or result artifact path.",
+    )
+    calculix_validate_cantilever_parser = subparsers.add_parser(
+        "calculix-validate-cantilever",
+        help="Validate parsed CalculiX displacement against cantilever beam theory.",
+    )
+    calculix_validate_cantilever_parser.add_argument(
+        "path",
+        help="Case directory, run result JSON, or result artifact path.",
+    )
+    calculix_validate_cantilever_parser.add_argument("--force", type=float, required=True)
+    calculix_validate_cantilever_parser.add_argument("--length", type=float, required=True)
+    calculix_validate_cantilever_parser.add_argument(
+        "--elastic-modulus",
+        type=float,
+        required=True,
+    )
+    calculix_validate_cantilever_parser.add_argument(
+        "--second-moment-area",
+        type=float,
+        required=True,
+    )
+    calculix_validate_cantilever_parser.add_argument(
+        "--tolerance",
+        type=float,
+        default=0.05,
+        help="Allowed relative error fraction.",
+    )
     mscript_preview_parser = subparsers.add_parser(
         "mscript-preview",
         help="Preview a MATLAB/Octave .m file without executing it.",
@@ -754,6 +803,72 @@ def main(argv: Sequence[str] | None = None) -> int:
         _print_calculix_run_result(result)
         status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
         return 0 if status == "completed" else 2 if status == "missing_executable" else 1
+
+    if args.command == "calculix-parse-results":
+        parsed = _load_calculix_parsed_results_source(Path(args.path))
+        _print_calculix_parsed_results(parsed)
+        status = getattr(getattr(parsed, "status", ""), "value", getattr(parsed, "status", ""))
+        return 0 if status in {"parsed", "partial"} else 1
+
+    if args.command == "calculix-parse-dat":
+        from osw.solvers.calculix.dat_parser import parse_calculix_dat
+
+        parsed = parse_calculix_dat(Path(args.path))
+        _print_calculix_parsed_results(parsed)
+        status = getattr(getattr(parsed, "status", ""), "value", getattr(parsed, "status", ""))
+        return 0 if status in {"parsed", "partial"} else 1
+
+    if args.command == "calculix-parse-sta":
+        from osw.solvers.calculix.sta_parser import parse_calculix_sta
+
+        summary = parse_calculix_sta(Path(args.path))
+        print("CalculiX STA summary")
+        print(f"Completed: {summary.completed}")
+        print(f"Increments: {summary.increments}")
+        print(f"Last step: {summary.last_step}")
+        print(f"Last increment: {summary.last_increment}")
+        for warning in summary.warnings:
+            print(f"WARNING: {warning}", file=sys.stderr)
+        for error in summary.errors:
+            print(f"ERROR: {error}", file=sys.stderr)
+        return 1 if summary.errors else 0
+
+    if args.command == "calculix-results-summary":
+        parsed = _load_calculix_parsed_results_source(Path(args.path))
+        _print_calculix_parsed_results(parsed)
+        status = getattr(getattr(parsed, "status", ""), "value", getattr(parsed, "status", ""))
+        return 0 if status in {"parsed", "partial"} else 1
+
+    if args.command == "calculix-validate-cantilever":
+        from osw.solvers.calculix.validation import (
+            CantileverValidationInput,
+            validate_cantilever_displacement,
+        )
+
+        parsed = _load_calculix_parsed_results_source(Path(args.path))
+        validation = validate_cantilever_displacement(
+            parsed,
+            CantileverValidationInput(
+                force=args.force,
+                length=args.length,
+                elastic_modulus=args.elastic_modulus,
+                second_moment_area=args.second_moment_area,
+                tolerance_fraction=args.tolerance,
+            ),
+        )
+        print("CalculiX cantilever validation")
+        print(f"Expected max displacement: {validation.expected_displacement:.12g}")
+        if validation.observed_displacement is not None:
+            print(f"Observed max displacement: {validation.observed_displacement:.12g}")
+        else:
+            print("Observed max displacement: missing")
+        print(f"Relative error: {validation.relative_error:.12g}")
+        print(f"Tolerance: {validation.tolerance_ratio:.12g}")
+        print(f"Passed: {validation.passed}")
+        print(validation.message)
+        for diagnostic in validation.diagnostics:
+            print(f"WARNING: {diagnostic}", file=sys.stderr)
+        return 0 if validation.passed else 1
 
     if args.command == "mscript-preview":
         from osw.scripts.mscript.importer import preview_mscript
@@ -1268,6 +1383,76 @@ def _print_calculix_run_result(result: object) -> None:
             role = getattr(artifact, "role", getattr(artifact, "kind", "artifact"))
             print(f"  - {role}: {getattr(artifact, 'path', '')}")
     diagnostics = getattr(result, "diagnostics", None)
+    if diagnostics is not None and getattr(diagnostics, "messages", ()):
+        print(diagnostics.summary(), file=sys.stderr)
+
+
+def _load_calculix_parsed_results_source(path: Path) -> object:
+    from osw.solvers.calculix.result_parser import (
+        parse_calculix_case_directory,
+        parse_calculix_results,
+        parse_calculix_run_artifacts,
+    )
+    from osw.solvers.calculix.results import CalculiXParsedResults
+    from osw.solvers.calculix.runner import CalculiXRunResult
+
+    source = path.expanduser()
+    if source.is_dir():
+        return parse_calculix_case_directory(source)
+    if source.suffix.lower() == ".json":
+        import json
+
+        payload = json.loads(source.read_text(encoding="utf-8"))
+        if isinstance(payload, dict) and "input_deck_path" in payload:
+            return parse_calculix_run_artifacts(CalculiXRunResult.from_dict(payload))
+        return CalculiXParsedResults.from_dict(payload)
+    if source.suffix.lower() == ".dat":
+        return parse_calculix_results(dat_path=source)
+    if source.suffix.lower() == ".sta":
+        return parse_calculix_results(sta_path=source)
+    if source.suffix.lower() == ".frd":
+        return parse_calculix_results(frd_path=source)
+    return parse_calculix_case_directory(source)
+
+
+def _print_calculix_parsed_results(parsed: object) -> None:
+    status = getattr(getattr(parsed, "status", ""), "value", getattr(parsed, "status", ""))
+    print(f"CalculiX result status: {status}")
+    print(f"Job name: {getattr(parsed, 'job_name', '')}")
+    displacement = getattr(parsed, "displacement_summary", None)
+    stress = getattr(parsed, "stress_summary", None)
+    if displacement is not None and getattr(displacement, "max_magnitude", None) is not None:
+        node = getattr(displacement, "max_node_id", None)
+        max_magnitude = displacement.max_magnitude
+        unit = getattr(displacement, "unit", "")
+        print(
+            "Max displacement: "
+            f"{max_magnitude} {unit}"
+            f"{f' at node {node}' if node is not None else ''}"
+        )
+    else:
+        print("Max displacement: not available")
+    if stress is not None and getattr(stress, "max_von_mises", None) is not None:
+        element = getattr(stress, "max_element_id", None)
+        max_von_mises = stress.max_von_mises
+        unit = getattr(stress, "unit", "")
+        print(
+            "Max von Mises stress: "
+            f"{max_von_mises} {unit}"
+            f"{f' at element {element}' if element is not None else ''}"
+        )
+    else:
+        print("Max von Mises stress: not available")
+    status_summary = getattr(parsed, "status_summary", None)
+    if status_summary is not None:
+        print(f"Completed: {getattr(status_summary, 'completed', None)}")
+        print(f"Increments: {getattr(status_summary, 'increments', 0)}")
+    artifacts = getattr(parsed, "artifacts", ()) or ()
+    if artifacts:
+        print("Artifacts:")
+        for artifact in artifacts:
+            print(f"  - {getattr(artifact, 'role', 'artifact')}: {getattr(artifact, 'path', '')}")
+    diagnostics = getattr(parsed, "diagnostics", None)
     if diagnostics is not None and getattr(diagnostics, "messages", ()):
         print(diagnostics.summary(), file=sys.stderr)
 

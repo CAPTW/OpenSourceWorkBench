@@ -228,3 +228,9 @@ call subprocesses from the GUI.
 The GUI shows run status, logs, artifacts, and diagnostics, and the run monitor
 receives a compact summary. The GUI still does not call subprocess directly or
 parse CalculiX result files.
+
+`OSW-FUNC-015_CALCULIX_RESULT_PARSER` adds a read-only `Parse Results` hook to
+the same CalculiX dialog. The dialog displays parsed max displacement, max
+stress, and parser diagnostics from existing artifacts only, while the run
+monitor can receive a compact result summary. The GUI still does not run `ccx`,
+parse full FRD fields, or call subprocesses directly.

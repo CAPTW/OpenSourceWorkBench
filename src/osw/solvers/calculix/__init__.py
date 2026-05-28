@@ -41,7 +41,22 @@ from .model import (
     CalculiXStep,
     CalculiXSurfaceSet,
 )
-from .result_parser import parse_calculix_dat, parse_calculix_results
+from .result_parser import (
+    calculix_results_to_result_dataset,
+    parse_calculix_case_directory,
+    parse_calculix_dat,
+    parse_calculix_results,
+    parse_calculix_run_artifacts,
+    result_dataset_from_calculix_run,
+)
+from .results import (
+    CalculiXDisplacementSummary,
+    CalculiXFieldSummary,
+    CalculiXParsedResults,
+    CalculiXResultStatus,
+    CalculiXStatusSummary,
+    CalculiXStressSummary,
+)
 from .runner import (
     CalculiXRunner,
     CalculiXRunPolicy,
@@ -52,7 +67,15 @@ from .runner import (
     collect_calculix_artifacts,
     find_ccx_executable,
 )
-from .validation import validate_calculix_case, validate_calculix_readiness
+from .validation import (
+    CantileverValidationInput,
+    CantileverValidationResult,
+    expected_cantilever_tip_displacement,
+    validate_calculix_case,
+    validate_calculix_readiness,
+    validate_cantilever_displacement,
+    validate_cantilever_tip_displacement,
+)
 
 __all__ = [
     "CalculiXAnalysisType",
@@ -67,12 +90,18 @@ __all__ = [
     "CalculiXMaterial",
     "CalculiXNode",
     "CalculiXNodeSet",
+    "CalculiXParsedResults",
     "CalculiXRunPolicy",
     "CalculiXRunRequest",
     "CalculiXRunResult",
     "CalculiXRunStatus",
     "CalculiXRunner",
     "CalculiXStep",
+    "CalculiXDisplacementSummary",
+    "CalculiXFieldSummary",
+    "CalculiXResultStatus",
+    "CalculiXStatusSummary",
+    "CalculiXStressSummary",
     "CalculiXSurfaceSet",
     "CalculixBoundaryCondition",
     "CalculixCcxRunner",
@@ -83,23 +112,32 @@ __all__ = [
     "CalculixLoad",
     "CalculixNodeSet",
     "CalculixSurface",
+    "CantileverValidationInput",
+    "CantileverValidationResult",
     "case_to_input_deck",
     "ccx_available",
+    "calculix_results_to_result_dataset",
     "collect_calculix_artifacts",
     "create_calculix_deck",
     "create_cantilever_demo_case",
     "create_cantilever_demo_material",
     "create_cantilever_demo_mesh",
     "deck_result_from_case",
+    "expected_cantilever_tip_displacement",
     "find_ccx_executable",
     "generate_input_deck_text",
     "generate_calculix_input_deck",
     "load_mesh_model_json",
+    "parse_calculix_case_directory",
     "parse_calculix_dat",
     "parse_calculix_results",
+    "parse_calculix_run_artifacts",
     "project_to_calculix_case",
     "project_to_calculix_deck",
+    "result_dataset_from_calculix_run",
     "validate_calculix_case",
     "validate_calculix_readiness",
+    "validate_cantilever_displacement",
+    "validate_cantilever_tip_displacement",
     "write_input_deck",
 ]

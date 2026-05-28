@@ -1,0 +1,24 @@
+{
+  "source_run_id": "fixture",
+  "job_name": "cantilever",
+  "dat_path": "tests/fixtures/calculix/results/simple_success.dat",
+  "frd_path": "",
+  "sta_path": "",
+  "status": "parsed",
+  "displacement_summary": {
+    "max_magnitude": 0.1904761905,
+    "max_node_id": 42,
+    "components": null,
+    "unit": "m",
+    "metadata": {}
+  },
+  "stress_summary": null,
+  "field_summaries": [],
+  "status_summary": null,
+  "log_events": [],
+  "artifacts": [],
+  "diagnostics": {
+    "messages": []
+  },
+  "metadata": {}
+}

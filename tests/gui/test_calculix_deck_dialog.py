@@ -39,6 +39,11 @@ def test_calculix_deck_dialog_object_names(app: object) -> None:
     assert dialog.run_log_preview.objectName() == "oswCalculixRunLogPreview"
     assert dialog.run_artifacts_list.objectName() == "oswCalculixRunArtifactsList"
     assert dialog.run_diagnostics_list.objectName() == "oswCalculixRunDiagnosticsList"
+    assert dialog.parse_results_button.objectName() == "oswCalculixParseResultsButton"
+    assert dialog.result_summary_panel.objectName() == "oswCalculixResultSummaryPanel"
+    assert dialog.max_displacement_label.objectName() == "oswCalculixMaxDisplacementLabel"
+    assert dialog.max_stress_label.objectName() == "oswCalculixMaxStressLabel"
+    assert dialog.result_diagnostics_list.objectName() == "oswCalculixResultDiagnosticsList"
     assert dialog.close_button.objectName() == "oswCalculixCloseButton"
     assert "*HEADING" in dialog.deck_preview.toPlainText()
 
@@ -116,6 +121,50 @@ def test_calculix_deck_dialog_run_hook_uses_injected_runner(
     assert "fake stdout" in dialog.run_log_preview.toPlainText()
     assert dialog.run_artifacts_list.count() == 1
     assert dialog.run_diagnostics_list.count() == 1
+
+
+def test_calculix_deck_dialog_parse_hook_uses_injected_parser(
+    app: object,
+    tmp_path: Path,
+) -> None:
+    from osw.core.diagnostics import DiagnosticReport
+    from osw.gui.dialogs.calculix_deck_dialog import CalculixDeckDialog
+    from osw.solvers.calculix.adapter import create_calculix_deck
+    from osw.solvers.calculix.results import (
+        CalculiXDisplacementSummary,
+        CalculiXParsedResults,
+        CalculiXResultStatus,
+        CalculiXStressSummary,
+    )
+
+    called = {"value": False}
+
+    def fake_parser(source: object) -> CalculiXParsedResults:
+        del source
+        called["value"] = True
+        report = DiagnosticReport()
+        report.add_warning("fixture-warning", "Fixture parse warning.")
+        return CalculiXParsedResults(
+            job_name="cantilever",
+            status=CalculiXResultStatus.PARSED,
+            displacement_summary=CalculiXDisplacementSummary(max_magnitude=0.001),
+            stress_summary=CalculiXStressSummary(max_von_mises=2.0e6),
+            diagnostics=report,
+        )
+
+    dialog = CalculixDeckDialog(
+        result=create_calculix_deck(options={"demo": "cantilever"}),
+        output_path=tmp_path / "cantilever.inp",
+        result_parser=fake_parser,
+    )
+
+    parsed = dialog.parse_results()
+
+    assert called["value"]
+    assert parsed is not None
+    assert "0.001" in dialog.max_displacement_label.text()
+    assert "2e+06" in dialog.max_stress_label.text()
+    assert dialog.result_diagnostics_list.count() == 1
 
 
 def test_calculix_deck_dialog_theme_switching(app: object) -> None:

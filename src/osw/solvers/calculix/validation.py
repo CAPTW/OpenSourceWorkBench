@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from osw.core.validation import ValidationReport
@@ -17,35 +17,106 @@ SUPPORTED_CELL_TYPES = {
 }
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, init=False)
 class CantileverValidationInput:
     force: float
     length: float
     young_modulus: float
     second_moment_area: float
     tolerance_ratio: float = 0.05
+    expected_unit: str = "m"
+
+    def __init__(
+        self,
+        *,
+        force: float,
+        length: float,
+        second_moment_area: float,
+        young_modulus: float | None = None,
+        elastic_modulus: float | None = None,
+        tolerance_ratio: float | None = None,
+        tolerance_fraction: float | None = None,
+        expected_unit: str = "m",
+    ) -> None:
+        modulus = young_modulus if young_modulus is not None else elastic_modulus
+        if modulus is None:
+            msg = "Cantilever validation requires young_modulus or elastic_modulus."
+            raise ValueError(msg)
+        tolerance = (
+            tolerance_ratio
+            if tolerance_ratio is not None
+            else 0.05
+            if tolerance_fraction is None
+            else tolerance_fraction
+        )
+        object.__setattr__(self, "force", float(force))
+        object.__setattr__(self, "length", float(length))
+        object.__setattr__(self, "young_modulus", float(modulus))
+        object.__setattr__(self, "second_moment_area", float(second_moment_area))
+        object.__setattr__(self, "tolerance_ratio", float(tolerance))
+        object.__setattr__(self, "expected_unit", str(expected_unit))
+
+    @property
+    def elastic_modulus(self) -> float:
+        return self.young_modulus
+
+    @property
+    def tolerance_fraction(self) -> float:
+        return self.tolerance_ratio
 
 
 @dataclass(frozen=True)
 class CantileverValidationResult:
-    observed_displacement: float
+    observed_displacement: float | None
     expected_displacement: float
     relative_error: float
     tolerance_ratio: float
     passed: bool
     message: str
     formula: str = "F L^3 / (3 E I)"
+    expected_unit: str = "m"
+    absolute_error: float | None = None
+    diagnostics: tuple[str, ...] = field(default_factory=tuple)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "observed_displacement": self.observed_displacement,
             "expected_displacement": self.expected_displacement,
+            "observed_max_displacement": self.observed_displacement,
+            "expected_max_displacement": self.expected_displacement,
+            "absolute_error": self.absolute_error,
             "relative_error": self.relative_error,
             "tolerance_ratio": self.tolerance_ratio,
+            "tolerance_fraction": self.tolerance_ratio,
             "passed": self.passed,
             "message": self.message,
             "formula": self.formula,
+            "expected_unit": self.expected_unit,
+            "diagnostics": list(self.diagnostics),
         }
+
+    @property
+    def observed_max_displacement(self) -> float | None:
+        return self.observed_displacement
+
+    @property
+    def expected_max_displacement(self) -> float:
+        return self.expected_displacement
+
+    @property
+    def tolerance_fraction(self) -> float:
+        return self.tolerance_ratio
+
+
+def expected_cantilever_tip_displacement(
+    force: float,
+    length: float,
+    elastic_modulus: float,
+    second_moment_area: float,
+) -> float:
+    """Return the Euler-Bernoulli tip displacement estimate ``F L^3 / (3 E I)``."""
+
+    return abs(force) * length**3 / (3.0 * elastic_modulus * second_moment_area)
 
 
 def validate_cantilever_tip_displacement(
@@ -55,10 +126,11 @@ def validate_cantilever_tip_displacement(
 ) -> CantileverValidationResult:
     """Validate a cantilever tip displacement against the beam-theory estimate."""
 
-    expected = (
-        abs(inputs.force)
-        * inputs.length**3
-        / (3.0 * inputs.young_modulus * inputs.second_moment_area)
+    expected = expected_cantilever_tip_displacement(
+        inputs.force,
+        inputs.length,
+        inputs.young_modulus,
+        inputs.second_moment_area,
     )
     if expected == 0:
         relative_error = 0.0 if observed_displacement == 0 else float("inf")
@@ -77,6 +149,39 @@ def validate_cantilever_tip_displacement(
         tolerance_ratio=inputs.tolerance_ratio,
         passed=passed,
         message=message,
+        expected_unit=inputs.expected_unit,
+        absolute_error=abs(abs(observed_displacement) - expected),
+    )
+
+
+def validate_cantilever_displacement(
+    parsed_results: object,
+    validation_input: CantileverValidationInput,
+) -> CantileverValidationResult:
+    """Validate parsed CalculiX max displacement against cantilever beam theory."""
+
+    displacement = getattr(parsed_results, "displacement_summary", None)
+    observed = getattr(displacement, "max_magnitude", None)
+    expected = expected_cantilever_tip_displacement(
+        validation_input.force,
+        validation_input.length,
+        validation_input.young_modulus,
+        validation_input.second_moment_area,
+    )
+    if observed is None:
+        return CantileverValidationResult(
+            observed_displacement=None,
+            expected_displacement=expected,
+            relative_error=float("inf"),
+            tolerance_ratio=validation_input.tolerance_ratio,
+            passed=False,
+            message="Observed max displacement is missing from parsed CalculiX results.",
+            expected_unit=validation_input.expected_unit,
+            diagnostics=("Parsed CalculiX results do not include max displacement.",),
+        )
+    return validate_cantilever_tip_displacement(
+        observed_displacement=float(observed),
+        inputs=validation_input,
     )
 
 
