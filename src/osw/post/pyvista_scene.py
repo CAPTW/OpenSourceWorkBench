@@ -10,6 +10,7 @@ from types import ModuleType
 from typing import Any
 
 from osw.mesh.mesh_model import MeshCellBlock, MeshData, MeshInfo
+from osw.post.field_dataset import FieldRenderRequest, FieldRenderResult
 
 
 class PyVistaUnavailableError(RuntimeError):
@@ -105,6 +106,82 @@ def build_result_contour_placeholder(
             "until result-to-mesh field mapping is implemented."
         ),
         dataset_id=str(getattr(result_dataset, "dataset_id", "")),
+    )
+
+
+def render_field_view(
+    field_view_model: object,
+    request: FieldRenderRequest,
+    *,
+    pyvista_module: Any | None = None,
+    loader: Callable[[], Any] | None = None,
+) -> FieldRenderResult:
+    """Render a scalar field when PyVista and in-memory mesh geometry are available."""
+
+    if request.mode == "vector" or request.vector_field:
+        return FieldRenderResult(
+            status="placeholder",
+            message="Vector field glyph rendering is deferred for OSW v0.1.",
+            request=request,
+            diagnostics=("Vector fields are listed as metadata only.",),
+        )
+    scalar_field = request.scalar_field or _first_scalar_field(field_view_model)
+    if not scalar_field:
+        return FieldRenderResult(
+            status="placeholder",
+            message="No scalar field is selected for rendering.",
+            request=request,
+        )
+    mesh_data = getattr(field_view_model, "mesh_data", None)
+    try:
+        scene = PyVistaScene(
+            config=PyVistaSceneConfig(
+                scalar_field=scalar_field,
+                off_screen=request.off_screen,
+            ),
+            pyvista_module=pyvista_module,
+            loader=loader,
+        )
+        if mesh_data is None:
+            scene._require_pyvista()
+            return FieldRenderResult(
+                status="placeholder",
+                message=(
+                    "Field metadata is available, but no in-memory mesh geometry is "
+                    "attached for rendering."
+                ),
+                request=request,
+                diagnostics=("Attach a MeshModel with points/cells for PyVista rendering.",),
+            )
+        if request.screenshot_path:
+            screenshot = scene.export_screenshot(mesh_data, request.screenshot_path)
+            return FieldRenderResult(
+                status="rendered",
+                message=f"Rendered scalar field '{scalar_field}' and exported screenshot.",
+                rendered=True,
+                request=request,
+                screenshot_path=str(screenshot),
+            )
+        state = scene.add_mesh(mesh_data)
+    except PyVistaUnavailableError as exc:
+        return FieldRenderResult(
+            status="dependency_missing",
+            message=str(exc),
+            request=request,
+            diagnostics=(str(exc),),
+        )
+    except Exception as exc:  # pragma: no cover - defensive boundary for optional backend.
+        return FieldRenderResult(
+            status="error",
+            message=f"Field rendering failed: {exc}",
+            request=request,
+            diagnostics=(str(exc),),
+        )
+    return FieldRenderResult(
+        status="rendered",
+        message=f"Rendered scalar field '{scalar_field}'.",
+        rendered=state.rendered,
+        request=request,
     )
 
 
@@ -206,6 +283,11 @@ def _has_scalar(mesh_data: MeshData, scalar_field: str | None) -> bool:
     if scalar_field is None:
         return False
     return scalar_field in mesh_data.point_data or scalar_field in mesh_data.cell_data
+
+
+def _first_scalar_field(field_view_model: object) -> str:
+    fields = getattr(field_view_model, "scalar_fields", ()) or ()
+    return str(fields[0]) if fields else ""
 
 
 def _scalar_warnings(mesh_data: MeshData, scalar_field: str | None) -> tuple[str, ...]:

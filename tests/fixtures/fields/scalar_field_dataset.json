@@ -1,0 +1,91 @@
+{
+  "dataset_id": "scalar-field",
+  "source": "tests/fixtures/fields/tiny_scalar.vtk",
+  "solver": "FieldPreview",
+  "analysis_type": "field_rendering",
+  "fields": [],
+  "summaries": {
+    "node_count": {
+      "name": "node_count",
+      "value": 4.0,
+      "unit": "nodes",
+      "source_field": "MeshInfo"
+    }
+  },
+  "warnings": [],
+  "metadata": {
+    "kind": "field_dataset",
+    "title": "Tiny Scalar Field",
+    "mesh_info": {
+      "source_path": "tests/fixtures/fields/tiny_scalar.vtk",
+      "format": "vtk",
+      "node_count": 4,
+      "element_count": 2,
+      "cell_blocks": [
+        {
+          "cell_type": "triangle",
+          "count": 2,
+          "order": 1,
+          "metadata": {}
+        }
+      ],
+      "bounds": {
+        "minimum": [0.0, 0.0, 0.0],
+        "maximum": [1.0, 1.0, 0.0]
+      },
+      "point_data_names": ["temperature", "velocity"],
+      "cell_data_names": [],
+      "field_data_names": [],
+      "physical_groups": {},
+      "warnings": [],
+      "metadata": {}
+    },
+    "field_arrays": [
+      {
+        "name": "temperature",
+        "location": "point",
+        "field_type": "scalar",
+        "components": ["temperature"],
+        "value_count": 4,
+        "unit": "K",
+        "minimum": 295.0,
+        "maximum": 310.0,
+        "source": "tiny_scalar.vtk",
+        "metadata": {
+          "data_type": "float"
+        }
+      },
+      {
+        "name": "velocity",
+        "location": "point",
+        "field_type": "vector",
+        "components": ["x", "y", "z"],
+        "value_count": 4,
+        "unit": "m/s",
+        "source": "tiny_scalar.vtk",
+        "metadata": {
+          "data_type": "float"
+        }
+      }
+    ],
+    "field_artifacts": [
+      {
+        "path": "tests/fixtures/fields/tiny_scalar.vtk",
+        "role": "field",
+        "format": "vtk",
+        "exists": true,
+        "size_bytes": null,
+        "source": "fixture",
+        "metadata": {}
+      }
+    ],
+    "field_rows": {
+      "title": "Field arrays",
+      "columns": ["Name", "Location", "Type", "Components", "Values", "Unit"],
+      "rows": [
+        ["temperature", "point", "scalar", "temperature", "4", "K"],
+        ["velocity", "point", "vector", "x, y, z", "4", "m/s"]
+      ]
+    }
+  }
+}

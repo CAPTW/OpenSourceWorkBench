@@ -30,6 +30,7 @@ else:
     QtWidgets = None
 
 FIXTURES = Path(__file__).parents[1] / "fixtures" / "results"
+FIELD_FIXTURES = Path(__file__).parents[1] / "fixtures" / "fields"
 
 
 @pytest.fixture
@@ -161,4 +162,21 @@ def test_result_viewer_theme_and_placeholder_do_not_require_pyvista(app: object)
     assert viewer.styleSheet()
     assert not placeholder.available
     assert "placeholder" in placeholder.warning.lower()
+    del app
+
+
+def test_result_viewer_displays_field_capable_dataset(app: object) -> None:
+    from osw.gui.result_viewer import ResultViewer
+
+    dataset = ResultDataset.from_dict(
+        json.loads((FIELD_FIXTURES / "scalar_field_dataset.json").read_text(encoding="utf-8"))
+    )
+    viewer = ResultViewer()
+
+    viewer.set_result_datasets([dataset])
+
+    assert viewer.field_viewer.objectName() == "oswFieldViewerPanel"
+    assert viewer.field_viewer.array_table.rowCount() == 2
+    assert viewer.current_field_view_model().scalar_fields == ("temperature",)
+    assert "Fields: 2" in viewer.summary_panel.text()
     del app

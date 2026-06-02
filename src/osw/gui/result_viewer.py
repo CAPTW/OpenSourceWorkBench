@@ -6,6 +6,10 @@ from typing import Any
 
 from osw.core.result_dataset import ResultCatalog, ResultDataset, ResultTable
 from osw.mesh.mesh_model import MeshData
+from osw.post.field_view_model import (
+    FieldViewModel,
+    field_view_model_from_result_dataset,
+)
 from osw.post.pyvista_scene import (
     PyVistaSceneConfig,
     PyVistaSceneState,
@@ -44,6 +48,7 @@ class ResultViewer(_BaseWidget):
         self._tokens = DARK_TOKENS
         self._catalog = ResultCatalog(catalog_id="empty-results")
         self._view_model: ResultViewModel | None = None
+        self._field_view_model: FieldViewModel | None = None
         self._figure_dataset: object | None = None
 
         self.dataset_selector = QtWidgets.QComboBox(self)
@@ -64,9 +69,11 @@ class ResultViewer(_BaseWidget):
         self.series_panel.setHorizontalHeaderLabels(["Series", "Points", "First", "Last", "Unit"])
 
         from osw.gui.table_viewer import TableViewer
+        from osw.gui.widgets.field_viewer_panel import FieldViewerPanel
 
         self.table_viewer = TableViewer(self)
         self.table_viewer.setObjectName("oswResultTableViewer")
+        self.field_viewer = FieldViewerPanel(self)
         self.artifacts_panel = QtWidgets.QTableWidget(self)
         self.artifacts_panel.setObjectName("oswResultArtifactsPanel")
         self.artifacts_panel.setColumnCount(5)
@@ -103,6 +110,7 @@ class ResultViewer(_BaseWidget):
         layout.addWidget(self.empty_state)
         layout.addWidget(self.scalar_cards)
         layout.addWidget(self.series_panel)
+        layout.addWidget(self.field_viewer)
         layout.addWidget(self.table_viewer, 1)
         layout.addWidget(self.artifacts_panel)
         layout.addWidget(self.diagnostics_list)
@@ -171,6 +179,9 @@ class ResultViewer(_BaseWidget):
     def current_view_model(self) -> ResultViewModel | None:
         return self._view_model
 
+    def current_field_view_model(self) -> FieldViewModel | None:
+        return self._field_view_model
+
     def current_catalog(self) -> ResultCatalog:
         return self._catalog
 
@@ -233,10 +244,19 @@ class ResultViewer(_BaseWidget):
         if index < 0 or index >= len(self._catalog.datasets):
             self._show_empty_catalog()
             return
-        self.set_result_view_model(result_dataset_to_view_model(self._catalog.datasets[index]))
+        dataset = self._catalog.datasets[index]
+        self._field_view_model = field_view_model_from_result_dataset(dataset)
+        self.field_viewer.set_field_view_model(self._field_view_model)
+        self.set_result_view_model(result_dataset_to_view_model(dataset))
 
     def _show_empty_catalog(self) -> None:
         self._view_model = None
+        self._field_view_model = FieldViewModel(
+            dataset_id="empty-fields",
+            title="Field Metadata",
+            empty_state_message="No mesh field arrays are available.",
+        )
+        self.field_viewer.set_field_view_model(self._field_view_model)
         self.summary_panel.setText("No result datasets loaded.")
         self.empty_state.setText("No result datasets loaded.")
         self.empty_state.setVisible(True)
@@ -255,7 +275,8 @@ class ResultViewer(_BaseWidget):
             f"Source: {view_model.source or 'Not recorded'}\n"
             f"Scalars: {len(view_model.scalars)} | Series: {len(view_model.series)} | "
             f"Tables: {len(view_model.tables)} | Figures: {len(view_model.figures)} | "
-            f"Artifacts: {len(view_model.artifacts)}"
+            f"Artifacts: {len(view_model.artifacts)} | "
+            f"Fields: {len(self._field_view_model.arrays) if self._field_view_model else 0}"
         )
         self._populate_scalars(view_model)
         self._populate_series(view_model)

@@ -442,6 +442,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     result_dataset_parser.add_argument("path", help="Dataset JSON path.")
     result_dataset_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    field_artifacts_parser = subparsers.add_parser(
+        "field-artifacts-inspect",
+        help="Inspect field artifacts without running solvers or visualization backends.",
+    )
+    field_artifacts_parser.add_argument("path", help="Field artifact file or directory.")
+    field_artifacts_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+    field_dataset_parser = subparsers.add_parser(
+        "field-dataset-inspect",
+        help="Inspect a field-capable ResultDataset or FieldDataset JSON file.",
+    )
+    field_dataset_parser.add_argument("path", help="Field dataset JSON path.")
+    field_dataset_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
     result_catalog_parser = subparsers.add_parser(
         "result-catalog-inspect",
         help="Inspect a ResultCatalog JSON file.",
@@ -1214,6 +1226,32 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             _print_result_dataset_summary(dataset)
         return 0
+
+    if args.command == "field-dataset-inspect":
+        import json
+
+        from osw.post.field_dataset import field_dataset_from_json_file
+        from osw.post.field_view_model import field_view_model_from_field_dataset
+
+        field_dataset = field_dataset_from_json_file(Path(args.path))
+        view_model = field_view_model_from_field_dataset(field_dataset)
+        if args.json:
+            print(json.dumps(view_model.to_dict(), indent=2, sort_keys=True))
+        else:
+            _print_field_view_model(view_model)
+        return 0
+
+    if args.command == "field-artifacts-inspect":
+        import json
+
+        from osw.post.field_view_model import field_view_model_from_artifacts
+
+        view_model = field_view_model_from_artifacts(Path(args.path))
+        if args.json:
+            print(json.dumps(view_model.to_dict(), indent=2, sort_keys=True))
+        else:
+            _print_field_view_model(view_model, artifact_heading=True)
+        return 1 if any("Missing field artifact" in item for item in view_model.diagnostics) else 0
 
     if args.command == "result-catalog-inspect":
         import json
@@ -2068,6 +2106,35 @@ def _print_result_catalog_summary(catalog: object) -> None:
             f"({summary.kind}, {summary.scalar_count} scalar(s), "
             f"{summary.series_count} series)"
         )
+
+
+def _print_field_view_model(view_model: object, *, artifact_heading: bool = False) -> None:
+    title = getattr(view_model, "title", "") or getattr(view_model, "dataset_id", "")
+    print(("Field artifacts" if artifact_heading else "Field Dataset") + f": {title}")
+    print(f"Dataset: {getattr(view_model, 'dataset_id', '')}")
+    print(f"Source: {getattr(view_model, 'source', '') or 'Not recorded'}")
+    scalar_fields = tuple(getattr(view_model, "scalar_fields", ()) or ())
+    vector_fields = tuple(getattr(view_model, "vector_fields", ()) or ())
+    print("Scalar fields: " + (", ".join(scalar_fields) or "none"))
+    print("Vector fields: " + (", ".join(vector_fields) or "none"))
+    arrays = tuple(getattr(view_model, "arrays", ()) or ())
+    print(f"Field arrays: {len(arrays)}")
+    for array in arrays:
+        components = ", ".join(getattr(array, "components", ()) or ())
+        print(
+            f"  - {array.name} ({array.location}, {array.field_type}, "
+            f"{components or 'no components'}, {array.value_count} value(s))"
+        )
+    artifacts = tuple(getattr(view_model, "artifacts", ()) or ())
+    print(f"Artifacts: {len(artifacts)}")
+    for artifact in artifacts:
+        state = "exists" if artifact.exists else "missing"
+        print(f"  - {artifact.path} [{artifact.format or 'unknown'}, {state}]")
+    diagnostics = tuple(getattr(view_model, "diagnostics", ()) or ())
+    if diagnostics:
+        print("Diagnostics:", file=sys.stderr)
+        for diagnostic in diagnostics:
+            print(f"  - {diagnostic}", file=sys.stderr)
 
 
 def _print_mscript_preview(preview: object) -> None:

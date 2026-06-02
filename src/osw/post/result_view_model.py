@@ -423,6 +423,8 @@ def _dataset_kind(dataset: ResultDataset) -> str:
         return ResultDatasetKind.CALCULIX_SUMMARY.value
     if "openfoam" in solver or "residual" in analysis_type or "openfoam" in source:
         return ResultDatasetKind.OPENFOAM_RESIDUALS.value
+    if "field" in analysis_type:
+        return ResultDatasetKind.FIELD_DATASET.value
     if "coolprop" in solver and "sweep" in analysis_type:
         return ResultDatasetKind.COOLPROP_SWEEP.value
     if "coolprop" in solver:
@@ -442,6 +444,8 @@ def _dataset_title(dataset: ResultDataset, kind: str) -> str:
         return title
     if kind == ResultDatasetKind.OPENFOAM_RESIDUALS.value:
         return "OpenFOAM Residuals"
+    if kind == ResultDatasetKind.FIELD_DATASET.value:
+        return "Field Dataset"
     if kind == ResultDatasetKind.CALCULIX_SUMMARY.value:
         return "CalculiX Result Summary"
     if kind == ResultDatasetKind.COOLPROP_PROPERTY.value:
@@ -547,6 +551,7 @@ def _tables_from_dataset(dataset: ResultDataset) -> tuple[ResultTable, ...]:
         ("workspace_rows", "Workspace variables"),
         ("figure_rows", "Figures"),
         ("cell_rows", "Mesh cell types"),
+        ("field_rows", "Field arrays"),
         ("property_rows", "CHM property table"),
         ("reactor_rows", "Cantera reactor time history"),
     ):

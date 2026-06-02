@@ -151,6 +151,18 @@ and MeshInfo summaries can be normalized into scalar, series, table, figure,
 artifact, and diagnostic records. See
 `docs/28_result_viewer_dataset_binding.md`.
 
+## Result Viewer Field Rendering
+
+Field rendering metadata lives under `osw.post.field_dataset` and
+`osw.post.field_view_model`. These modules summarize mesh-associated scalar,
+vector, and tensor arrays from ResultDataset metadata, MeshInfo/MeshModel
+records, and small VTK/VTU-style artifacts without running solvers or importing
+PyVista. Optional rendering remains isolated in `osw.post.pyvista_scene`;
+missing PyVista returns dependency diagnostics and vector glyph rendering is
+explicitly deferred. The GUI FieldViewerPanel is a ResultViewer subpanel and
+does not call subprocesses or make visualization dependencies mandatory. See
+`docs/30_result_viewer_field_rendering.md`.
+
 ## CHM CoolProp / Cantera Binding
 
 CHM support lives under `osw.solvers.coolprop` and `osw.solvers.cantera` as

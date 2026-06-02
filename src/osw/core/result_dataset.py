@@ -12,6 +12,7 @@ from typing import Any
 class ResultDatasetKind(StrEnum):
     CALCULIX_SUMMARY = "calculix_summary"
     OPENFOAM_RESIDUALS = "openfoam_residuals"
+    FIELD_DATASET = "field_dataset"
     COOLPROP_PROPERTY = "coolprop_property"
     COOLPROP_SWEEP = "coolprop_sweep"
     CANTERA_REACTOR = "cantera_reactor"
@@ -526,6 +527,7 @@ def _metadata_preview_tables(dataset: ResultDataset) -> list[object]:
 
     tables = []
     for key, default_title in (
+        ("field_rows", "Field arrays"),
         ("property_rows", "CHM property table"),
         ("reactor_rows", "Cantera reactor time history"),
     ):

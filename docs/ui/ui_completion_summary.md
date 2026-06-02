@@ -255,3 +255,10 @@ explicit user action, optional dependency diagnostics are displayed in-dialog,
 and successful CHM outputs hand off ResultDataset records to the existing
 ResultViewer/report path. The GUI still does not run subprocesses, implement
 reacting CFD, or provide a process flowsheet simulator.
+
+`OSW-FUNC-019_RESULT_VIEWER_FIELD_RENDERING` adds a field metadata and optional
+rendering subpanel inside the existing ResultViewer. It lists mesh scalar/vector
+arrays, field artifacts, and diagnostics, and delegates scalar rendering only to
+the guarded PyVista bridge when optional dependencies and in-memory mesh
+geometry are available. The frozen GUI shell remains intact and no solver or
+script execution path is added.

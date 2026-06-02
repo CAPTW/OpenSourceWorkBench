@@ -75,6 +75,16 @@ These commands do not require PySide6 or optional visualization dependencies.
 - PyVista rendering remains optional and placeholder-only in this step.
 - Viewer summaries are evidence for review, not proof of physical validity.
 
+## Field Rendering Extension
+
+`OSW-FUNC-019_RESULT_VIEWER_FIELD_RENDERING` extends this viewer with a
+field-specific metadata panel. FieldArraySummary and FieldArtifactSummary records
+can be attached through ResultDataset metadata, MeshInfo/MeshModel summaries, or
+read-only VTK/VTU artifact inspection. Scalar rendering is attempted only
+through the optional PyVista bridge when in-memory mesh geometry is available;
+missing PyVista and metadata-only datasets produce friendly placeholder
+diagnostics. Vector/tensor rendering is listed as metadata and deferred.
+
 ## Next Step
 
-Next functional step: `OSW-FUNC-018_CHM_COOLPROP_CANTERA_BINDING`.
+Next functional step: `OSW-FUNC-020_RELEASE_VALIDATION_GATE`.

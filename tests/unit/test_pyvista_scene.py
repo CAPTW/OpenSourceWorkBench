@@ -4,13 +4,16 @@ from pathlib import Path
 
 import pytest
 
-from osw.mesh.mesh_model import MeshCellBlock, MeshData
+from osw.mesh.mesh_model import MeshCellBlock, MeshData, mesh_data_to_model
+from osw.post.field_dataset import FieldRenderRequest
+from osw.post.field_view_model import field_view_model_from_mesh_model
 from osw.post.pyvista_scene import (
     PyVistaScene,
     PyVistaSceneConfig,
     PyVistaUnavailableError,
     build_scene_state,
     mesh_data_to_polydata,
+    render_field_view,
 )
 
 
@@ -18,6 +21,7 @@ class FakePolyData:
     def __init__(self, points: object, faces: object) -> None:
         self.points = points
         self.faces = faces
+        self.point_data: dict[str, object] = {}
 
 
 class FakePlotter:
@@ -138,3 +142,55 @@ def test_screenshot_export_uses_optional_plotter(tmp_path: Path) -> None:
     assert exported == screenshot_path
     assert screenshot_path.read_text(encoding="utf-8") == "fake screenshot"
     assert fake_pyvista.plotters[0].screenshots == [str(screenshot_path)]
+
+
+def test_field_render_missing_pyvista_returns_dependency_diagnostic() -> None:
+    model = field_view_model_from_mesh_model(
+        mesh_data_to_model(sample_mesh(), source="mesh.vtk", mesh_format="vtk")
+    )
+
+    result = render_field_view(
+        model,
+        FieldRenderRequest(dataset_id=model.dataset_id, scalar_field="temperature"),
+        loader=lambda: None,
+    )
+
+    assert result.status == "dependency_missing"
+    assert not result.rendered
+    assert "PyVista is not installed" in result.message
+
+
+def test_field_render_fake_pyvista_uses_scalar_field() -> None:
+    fake_pyvista = FakePyVista()
+    model = field_view_model_from_mesh_model(
+        mesh_data_to_model(sample_mesh(), source="mesh.vtk", mesh_format="vtk")
+    )
+
+    result = render_field_view(
+        model,
+        FieldRenderRequest(dataset_id=model.dataset_id, scalar_field="temperature"),
+        pyvista_module=fake_pyvista,
+    )
+
+    assert result.status == "rendered"
+    assert result.rendered
+    assert fake_pyvista.plotters[0].mesh_calls[0]["scalars"] == "temperature"
+    dataset = fake_pyvista.plotters[0].mesh_calls[0]["dataset"]
+    assert dataset.point_data["temperature"] == (300.0, 310.0, 305.0)
+
+
+def test_vector_field_rendering_is_deferred_placeholder() -> None:
+    fake_pyvista = FakePyVista()
+    model = field_view_model_from_mesh_model(
+        mesh_data_to_model(sample_mesh(), source="mesh.vtk", mesh_format="vtk")
+    )
+
+    result = render_field_view(
+        model,
+        FieldRenderRequest(dataset_id=model.dataset_id, vector_field="velocity", mode="vector"),
+        pyvista_module=fake_pyvista,
+    )
+
+    assert result.status == "placeholder"
+    assert "Vector field glyph rendering is deferred" in result.message
+    assert fake_pyvista.plotters == []

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from osw.core.boundary_curve import boundary_curve_from_xy
@@ -16,6 +17,7 @@ from osw.core.project_schema import (
     ScriptRef,
     SolverConfig,
 )
+from osw.core.result_dataset import ResultDataset
 from osw.core.units import Quantity
 from osw.mesh.mesh_model import MeshBoundingBox, MeshInfo
 from osw.post.exporters import export_html_report
@@ -359,6 +361,21 @@ def test_build_report_summary_accepts_chm_result_dataset(tmp_path: Path) -> None
     assert "CoolProp property table" in html
     assert "density" in html
     assert "kg/m^3" in html
+
+
+def test_build_report_summary_accepts_field_dataset_metadata(tmp_path: Path) -> None:
+    fixture = Path(__file__).parents[1] / "fixtures" / "fields" / "scalar_field_dataset.json"
+    dataset = ResultDataset.from_dict(json.loads(fixture.read_text(encoding="utf-8")))
+
+    summary = build_report_summary(
+        rich_project(),
+        result_tables=dataset.to_report_tables(),
+    )
+    html = render_report_summary_html(summary, output_path=tmp_path / "report.html")
+
+    assert "Field arrays" in html
+    assert "temperature" in html
+    assert "velocity" in html
 
 
 def test_summary_html_escapes_user_strings_and_handles_missing_image(tmp_path: Path) -> None:
