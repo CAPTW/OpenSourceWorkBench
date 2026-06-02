@@ -4,6 +4,8 @@ from __future__ import annotations
 
 __all__ = [
     "BoundaryCurveDialog",
+    "ChmPropertyDialog",
+    "ChmReactorDialog",
     "CalculixDeckDialog",
     "ExecutablePathDialog",
     "GmshMeshDialog",
@@ -46,6 +48,14 @@ def __getattr__(name: str) -> object:
         from osw.gui.dialogs.calculix_deck_dialog import CalculixDeckDialog
 
         return CalculixDeckDialog
+    if name == "ChmPropertyDialog":
+        from osw.gui.dialogs.chm_property_dialog import ChmPropertyDialog
+
+        return ChmPropertyDialog
+    if name == "ChmReactorDialog":
+        from osw.gui.dialogs.chm_reactor_dialog import ChmReactorDialog
+
+        return ChmReactorDialog
     if name == "OpenFOAMTemplateDialog":
         from osw.gui.dialogs.openfoam_template_dialog import OpenFOAMTemplateDialog
 

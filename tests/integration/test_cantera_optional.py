@@ -2,25 +2,30 @@ from __future__ import annotations
 
 import pytest
 
-from osw.solvers.cantera.adapter import CanteraReactorConfig, CanteraReactorPlugin
+from osw.solvers.cantera.model import CanteraMixtureSpec, CanteraReactorRequest
+from osw.solvers.cantera.reactor_adapter import run_zero_d_reactor
+from osw.solvers.cantera.results import cantera_result_to_result_dataset
 
-pytestmark = pytest.mark.optional_dependency
 
-
-def test_cantera_optional_real_backend_runs_small_reactor() -> None:
+def test_cantera_optional_reactor_to_result_dataset() -> None:
     pytest.importorskip("cantera")
-    plugin = CanteraReactorPlugin()
 
-    result = plugin.run_reactor(
-        CanteraReactorConfig(
-            mechanism="gri30.yaml",
-            temperature_k=1000.0,
-            pressure_pa=101325.0,
-            composition={"CH4": 1.0, "O2": 2.0, "N2": 7.52},
-            end_time_s=1e-5,
-            time_step_s=1e-5,
+    result = run_zero_d_reactor(
+        CanteraReactorRequest(
+            mixture=CanteraMixtureSpec(
+                mechanism="gri30.yaml",
+                composition="CH4:1,O2:2,N2:7.52",
+                temperature=1000.0,
+                pressure=101325.0,
+            ),
+            end_time=1e-5,
+            time_step=1e-5,
+            tracked_species=("CH4",),
         )
     )
+    dataset = cantera_result_to_result_dataset(result)
 
-    assert result.table.rows
-    assert result.plot_dataset_placeholder["kind"] == "cantera_temperature_time"
+    assert result.status in {"ok", "warning"}
+    assert dataset.fields
+    assert dataset.summaries
+

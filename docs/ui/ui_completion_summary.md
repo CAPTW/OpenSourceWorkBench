@@ -248,3 +248,10 @@ records, shows scalar cards, residual series, workspace tables, figures,
 artifacts, and diagnostics, and keeps the original QPainter viewport as the
 default fallback. The GUI still does not run solvers, scripts, external
 commands, or mandatory heavy visualization dependencies.
+
+`OSW-FUNC-018_CHM_COOLPROP_CANTERA_BINDING` adds a minimal CHM menu with safe
+CoolProp property and Cantera 0D reactor dialogs. Calculations occur only after
+explicit user action, optional dependency diagnostics are displayed in-dialog,
+and successful CHM outputs hand off ResultDataset records to the existing
+ResultViewer/report path. The GUI still does not run subprocesses, implement
+reacting CFD, or provide a process flowsheet simulator.

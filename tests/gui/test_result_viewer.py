@@ -9,6 +9,13 @@ import pytest
 
 from osw.core.result_dataset import ResultDataset
 from osw.mesh.mesh_model import MeshCellBlock, MeshData
+from osw.solvers.coolprop.model import (
+    CoolPropPropertyRequest,
+    CoolPropPropertyResult,
+    CoolPropPropertyValue,
+    PropertyInputPair,
+)
+from osw.solvers.coolprop.results import coolprop_result_to_result_dataset
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 PYSIDE6_AVAILABLE = importlib.util.find_spec("PySide6") is not None
@@ -115,6 +122,29 @@ def test_result_viewer_handles_missing_artifacts_and_empty_catalog(app: object) 
     assert viewer.empty_state.objectName() == "oswResultEmptyState"
     assert not viewer.empty_state.isHidden()
 
+    del app
+
+
+def test_result_viewer_accepts_chm_dataset(app: object) -> None:
+    from osw.gui.result_viewer import ResultViewer
+
+    dataset = coolprop_result_to_result_dataset(
+        CoolPropPropertyResult(
+            "ok",
+            CoolPropPropertyRequest(
+                "Water",
+                PropertyInputPair("T", 300.0, "P", 101325.0),
+            ),
+            values=(CoolPropPropertyValue("density", 997.0, "kg/m^3"),),
+        )
+    )
+    viewer = ResultViewer()
+
+    viewer.set_result_datasets([dataset])
+
+    assert viewer.dataset_selector.count() == 1
+    assert viewer.scalar_cards.rowCount() == 1
+    assert "CoolProp" in viewer.summary_panel.text()
     del app
 
 

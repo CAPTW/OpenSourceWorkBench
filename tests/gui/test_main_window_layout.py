@@ -29,7 +29,7 @@ REQUIRED_OBJECT_NAMES = {
     "main_toolbar": "oswMainToolBar",
 }
 
-EXPECTED_MENU_TITLES = ("File", "Import", "Plugins", "Run", "Reports", "Help")
+EXPECTED_MENU_TITLES = ("File", "Import", "Plugins", "Run", "CHM", "Reports", "Help")
 EXPECTED_TOOLBAR_ACTIONS = (
     "New",
     "Open",
@@ -141,6 +141,21 @@ def test_run_menu_contains_calculix_deck_preview_action(app: object) -> None:
     assert (
         window.menu_actions["Generate OpenFOAM Template Case..."].objectName()
         == "oswActionGenerateOpenFOAMTemplate"
+    )
+
+
+def test_chm_menu_contains_safe_property_and_reactor_actions(app: object) -> None:
+    from osw.gui.main_window import MainWindow
+
+    window = MainWindow()
+
+    assert (
+        window.menu_actions["CoolProp Property Calculator..."].objectName()
+        == "oswActionCoolPropPropertyCalculator"
+    )
+    assert (
+        window.menu_actions["Cantera 0D Reactor..."].objectName()
+        == "oswActionCanteraReactor"
     )
 
 

@@ -423,6 +423,12 @@ def _dataset_kind(dataset: ResultDataset) -> str:
         return ResultDatasetKind.CALCULIX_SUMMARY.value
     if "openfoam" in solver or "residual" in analysis_type or "openfoam" in source:
         return ResultDatasetKind.OPENFOAM_RESIDUALS.value
+    if "coolprop" in solver and "sweep" in analysis_type:
+        return ResultDatasetKind.COOLPROP_SWEEP.value
+    if "coolprop" in solver:
+        return ResultDatasetKind.COOLPROP_PROPERTY.value
+    if "cantera" in solver:
+        return ResultDatasetKind.CANTERA_REACTOR.value
     if "figure" in analysis_type:
         return ResultDatasetKind.FIGURE_DATASET.value
     if "workspace" in analysis_type or solver == "mat":
@@ -438,6 +444,12 @@ def _dataset_title(dataset: ResultDataset, kind: str) -> str:
         return "OpenFOAM Residuals"
     if kind == ResultDatasetKind.CALCULIX_SUMMARY.value:
         return "CalculiX Result Summary"
+    if kind == ResultDatasetKind.COOLPROP_PROPERTY.value:
+        return "CoolProp Properties"
+    if kind == ResultDatasetKind.COOLPROP_SWEEP.value:
+        return "CoolProp Sweep"
+    if kind == ResultDatasetKind.CANTERA_REACTOR.value:
+        return "Cantera 0D Reactor"
     if kind == ResultDatasetKind.FIGURE_DATASET.value:
         return "Figure Dataset"
     if kind == ResultDatasetKind.MAT_WORKSPACE.value:
@@ -480,7 +492,10 @@ def _series_from_dataset(dataset: ResultDataset) -> tuple[ResultSeries, ...]:
             )
     for field_item in dataset.fields:
         rows = field_item.rows[:MAX_PREVIEW_POINTS]
-        x_values = tuple(float(row.entity_id) for row in rows)
+        x_values = _series_x_values(dataset, field_item, rows)
+        series_units = dataset.metadata.get("series_units", {})
+        if not isinstance(series_units, Mapping):
+            series_units = {}
         for component in field_item.components:
             y_values = tuple(
                 float(row.values[component])
@@ -493,13 +508,14 @@ def _series_from_dataset(dataset: ResultDataset) -> tuple[ResultSeries, ...]:
                 ResultSeries(
                     name=(
                         component
-                        if field_item.name == "residuals"
+                        if field_item.name
+                        in {"residuals", "coolprop_sweep", "cantera_reactor"}
                         else f"{field_item.name}.{component}"
                     ),
                     x_values=x_values[: len(y_values)],
                     y_values=y_values,
-                    x_unit="iteration" if field_item.name == "residuals" else "",
-                    y_unit=field_item.unit,
+                    x_unit=_series_x_unit(dataset, field_item),
+                    y_unit=str(series_units.get(component, field_item.unit)),
                     source=field_item.name,
                 )
             )
@@ -531,11 +547,39 @@ def _tables_from_dataset(dataset: ResultDataset) -> tuple[ResultTable, ...]:
         ("workspace_rows", "Workspace variables"),
         ("figure_rows", "Figures"),
         ("cell_rows", "Mesh cell types"),
+        ("property_rows", "CHM property table"),
+        ("reactor_rows", "Cantera reactor time history"),
     ):
         rows_payload = dataset.metadata.get(key)
         if isinstance(rows_payload, Mapping):
             tables.append(_payload_table(dataset.dataset_id, key, default_title, rows_payload))
     return tuple(tables)
+
+
+def _series_x_values(
+    dataset: ResultDataset,
+    field_item: ResultField,
+    rows: tuple[ResultRow, ...],
+) -> tuple[float, ...]:
+    if field_item.name == "coolprop_sweep":
+        values = dataset.metadata.get("sweep_values", ())
+        if values:
+            return tuple(float(item) for item in values)[: len(rows)]
+    if field_item.name == "cantera_reactor":
+        values = dataset.metadata.get("time_values", ())
+        if values:
+            return tuple(float(item) for item in values)[: len(rows)]
+    return tuple(float(row.entity_id) for row in rows)
+
+
+def _series_x_unit(dataset: ResultDataset, field_item: ResultField) -> str:
+    if field_item.name == "residuals":
+        return "iteration"
+    if field_item.name == "coolprop_sweep":
+        return str(dataset.metadata.get("sweep_unit", ""))
+    if field_item.name == "cantera_reactor":
+        return str(dataset.metadata.get("time_unit", "s"))
+    return ""
 
 
 def _field_to_result_table(dataset: ResultDataset, field_item: ResultField) -> ResultTable:

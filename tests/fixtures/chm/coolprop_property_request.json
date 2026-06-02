@@ -1,0 +1,20 @@
+{
+  "backend": "HEOS",
+  "fluid": "Water",
+  "input_pair": {
+    "first_name": "T",
+    "first_unit": "K",
+    "first_value": 300.0,
+    "second_name": "P",
+    "second_unit": "Pa",
+    "second_value": 101325.0
+  },
+  "metadata": {
+    "fixture": true
+  },
+  "output_properties": [
+    "density",
+    "viscosity",
+    "enthalpy"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "backend": "HEOS",
+  "fixed_unit": "Pa",
+  "fixed_value": 101325.0,
+  "fixed_variable": "P",
+  "fluid": "Water",
+  "metadata": {
+    "fixture": true
+  },
+  "output_properties": [
+    "density"
+  ],
+  "sweep_unit": "K",
+  "sweep_values": [
+    280.0,
+    300.0,
+    320.0
+  ],
+  "sweep_variable": "T"
+}

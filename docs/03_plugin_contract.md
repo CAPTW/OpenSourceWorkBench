@@ -337,6 +337,54 @@ capabilities:
   - project_mesh_ref_binding
 ```
 
+CHM property/reactor adapters:
+
+```yaml
+id: osw.coolprop
+name: CoolProp Property Calculator
+version: "0.1.0"
+domain: CHM
+type: property_model
+license: MIT-compatible optional dependency
+input_formats:
+  - internal_property_request
+output_formats:
+  - property_table
+  - result_dataset
+  - csv
+optional_requires:
+  - CoolProp
+capabilities:
+  - thermophysical_properties
+  - property_sweep
+  - result_dataset_binding
+  - report_embedding
+```
+
+```yaml
+id: osw.cantera
+name: Cantera 0D Reactor Adapter
+version: "0.1.0"
+domain: CHM
+type: solver_adapter
+license: BSD-compatible optional dependency
+input_formats:
+  - internal_reactor_request
+  - cantera_mechanism
+output_formats:
+  - reactor_time_history
+  - result_dataset
+  - csv
+optional_requires:
+  - cantera
+capabilities:
+  - zero_d_reactor
+  - species_time_history
+  - temperature_time_history
+  - result_dataset_binding
+  - report_embedding
+```
+
 ## Future Extension Points
 
 `OSW-FUNC-004_PLUGIN_MANAGER_DIALOG_BINDING` adds a manifest-first Plugin
@@ -393,6 +441,11 @@ manifest. Discovery and health checks resolve the `gmsh` executable name only;
 they do not run Gmsh, import the optional Gmsh Python module, generate meshes,
 or load plugin implementation code.
 
+`OSW-FUNC-018_CHM_COOLPROP_CANTERA_BINDING` adds built-in data-only
+`osw.coolprop` and `osw.cantera` manifests. Health checks report missing
+CoolProp/Cantera as optional dependency warnings and do not run property or
+reactor calculations during discovery.
+
 ## Next Step
 
-Next functional step: `OSW-FUNC-013_CALCULIX_INPUT_DECK`.
+Next functional step: `OSW-FUNC-019_RESULT_VIEWER_FIELD_RENDERING`.

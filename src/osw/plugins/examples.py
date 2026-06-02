@@ -258,6 +258,82 @@ def builtin_openfoam_plugin_manifest() -> PluginManifest:
     )
 
 
+def builtin_coolprop_plugin_manifest() -> PluginManifest:
+    """Return the data-only manifest for CoolProp property calculations."""
+
+    return PluginManifest.from_dict(
+        {
+            "id": "osw.coolprop",
+            "name": "CoolProp Property Calculator",
+            "version": "0.1.0",
+            "domain": "CHM",
+            "type": "property_model",
+            "license": "MIT-compatible optional dependency",
+            "description": (
+                "Calculates bounded thermophysical property points and simple "
+                "T/P sweeps through the optional CoolProp package when "
+                "explicitly requested."
+            ),
+            "input_formats": ["internal_property_request"],
+            "output_formats": ["property_table", "result_dataset", "csv"],
+            "requires": [],
+            "optional_requires": ["CoolProp"],
+            "executable_names": [],
+            "capabilities": [
+                "thermophysical_properties",
+                "property_sweep",
+                "result_dataset_binding",
+                "report_embedding",
+            ],
+            "metadata": {
+                "built_in": True,
+                "preview_first": True,
+                "lazy_optional_dependency": True,
+                "no_external_process": True,
+                "not_process_flowsheet_simulator": True,
+            },
+        }
+    )
+
+
+def builtin_cantera_plugin_manifest() -> PluginManifest:
+    """Return the data-only manifest for Cantera 0D reactor summaries."""
+
+    return PluginManifest.from_dict(
+        {
+            "id": "osw.cantera",
+            "name": "Cantera 0D Reactor Adapter",
+            "version": "0.1.0",
+            "domain": "CHM",
+            "type": "solver_adapter",
+            "license": "BSD-compatible optional dependency",
+            "description": (
+                "Runs bounded in-process Cantera 0D reactor calculations when "
+                "explicitly requested and converts the time history to ResultDataset."
+            ),
+            "input_formats": ["internal_reactor_request", "cantera_mechanism"],
+            "output_formats": ["reactor_time_history", "result_dataset", "csv"],
+            "requires": [],
+            "optional_requires": ["cantera"],
+            "executable_names": [],
+            "capabilities": [
+                "zero_d_reactor",
+                "species_time_history",
+                "temperature_time_history",
+                "result_dataset_binding",
+                "report_embedding",
+            ],
+            "metadata": {
+                "built_in": True,
+                "preview_first": True,
+                "lazy_optional_dependency": True,
+                "no_external_process": True,
+                "not_reacting_cfd": True,
+            },
+        }
+    )
+
+
 def builtin_plugin_manifests() -> tuple[PluginManifest, ...]:
     """Return built-in data-only plugin manifest records."""
 
@@ -267,4 +343,6 @@ def builtin_plugin_manifests() -> tuple[PluginManifest, ...]:
         builtin_gmsh_plugin_manifest(),
         builtin_calculix_plugin_manifest(),
         builtin_openfoam_plugin_manifest(),
+        builtin_coolprop_plugin_manifest(),
+        builtin_cantera_plugin_manifest(),
     )

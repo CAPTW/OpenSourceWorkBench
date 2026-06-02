@@ -371,6 +371,71 @@ def build_parser() -> argparse.ArgumentParser:
         help="Parse residual summaries from an OpenFOAM case directory.",
     )
     openfoam_results_summary_parser.add_argument("case_dir", help="Case directory.")
+    subparsers.add_parser(
+        "coolprop-check",
+        help="Check whether the optional CoolProp package is importable.",
+    )
+    coolprop_props_parser = subparsers.add_parser(
+        "coolprop-props",
+        help="Calculate bounded CoolProp properties at a T/P state.",
+    )
+    coolprop_props_parser.add_argument("--fluid", required=True, help="CoolProp fluid name.")
+    coolprop_props_parser.add_argument("--T", type=float, required=True, help="Temperature [K].")
+    coolprop_props_parser.add_argument("--P", type=float, required=True, help="Pressure [Pa].")
+    coolprop_props_parser.add_argument(
+        "--outputs",
+        default="density,viscosity,enthalpy,entropy,cp,thermal_conductivity",
+        help="Comma-separated output properties.",
+    )
+    coolprop_sweep_parser = subparsers.add_parser(
+        "coolprop-sweep",
+        help="Calculate a bounded CoolProp T/P property sweep and write ResultDataset JSON.",
+    )
+    coolprop_sweep_parser.add_argument("--fluid", required=True, help="CoolProp fluid name.")
+    coolprop_sweep_parser.add_argument(
+        "--sweep",
+        choices=("T", "P"),
+        required=True,
+        help="Sweep variable.",
+    )
+    coolprop_sweep_parser.add_argument("--start", type=float, required=True)
+    coolprop_sweep_parser.add_argument("--stop", type=float, required=True)
+    coolprop_sweep_parser.add_argument("--count", type=int, required=True)
+    coolprop_sweep_parser.add_argument("--T", type=float, default=None, help="Fixed T [K].")
+    coolprop_sweep_parser.add_argument("--P", type=float, default=None, help="Fixed P [Pa].")
+    coolprop_sweep_parser.add_argument("--out", required=True, help="Output ResultDataset JSON.")
+    coolprop_sweep_parser.add_argument(
+        "--outputs",
+        default="density",
+        help="Comma-separated output properties.",
+    )
+    subparsers.add_parser(
+        "cantera-check",
+        help="Check whether the optional Cantera package is importable.",
+    )
+    cantera_reactor_parser = subparsers.add_parser(
+        "cantera-reactor",
+        help="Run a bounded in-process Cantera 0D reactor and write ResultDataset JSON.",
+    )
+    cantera_reactor_parser.add_argument("--mechanism", default="gri30.yaml")
+    cantera_reactor_parser.add_argument("--phase-name", default="")
+    cantera_reactor_parser.add_argument("--composition", required=True)
+    cantera_reactor_parser.add_argument("--T", type=float, required=True)
+    cantera_reactor_parser.add_argument("--P", type=float, required=True)
+    cantera_reactor_parser.add_argument("--end-time", type=float, required=True)
+    cantera_reactor_parser.add_argument("--time-step", type=float, default=0.00025)
+    cantera_reactor_parser.add_argument(
+        "--tracked-species",
+        default="CH4,O2,CO2,H2O",
+        help="Comma-separated species names.",
+    )
+    cantera_reactor_parser.add_argument("--out", required=True, help="Output ResultDataset JSON.")
+    chm_inspect_parser = subparsers.add_parser(
+        "chm-result-inspect",
+        help="Inspect CHM ResultDataset or raw CoolProp/Cantera result JSON.",
+    )
+    chm_inspect_parser.add_argument("path", help="CHM JSON path.")
+    chm_inspect_parser.add_argument("--json", action="store_true", help="Emit ResultDataset JSON.")
     result_dataset_parser = subparsers.add_parser(
         "result-dataset-inspect",
         help="Inspect a ResultDataset/FigureDataset/MAT/BoundaryCurve JSON file.",
@@ -1021,6 +1086,124 @@ def main(argv: Sequence[str] | None = None) -> int:
         summary = parse_openfoam_case_logs(Path(args.case_dir))
         _print_openfoam_residual_summary(summary)
         return 1 if summary.diagnostics.has_errors else 0
+
+    if args.command == "coolprop-check":
+        from osw.solvers.coolprop.property_adapter import coolprop_available
+
+        available = coolprop_available()
+        print("CoolProp")
+        print(f"Status: {'available' if available else 'missing'}")
+        if not available:
+            print(
+                "CoolProp is not installed. Install the CHM optional extra or install "
+                "CoolProp to run thermophysical property calculations.",
+                file=sys.stderr,
+            )
+        return 0 if available else 1
+
+    if args.command == "coolprop-props":
+        from osw.solvers.coolprop.model import CoolPropPropertyRequest, PropertyInputPair
+        from osw.solvers.coolprop.property_adapter import calculate_properties
+
+        request = CoolPropPropertyRequest(
+            fluid=args.fluid,
+            input_pair=PropertyInputPair("T", args.T, "P", args.P, "K", "Pa"),
+            output_properties=_csv_items(args.outputs),
+        )
+        result = calculate_properties(request)
+        _print_coolprop_property_result(result)
+        return _chm_status_exit_code(result.status)
+
+    if args.command == "coolprop-sweep":
+        import json
+
+        from osw.solvers.coolprop.model import CoolPropSweepRequest
+        from osw.solvers.coolprop.property_adapter import sweep_properties
+        from osw.solvers.coolprop.results import coolprop_sweep_to_result_dataset
+
+        fixed_variable = "P" if args.sweep == "T" else "T"
+        fixed_value = args.P if args.sweep == "T" else args.T
+        if fixed_value is None:
+            print(f"Fixed {fixed_variable} is required for a {args.sweep} sweep.", file=sys.stderr)
+            return 1
+        request = CoolPropSweepRequest(
+            fluid=args.fluid,
+            sweep_variable=args.sweep,
+            sweep_values=_linspace(args.start, args.stop, args.count),
+            sweep_unit="K" if args.sweep == "T" else "Pa",
+            fixed_variable=fixed_variable,
+            fixed_value=fixed_value,
+            fixed_unit="Pa" if fixed_variable == "P" else "K",
+            output_properties=_csv_items(args.outputs),
+        )
+        result = sweep_properties(request)
+        _print_coolprop_sweep_result(result)
+        if result.status in {"ok", "warning"}:
+            output = Path(args.out)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            dataset = coolprop_sweep_to_result_dataset(result)
+            output.write_text(
+                json.dumps(dataset.to_dict(), indent=2, sort_keys=True),
+                encoding="utf-8",
+            )
+            print(f"Wrote CHM ResultDataset JSON: {output}")
+        return _chm_status_exit_code(result.status)
+
+    if args.command == "cantera-check":
+        from osw.solvers.cantera.reactor_adapter import cantera_available
+
+        available = cantera_available()
+        print("Cantera")
+        print(f"Status: {'available' if available else 'missing'}")
+        if not available:
+            print(
+                "Cantera is not installed. Install the CHM optional extra or install "
+                "Cantera to run reactor calculations.",
+                file=sys.stderr,
+            )
+        return 0 if available else 1
+
+    if args.command == "cantera-reactor":
+        import json
+
+        from osw.solvers.cantera.model import CanteraMixtureSpec, CanteraReactorRequest
+        from osw.solvers.cantera.reactor_adapter import run_zero_d_reactor
+        from osw.solvers.cantera.results import cantera_result_to_result_dataset
+
+        request = CanteraReactorRequest(
+            mixture=CanteraMixtureSpec(
+                mechanism=args.mechanism,
+                phase_name=args.phase_name,
+                composition=args.composition,
+                temperature=args.T,
+                pressure=args.P,
+            ),
+            end_time=args.end_time,
+            time_step=args.time_step,
+            tracked_species=_csv_items(args.tracked_species),
+        )
+        result = run_zero_d_reactor(request)
+        _print_cantera_reactor_result(result)
+        if result.status in {"ok", "warning"}:
+            output = Path(args.out)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            dataset = cantera_result_to_result_dataset(result)
+            output.write_text(
+                json.dumps(dataset.to_dict(), indent=2, sort_keys=True),
+                encoding="utf-8",
+            )
+            print(f"Wrote CHM ResultDataset JSON: {output}")
+        return _chm_status_exit_code(result.status)
+
+    if args.command == "chm-result-inspect":
+        import json
+
+        dataset = _load_chm_result_dataset_source(Path(args.path))
+        if args.json:
+            print(json.dumps(dataset.to_dict(), indent=2, sort_keys=True))
+        else:
+            _print_result_dataset_summary(dataset)
+        return 0
 
     if args.command == "result-dataset-inspect":
         dataset = _load_result_dataset_source(Path(args.path))
@@ -1705,6 +1888,97 @@ def _print_openfoam_residual_summary(summary: object) -> None:
     diagnostics = getattr(summary, "diagnostics", None)
     if diagnostics is not None and getattr(diagnostics, "messages", ()):
         print(diagnostics.summary(), file=sys.stderr)
+
+
+def _print_coolprop_property_result(result: object) -> None:
+    print(f"CoolProp property status: {getattr(result, 'status', '')}")
+    request = getattr(result, "request", None)
+    if request is not None:
+        print(f"Fluid: {getattr(request, 'fluid', '')}")
+    for value in getattr(result, "values", ()) or ():
+        print(
+            f"{getattr(value, 'name', '')}: "
+            f"{getattr(value, 'value', '')} {getattr(value, 'unit', '')}".rstrip()
+        )
+    diagnostics = getattr(result, "diagnostics", None)
+    if diagnostics is not None and getattr(diagnostics, "messages", ()):
+        print(diagnostics.summary(), file=sys.stderr)
+
+
+def _print_coolprop_sweep_result(result: object) -> None:
+    print(f"CoolProp sweep status: {getattr(result, 'status', '')}")
+    print(f"Rows: {len(getattr(result, 'rows', ()) or ())}")
+    for name, values in dict(getattr(result, "series", {}) or {}).items():
+        if values:
+            print(f"{name}: first={values[0]:.12g}, last={values[-1]:.12g}")
+    diagnostics = getattr(result, "diagnostics", None)
+    if diagnostics is not None and getattr(diagnostics, "messages", ()):
+        print(diagnostics.summary(), file=sys.stderr)
+
+
+def _print_cantera_reactor_result(result: object) -> None:
+    print(f"Cantera reactor status: {getattr(result, 'status', '')}")
+    print(f"Samples: {len(getattr(result, 'times', ()) or ())}")
+    temperatures = tuple(getattr(result, "temperature_series", ()) or ())
+    if temperatures:
+        print(f"Final temperature: {temperatures[-1]:.12g} K")
+        print(f"Max temperature: {max(temperatures):.12g} K")
+    for species, values in dict(getattr(result, "species_series", {}) or {}).items():
+        if values:
+            print(f"Final {species}: {values[-1]:.12g}")
+    diagnostics = getattr(result, "diagnostics", None)
+    if diagnostics is not None and getattr(diagnostics, "messages", ()):
+        print(diagnostics.summary(), file=sys.stderr)
+
+
+def _load_chm_result_dataset_source(path: Path) -> object:
+    import json
+
+    from osw.core.result_dataset import ResultDataset
+    from osw.solvers.cantera.model import CanteraReactorResult
+    from osw.solvers.cantera.results import cantera_result_to_result_dataset
+    from osw.solvers.coolprop.model import CoolPropPropertyResult, CoolPropSweepResult
+    from osw.solvers.coolprop.results import (
+        coolprop_result_to_result_dataset,
+        coolprop_sweep_to_result_dataset,
+    )
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        msg = "CHM result JSON must contain an object."
+        raise SystemExit(msg)
+    if "fields" in payload or "summaries" in payload:
+        return ResultDataset.from_dict(payload)
+    request = payload.get("request")
+    if "values" in payload and isinstance(request, dict):
+        return coolprop_result_to_result_dataset(CoolPropPropertyResult.from_dict(payload))
+    if "series" in payload and isinstance(request, dict):
+        return coolprop_sweep_to_result_dataset(CoolPropSweepResult.from_dict(payload))
+    if "temperature_series" in payload and isinstance(request, dict):
+        return cantera_result_to_result_dataset(CanteraReactorResult.from_dict(payload))
+    return _load_result_dataset_source(path)
+
+
+def _chm_status_exit_code(status: object) -> int:
+    text = str(status)
+    if text in {"ok", "warning"}:
+        return 0
+    if text == "dependency_missing":
+        return 2
+    return 1
+
+
+def _csv_items(text: str) -> tuple[str, ...]:
+    return tuple(item.strip() for item in str(text).split(",") if item.strip())
+
+
+def _linspace(start: float, stop: float, count: int) -> tuple[float, ...]:
+    if count <= 0:
+        return ()
+    if count == 1:
+        return (float(start),)
+    step = (float(stop) - float(start)) / float(count - 1)
+    return tuple(float(start) + step * index for index in range(count))
 
 
 def _load_result_dataset_source(path: Path) -> object:

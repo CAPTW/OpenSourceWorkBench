@@ -12,6 +12,9 @@ from typing import Any
 class ResultDatasetKind(StrEnum):
     CALCULIX_SUMMARY = "calculix_summary"
     OPENFOAM_RESIDUALS = "openfoam_residuals"
+    COOLPROP_PROPERTY = "coolprop_property"
+    COOLPROP_SWEEP = "coolprop_sweep"
+    CANTERA_REACTOR = "cantera_reactor"
     FIGURE_DATASET = "figure_dataset"
     MAT_WORKSPACE = "mat_workspace"
     BOUNDARY_CURVE = "boundary_curve"
@@ -471,6 +474,7 @@ class ResultDataset:
         tables = [_field_to_table(self, field_item) for field_item in self.fields]
         if self.summaries:
             tables.append(_summary_to_table(self))
+        tables.extend(_metadata_preview_tables(self))
         return tuple(tables)
 
 
@@ -515,6 +519,35 @@ def _summary_to_table(dataset: ResultDataset) -> object:
         source=dataset.source,
         notes=tuple(dataset.warnings),
     )
+
+
+def _metadata_preview_tables(dataset: ResultDataset) -> list[object]:
+    from osw.post.table_model import TablePreview
+
+    tables = []
+    for key, default_title in (
+        ("property_rows", "CHM property table"),
+        ("reactor_rows", "Cantera reactor time history"),
+    ):
+        payload = dataset.metadata.get(key)
+        if not isinstance(payload, Mapping):
+            continue
+        columns = tuple(str(item) for item in payload.get("columns", ()) or ())
+        rows = tuple(
+            tuple(str(cell) for cell in row)
+            for row in payload.get("rows", ()) or ()
+        )
+        if columns:
+            tables.append(
+                TablePreview(
+                    columns=columns,
+                    rows=rows,
+                    title=str(payload.get("title", default_title)),
+                    source=dataset.source,
+                    notes=tuple(dataset.warnings),
+                )
+            )
+    return tables
 
 
 def _format_value(value: float | None) -> str:

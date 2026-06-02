@@ -18,6 +18,24 @@ from osw.post.result_view_model import (
 )
 from osw.scripts.mscript.figure_dataset import FigureDataset
 from osw.scripts.mscript.mat_model import MatFileSummary
+from osw.solvers.cantera.model import (
+    CanteraMixtureSpec,
+    CanteraReactorRequest,
+    CanteraReactorResult,
+)
+from osw.solvers.cantera.results import cantera_result_to_result_dataset
+from osw.solvers.coolprop.model import (
+    CoolPropPropertyRequest,
+    CoolPropPropertyResult,
+    CoolPropPropertyValue,
+    CoolPropSweepRequest,
+    CoolPropSweepResult,
+    PropertyInputPair,
+)
+from osw.solvers.coolprop.results import (
+    coolprop_result_to_result_dataset,
+    coolprop_sweep_to_result_dataset,
+)
 
 FIXTURES = Path(__file__).parents[1] / "fixtures" / "results"
 
@@ -89,6 +107,61 @@ def test_mesh_info_converts_to_scalar_summary() -> None:
     assert view_model.kind == "mesh_summary"
     assert {scalar.name for scalar in view_model.scalars} == {"node_count", "element_count"}
     assert any(table.title == "Mesh cell types" for table in view_model.tables)
+
+
+def test_chm_result_datasets_convert_to_view_models() -> None:
+    property_dataset = coolprop_result_to_result_dataset(
+        CoolPropPropertyResult(
+            "ok",
+            CoolPropPropertyRequest(
+                "Water",
+                PropertyInputPair("T", 300.0, "P", 101325.0),
+            ),
+            values=(CoolPropPropertyValue("density", 997.0, "kg/m^3"),),
+        )
+    )
+    sweep_dataset = coolprop_sweep_to_result_dataset(
+        CoolPropSweepResult(
+            "ok",
+            CoolPropSweepRequest(
+                "Water",
+                "T",
+                (280.0, 300.0),
+                "P",
+                101325.0,
+                ("density",),
+                sweep_unit="K",
+                fixed_unit="Pa",
+            ),
+            columns=("T [K]", "density [kg/m^3]"),
+            rows=((280.0, 999.0), (300.0, 997.0)),
+            series={"density": (999.0, 997.0)},
+        )
+    )
+    reactor_dataset = cantera_result_to_result_dataset(
+        CanteraReactorResult(
+            "ok",
+            CanteraReactorRequest(
+                mixture=CanteraMixtureSpec(mechanism="gri30.yaml"),
+                tracked_species=("CH4",),
+            ),
+            times=(0.0, 0.001),
+            temperature_series=(1000.0, 1025.0),
+            pressure_series=(101325.0, 101400.0),
+            species_series={"CH4": (0.05, 0.03)},
+        )
+    )
+
+    property_view = result_dataset_to_view_model(property_dataset)
+    sweep_view = result_dataset_to_view_model(sweep_dataset)
+    reactor_view = result_dataset_to_view_model(reactor_dataset)
+
+    assert property_view.kind == "coolprop_property"
+    assert any(table.title == "CoolProp property table" for table in property_view.tables)
+    assert sweep_view.kind == "coolprop_sweep"
+    assert sweep_view.series[0].x_values == (280.0, 300.0)
+    assert reactor_view.kind == "cantera_reactor"
+    assert {"temperature", "CH4"}.issubset({series.name for series in reactor_view.series})
 
 
 def test_empty_dataset_and_missing_artifact_are_friendly() -> None:

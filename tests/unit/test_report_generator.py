@@ -31,6 +31,13 @@ from osw.post.report_generator import (
 from osw.post.report_model import ReportBuildRequest
 from osw.post.table_model import TablePreview
 from osw.scripts.mscript.figure_dataset import FigureDataset, FigureRecord
+from osw.solvers.coolprop.model import (
+    CoolPropPropertyRequest,
+    CoolPropPropertyResult,
+    CoolPropPropertyValue,
+    PropertyInputPair,
+)
+from osw.solvers.coolprop.results import coolprop_result_to_result_dataset
 from osw.solvers.openfoam.residual_parser import parse_openfoam_residuals_from_text
 from osw.solvers.openfoam.results import openfoam_residuals_to_result_dataset
 
@@ -329,6 +336,29 @@ def test_build_report_summary_accepts_openfoam_residual_dataset(tmp_path: Path) 
 
     assert "icoFoam result summary" in html
     assert "final_residual_p" in html
+
+
+def test_build_report_summary_accepts_chm_result_dataset(tmp_path: Path) -> None:
+    dataset = coolprop_result_to_result_dataset(
+        CoolPropPropertyResult(
+            "ok",
+            CoolPropPropertyRequest(
+                "Water",
+                PropertyInputPair("T", 300.0, "P", 101325.0),
+            ),
+            values=(CoolPropPropertyValue("density", 997.0, "kg/m^3"),),
+        )
+    )
+
+    summary = build_report_summary(
+        rich_project(),
+        result_tables=dataset.to_report_tables(),
+    )
+    html = render_report_summary_html(summary, output_path=tmp_path / "report.html")
+
+    assert "CoolProp property table" in html
+    assert "density" in html
+    assert "kg/m^3" in html
 
 
 def test_summary_html_escapes_user_strings_and_handles_missing_image(tmp_path: Path) -> None:

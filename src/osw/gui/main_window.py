@@ -26,7 +26,7 @@ except ModuleNotFoundError:
     QtGui = None
     QtWidgets = None
 
-MENU_TITLES = ("File", "Import", "Plugins", "Run", "Reports", "Help")
+MENU_TITLES = ("File", "Import", "Plugins", "Run", "CHM", "Reports", "Help")
 
 # Legacy import-safe contract retained for existing CLI/unit tests.
 MENU_ACTIONS = {
@@ -54,6 +54,7 @@ SHELL_MENU_ACTIONS = {
         "Generate OpenFOAM Template Case...",
         "Open Results Folder",
     ),
+    "CHM": ("CoolProp Property Calculator...", "Cantera 0D Reactor..."),
     "Reports": ("Generate Report", "Export Report"),
     "Help": ("Documentation", "About"),
 }
@@ -116,6 +117,8 @@ class MainWindow(_BaseMainWindow):
         self.gmsh_mesh_dialog: object | None = None
         self.calculix_deck_dialog: object | None = None
         self.openfoam_template_dialog: object | None = None
+        self.chm_property_dialog: object | None = None
+        self.chm_reactor_dialog: object | None = None
         self.result_viewer_dialog: object | None = None
         self.result_viewer: object | None = None
         self.plot_viewer_dialog: object | None = None
@@ -167,6 +170,10 @@ class MainWindow(_BaseMainWindow):
                     action.triggered.connect(self.open_calculix_deck_dialog)
                 elif action_title == "Generate OpenFOAM Template Case...":
                     action.triggered.connect(self.open_openfoam_template_dialog)
+                elif action_title == "CoolProp Property Calculator...":
+                    action.triggered.connect(self.open_chm_property_dialog)
+                elif action_title == "Cantera 0D Reactor...":
+                    action.triggered.connect(self.open_chm_reactor_dialog)
                 else:
                     action.triggered.connect(
                         lambda _checked=False, label=action_title: self._placeholder_action(label)
@@ -298,6 +305,16 @@ class MainWindow(_BaseMainWindow):
             "set_theme_tokens",
         ):
             self.openfoam_template_dialog.set_theme_tokens(tokens)
+        if self.chm_property_dialog is not None and hasattr(
+            self.chm_property_dialog,
+            "set_theme_tokens",
+        ):
+            self.chm_property_dialog.set_theme_tokens(tokens)
+        if self.chm_reactor_dialog is not None and hasattr(
+            self.chm_reactor_dialog,
+            "set_theme_tokens",
+        ):
+            self.chm_reactor_dialog.set_theme_tokens(tokens)
         if self.result_viewer is not None and hasattr(
             self.result_viewer,
             "set_theme_tokens",
@@ -827,6 +844,70 @@ class MainWindow(_BaseMainWindow):
             return
         self.add_result_dataset(dataset)
 
+    def open_chm_property_dialog(self, _checked: bool = False) -> object:
+        """Open the bounded CoolProp property dialog without running external tools."""
+
+        from osw.gui.dialogs.chm_property_dialog import ChmPropertyDialog
+
+        if self.chm_property_dialog is None:
+            self.chm_property_dialog = ChmPropertyDialog(
+                parent=self,
+                theme_tokens=self.theme_manager.current_tokens,
+            )
+            self.chm_property_dialog.resultDatasetReady.connect(self._on_chm_dataset_ready)
+            self.chm_property_dialog.propertyCalculated.connect(self._on_chm_property_result)
+        else:
+            self.chm_property_dialog.set_theme_tokens(self.theme_manager.current_tokens)
+        self.chm_property_dialog.show()
+        self.chm_property_dialog.raise_()
+        self.chm_property_dialog.activateWindow()
+        return self.chm_property_dialog
+
+    def open_chm_reactor_dialog(self, _checked: bool = False) -> object:
+        """Open the bounded Cantera 0D reactor dialog without external processes."""
+
+        from osw.gui.dialogs.chm_reactor_dialog import ChmReactorDialog
+
+        if self.chm_reactor_dialog is None:
+            self.chm_reactor_dialog = ChmReactorDialog(
+                parent=self,
+                theme_tokens=self.theme_manager.current_tokens,
+            )
+            self.chm_reactor_dialog.resultDatasetReady.connect(self._on_chm_dataset_ready)
+            self.chm_reactor_dialog.reactorRunCompleted.connect(self._on_chm_reactor_result)
+        else:
+            self.chm_reactor_dialog.set_theme_tokens(self.theme_manager.current_tokens)
+        self.chm_reactor_dialog.show()
+        self.chm_reactor_dialog.raise_()
+        self.chm_reactor_dialog.activateWindow()
+        return self.chm_reactor_dialog
+
+    def _on_chm_dataset_ready(self, dataset: object) -> None:
+        self.add_result_dataset(dataset)
+        if hasattr(self.run_monitor, "append_log"):
+            dataset_id = str(getattr(dataset, "dataset_id", "chm-result"))
+            self.run_monitor.append_log(f"CHM ResultDataset ready: {dataset_id}", level="info")
+
+    def _on_chm_property_result(self, result: object) -> None:
+        if not hasattr(self.run_monitor, "append_log"):
+            return
+        status = str(getattr(result, "status", ""))
+        value_count = len(getattr(result, "values", ()) or ())
+        self.run_monitor.append_log(
+            f"CoolProp property calculation: {status}, {value_count} value(s).",
+            level="info",
+        )
+
+    def _on_chm_reactor_result(self, result: object) -> None:
+        if not hasattr(self.run_monitor, "append_log"):
+            return
+        status = str(getattr(result, "status", ""))
+        samples = len(getattr(result, "times", ()) or ())
+        self.run_monitor.append_log(
+            f"Cantera reactor calculation: {status}, {samples} sample(s).",
+            level="info",
+        )
+
     def _on_script_run_completed(self, result: object) -> None:
         status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
         from osw.scripts.mscript.figure_capture import figure_dataset_from_octave_result
@@ -973,6 +1054,8 @@ def _action_object_name(action_title: str) -> str:
         "Generate Mesh with Gmsh...": "oswActionGenerateGmshMesh",
         "Generate CalculiX Input Deck...": "oswActionGenerateCalculixDeck",
         "Generate OpenFOAM Template Case...": "oswActionGenerateOpenFOAMTemplate",
+        "CoolProp Property Calculator...": "oswActionCoolPropPropertyCalculator",
+        "Cantera 0D Reactor...": "oswActionCanteraReactor",
     }
     if action_title in plugin_action_names:
         return plugin_action_names[action_title]

@@ -150,3 +150,16 @@ residuals, FigureDataset records, MAT workspace variables, BoundaryCurve series,
 and MeshInfo summaries can be normalized into scalar, series, table, figure,
 artifact, and diagnostic records. See
 `docs/28_result_viewer_dataset_binding.md`.
+
+## CHM CoolProp / Cantera Binding
+
+CHM support lives under `osw.solvers.coolprop` and `osw.solvers.cantera` as
+bounded optional-dependency adapters. CoolProp requests calculate simple
+thermophysical property points and T/P sweeps through lazy `PropsSI` imports,
+while Cantera requests run short in-process 0D constant-volume reactor examples
+through lazy Cantera imports. Both adapters return structured diagnostics when
+the optional package is missing and convert successful or partial results into
+`ResultDataset` tables, scalar summaries, and series for the ResultViewer and
+reports. The CHM layer does not run external executables, call subprocesses,
+implement reacting CFD, or provide a process flowsheet simulator. See
+`docs/29_chm_coolprop_cantera_binding.md`.
