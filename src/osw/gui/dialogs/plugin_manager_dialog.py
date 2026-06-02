@@ -172,6 +172,7 @@ class PluginManagerDialog(_BaseDialog):
         self._rows: list[PluginManagerRow] = []
         self._health_by_id: dict[str, PluginHealthRecord] = {}
         self._diagnostics: list[PluginDiagnostic] = []
+        self._install_diagnostics: list[str] = []
         self._executable_dialog: ExecutablePathDialog | None = None
 
         from osw.plugins.installer import PluginInstallManager
@@ -281,67 +282,71 @@ class PluginManagerDialog(_BaseDialog):
         self.installer = installer
         self.refresh_plugins()
 
-    def install_plugin_folder(self, path: str | Path) -> None:
+    def install_plugin_folder(self, path: str | Path) -> Any | None:
         try:
-            result = self.installer.install_from_folder(path, allow_replace=False)
-            QtWidgets.QMessageBox.information(
-                self,
-                "Success",
-                f"Successfully installed plugin: {result.manifest.name} ({result.plugin_id})"
+            result = self.installer.install_from_folder(
+                path,
+                existing_plugin_ids=self._existing_plugin_ids_for_install(),
+                allow_replace=False,
+            )
+            name = result.manifest.name if result.manifest is not None else result.plugin_id
+            self._record_install_diagnostic(
+                f"Installed folder plugin: {name} ({result.plugin_id})"
             )
             self.refresh_plugins()
+            self._select_row_by_plugin_id(result.plugin_id)
+            return result
         except Exception as exc:
-            QtWidgets.QMessageBox.warning(
-                self,
-                "Installation Failed",
-                f"Could not install plugin from folder:\n{exc}"
-            )
+            self._record_install_diagnostic(f"Folder install rejected: {exc}")
+            self.refresh_plugins()
+            return None
 
-    def install_plugin_zip(self, path: str | Path) -> None:
+    def install_plugin_zip(self, path: str | Path) -> Any | None:
         try:
-            result = self.installer.install_from_zip(path, allow_replace=False)
-            QtWidgets.QMessageBox.information(
-                self,
-                "Success",
-                f"Successfully installed plugin: {result.manifest.name} ({result.plugin_id})"
+            result = self.installer.install_from_zip(
+                path,
+                existing_plugin_ids=self._existing_plugin_ids_for_install(),
+                allow_replace=False,
+            )
+            name = result.manifest.name if result.manifest is not None else result.plugin_id
+            self._record_install_diagnostic(
+                f"Installed zip plugin: {name} ({result.plugin_id})"
             )
             self.refresh_plugins()
+            self._select_row_by_plugin_id(result.plugin_id)
+            return result
         except Exception as exc:
-            QtWidgets.QMessageBox.warning(
-                self,
-                "Installation Failed",
-                f"Could not install plugin from ZIP:\n{exc}"
-            )
+            self._record_install_diagnostic(f"Zip install rejected: {exc}")
+            self.refresh_plugins()
+            return None
 
-    def uninstall_selected_plugin(self) -> None:
+    def uninstall_selected_plugin(self, *, confirm: bool = False) -> bool:
         plugin_id = self.selected_plugin_id()
         if not plugin_id:
-            QtWidgets.QMessageBox.warning(self, "Warning", "No plugin selected.")
-            return
+            self._record_install_diagnostic("Uninstall rejected: no plugin selected.")
+            return False
 
-        reply = QtWidgets.QMessageBox.question(
-            self,
-            "Confirm Uninstall",
-            f"Are you sure you want to uninstall plugin: {plugin_id}?",
-            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No
-        )
-        if reply == QtWidgets.QMessageBox.StandardButton.No:
-            return
+        if confirm:
+            reply = QtWidgets.QMessageBox.question(
+                self,
+                "Confirm Uninstall",
+                f"Are you sure you want to uninstall plugin: {plugin_id}?",
+                QtWidgets.QMessageBox.StandardButton.Yes
+                | QtWidgets.QMessageBox.StandardButton.No,
+            )
+            if reply == QtWidgets.QMessageBox.StandardButton.No:
+                self._record_install_diagnostic(f"Uninstall cancelled: {plugin_id}")
+                return False
 
         try:
             self.installer.uninstall_plugin(plugin_id)
-            QtWidgets.QMessageBox.information(
-                self,
-                "Success",
-                f"Successfully uninstalled plugin: {plugin_id}"
-            )
+            self._record_install_diagnostic(f"Uninstalled managed plugin: {plugin_id}")
             self.refresh_plugins()
+            return True
         except Exception as exc:
-            QtWidgets.QMessageBox.warning(
-                self,
-                "Uninstall Failed",
-                f"Could not uninstall plugin:\n{exc}"
-            )
+            self._record_install_diagnostic(f"Uninstall rejected: {exc}")
+            self.refresh_plugins()
+            return False
 
     def _browse_install_folder(self) -> None:
         selected = QtWidgets.QFileDialog.getExistingDirectory(
@@ -450,6 +455,8 @@ class PluginManagerDialog(_BaseDialog):
         self.executable_panel = _readonly_plain_text("oswPluginExecutablePanel", details)
         self.diagnostics_list = QtWidgets.QListWidget(details)
         self.diagnostics_list.setObjectName("oswPluginDiagnosticsList")
+        self.install_diagnostics_list = QtWidgets.QListWidget(details)
+        self.install_diagnostics_list.setObjectName("oswPluginInstallDiagnosticsList")
         self.receipt_panel = _readonly_plain_text("oswPluginInstallReceiptPanel", details)
         self.quarantine_panel = _readonly_plain_text("oswPluginQuarantineList", details)
         self.source_label = QtWidgets.QLabel(details)
@@ -461,6 +468,7 @@ class PluginManagerDialog(_BaseDialog):
         self.details_tabs.addTab(self.health_panel, "Dependencies")
         self.details_tabs.addTab(self.executable_panel, "Executables")
         self.details_tabs.addTab(self.diagnostics_list, "Diagnostics")
+        self.details_tabs.addTab(self.install_diagnostics_list, "Install")
         self.details_tabs.addTab(self.receipt_panel, "Receipt")
         self.details_tabs.addTab(self.quarantine_panel, "Quarantine")
         
@@ -490,7 +498,9 @@ class PluginManagerDialog(_BaseDialog):
         self.configure_executables_button.clicked.connect(self.open_executable_path_dialog)
         self.install_folder_button.clicked.connect(self._browse_install_folder)
         self.install_zip_button.clicked.connect(self._browse_install_zip)
-        self.uninstall_button.clicked.connect(self.uninstall_selected_plugin)
+        self.uninstall_button.clicked.connect(
+            lambda: self.uninstall_selected_plugin(confirm=True)
+        )
         self.close_button.clicked.connect(self.accept)
         self.plugin_table.currentCellChanged.connect(
             lambda current_row, _current_col, _previous_row, _previous_col: self._show_row(
@@ -592,9 +602,19 @@ class PluginManagerDialog(_BaseDialog):
             all_diagnostics.extend(row.diagnostics)
         if not all_diagnostics:
             self.diagnostics_list.addItem("No diagnostics.")
+            self._populate_install_diagnostics_list()
             return
         for diagnostic in all_diagnostics:
             self.diagnostics_list.addItem(_diagnostic_line(diagnostic))
+        self._populate_install_diagnostics_list()
+
+    def _populate_install_diagnostics_list(self) -> None:
+        self.install_diagnostics_list.clear()
+        if not self._install_diagnostics:
+            self.install_diagnostics_list.addItem("No install diagnostics.")
+            return
+        for message in reversed(self._install_diagnostics):
+            self.install_diagnostics_list.addItem(message)
 
     def _show_row(self, row: int) -> None:
         if row < 0 or row >= len(self._rows):
@@ -659,6 +679,22 @@ class PluginManagerDialog(_BaseDialog):
         self.receipt_panel.setPlainText("No active plugin selected.")
         self.quarantine_panel.setPlainText("No active plugin selected.")
         self._populate_diagnostics_list()
+
+    def _existing_plugin_ids_for_install(self) -> tuple[str, ...]:
+        return tuple(row.plugin_id for row in self._rows if row.plugin_id)
+
+    def _record_install_diagnostic(self, message: str) -> None:
+        self._install_diagnostics.append(message)
+        self._install_diagnostics = self._install_diagnostics[-25:]
+        if hasattr(self, "install_diagnostics_list"):
+            self._populate_install_diagnostics_list()
+
+    def _select_row_by_plugin_id(self, plugin_id: str) -> None:
+        for row, row_data in enumerate(self._rows):
+            if row_data.plugin_id == plugin_id:
+                self.plugin_table.setCurrentCell(row, 0)
+                self._show_row(row)
+                return
 
     def _row_for_plugin_id(self, plugin_id: str | None) -> PluginManagerRow | None:
         if not plugin_id:

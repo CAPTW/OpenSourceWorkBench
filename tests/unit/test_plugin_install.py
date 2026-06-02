@@ -11,12 +11,15 @@ from osw.gui.plugin_manager_dialog import (
     PluginManagerEntry,
     _merge_preserved_entry_point_entries,
 )
+from osw.plugins.discovery import discover_local_plugin_manifests
 from osw.plugins.installer import (
     DuplicatePluginInstallError,
     PluginInstallError,
     PluginInstallManager,
+    PluginInstallReceipt,
     ZipPathTraversalError,
 )
+from osw.plugins.state import PluginStateStore
 
 
 def _manifest_data(**overrides: object) -> dict[str, object]:
@@ -78,7 +81,8 @@ def test_invalid_manifest_is_rejected(tmp_path: Path) -> None:
     with pytest.raises(PluginInstallError, match="missing required field: name"):
         manager.install_from_folder(source)
 
-    assert not (tmp_path / "installed").exists()
+    assert not manager.list_receipts()
+    assert manager.list_quarantine()
 
 
 def test_duplicate_plugin_id_is_detected(tmp_path: Path) -> None:
@@ -162,6 +166,94 @@ def test_zip_plugin_installs_from_archive(tmp_path: Path) -> None:
     ) == "demo"
 
 
+def test_install_receipt_is_written_and_round_trips(tmp_path: Path) -> None:
+    source = tmp_path / "source" / "plugin"
+    _write_manifest(source, id="demo.receipt")
+    manager = PluginInstallManager(tmp_path / "installed")
+
+    result = manager.install_from_folder(source)
+    receipts = manager.list_receipts()
+
+    assert [receipt.plugin_id for receipt in receipts] == ["demo.receipt"]
+    assert receipts[0].sha256
+    assert PluginInstallReceipt.from_dict(result.receipt.to_dict()).to_dict() == (
+        result.receipt.to_dict()
+    )
+
+
+def test_installed_plugin_appears_in_manifest_discovery(tmp_path: Path) -> None:
+    source = tmp_path / "source" / "plugin"
+    _write_manifest(source, id="demo.discovery")
+    manager = PluginInstallManager(tmp_path / "installed")
+
+    manager.install_from_folder(source)
+    discovered = discover_local_plugin_manifests(manager.install_root)
+
+    assert {manifest.id for manifest in discovered.manifests} == {"demo.discovery"}
+
+
+def test_uninstall_removes_receipt_and_managed_files(tmp_path: Path) -> None:
+    source = tmp_path / "source" / "plugin"
+    _write_manifest(source, id="demo.uninstall")
+    manager = PluginInstallManager(tmp_path / "installed")
+    result = manager.install_from_folder(source)
+    installed_path = result.installed_path
+
+    manager.uninstall_plugin("demo.uninstall")
+
+    assert not installed_path.exists()
+    assert manager.list_receipts() == []
+
+
+def test_uninstall_refuses_non_receipted_plugin_directory(tmp_path: Path) -> None:
+    manager = PluginInstallManager(tmp_path / "installed")
+    managed_dir = manager.install_root / "plugin_ZGVtby5ub3JlY2VpcHQ"
+    managed_dir.mkdir(parents=True)
+
+    with pytest.raises(PluginInstallError, match="not installed in the managed root"):
+        manager.uninstall_plugin("demo.noreceipt")
+
+    assert managed_dir.exists()
+
+
+def test_allow_replace_replaces_existing_managed_plugin(tmp_path: Path) -> None:
+    first = tmp_path / "source" / "first"
+    second = tmp_path / "source" / "second"
+    _write_manifest(first, id="demo.replace", version="0.1.0")
+    _write_manifest(second, id="demo.replace", version="0.2.0")
+    (first / "payload.txt").write_text("first", encoding="utf-8")
+    (second / "payload.txt").write_text("second", encoding="utf-8")
+    manager = PluginInstallManager(tmp_path / "installed")
+
+    manager.install_from_folder(first)
+    result = manager.install_from_folder(second, allow_replace=True)
+
+    assert result.receipt.version == "0.2.0"
+    assert (result.installed_path / "payload.txt").read_text(encoding="utf-8") == "second"
+    assert len(manager.list_receipts()) == 1
+
+
+def test_allow_replace_does_not_override_builtin_plugin_id(tmp_path: Path) -> None:
+    source = tmp_path / "source" / "plugin"
+    _write_manifest(source, id="osw.calculix")
+    manager = PluginInstallManager(tmp_path / "installed")
+
+    with pytest.raises(DuplicatePluginInstallError, match="Duplicate plugin id"):
+        manager.install_from_folder(source, allow_replace=True)
+
+
+def test_enable_after_install_updates_state_store(tmp_path: Path) -> None:
+    source = tmp_path / "source" / "plugin"
+    _write_manifest(source, id="demo.enable")
+    state_store = PluginStateStore(tmp_path / "state.json")
+    state_store.set_enabled("demo.enable", False)
+    manager = PluginInstallManager(tmp_path / "installed", state_store=state_store)
+
+    manager.install_from_folder(source, enable_after_install=True)
+
+    assert state_store.is_enabled("demo.enable")
+
+
 def test_zip_path_traversal_is_rejected(tmp_path: Path) -> None:
     archive_path = tmp_path / "traversal.zip"
     with zipfile.ZipFile(archive_path, "w") as archive:
@@ -174,7 +266,8 @@ def test_zip_path_traversal_is_rejected(tmp_path: Path) -> None:
         manager.install_from_zip(archive_path)
 
     assert not (tmp_path / "outside.txt").exists()
-    assert not (tmp_path / "installed").exists()
+    assert not manager.list_receipts()
+    assert manager.list_quarantine()
 
 
 def test_dependency_warning_is_reported_without_blocking_install(tmp_path: Path) -> None:

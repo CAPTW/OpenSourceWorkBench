@@ -32,6 +32,14 @@ base install. Missing optional dependencies should produce diagnostics or skips.
 Pillow is used only by helper/image workflows when present; it is not mandatory
 for the base package.
 
+## Plugin Trust Boundary
+
+Local plugin folder and ZIP install is manifest-first and rejects unsafe archive
+paths before extraction, but v0.1 does not provide plugin signing, a remote
+plugin store/catalog, dependency auto-install, or automatic trust elevation.
+Installed plugin code should run only later through explicit plugin-system
+workflows, not during install or health checks.
+
 ## Deferred Work
 
 - Full CalculiX FRD parser.
@@ -39,7 +47,7 @@ for the base package.
 - Vector glyphs, streamlines, and time animation.
 - PDF export.
 - Binary desktop installers.
-- Remote plugin store and plugin install hardening.
+- Remote plugin store, plugin signing, and dependency auto-install.
 
 For the broader standing limitations document, see
 [Known Limitations](../known_limitations.md).

@@ -88,6 +88,7 @@ be committed.
 - [Source and Development Install](docs/install/source_install.md)
 - [Optional Dependencies](docs/install/optional_dependencies.md)
 - [Known Limitations](docs/release/known_limitations_v0_1.md)
+- [Plugin Install Hardening](docs/33_plugin_install_hardening.md)
 - [Tutorials](docs/tutorials.md)
 - [Demo Smoke Checklist](docs/demo_smoke_checklist.md)
 - [Architecture](docs/02_architecture.md)

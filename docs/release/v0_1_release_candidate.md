@@ -15,7 +15,8 @@ Current package metadata: `0.1.2`.
 - Frozen PySide6 GUI visual shell.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset
   contracts.
-- Manifest-first Plugin Manager and plugin health diagnostics.
+- Manifest-first Plugin Manager, local plugin install hardening, and plugin
+  health diagnostics.
 - External runner diagnostics through backend/service boundaries.
 - Mesh bridge and optional meshio import/export paths.
 - Gmsh primitive `.geo` generation and optional explicit mesh generation.
@@ -52,8 +53,7 @@ release-candidate documentation on top of that evidence.
 ## Public Release Boundary
 
 Do not publish this candidate as a final public release until the later
-packaging, plugin install hardening, freeze/handoff, and maintainer-controlled
-tag/push gates are complete.
+freeze/handoff and maintainer-controlled tag/push gates are complete.
 
 ## Links
 

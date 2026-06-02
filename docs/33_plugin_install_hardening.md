@@ -1,6 +1,7 @@
 # Plugin Install Hardening
 
-OpenSolver Workbench (OSW) employs a highly secure, manifest-first local plugin installation flow for v0.1.
+OpenSolver Workbench (OSW) uses a bounded, manifest-first local plugin
+installation flow for v0.1.
 
 This document describes the security model, safety validation gates, install receipts tracking, quarantine handling, safe uninstallation policy, and troubleshooting resources.
 
@@ -59,7 +60,9 @@ If a plugin fails static manifest validation, contains path traversal indicators
 
 OSW permits clean uninstallation only for managed installed plugins:
 1. **Safety Boundary Constraint**: The uninstall path is strictly validated to ensure it lies entirely within the managed `install_root`.
-2. **Rejection of Core/Built-in Deletion**: Built-in plugins or Python entry-point plugins do not have installation receipts and cannot be uninstalled.
+2. **Rejection of Core/Built-in Deletion**: Built-in plugins, Python entry-point
+   plugins, and unmanaged local plugin directories do not have installation
+   receipts and cannot be uninstalled by this command.
 3. **Registry Cleanup**: Removes the plugin's folder and deletes its receipt entry from `receipts.json`.
 
 ---
@@ -108,3 +111,18 @@ python -m osw.cli plugins-uninstall <PLUGIN_ID>
 ### Safe ZIP Traversal Rejection
 - **Message**: `Plugin zip entry would write outside the install staging folder`
 - **Solution**: Remove any parent traversal (`../`), backslashes, absolute, or symlink components from your archive builder.
+
+### Optional Dependency Missing
+- **Message**: `Required dependency is missing: ...` or `Optional dependency is missing: ...`
+- **Solution**: Install the optional dependency only if you intend to use that
+  plugin capability. OSW does not install plugin dependencies automatically.
+
+## Known Limitations
+
+- No remote plugin store or marketplace.
+- No network plugin install.
+- No plugin signing or trust chain.
+- No dependency auto-install or `pip install` during plugin installation.
+- Installed plugin code is not executed during install, validation, discovery,
+  or health checks. Plugin code can run only later through explicit
+  plugin-system workflows.

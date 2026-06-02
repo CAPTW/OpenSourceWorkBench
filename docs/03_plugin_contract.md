@@ -150,10 +150,39 @@ After `OSW-FUNC-003_RUNNER_DIAGNOSTICS`, plugin health can share
 remaining manifest-only. Health checks still do not execute plugin code or
 solver binaries.
 
+## Local Plugin Installation
+
+`OSW-FUNC-022_PLUGIN_INSTALL_HARDENING` adds local-only folder and ZIP plugin
+installation on top of this manifest contract. Installation reads exactly the
+candidate manifest data, validates required fields, rejects duplicate IDs, and
+then copies the validated package into the managed user install root
+(`~/.osw/plugins` by default, explicit temp roots in tests).
+
+Install receipts are written as JSON under the managed install root and include
+plugin ID, name, version, source kind, source path, installed path, manifest
+path, package hash, status, diagnostics, and install timestamp. Rejected or
+quarantined attempts are recorded separately. Uninstall is receipt-based and is
+restricted to managed installed plugin directories.
+
+ZIP install pre-scans archives before extraction. Path traversal, absolute
+paths, Windows drive paths, UNC paths, symlink entries, empty archives, duplicate
+archive entries, and archives over the v0.1 file-count or uncompressed-size
+limits are rejected before package files are trusted. Local folder install
+rejects symlink or junction entries where the platform exposes them.
+
+The installer does not import plugin Python modules, execute plugin entry
+points, run solver executables, install Python dependencies, access the network,
+or elevate trust. Plugin signing, a remote catalog/store, and dependency
+auto-install are deferred.
+
 ## Security Rules
 
 - Manifest validation does not execute plugin code.
 - Local plugin discovery reads data files only.
+- Local folder/ZIP installation validates manifests and archive paths before
+  copying into the managed install root.
+- Local folder/ZIP installation does not import plugin modules or install
+  dependencies.
 - Entry point loading is explicit.
 - Solver executables are not run during health checks.
 - Script import plugins must not auto-run `.m` files.
@@ -448,4 +477,4 @@ reactor calculations during discovery.
 
 ## Next Step
 
-Next functional step: `OSW-FUNC-019_RESULT_VIEWER_FIELD_RENDERING`.
+Next functional step: `OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF`.

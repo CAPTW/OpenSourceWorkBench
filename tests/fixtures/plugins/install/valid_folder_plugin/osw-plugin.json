@@ -1,0 +1,12 @@
+{
+  "id": "osw.fixture.install.valid",
+  "name": "Install Valid Fixture",
+  "version": "0.1.0",
+  "domain": "GENERAL",
+  "type": "ui_extension",
+  "license": "MIT",
+  "entry_point": "plugin_code:Plugin",
+  "capabilities": [
+    "preview"
+  ]
+}

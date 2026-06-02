@@ -30,6 +30,7 @@ def _manifest_data(**overrides: object) -> dict[str, object]:
     data.update(overrides)
     return data
 
+
 def test_quarantine_created_on_invalid_folder_install(tmp_path: Path) -> None:
     source = tmp_path / "source" / "invalid"
     source.mkdir(parents=True)
@@ -51,8 +52,8 @@ def test_quarantine_created_on_invalid_folder_install(tmp_path: Path) -> None:
     assert records[0].reason != ""
     reason = records[0].reason
     assert "bad.quarantine" in reason or "missing required field: name" in reason
-    assert records[0].quarantine_path is not None
-    assert Path(records[0].quarantine_path).exists()
+    assert records[0].quarantine_path is None
+
 
 def test_quarantine_created_on_zip_path_traversal(tmp_path: Path) -> None:
     archive_path = tmp_path / "traversal.zip"

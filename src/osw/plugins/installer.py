@@ -16,12 +16,15 @@ import tempfile
 import zipfile
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from enum import StrEnum
 from pathlib import Path, PurePosixPath
 from typing import Any
 
 from .discovery import iter_manifest_paths
+from .examples import builtin_plugin_manifests
 from .health import check_manifest_health
 from .manifest import PluginManifest, PluginManifestError
+from .state import PluginStateStore
 
 MAX_UNCOMPRESSED_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
 MAX_FILE_COUNT = 200
@@ -43,10 +46,30 @@ class UnsafeArchiveError(PluginInstallError):
     """Raised when a zip archive exceeds limits or contains symlinks/dangerous items."""
 
 
+class PluginSourceKind(StrEnum):
+    LOCAL_FOLDER = "local_folder"
+    LOCAL_ZIP = "local_zip"
+    BUILTIN = "builtin"
+    ENTRY_POINT = "entry_point"
+    UNKNOWN = "unknown"
+
+
+class PluginInstallStatus(StrEnum):
+    VALID = "valid"
+    INSTALLED = "installed"
+    REJECTED = "rejected"
+    QUARANTINED = "quarantined"
+    DUPLICATE = "duplicate"
+    UNSAFE_ARCHIVE = "unsafe_archive"
+    INVALID_MANIFEST = "invalid_manifest"
+    MISSING_MANIFEST = "missing_manifest"
+    ERROR = "error"
+
+
 @dataclass
 class PluginInstallRequest:
     source_path: str
-    source_kind: str  # "local_folder", "local_zip", "builtin", "entry_point", "unknown"
+    source_kind: str  # values from PluginSourceKind
     install_root: str | None = None
     allow_replace: bool = False
     enable_after_install: bool = False
@@ -198,8 +221,14 @@ class PluginQuarantineRecord:
 class PluginInstallManager:
     """Install local plugin folders or zip archives into a managed directory."""
 
-    def __init__(self, install_root: str | Path) -> None:
+    def __init__(
+        self,
+        install_root: str | Path,
+        *,
+        state_store: PluginStateStore | None = None,
+    ) -> None:
         self.install_root = Path(install_root)
+        self.state_store = state_store
 
     def _load_receipts(self) -> dict[str, dict[str, Any]]:
         receipts_file = self.install_root / "receipts.json"
@@ -277,17 +306,21 @@ class PluginInstallManager:
         *,
         existing_plugin_ids: Iterable[str] = (),
         allow_replace: bool = False,
+        enable_after_install: bool = False,
     ) -> PluginInstallResult:
         source = Path(plugin_folder)
-        known_ids = self._known_plugin_ids(existing_plugin_ids)
+        replace_plugin_id = ""
         if allow_replace:
             # exclude self if replacement is allowed
             try:
                 manifest_path = _single_manifest_path(source)
-                manifest_id = PluginManifest.load(manifest_path).id
-                known_ids = tuple(x for x in known_ids if x != manifest_id)
+                replace_plugin_id = PluginManifest.load(manifest_path).id
             except Exception:
                 pass
+        known_ids = self._known_plugin_ids(
+            existing_plugin_ids,
+            replace_plugin_id=replace_plugin_id,
+        )
 
         validation = self.validate_folder(
             source,
@@ -307,7 +340,13 @@ class PluginInstallManager:
         destination = self.install_root / _install_directory_name(manifest.id)
 
         try:
+            _assert_install_source_is_safe(
+                source=source,
+                plugin_root=validation.plugin_root,
+                install_root=self.install_root,
+            )
             if destination.exists():
+                _assert_managed_child(destination, self.install_root)
                 if allow_replace:
                     shutil.rmtree(destination)
                 else:
@@ -327,7 +366,7 @@ class PluginInstallManager:
                 plugin_id=manifest.id,
                 name=manifest.name,
                 version=manifest.version,
-                source_kind="local_folder",
+                source_kind=PluginSourceKind.LOCAL_FOLDER.value,
                 source_path=str(source.resolve()),
                 installed_path=str(destination.resolve()),
                 manifest_path=str(installed_manifest_path.resolve()),
@@ -337,9 +376,10 @@ class PluginInstallManager:
             receipts = self._load_receipts()
             receipts[manifest.id] = receipt.to_dict()
             self._save_receipts(receipts)
+            self._apply_enablement(manifest.id, enable_after_install)
 
             return PluginInstallResult(
-                status="installed",
+                status=PluginInstallStatus.INSTALLED.value,
                 receipt=receipt,
                 manifest=manifest,
                 source_path=source,
@@ -360,6 +400,7 @@ class PluginInstallManager:
         *,
         existing_plugin_ids: Iterable[str] = (),
         allow_replace: bool = False,
+        enable_after_install: bool = False,
     ) -> PluginInstallResult:
         source = Path(archive_path)
         with tempfile.TemporaryDirectory(prefix="osw-plugin-") as temp_dir:
@@ -377,7 +418,10 @@ class PluginInstallManager:
                 try:
                     manifest_path = _single_manifest_path(extract_root)
                     manifest_id = PluginManifest.load(manifest_path).id
-                    known_ids = tuple(x for x in known_ids if x != manifest_id)
+                    known_ids = self._known_plugin_ids(
+                        existing_plugin_ids,
+                        replace_plugin_id=manifest_id,
+                    )
                 except Exception:
                     pass
 
@@ -402,6 +446,7 @@ class PluginInstallManager:
 
             try:
                 if destination.exists():
+                    _assert_managed_child(destination, self.install_root)
                     if allow_replace:
                         shutil.rmtree(destination)
                     else:
@@ -420,7 +465,7 @@ class PluginInstallManager:
                     plugin_id=manifest.id,
                     name=manifest.name,
                     version=manifest.version,
-                    source_kind="local_zip",
+                    source_kind=PluginSourceKind.LOCAL_ZIP.value,
                     source_path=str(source.resolve()),
                     installed_path=str(destination.resolve()),
                     manifest_path=str(installed_manifest_path.resolve()),
@@ -430,9 +475,10 @@ class PluginInstallManager:
                 receipts = self._load_receipts()
                 receipts[manifest.id] = receipt.to_dict()
                 self._save_receipts(receipts)
+                self._apply_enablement(manifest.id, enable_after_install)
 
                 return PluginInstallResult(
-                    status="installed",
+                    status=PluginInstallStatus.INSTALLED.value,
                     receipt=receipt,
                     manifest=manifest,
                     source_path=source,
@@ -450,12 +496,6 @@ class PluginInstallManager:
     def uninstall_plugin(self, plugin_id: str) -> None:
         receipts = self._load_receipts()
         if plugin_id not in receipts:
-            # Let's see if the directory exists anyway under managed root
-            dir_name = _install_directory_name(plugin_id)
-            target_dir = self.install_root / dir_name
-            if target_dir.exists() and target_dir.parent.resolve() == self.install_root.resolve():
-                shutil.rmtree(target_dir)
-                return
             raise PluginInstallError(
                 f"Plugin '{plugin_id}' is not installed in the managed root."
             )
@@ -470,8 +510,8 @@ class PluginInstallManager:
             resolved_installed = installed_path.resolve()
             resolved_root = self.install_root.resolve()
             if (
-                resolved_root not in resolved_installed.parents
-                and resolved_installed != resolved_root
+                resolved_installed == resolved_root
+                or resolved_root not in resolved_installed.parents
             ):
                 raise PluginInstallError(
                     "Safety rejection: uninstall would write outside managed root."
@@ -504,8 +544,6 @@ class PluginInstallManager:
     def _quarantine_failed_install(
         self, source_path: Path, reason: str
     ) -> PluginQuarantineRecord | None:
-        if not self.install_root.exists():
-            return None
         self.install_root.mkdir(parents=True, exist_ok=True)
         q_dir = self.install_root / "quarantine"
         q_dir.mkdir(exist_ok=True)
@@ -514,20 +552,18 @@ class PluginInstallManager:
         target_name = f"{source_path.stem}_quarantine_{timestamp}"
         target_path = q_dir / target_name
 
-        # If it is an existing valid local directory, we copy it to quarantine folder.
-        # If it is a file (zip), we copy the zip file.
+        # Keep invalid local folders as records only; copying them could follow
+        # local symlink/junction escapes. Zip files are copied as inert bytes.
         quarantined_dest: str | None = None
         try:
             if source_path.exists():
-                if source_path.is_dir():
-                    shutil.copytree(source_path, target_path)
-                else:
+                if source_path.is_file():
                     shutil.copy2(
                         source_path,
                         target_path.with_name(target_name + source_path.suffix)
                     )
                     target_path = target_path.with_name(target_name + source_path.suffix)
-                quarantined_dest = str(target_path.resolve())
+                    quarantined_dest = str(target_path.resolve())
         except Exception:
             pass
 
@@ -543,8 +579,23 @@ class PluginInstallManager:
         self._save_quarantine_records(records)
         return record
 
-    def _known_plugin_ids(self, additional_ids: Iterable[str]) -> tuple[str, ...]:
-        return tuple({*self.installed_plugin_ids(), *additional_ids})
+    def _known_plugin_ids(
+        self,
+        additional_ids: Iterable[str],
+        *,
+        replace_plugin_id: str = "",
+    ) -> tuple[str, ...]:
+        builtin_ids = {manifest.id for manifest in builtin_plugin_manifests()}
+        installed_ids = {
+            plugin_id
+            for plugin_id in self.installed_plugin_ids()
+            if not replace_plugin_id or plugin_id != replace_plugin_id
+        }
+        return tuple({*builtin_ids, *installed_ids, *additional_ids})
+
+    def _apply_enablement(self, plugin_id: str, enable_after_install: bool) -> None:
+        if self.state_store is not None and enable_after_install:
+            self.state_store.set_enabled(plugin_id, enable_after_install)
 
 
 def _single_manifest_path(folder: Path) -> Path:
@@ -573,6 +624,8 @@ def _safe_extract_zip(archive_path: Path, extract_root: Path) -> None:
     try:
         with zipfile.ZipFile(archive_path) as archive:
             members = archive.infolist()
+            if not members:
+                raise UnsafeArchiveError("Archive is empty; no plugin manifest can be read.")
             # 1. Enforce file count limits
             if len(members) > MAX_FILE_COUNT:
                 raise UnsafeArchiveError(
@@ -588,6 +641,7 @@ def _safe_extract_zip(archive_path: Path, extract_root: Path) -> None:
                 )
 
             # Pre-scan for path traversal, UNC, symlinks, absolute paths
+            normalized_names: set[str] = set()
             for member in members:
                 # Reject symlinks if detectable via Unix mode
                 # zipfile external_attr: upper 16 bits are Unix mode.
@@ -600,6 +654,13 @@ def _safe_extract_zip(archive_path: Path, extract_root: Path) -> None:
 
                 # Validate paths
                 _safe_zip_target(root, member.filename)
+                normalized = member.filename.replace("\\", "/")
+                name_key = str(PurePosixPath(normalized)).casefold().rstrip("/")
+                if name_key in normalized_names:
+                    raise UnsafeArchiveError(
+                        f"Archive contains duplicate/conflicting entry: {member.filename}"
+                    )
+                normalized_names.add(name_key)
 
             # Perform actual extraction safely
             for member in members:
@@ -653,6 +714,53 @@ def _has_unsafe_zip_part(parts: tuple[str, ...]) -> bool:
     return any(part in ("", ".", "..") or ":" in part for part in parts)
 
 
+def _assert_install_source_is_safe(
+    *,
+    source: Path,
+    plugin_root: Path,
+    install_root: Path,
+) -> None:
+    resolved_source = source.resolve()
+    resolved_plugin_root = plugin_root.resolve()
+    resolved_install_root = install_root.resolve()
+    if (
+        resolved_source == resolved_install_root
+        or resolved_install_root in resolved_source.parents
+        or resolved_plugin_root == resolved_install_root
+        or resolved_install_root in resolved_plugin_root.parents
+    ):
+        raise PluginInstallError(
+            "Plugin folder install source must be outside the managed install root."
+        )
+    _reject_local_link_entries(resolved_plugin_root)
+
+
+def _reject_local_link_entries(plugin_root: Path) -> None:
+    if plugin_root.is_symlink() or _is_junction(plugin_root):
+        raise UnsafeArchiveError(
+            f"Plugin folder contains a symbolic link or junction: {plugin_root}"
+        )
+    for child in plugin_root.rglob("*"):
+        if child.is_symlink() or _is_junction(child):
+            raise UnsafeArchiveError(
+                f"Plugin folder contains a symbolic link or junction: {child}"
+            )
+
+
+def _is_junction(path: Path) -> bool:
+    is_junction = getattr(path, "is_junction", None)
+    return bool(is_junction and is_junction())
+
+
+def _assert_managed_child(path: Path, install_root: Path) -> None:
+    resolved_path = path.resolve()
+    resolved_root = install_root.resolve()
+    if resolved_path == resolved_root or resolved_root not in resolved_path.parents:
+        raise PluginInstallError(
+            "Safety rejection: managed plugin path is outside install root."
+        )
+
+
 def _install_directory_name(plugin_id: str) -> str:
     encoded = base64.urlsafe_b64encode(plugin_id.encode("utf-8")).decode("ascii")
     return "plugin_" + encoded.rstrip("=")
@@ -670,12 +778,21 @@ def _compute_file_hash(path: Path) -> str:
 
 
 def _compute_folder_hash(path: Path) -> str:
-    # Just hash the osw-plugin/manifest json/yaml file, since folder can have many files
-    # but the manifest file is the anchor.
-    manifest_path = _first_direct_manifest(path)
-    if manifest_path:
-        return _compute_file_hash(manifest_path)
-    return ""
+    h = hashlib.sha256()
+    try:
+        for child in sorted(path.rglob("*")):
+            if not child.is_file() or child.is_symlink():
+                continue
+            relative = child.relative_to(path).as_posix()
+            h.update(relative.encode("utf-8"))
+            h.update(b"\0")
+            with child.open("rb") as handle:
+                for chunk in iter(lambda: handle.read(65536), b""):
+                    h.update(chunk)
+            h.update(b"\0")
+        return h.hexdigest()
+    except Exception:
+        return ""
 
 
 def _first_direct_manifest(root: Path) -> Path | None:

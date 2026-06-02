@@ -57,8 +57,15 @@ untracked desktop duplicate `* (1)` files were present, and the local venv had a
 stale duplicate editable `.pth` entry. See
 [v0.1 Release Candidate](release/v0_1_release_candidate.md).
 
-This candidate is not a public final release until the later handoff, plugin
-install hardening, and maintainer-controlled tag/push gates are complete.
+This candidate is not a public final release until the later freeze/handoff and
+maintainer-controlled tag/push gates are complete.
+
+## Plugin Install Note
+
+`OSW-FUNC-022_PLUGIN_INSTALL_HARDENING` adds local folder/ZIP plugin install,
+receipt, quarantine/rejection, uninstall, GUI, and CLI flows. It remains
+local-only: no remote plugin store, plugin signing, dependency auto-install, or
+plugin code execution during install/health is part of v0.1.
 
 ## Artifact Hygiene
 
