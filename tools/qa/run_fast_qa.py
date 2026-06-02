@@ -24,7 +24,12 @@ def main() -> int:
         ),
     ]
     if shutil.which("ruff"):
-        commands.append((["ruff", "check", "src", "tests"], "ruff check src tests"))
+        commands.append(
+            (
+                ["ruff", "check", "--extend-exclude", "* (1).py", "src", "tests"],
+                "ruff check src tests",
+            )
+        )
     else:
         print("[skip] ruff check src tests: ruff not found")
 
@@ -36,7 +41,11 @@ def main() -> int:
     if os.environ.get("PYTEST_CURRENT_TEST"):
         print(f"[skip] {pytest_label}: running inside pytest")
     else:
-        exit_code = run(["pytest", "tests/unit", "-q"], cwd=root, label=pytest_label) or exit_code
+        exit_code = run(
+            [python_executable(), "-m", "pytest", "tests/unit", "-q"],
+            cwd=root,
+            label=pytest_label,
+        ) or exit_code
 
     return exit_code
 

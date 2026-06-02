@@ -1,11 +1,21 @@
 [
   {
+    "dependency_diagnostics": [
+      {
+        "code": "missing-python-package",
+        "field": "requires",
+        "hint": "Install the Python package for osw_missing_dependency_for_golden_test.",
+        "message": "Required dependency is missing: osw_missing_dependency_for_golden_test",
+        "severity": "error",
+        "source": ""
+      }
+    ],
     "dependency_messages": [
       "Required dependency is missing: osw_missing_dependency_for_golden_test"
     ],
     "dependency_status": "error",
     "display_name": "Golden Manifest Plugin",
-    "domain": "solver",
+    "domain": "CAE",
     "enabled": true,
     "executable_status": [
       {

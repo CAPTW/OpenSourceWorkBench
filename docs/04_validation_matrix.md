@@ -39,14 +39,14 @@ installed.
 
 | Area | Evidence | Pass criterion | Last run |
 | --- | --- | --- | --- |
-| Package import | `python -m osw.cli --version` through fast QA | CLI returns version without importing heavy optional dependencies | 2026-05-14 via `python tools/qa/run_fast_qa.py` |
-| CLI doctor | `python -m osw.cli doctor` through fast QA | Reports optional dependencies and states external solver execution is disabled | 2026-05-14 via `python tools/qa/run_fast_qa.py` |
-| Scope drift | `python tools/qa/check_scope_drift.py` | No forbidden v0.1 scope claims in changed files | 2026-05-14 |
-| Architecture boundaries | `python tools/qa/check_architecture_boundaries.py` | GUI/core/plugin dependency direction remains within documented boundaries | 2026-05-14 |
-| Solver artifacts | `python tools/qa/check_no_solver_artifacts_committed.py` | No runtime solver outputs, logs, or generated reports staged or committed | 2026-05-14 |
-| Golden fixtures | `pytest tests/golden -q` | CalculiX decks, OpenFOAM templates, mesh export summaries, report sections, and plugin health output match curated fixtures with normalized diffs | 2026-05-14 |
-| Release checklist gate | `python tools/qa/run_pre_merge_qa.py`; `pytest -q --import-mode=importlib`; split integration/golden/validation suites | Release readiness checklist records PASS/SKIP/P1/P2 status, with no P0 scope or safety blocker | 2026-05-14 |
-| Broad pytest command | `pytest -q` | Default collection currently has a P2 follow-up because duplicate test module basenames collide; CI-style split suites pass | 2026-05-14 |
+| Package import | `python -m osw.cli --version` through fast QA | CLI returns version without importing heavy optional dependencies | 2026-06-02 via `python tools/qa/run_fast_qa.py` |
+| CLI doctor | `python -m osw.cli doctor` through fast QA | Reports optional dependencies and states external solver execution is disabled | 2026-06-02 via `python tools/qa/run_fast_qa.py` |
+| Scope drift | `python tools/qa/check_scope_drift.py` | No forbidden v0.1 scope claims in changed files | 2026-06-02 via `python tools/qa/run_release_gate.py` |
+| Architecture boundaries | `python tools/qa/check_architecture_boundaries.py` | GUI/core/plugin dependency direction remains within documented boundaries | 2026-06-02 via `python tools/qa/run_release_gate.py` |
+| Solver artifacts | `python tools/qa/check_no_solver_artifacts_committed.py` | No runtime solver outputs, logs, or generated reports staged or committed | 2026-06-02 via `python tools/qa/run_release_gate.py` |
+| Golden fixtures | `pytest tests/golden -q` | CalculiX decks, OpenFOAM templates, mesh export summaries, report sections, and plugin health output match curated fixtures with normalized diffs | 2026-06-02 |
+| Release checklist gate | `python tools/qa/run_release_gate.py`; split unit/gui/integration/golden/validation suites; CLI smoke matrix | Release readiness checklist records PASS/SKIP/P1/P2 status, with no P0 scope or safety blocker | 2026-06-02 |
+| Broad pytest command | Split suite commands including tracked GUI with duplicate-file ignore | Unit, integration, golden, validation, and tracked GUI suites pass; untracked desktop duplicate `* (1).py` files remain a local hygiene warning | 2026-06-02 |
 
 ## Limitations
 

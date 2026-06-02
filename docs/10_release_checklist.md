@@ -1,6 +1,6 @@
 # Release Checklist
 
-Release gate date: 2026-05-21
+Release gate date: 2026-06-02
 
 This checklist records v0.1 release readiness evidence for the educational and
 research OpenSolver Workbench prototype. It confirms documentation coverage,
@@ -9,11 +9,22 @@ limitations. It does not claim industrial certification, production CAE
 validation, external solver availability, native commercial CAD direct import,
 or full solver parity.
 
+## FUNC-020 Release Gate Snapshot
+
+| Item | Status | Evidence / decision |
+| --- | --- | --- |
+| OSW-FUNC-020 release gate | `PASS_WITH_WARNINGS` | Current `develop` passed the tracked release validation suite on 2026-06-02. Detailed evidence is recorded in `.codex/reports/func/OSW-FUNC-020_RELEASE_VALIDATION_GATE.md`. |
+| Queue state | `PASS` | Functional queue now includes `OSW-FUNC-020_RELEASE_VALIDATION_GATE`, `current_step` is `null`, and `next_step` is `OSW-FUNC-021_PACKAGING_RELEASE_DOCS`. UI queue remains complete. |
+| Test and QA evidence | `PASS_WITH_WARNINGS` | Unit, integration, golden, validation, tracked GUI, focused release targets, fast QA, release-gate QA scripts, filtered Ruff, docs links, plugin manifests, scope, architecture, solver-artifact, JSON, and diff checks passed. Raw Ruff/GUI collection still sees untracked desktop duplicate `* (1).py` files, which remain untracked and are classified as repository hygiene warnings. |
+| CLI and optional dependency smoke | `PASS_WITH_WARNINGS` | Base CLI, project/report, runner fake, mesh format, script preview/scan, figure, curve, CalculiX, OpenFOAM, result catalog, and field commands passed. Missing Octave, SciPy MAT reader support, Gmsh, CoolProp, and Cantera reported explicit diagnostics. |
+| GUI visual smoke | `PASS` | Offscreen dark, light, and system theme screenshots were generated under `artifacts/ui/func020_*.png` and left untracked. |
+
 ## Status Legend
 
 | Status | Meaning |
 | --- | --- |
 | `PASS` | Evidence is present and aligned with v0.1 scope. |
+| `PASS_WITH_WARNINGS` | Blocking criteria passed, with documented local-environment or repository-hygiene warnings. |
 | `PENDING` | Gate criteria are defined and being checked in the current release prompt. |
 | `SKIP` | Not applicable in the current local environment; skip reason is recorded. |
 | `P0 BLOCKED` | Safety, secrets, destructive Git, or forbidden-scope blocker. |

@@ -29,6 +29,8 @@ def run_tool(*args: str) -> subprocess.CompletedProcess[str]:
         cwd=REPO_ROOT,
         env=tool_env(),
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
         check=False,
     )
@@ -66,3 +68,10 @@ def test_fast_qa_runner_handles_available_checks() -> None:
 
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert "pytest tests/unit -q" in proc.stdout
+
+
+def test_release_gate_checker_runs_on_current_repo() -> None:
+    proc = run_tool("tools/qa/check_release_gate.py")
+
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "Release gate queue" in proc.stdout
