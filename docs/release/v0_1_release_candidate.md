@@ -47,10 +47,14 @@ the final local handoff docs without creating a public tag or push.
   meshio, PyVista, SciPy/hdf5storage, Gmsh, GNU Octave, CoolProp, Cantera, and
   external solver executables.
 - PySide6 was available locally for the release-gate GUI screenshot smoke.
-- Untracked desktop duplicate `* (1)` files are present and can disrupt raw
-  recursive Ruff or Pytest collection if included.
+- Duplicate desktop `* (1)` files were quarantined under ignored
+  `artifacts/hygiene` during post-freeze repository hygiene.
 - The local venv had a stale duplicate editable `.pth` pointing at another
-  checkout; validation commands pinned `PYTHONPATH` to the intended checkout.
+  checkout; release-line reconciliation repaired the editable import path so
+  default `.venv` validation imports this checkout.
+- Local historical tags exist through `v0.1.2`; current `develop` is ahead of
+  that tag, so a current release candidate should use a reconciled next patch
+  line such as `0.1.3rc1` / `v0.1.3-rc1`.
 - Full CalculiX FRD field parsing and full OpenFOAM field parsing are deferred.
 - Vector glyphs, streamlines, time animation, and PDF export are deferred.
 

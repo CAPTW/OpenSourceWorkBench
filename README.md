@@ -13,10 +13,18 @@ execution.
 
 ## Release Status
 
-Current package metadata is `0.1.2`. The v0.1 functional release gate passed
-with warnings on 2026-06-02: optional live dependencies were missing locally,
-untracked desktop duplicate `* (1)` files can disrupt raw recursive checks, and
-a stale duplicate editable `.pth` was present in the local venv. This is an
+Current package metadata is `0.1.2`. Local historical release tags exist
+through `v0.1.2`, which points to
+`c39f21372ef837f096aa0d430cced82adc6f3485`. Current `develop` is ahead at
+`f42131845bee49a89ef40a8d21c0c146846ada25` after the internal freeze and
+handoff work. Do not move or recreate historical tags; if maintainers need a
+current release-candidate tag for this commit line, reconcile metadata for the
+next patch line, currently recommended as `0.1.3rc1` / `v0.1.3-rc1`.
+
+The v0.1 functional release gate passed with warnings on 2026-06-02. Optional
+live dependencies were missing locally, duplicate desktop `* (1)` files were
+quarantined during post-freeze hygiene, and a stale duplicate editable `.pth`
+in the local venv was repaired during release-line reconciliation. This is an
 internal v0.1 release-candidate handoff, not a final public release announcement
 or tag push.
 

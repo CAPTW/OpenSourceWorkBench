@@ -12,6 +12,7 @@ candidate. It records what to inspect, how to smoke test, and what not to stage.
 | Queue status | UI complete; functional queue frozen after `OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF` |
 | Public tag/push | Not created, not pushed |
 | Package metadata | `0.1.2` |
+| Local tag line | Historical tags exist through `v0.1.2`; current `develop` is ahead and should use a new patch line such as `0.1.3rc1` / `v0.1.3-rc1` if a current candidate is needed. |
 
 The exact handoff commit is the commit containing this manifest and is recorded
 in the final run output.
@@ -73,20 +74,20 @@ python -m osw.cli cantera-check
 
 ```powershell
 .venv\Scripts\python.exe -m pytest tests/unit -q
-.venv\Scripts\python.exe -m pytest tests/gui --ignore-glob "* (1).py" -q
+.venv\Scripts\python.exe -m pytest tests/gui -q
 .venv\Scripts\python.exe -m pytest tests/integration -q
 .venv\Scripts\python.exe -m pytest tests/golden -q
 .venv\Scripts\python.exe -m pytest tests/validation -q
-ruff check --extend-exclude "* (1).py" src tests
+ruff check src tests
 ruff check tests/unit tests/gui tests/integration tests/validation
 python tools/qa/run_release_gate.py
 python -m json.tool .codex/func_queue_state.json
 git diff --check
 ```
 
-Raw `ruff check src tests` may fail on untracked duplicate desktop files. Treat
-that as a repository-hygiene warning only when the duplicate-ignore/tracked
-checks pass.
+Raw `ruff check src tests` should pass after post-freeze duplicate-file
+hygiene. If duplicate desktop files reappear, quarantine them in a separate
+hygiene task before release validation.
 
 ## Artifact Policy
 
@@ -123,10 +124,13 @@ Generated smoke outputs should stay under `artifacts/release`,
 No P0/P1 blocker is accepted in this handoff if final QA passes. Remaining
 warnings:
 
-- Untracked duplicate `* (1)` files exist and can pollute raw recursive checks.
+- Duplicate `* (1)` files were quarantined under ignored `artifacts/hygiene`;
+  do not stage them.
 - Runtime reports and artifacts are untracked by policy.
 - Optional live dependencies and executables may be missing locally.
 - No public tag/push/package publication is part of this handoff.
+- Local `v0.1.2` exists as historical evidence and must not be moved or pushed
+  as the current `develop` line.
 - No plugin signing, remote plugin store, or dependency auto-install exists.
 
 ## Next-Owner Checklist
@@ -137,5 +141,7 @@ warnings:
 3. Review [v0.1 Freeze Handoff](v0_1_freeze_handoff.md).
 4. Run the test/QA commands relevant to the local environment.
 5. Keep generated artifacts and reports untracked.
-6. Clean duplicate `* (1)` files only in a separate hygiene task.
-7. Prepare any public release tag only after explicit maintainer approval.
+6. Clean duplicate `* (1)` files only in a separate hygiene task if they
+   reappear.
+7. Prepare any current release tag only after explicit maintainer approval and
+   version-line reconciliation.
