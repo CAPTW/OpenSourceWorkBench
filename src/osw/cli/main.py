@@ -143,6 +143,57 @@ def build_parser() -> argparse.ArgumentParser:
         help="Local plugin directory or manifest path to scan. May be repeated.",
     )
     plugins_health_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+
+    # New Plugin Hardening Commands:
+    plugins_install_folder_parser = subparsers.add_parser(
+        "plugins-install-folder",
+        help="Install a local plugin folder safely into the managed root.",
+    )
+    plugins_install_folder_parser.add_argument("path", help="Local plugin folder path.")
+    plugins_install_folder_parser.add_argument(
+        "--install-root", help="Managed install root directory."
+    )
+    plugins_install_folder_parser.add_argument(
+        "--allow-replace",
+        action="store_true",
+        help="Replace existing plugin if it exists.",
+    )
+
+    plugins_install_zip_parser = subparsers.add_parser(
+        "plugins-install-zip",
+        help="Install a local plugin zip archive safely into the managed root.",
+    )
+    plugins_install_zip_parser.add_argument("path", help="Local plugin zip archive path.")
+    plugins_install_zip_parser.add_argument(
+        "--install-root", help="Managed install root directory."
+    )
+    plugins_install_zip_parser.add_argument(
+        "--allow-replace",
+        action="store_true",
+        help="Replace existing plugin if it exists.",
+    )
+
+    plugins_installed_parser = subparsers.add_parser(
+        "plugins-installed",
+        help="List installed plugin receipts from the managed install root.",
+    )
+    plugins_installed_parser.add_argument("--install-root", help="Managed install root directory.")
+    plugins_installed_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+
+    plugins_uninstall_parser = subparsers.add_parser(
+        "plugins-uninstall",
+        help="Uninstall a managed plugin by ID.",
+    )
+    plugins_uninstall_parser.add_argument("plugin_id", help="Plugin ID to uninstall.")
+    plugins_uninstall_parser.add_argument("--install-root", help="Managed install root directory.")
+
+    plugins_quarantine_parser = subparsers.add_parser(
+        "plugins-quarantine-list",
+        help="List quarantined / rejected plugins.",
+    )
+    plugins_quarantine_parser.add_argument("--install-root", help="Managed install root directory.")
+    plugins_quarantine_parser.add_argument("--json", action="store_true", help="Emit JSON output.")
+
     runner_check_parser = subparsers.add_parser(
         "runner-check",
         help="Resolve an executable path without executing it.",
@@ -724,6 +775,97 @@ def main(argv: Sequence[str] | None = None) -> int:
         for diagnostic in result.diagnostics:
             print(f"{diagnostic.severity.value}: {diagnostic.message}", file=sys.stderr)
         return 1 if has_errors else 0
+
+    if args.command in (
+        "plugins-install-folder",
+        "plugins-install-zip",
+        "plugins-installed",
+        "plugins-uninstall",
+        "plugins-quarantine-list",
+    ):
+        import json
+
+        from osw.plugins.installer import PluginInstallManager
+        
+        install_root = (
+            args.install_root
+            if getattr(args, "install_root", None)
+            else DEFAULT_PLUGIN_INSTALL_ROOT
+        )
+        manager = PluginInstallManager(install_root)
+
+        if args.command == "plugins-install-folder":
+            try:
+                result = manager.install_from_folder(
+                    args.path, allow_replace=args.allow_replace
+                )
+                print(
+                    f"Successfully installed folder plugin: "
+                    f"{result.manifest.name} ({result.plugin_id})"
+                )
+                print(f"Installed Path: {result.installed_path}")
+                if result.warnings:
+                    print("Warnings:")
+                    for w in result.warnings:
+                        print(f"  - {w}")
+                return 0
+            except Exception as exc:
+                print(f"Error: {exc}", file=sys.stderr)
+                return 1
+
+        elif args.command == "plugins-install-zip":
+            try:
+                result = manager.install_from_zip(
+                    args.path, allow_replace=args.allow_replace
+                )
+                print(
+                    f"Successfully installed ZIP plugin: "
+                    f"{result.manifest.name} ({result.plugin_id})"
+                )
+                print(f"Installed Path: {result.installed_path}")
+                if result.warnings:
+                    print("Warnings:")
+                    for w in result.warnings:
+                        print(f"  - {w}")
+                return 0
+            except Exception as exc:
+                print(f"Error: {exc}", file=sys.stderr)
+                return 1
+
+        elif args.command == "plugins-installed":
+            receipts = manager.list_receipts()
+            if args.json:
+                print(json.dumps([r.to_dict() for r in receipts], indent=2, sort_keys=True))
+            else:
+                print("Installed plugins:")
+                if not receipts:
+                    print("  No installed plugins.")
+                for r in receipts:
+                    print(f"  - {r.plugin_id} (version: {r.version})")
+            return 0
+
+        elif args.command == "plugins-uninstall":
+            try:
+                manager.uninstall_plugin(args.plugin_id)
+                print(f"Successfully uninstalled plugin: {args.plugin_id}")
+                return 0
+            except Exception as exc:
+                print(f"Error: {exc}", file=sys.stderr)
+                return 1
+
+        elif args.command == "plugins-quarantine-list":
+            records = manager.list_quarantine()
+            if args.json:
+                print(json.dumps([r.to_dict() for r in records], indent=2, sort_keys=True))
+            else:
+                print("Quarantined plugins:")
+                if not records:
+                    print("  No quarantined plugins.")
+                for r in records:
+                    print(f"  - Time: {r.created_at}")
+                    print(f"    Source: {r.source_path}")
+                    print(f"    Reason: {r.reason}")
+            return 0
 
     if args.command == "runner-check":
         resolution = ExecutablePathRegistry().resolve(args.name)

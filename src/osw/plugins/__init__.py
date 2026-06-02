@@ -60,8 +60,12 @@ from osw.plugins.installer import (
     DuplicatePluginInstallError,
     PluginInstallError,
     PluginInstallManager,
+    PluginInstallReceipt,
+    PluginInstallRequest,
     PluginInstallResult,
+    PluginQuarantineRecord,
     PluginValidationResult,
+    UnsafeArchiveError,
     ZipPathTraversalError,
 )
 from osw.plugins.manifest import (
@@ -97,6 +101,10 @@ __all__ = [
     "PluginInstallError",
     "PluginInstallManager",
     "PluginInstallResult",
+    "PluginInstallRequest",
+    "PluginInstallReceipt",
+    "PluginQuarantineRecord",
+    "UnsafeArchiveError",
     "PluginManifest",
     "PluginManifestError",
     "PluginRegistry",
