@@ -57,8 +57,10 @@ untracked desktop duplicate `* (1)` files were present, and the local venv had a
 stale duplicate editable `.pth` entry. See
 [v0.1 Release Candidate](release/v0_1_release_candidate.md).
 
-This candidate is not a public final release until the later freeze/handoff and
-maintainer-controlled tag/push gates are complete.
+After `OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF`, this candidate is locally frozen
+as an internal release candidate. It is still not a public final release until a
+later maintainer-controlled tag/push gate explicitly approves the exact release
+path.
 
 ## Plugin Install Note
 

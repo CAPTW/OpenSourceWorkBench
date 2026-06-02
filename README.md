@@ -21,6 +21,8 @@ internal v0.1 release-candidate handoff, not a final public release announcement
 or tag push.
 
 See [v0.1 Release Candidate](docs/release/v0_1_release_candidate.md),
+[v0.1 Freeze Handoff](docs/release/v0_1_freeze_handoff.md),
+[v0.1 Release Notes](docs/release/v0_1_release_notes.md),
 [Release Checklist](docs/10_release_checklist.md), and
 [Validation Matrix](docs/04_validation_matrix.md).
 
@@ -83,6 +85,9 @@ be committed.
 ## Documentation
 
 - [Packaging and Release Docs](docs/32_packaging_release_docs.md)
+- [v0.1 Freeze Handoff](docs/release/v0_1_freeze_handoff.md)
+- [v0.1 Release Notes](docs/release/v0_1_release_notes.md)
+- [v0.1 Handoff Manifest](docs/release/v0_1_handoff_manifest.md)
 - [Windows Install](docs/install/windows.md)
 - [Linux Install](docs/install/linux.md)
 - [Source and Development Install](docs/install/source_install.md)

@@ -6,7 +6,8 @@ publication.
 
 ## Candidate Label
 
-v0.1 release candidate / internal handoff.
+v0.1 release candidate / internal handoff. `OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF`
+freezes this candidate locally as passed-with-warnings.
 
 Current package metadata: `0.1.2`.
 
@@ -36,6 +37,9 @@ Current package metadata: `0.1.2`.
 `OSW-FUNC-020_RELEASE_VALIDATION_GATE` passed with warnings on 2026-06-02.
 `OSW-FUNC-021_PACKAGING_RELEASE_DOCS` adds install, optional dependency, and
 release-candidate documentation on top of that evidence.
+`OSW-FUNC-022_PLUGIN_INSTALL_HARDENING` adds local folder/ZIP plugin install
+hardening at commit `c2bbee7`. `OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF` writes
+the final local handoff docs without creating a public tag or push.
 
 ## Warnings
 
@@ -52,12 +56,15 @@ release-candidate documentation on top of that evidence.
 
 ## Public Release Boundary
 
-Do not publish this candidate as a final public release until the later
-freeze/handoff and maintainer-controlled tag/push gates are complete.
+Do not publish this candidate as a final public release until a later
+maintainer-controlled tag/push gate explicitly approves the exact release path.
 
 ## Links
 
 - [Packaging and Release Docs](../32_packaging_release_docs.md)
+- [v0.1 Freeze Handoff](v0_1_freeze_handoff.md)
+- [v0.1 Handoff Manifest](v0_1_handoff_manifest.md)
+- [v0.1 Release Notes](v0_1_release_notes.md)
 - [Optional Dependencies](../install/optional_dependencies.md)
 - [Known Limitations](known_limitations_v0_1.md)
 - [Release Checklist](../10_release_checklist.md)

@@ -37,6 +37,15 @@ or full solver parity.
 | Release docs | `PASS` | [Plugin Install Hardening](33_plugin_install_hardening.md), [Plugin Contract](03_plugin_contract.md), and [Known Limitations For v0.1](release/known_limitations_v0_1.md) document the local-only install, receipt, rejection, duplicate ID, and no-code-execution boundaries. |
 | Remaining warnings | `PASS_WITH_WARNINGS` | Plugin signing, a remote catalog/store, dependency auto-install, and trust elevation remain deferred; duplicate untracked `* (1)` files remain a local hygiene warning. |
 
+## FUNC-023 Freeze And Handoff Snapshot
+
+| Item | Status | Evidence / decision |
+| --- | --- | --- |
+| OSW-FUNC-023 freeze/handoff | `PASS_WITH_WARNINGS` | v0.1 is frozen as an internal release candidate with final handoff docs, release notes, handoff manifest, queue state, and final QA evidence. |
+| Queue state | `PASS` | Functional queue includes `OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF`, `current_step` is `null`, and `next_step` is `null`. UI queue remains complete. |
+| Handoff docs | `PASS` | [v0.1 Freeze Handoff](release/v0_1_freeze_handoff.md), [v0.1 Handoff Manifest](release/v0_1_handoff_manifest.md), and [v0.1 Release Notes](release/v0_1_release_notes.md) record freeze status, test commands, artifact policy, optional dependencies, warnings, and next-owner checklist. |
+| Public release boundary | `PASS_WITH_WARNINGS` | No public tag, push, package publication, release upload, binary installer, Docker image, remote plugin store, signing trust chain, or dependency auto-install is created by this freeze step. |
+
 ## Status Legend
 
 | Status | Meaning |

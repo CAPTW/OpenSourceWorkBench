@@ -132,6 +132,12 @@ Do not rerun or recreate:
 The completed GUI is now the baseline. Future prompts must integrate into it
 rather than replacing it.
 
+## Freeze Handoff Note
+
+`OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF` freezes this completed GUI as part of the
+v0.1 internal release candidate. Handoff work must not rerun the UI pixel queue
+or replace the shell.
+
 ## Recommended Next Functional Implementation Step
 
 The next work should connect this completed visual shell to real data models in

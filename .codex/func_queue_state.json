@@ -21,9 +21,11 @@
     "OSW-FUNC-019_RESULT_VIEWER_FIELD_RENDERING",
     "OSW-FUNC-020_RELEASE_VALIDATION_GATE",
     "OSW-FUNC-021_PACKAGING_RELEASE_DOCS",
-    "OSW-FUNC-022_PLUGIN_INSTALL_HARDENING"
+    "OSW-FUNC-022_PLUGIN_INSTALL_HARDENING",
+    "OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF"
   ],
   "current_step": null,
-  "next_step": "OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF",
-  "last_report": ".codex/reports/func/OSW-FUNC-022_PLUGIN_INSTALL_HARDENING.md"
+  "next_step": null,
+  "release_state": "v0.1-internal-rc-frozen",
+  "last_report": ".codex/reports/func/OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF.md"
 }
