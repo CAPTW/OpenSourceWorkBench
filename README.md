@@ -1,151 +1,112 @@
 # OpenSolver Workbench
 
 OpenSolver Workbench (OSW) is an open-source educational and research
-Engineering Solver & Script Workbench. The v0.1 goal is a safe, inspectable
-desktop workbench for demonstrating solver workflows, data exchange, validation,
-and report generation.
+Engineering Solver and Script Workbench. The v0.1 goal is a safe, inspectable
+desktop workbench for demonstrating solver workflows, data exchange,
+validation, result review, and HTML report generation.
 
-## v0.1 Scope
-
-- PySide6 desktop GUI architecture.
-- Plugin/add-in contracts for solvers and importers.
-- Project schema, units, material database, result dataset, and figure dataset.
-- Standard/exported CAD, CAE, CFD, and chemistry formats.
-- `meshio`, Gmsh, PyVista, and Matplotlib based workflows.
-- CalculiX linear static demo.
-- OpenFOAM cavity/duct template demo.
-- Cantera and CoolProp basic demos.
-- MATLAB/Octave `.m` and `.mat` preview-first workflow.
-- HTML reports, validation matrix, and golden tests.
-
-The eight planned v0.1 demos are empty project, STEP import preview, mesh import
-preview, Gmsh meshing template, CalculiX cantilever, OpenFOAM cavity/duct
-template, Cantera/CoolProp basics, and MATLAB/Octave figure preview.
-
-The expected workflow is Import -> Configure -> Run or prepare a bounded demo
-run -> inspect Result/Figure data -> export an HTML report with validation notes.
-For v0.1, "Run" may mean case preparation, fixture-backed result inspection, or
-a small bounded demo. It does not mean GUI-triggered broad external solver
+OSW v0.1 is not a MATLAB, ANSYS, Simulink, SolidWorks, CATIA, NX, Creo,
+industrial-certified CAE, or commercial CAD replacement. It does not support
+native commercial CAD direct import, Simulink, `.slx`, `.mlapp`, full OpenFOAM
+coverage, full MATLAB toolbox compatibility, or GUI direct solver subprocess
 execution.
-
-## Non-Goals
-
-OSW v0.1 is not a MATLAB, ANSYS, Simulink, SolidWorks, CATIA, NX, or Creo clone.
-It does not claim industrial certification. It does not support native
-commercial CAD import, Simulink or `.mlapp`, full OpenFOAM coverage, full MATLAB
-toolbox compatibility, nonlinear contact/plasticity demos, industrial
-certification claims, or GUI-triggered direct subprocess solver execution.
-
-See [Known Limitations](docs/known_limitations.md) for the full v0.1 boundary
-statement, including optional dependency behavior and script execution safety.
-
-Release-readiness review uses the [Release Checklist](docs/10_release_checklist.md)
-and [v0.1 Demo Smoke Checklist](docs/demo_smoke_checklist.md). License and
-release tag planning is tracked in the
-[License and Version Plan](docs/13_license_and_version_plan.md).
 
 ## Release Status
 
-The current package version is `0.1.2`. Local `v0.1.0-rc1`, `v0.1.0-rc2`,
-`v0.1.0-rc3`, `v0.1.0`, `v0.1.1-rc1`, and `v0.1.1` tags remain local-only
-release evidence. The local `v0.1.1` final tag was parked with no public push
-and must not be published as the current release after the OSW-AUTO-067 GUI
-workflow fix advanced `develop`. OSW-AUTO-070 prepared the local patch
-candidate `0.1.2rc1` / `v0.1.2-rc1`, and OSW-AUTO-072 prepares final `0.1.2`
-package metadata after RC1 triage found no P0/P1 blockers. The final
-`v0.1.2` tag, public tag push, release artifacts, and announcement remain
-blocked until later maintainer-controlled gates. See the
-[Changelog](CHANGELOG.md) for patch candidate and final-prep notes plus
-source-install retest evidence.
+Current package metadata is `0.1.2`. The v0.1 functional release gate passed
+with warnings on 2026-06-02: optional live dependencies were missing locally,
+untracked desktop duplicate `* (1)` files can disrupt raw recursive checks, and
+a stale duplicate editable `.pth` was present in the local venv. This is an
+internal v0.1 release-candidate handoff, not a final public release announcement
+or tag push.
 
-OSW v0.1 is educational and research oriented. It makes no regulated-use or
-production-accuracy claim, does not replace expert engineering judgment, and
-does not guarantee that optional external solvers are installed in every local
-environment.
+See [v0.1 Release Candidate](docs/release/v0_1_release_candidate.md),
+[Release Checklist](docs/10_release_checklist.md), and
+[Validation Matrix](docs/04_validation_matrix.md).
+
+## Install Quickstart
+
+Base install keeps heavy optional dependencies out of the bootstrap path.
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e .
+python -m osw.cli --help
+python -m osw.cli doctor
+```
+
+GUI install:
+
+```powershell
+python -m pip install -e ".[gui]"
+python -m osw.cli gui
+```
+
+Developer install:
+
+```powershell
+python -m pip install -e ".[dev]"
+python -m pytest tests/unit -q
+python -m pytest tests/integration -q -m "not external_solver"
+python -m pytest tests/integration -q -m external_solver
+ruff check src tests
+```
+
+Run the `external_solver` command only on machines where the relevant optional
+tools are intentionally installed and configured.
+
+Research/dev install with optional Python stacks:
+
+```powershell
+python -m pip install -e ".[gui,viz,mesh,mscript,chm]"
+```
+
+External executables such as Gmsh, GNU Octave, CalculiX `ccx`, and OpenFOAM are
+not bundled and are never required for base CLI smoke or unit tests.
+
+## CLI Smoke Examples
+
+```powershell
+python -m osw.cli project-demo-json --out artifacts\release\demo_project.json
+python -m osw.cli project-validate artifacts\release\demo_project.json
+python -m osw.cli plugins-health
+python -m osw.cli report-export artifacts\release\demo_project.json --out artifacts\release\demo_report.html
+python -m osw.cli result-catalog-inspect tests\fixtures\results\mixed_result_catalog.json
+python -m osw.cli field-dataset-inspect tests\fixtures\fields\scalar_field_dataset.json
+```
+
+Generated outputs under `artifacts/*` are local runtime artifacts and should not
+be committed.
+
+## Documentation
+
+- [Packaging and Release Docs](docs/32_packaging_release_docs.md)
+- [Windows Install](docs/install/windows.md)
+- [Linux Install](docs/install/linux.md)
+- [Source and Development Install](docs/install/source_install.md)
+- [Optional Dependencies](docs/install/optional_dependencies.md)
+- [Known Limitations](docs/release/known_limitations_v0_1.md)
+- [Tutorials](docs/tutorials.md)
+- [Demo Smoke Checklist](docs/demo_smoke_checklist.md)
+- [Architecture](docs/02_architecture.md)
+- [Plugin Contract](docs/03_plugin_contract.md)
+
+## v0.1 Feature Coverage
+
+The v0.1 candidate covers the frozen PySide6 GUI shell, ProjectSchema,
+manifest-first Plugin Manager, runner diagnostics, mesh bridge, Gmsh primitive
+`.geo` generation, M-Script preview, optional Octave runner, FigureDataset, MAT
+reader, BoundaryCurve, report generator, CalculiX deck/runner/parser,
+OpenFOAM templates/residual parser, CHM CoolProp/Cantera adapters,
+ResultViewer, and FieldViewer metadata paths.
+
+Missing optional dependencies should produce friendly diagnostics or skips. A
+missing optional dependency is not a base install failure.
 
 ## License
 
 OpenSolver Workbench source is licensed under
-[GPL-3.0-or-later](LICENSE). This is the recorded maintainer decision for
-v0.1; see the [License and Version Plan](docs/13_license_and_version_plan.md)
-for the version/tag policy and the [Third-Party Notices Draft](docs/14_third_party_notices.md)
-for optional dependency notice review areas.
-
-External solver binaries such as CalculiX, OpenFOAM tools, Gmsh, GNU Octave,
-and SU2 are optional local runtime tools and are not bundled in v0.1 release
-artifacts by default. See [Known Limitations](docs/known_limitations.md) for
-scope, validation, optional dependency, and script safety boundaries.
-
-## Quick Start
-
-For full Windows, Linux, conda, pip, uv, optional dependency, and external tool
-notes, see the [Installation Guide](docs/install.md).
-
-```powershell
-python -m pip install -e ".[dev]"
-python -m osw.cli --version
-python -m osw.cli doctor
-pytest tests/unit -q
-ruff check src tests
-```
-
-Optional stacks are grouped as extras:
-
-- Base install supports CLI, docs, validation metadata, and HTML report code
-  paths without requiring heavy optional stacks.
-- `.[gui]` for PySide6.
-- `.[mesh]` for mesh import and Gmsh-facing work.
-- `.[viz]` for PyVista and Matplotlib.
-- `.[thermo]` for Cantera and CoolProp.
-- `.[mscript]` for `.mat` preview support.
-
-External solver binaries are not bundled by default. Optional solver stacks and
-executables remain user-installed local tools, and missing dependencies should
-produce diagnostics or skips rather than blocking the base CLI workflow.
-
-## Local CI Commands
-
-The GitHub Actions workflow is intentionally local-safe and uses the same
-commands below. It installs only the base development extra and does not assume
-that external solvers or heavy optional stacks are available:
-
-```powershell
-python -m pip install -e ".[dev]"
-python -m osw.cli --version
-python -m osw.cli doctor
-ruff check src tests
-pytest tests/unit -q
-pytest tests/integration -q -m "not external_solver"
-pytest tests/golden -q
-pytest tests/validation -q
-python tools/qa/run_fast_qa.py
-python tools/qa/check_scope_drift.py
-python tools/qa/check_architecture_boundaries.py
-python tools/qa/check_no_solver_artifacts_committed.py
-```
-
-Optional executable smoke checks are opt-in. Run them only on a machine where
-the relevant dependency is intentionally installed and configured:
-
-```powershell
-pytest tests/integration -q -m external_solver
-```
-
-Missing external solvers, GNU Octave, Gmsh, Cantera, CoolProp, PySide6, meshio,
-or PyVista are expected in many local and CI environments and should be reported
-as skipped or optional rather than release blockers for the base workflow.
-
-## Tutorial Examples
-
-The v0.1 tutorial path is documented in [docs/tutorials.md](docs/tutorials.md).
-Each example README includes a goal, prerequisites, steps, expected output, and
-troubleshooting notes:
-
-- [01 STEP import preview](examples/01_step_import/README.md)
-- [02 mesh import preview](examples/02_mesh_import/README.md)
-- [03 Gmsh meshing template](examples/03_gmsh_meshing/README.md)
-- [04 CalculiX cantilever](examples/04_calculix_cantilever/README.md)
-- [05 OpenFOAM cavity and duct templates](examples/05_openfoam_cavity/README.md)
-- [06 Cantera reactor](examples/06_cantera_reactor/README.md)
-- [07 CoolProp property table](examples/07_coolprop_property/README.md)
-- [08 MATLAB/Octave figure preview](examples/08_mscript_figure/README.md)
+[GPL-3.0-or-later](LICENSE). External solver binaries and optional tools are
+user-installed local dependencies and are not bundled by OSW v0.1.

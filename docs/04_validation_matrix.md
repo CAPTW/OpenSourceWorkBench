@@ -47,6 +47,7 @@ installed.
 | Golden fixtures | `pytest tests/golden -q` | CalculiX decks, OpenFOAM templates, mesh export summaries, report sections, and plugin health output match curated fixtures with normalized diffs | 2026-06-02 |
 | Release checklist gate | `python tools/qa/run_release_gate.py`; split unit/gui/integration/golden/validation suites; CLI smoke matrix | Release readiness checklist records PASS/SKIP/P1/P2 status, with no P0 scope or safety blocker | 2026-06-02 |
 | Broad pytest command | Split suite commands including tracked GUI with duplicate-file ignore | Unit, integration, golden, validation, and tracked GUI suites pass; untracked desktop duplicate `* (1).py` files remain a local hygiene warning | 2026-06-02 |
+| Packaging docs | `python tools/qa/check_docs_links.py`; `pytest tests/unit/test_cli_surface.py -q`; CLI quickstart smoke | README, install docs, optional dependency matrix, and release-candidate docs link current v0.1 source-install and diagnostic workflows | 2026-06-02 |
 
 ## Limitations
 

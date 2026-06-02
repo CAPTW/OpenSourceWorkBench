@@ -19,6 +19,15 @@ or full solver parity.
 | CLI and optional dependency smoke | `PASS_WITH_WARNINGS` | Base CLI, project/report, runner fake, mesh format, script preview/scan, figure, curve, CalculiX, OpenFOAM, result catalog, and field commands passed. Missing Octave, SciPy MAT reader support, Gmsh, CoolProp, and Cantera reported explicit diagnostics. |
 | GUI visual smoke | `PASS` | Offscreen dark, light, and system theme screenshots were generated under `artifacts/ui/func020_*.png` and left untracked. |
 
+## FUNC-021 Packaging Documentation Snapshot
+
+| Item | Status | Evidence / decision |
+| --- | --- | --- |
+| OSW-FUNC-021 packaging docs | `PASS_WITH_WARNINGS` | v0.1 source install, Windows/Linux setup, optional dependencies, external solver diagnostics, CLI/GUI quickstarts, release-candidate notes, and artifact hygiene are documented. |
+| Queue state | `PASS` | Functional queue includes `OSW-FUNC-021_PACKAGING_RELEASE_DOCS`, `current_step` is `null`, and `next_step` is `OSW-FUNC-022_PLUGIN_INSTALL_HARDENING`. |
+| Release docs | `PASS` | README links [Packaging and Release Docs](32_packaging_release_docs.md), dedicated install guides, [v0.1 Release Candidate](release/v0_1_release_candidate.md), and [Known Limitations For v0.1](release/known_limitations_v0_1.md). |
+| Packaging warnings | `PASS_WITH_WARNINGS` | Optional dependencies remain local-environment dependent; duplicate `* (1)` files and stale editable `.pth` hygiene warnings remain documented and unstaged. |
+
 ## Status Legend
 
 | Status | Meaning |
