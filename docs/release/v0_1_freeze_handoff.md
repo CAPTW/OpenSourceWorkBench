@@ -13,12 +13,13 @@ not a tag push, not a binary installer, and not a package publication.
 | Public tag | not created in this handoff step |
 | Push | not pushed |
 | Binary/package publication | not produced |
-| Current package metadata | `0.1.2` |
+| Current package metadata | `0.1.3rc1` |
 
 The remaining warnings are local-environment and release-line items: optional
 live solver/dependency stacks may be missing, `.codex/reports/*` and
 `artifacts/*` are untracked by policy, historical tags through `v0.1.2` must not
-be moved, and current `develop` is ahead of local `v0.1.2` tag evidence.
+be moved, and the current candidate tag `v0.1.3-rc1` is not created by this
+handoff step.
 Duplicate desktop `* (1)` files were quarantined during post-freeze hygiene.
 
 ## Latest Commits
@@ -101,7 +102,9 @@ Duplicate desktop `* (1)` files were quarantined during post-freeze hygiene.
   release-line reconciliation; validation should import OSW from this checkout.
 - Local `v0.1.2` exists as historical tag evidence and points to
   `c39f21372ef837f096aa0d430cced82adc6f3485`, while current `develop` is ahead
-  at `f42131845bee49a89ef40a8d21c0c146846ada25`.
+  after freeze, handoff, and release-line reconciliation work.
+- Current package metadata is `0.1.3rc1`; planned local candidate tag
+  `v0.1.3-rc1` remains pending a dedicated explicit tag gate.
 
 ## Known Limitations
 
@@ -163,7 +166,7 @@ separate hygiene step after the release freeze is recorded.
 ## Recommended Next Actions
 
 1. Manual hygiene cleanup of duplicate `* (1)` files in a separate task.
-2. Optional public release tag prep after maintainer approval.
+2. Optional local `v0.1.3-rc1` tag prep after maintainer approval.
 3. Optional plugin signing/trust policy design.
 4. Optional binary packaging experiment.
 5. Optional post-release cleanup and dependency-specific smoke on machines with

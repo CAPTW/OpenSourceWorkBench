@@ -13,16 +13,26 @@ from pathlib import Path
 
 from _common import repo_root
 
-TARGET_VERSION = "0.1.0"
+TARGET_VERSION = "0.1.3rc1"
 TARGET_LICENSE = "GPL-3.0-or-later"
-DEFAULT_RC_TAG = "v0.1.0-rc3"
+DEFAULT_RC_TAG = "v0.1.3-rc1"
 DEFAULT_PRIOR_RC1_TAG = "v0.1.0-rc1"
 DEFAULT_PRIOR_RC1_TARGET = "29c5c8bec8df30c7f7be72fc9be5e5409794968e"
 DEFAULT_PRIOR_RC2_TAG = "v0.1.0-rc2"
 DEFAULT_PRIOR_RC2_TARGET = "684dc6138d4257564bbcdd176a9d5ed311a7316d"
 DEFAULT_PRIOR_RC3_TAG = "v0.1.0-rc3"
 DEFAULT_PRIOR_RC3_TARGET = "dc7df75c53f0a4acb0a1ccf33d97c01ffdde4b16"
-FINAL_TAG = "v0.1.0"
+DEFAULT_PRIOR_PATCH_V011_RC1_TAG = "v0.1.1-rc1"
+DEFAULT_PRIOR_PATCH_V011_RC1_TARGET = "da1a2c9e2d27674dc4bb85a2800138170c4c4dec"
+DEFAULT_PRIOR_PATCH_V012_RC1_TAG = "v0.1.2-rc1"
+DEFAULT_PRIOR_PATCH_V012_RC1_TARGET = "28b30c1f79d4c62d160629e96fc1fcefa2382ebe"
+DEFAULT_HISTORICAL_FINAL_V010_TAG = "v0.1.0"
+DEFAULT_HISTORICAL_FINAL_V010_TARGET = "da8728adf679314442755ed781c1dd57d1c6ed27"
+DEFAULT_HISTORICAL_FINAL_V011_TAG = "v0.1.1"
+DEFAULT_HISTORICAL_FINAL_V011_TARGET = "7b232f5003fcc8eb207846570499ffb3442d3197"
+DEFAULT_HISTORICAL_FINAL_V012_TAG = "v0.1.2"
+DEFAULT_HISTORICAL_FINAL_V012_TARGET = "c39f21372ef837f096aa0d430cced82adc6f3485"
+FINAL_TAG = "v0.1.3"
 RELEASE_TAG_PATTERN = "v0.1*"
 
 
@@ -39,6 +49,29 @@ DEFAULT_PRIOR_RC_TAGS = (
     ReleaseTagExpectation(DEFAULT_PRIOR_RC1_TAG, DEFAULT_PRIOR_RC1_TARGET),
     ReleaseTagExpectation(DEFAULT_PRIOR_RC2_TAG, DEFAULT_PRIOR_RC2_TARGET),
     ReleaseTagExpectation(DEFAULT_PRIOR_RC3_TAG, DEFAULT_PRIOR_RC3_TARGET),
+    ReleaseTagExpectation(
+        DEFAULT_PRIOR_PATCH_V011_RC1_TAG,
+        DEFAULT_PRIOR_PATCH_V011_RC1_TARGET,
+    ),
+    ReleaseTagExpectation(
+        DEFAULT_PRIOR_PATCH_V012_RC1_TAG,
+        DEFAULT_PRIOR_PATCH_V012_RC1_TARGET,
+    ),
+)
+
+DEFAULT_HISTORICAL_FINAL_TAGS = (
+    ReleaseTagExpectation(
+        DEFAULT_HISTORICAL_FINAL_V010_TAG,
+        DEFAULT_HISTORICAL_FINAL_V010_TARGET,
+    ),
+    ReleaseTagExpectation(
+        DEFAULT_HISTORICAL_FINAL_V011_TAG,
+        DEFAULT_HISTORICAL_FINAL_V011_TARGET,
+    ),
+    ReleaseTagExpectation(
+        DEFAULT_HISTORICAL_FINAL_V012_TAG,
+        DEFAULT_HISTORICAL_FINAL_V012_TARGET,
+    ),
 )
 
 
@@ -58,7 +91,9 @@ class ReleaseTagPolicy:
     expected_final_target: str | None = None
     require_annotated_final_tag: bool = True
     require_expected_final_tag: bool = False
-    allowed_historical_final_tags: tuple[ReleaseTagExpectation, ...] = ()
+    allowed_historical_final_tags: tuple[ReleaseTagExpectation, ...] = (
+        DEFAULT_HISTORICAL_FINAL_TAGS
+    )
 
 
 def _read(path: Path) -> str:
@@ -338,10 +373,11 @@ def _truthy_env(name: str) -> bool:
 
 def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
     forbid_release_tags = bool(args.forbid_release_tags) or _truthy_env("OSW_RELEASE_FORBID_TAGS")
+    use_current_defaults = args.expected_version == TARGET_VERSION
     expected_rc_tag = (
         args.expected_rc_tag
         or os.environ.get("OSW_RELEASE_EXPECTED_RC_TAG")
-        or DEFAULT_RC_TAG
+        or (DEFAULT_RC_TAG if use_current_defaults else None)
     )
     expected_rc_target = args.expected_rc_target or os.environ.get("OSW_RELEASE_EXPECTED_RC_TARGET")
     require_annotated = bool(args.require_annotated_rc_tag) or _truthy_env(
@@ -375,13 +411,18 @@ def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
     else:
         allowed_prior_rc_tags = DEFAULT_PRIOR_RC_TAGS
 
-    allowed_historical_final_tags = tuple(
-        ReleaseTagExpectation(
-            tag,
-            historical_final_targets[index] if index < len(historical_final_targets) else None,
+    if historical_final_tags:
+        allowed_historical_final_tags = tuple(
+            ReleaseTagExpectation(
+                tag,
+                historical_final_targets[index] if index < len(historical_final_targets) else None,
+            )
+            for index, tag in enumerate(historical_final_tags)
         )
-        for index, tag in enumerate(historical_final_tags)
-    )
+    elif use_current_defaults:
+        allowed_historical_final_tags = DEFAULT_HISTORICAL_FINAL_TAGS
+    else:
+        allowed_historical_final_tags = ()
 
     return ReleaseTagPolicy(
         forbid_release_tags=forbid_release_tags,

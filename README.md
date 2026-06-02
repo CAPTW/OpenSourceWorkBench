@@ -13,13 +13,13 @@ execution.
 
 ## Release Status
 
-Current package metadata is `0.1.2`. Local historical release tags exist
+Current package metadata is `0.1.3rc1`. Local historical release tags exist
 through `v0.1.2`, which points to
-`c39f21372ef837f096aa0d430cced82adc6f3485`. Current `develop` is ahead at
-`f42131845bee49a89ef40a8d21c0c146846ada25` after the internal freeze and
-handoff work. Do not move or recreate historical tags; if maintainers need a
-current release-candidate tag for this commit line, reconcile metadata for the
-next patch line, currently recommended as `0.1.3rc1` / `v0.1.3-rc1`.
+`c39f21372ef837f096aa0d430cced82adc6f3485`. Current `develop` is ahead after
+the internal freeze, handoff, and release-line reconciliation work. Do not move
+or recreate historical tags. The current candidate tag line is `v0.1.3-rc1`,
+but that tag is not created by metadata alignment and requires a dedicated
+local tag gate.
 
 The v0.1 functional release gate passed with warnings on 2026-06-02. Optional
 live dependencies were missing locally, duplicate desktop `* (1)` files were

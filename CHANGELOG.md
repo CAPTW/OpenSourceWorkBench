@@ -6,6 +6,23 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Patch v0.1.3rc1 Release Candidate Metadata Prepared
+
+Release-candidate package version: `0.1.3rc1`
+
+Planned local release-candidate tag: `v0.1.3-rc1`
+
+- OSW-RELEASE-003 aligns source package metadata to `0.1.3rc1` after
+  OSW-RELEASE-002 preserved historical local tags through `v0.1.2` and repaired
+  the default editable import path for this checkout.
+- The existing local `v0.1.2` final tag remains historical evidence at
+  `c39f21372ef837f096aa0d430cced82adc6f3485` and must not be moved,
+  recreated, retargeted, deleted, pushed, or published as the current
+  `develop` line.
+- `v0.1.3-rc1` is the planned current release-candidate tag name, but this
+  metadata gate does not create that tag, push any branch or tag, build release
+  artifacts, or create a public announcement.
+
 ### Patch v0.1.2 Final Metadata Prepared
 
 Final package version: `0.1.2`

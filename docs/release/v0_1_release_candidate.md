@@ -9,7 +9,7 @@ publication.
 v0.1 release candidate / internal handoff. `OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF`
 freezes this candidate locally as passed-with-warnings.
 
-Current package metadata: `0.1.2`.
+Current package metadata: `0.1.3rc1`.
 
 ## Feature Coverage
 
@@ -52,9 +52,10 @@ the final local handoff docs without creating a public tag or push.
 - The local venv had a stale duplicate editable `.pth` pointing at another
   checkout; release-line reconciliation repaired the editable import path so
   default `.venv` validation imports this checkout.
-- Local historical tags exist through `v0.1.2`; current `develop` is ahead of
-  that tag, so a current release candidate should use a reconciled next patch
-  line such as `0.1.3rc1` / `v0.1.3-rc1`.
+- Local historical tags exist through `v0.1.2`; current metadata uses the
+  reconciled next patch line `0.1.3rc1` / `v0.1.3-rc1`.
+- The local `v0.1.3-rc1` candidate tag is not created by metadata alignment and
+  remains pending a dedicated explicit tag gate.
 - Full CalculiX FRD field parsing and full OpenFOAM field parsing are deferred.
 - Vector glyphs, streamlines, time animation, and PDF export are deferred.
 

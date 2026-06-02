@@ -443,3 +443,20 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   OSW-AUTO-073. Public push, release artifacts, external solver binary bundles,
   and public announcements remain blocked until later dedicated maintainer
   gates.
+
+## ADR-0026: Patch v0.1.3rc1 Metadata After Release-Line Reconciliation
+
+- Status: Accepted
+- Date: 2026-06-02
+- Context: A later local final tag gate created annotated `v0.1.2` at
+  `c39f21372ef837f096aa0d430cced82adc6f3485`, then freeze, handoff, and
+  release-line reconciliation work advanced `develop`. OSW-RELEASE-002 repaired
+  the local editable import path and recommended a new patch candidate line
+  instead of moving historical tags.
+- Decision: OSW-RELEASE-003 prepares package metadata as `0.1.3rc1` and uses
+  planned Git tag name `v0.1.3-rc1`. Historical `v0.1.0`, `v0.1.1`, `v0.1.2`,
+  and their RC tags remain immutable local evidence. This metadata gate must not
+  create, move, delete, retarget, overwrite, push, or publish any tag.
+- Consequences: `v0.1.3-rc1` remains pending a later explicit local tag gate.
+  Public push, release artifacts, external solver binary bundles, and public
+  announcements remain blocked until dedicated maintainer gates.
