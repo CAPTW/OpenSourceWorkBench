@@ -444,19 +444,42 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   and public announcements remain blocked until later dedicated maintainer
   gates.
 
-## ADR-0026: Patch v0.1.3rc1 Metadata After Release-Line Reconciliation
+## ADR-0026: Patch v0.1.2 GitHub Source Publish
+
+- Status: Accepted
+- Date: 2026-05-26
+- Context: OSW-AUTO-073 created local annotated `v0.1.2` at
+  `c39f21372ef837f096aa0d430cced82adc6f3485`. OSW-AUTO-075 source smoke passed
+  with limitations and no P0/P1 blockers. OSW-AUTO-076E verified a clean publish
+  clone and found the GitHub remote ready for first-time publication.
+- Decision: OSW-AUTO-077 published only
+  `refs/heads/develop:refs/heads/develop` and
+  `refs/tags/v0.1.2:refs/tags/v0.1.2` from the clean publish clone. It did not
+  push historical `v0.1.0`, `v0.1.1`, or `v0.1.2-rc1` tags, did not run
+  `git push --tags`, and did not create release artifacts or announcement text.
+- Consequences: The GitHub source release is now published at `develop` and
+  `v0.1.2`, both resolving to `c39f21372ef837f096aa0d430cced82adc6f3485`.
+  Release artifacts, GitHub Release notes, binary installers, optional solver
+  live-run evidence, and public announcement text remain separate
+  maintainer-controlled gates.
+
+## ADR-0027: Patch v0.1.3rc1 Metadata And Tag-Only Publish
 
 - Status: Accepted
 - Date: 2026-06-02
-- Context: A later local final tag gate created annotated `v0.1.2` at
+- Context: The final `v0.1.2` source release was already published at
   `c39f21372ef837f096aa0d430cced82adc6f3485`, then freeze, handoff, and
-  release-line reconciliation work advanced `develop`. OSW-RELEASE-002 repaired
-  the local editable import path and recommended a new patch candidate line
-  instead of moving historical tags.
+  release-line reconciliation work advanced local `develop`. OSW-RELEASE-002
+  repaired the local editable import path and recommended a new patch candidate
+  line instead of moving historical tags.
 - Decision: OSW-RELEASE-003 prepares package metadata as `0.1.3rc1` and uses
-  planned Git tag name `v0.1.3-rc1`. Historical `v0.1.0`, `v0.1.1`, `v0.1.2`,
-  and their RC tags remain immutable local evidence. This metadata gate must not
-  create, move, delete, retarget, overwrite, push, or publish any tag.
-- Consequences: `v0.1.3-rc1` remains pending a later explicit local tag gate.
-  Public push, release artifacts, external solver binary bundles, and public
-  announcements remain blocked until dedicated maintainer gates.
+  Git tag name `v0.1.3-rc1`. OSW-RELEASE-005 creates the annotated local tag,
+  OSW-RELEASE-008 pushes only that tag to `origin`, and OSW-RELEASE-009 verifies
+  that the remote tag peels to
+  `a6e8d3a8211e02359841d10e1947e16ab847b132`. Historical `v0.1.0`, `v0.1.1`,
+  `v0.1.2`, and their RC tags remain immutable release evidence.
+- Consequences: Branch push, release artifacts, external solver binary bundles,
+  GitHub Release creation, and public announcements remain blocked until
+  dedicated maintainer gates. `v0.1.3-rc1` must not be moved, deleted,
+  retargeted, recreated, force-updated, or pushed again without an explicit
+  maintainer gate.

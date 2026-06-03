@@ -13,13 +13,18 @@ execution.
 
 ## Release Status
 
-Current package metadata is `0.1.3rc1`. Local historical release tags exist
-through `v0.1.2`, which points to
-`c39f21372ef837f096aa0d430cced82adc6f3485`. Current `develop` is ahead after
-the internal freeze, handoff, and release-line reconciliation work. Do not move
-or recreate historical tags. The current candidate tag line is `v0.1.3-rc1`,
-but that tag is not created by metadata alignment and requires a dedicated
-local tag gate.
+Current package metadata is `0.1.3rc1`. OSW-AUTO-077 published the historical
+`develop` branch state and annotated `v0.1.2` tag to GitHub at commit
+`c39f21372ef837f096aa0d430cced82adc6f3485`. OSW-RELEASE-008 later pushed only
+the annotated `v0.1.3-rc1` tag to `origin`, and OSW-RELEASE-009 verified that
+the remote tag peels to
+`a6e8d3a8211e02359841d10e1947e16ab847b132`. Current local `develop` is newer
+than both tag targets because it includes post-push release docs and handoff
+status. Do not move or recreate historical tags. Branch push, GitHub Release
+page, package artifacts, installers, and public announcement text remain
+separate maintainer-controlled gates. Optional external solvers remain
+user-installed local tools. See the [Changelog](CHANGELOG.md) for the recorded
+source-release and tag-only release-candidate evidence.
 
 The v0.1 functional release gate passed with warnings on 2026-06-02. Optional
 live dependencies were missing locally, duplicate desktop `* (1)` files were

@@ -6,36 +6,44 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
-### Patch v0.1.3rc1 Release Candidate Metadata Prepared
+### Patch v0.1.3rc1 Release Candidate Tag Published
 
 Release-candidate package version: `0.1.3rc1`
 
-Planned local release-candidate tag: `v0.1.3-rc1`
+Release-candidate tag: `v0.1.3-rc1`
 
 - OSW-RELEASE-003 aligns source package metadata to `0.1.3rc1` after
   OSW-RELEASE-002 preserved historical local tags through `v0.1.2` and repaired
   the default editable import path for this checkout.
-- The existing local `v0.1.2` final tag remains historical evidence at
+- OSW-RELEASE-005 created the local annotated `v0.1.3-rc1` tag, OSW-RELEASE-008
+  pushed only that tag to `origin`, and OSW-RELEASE-009 verified that the remote
+  tag peels to `a6e8d3a8211e02359841d10e1947e16ab847b132`.
+- The existing `v0.1.2` final tag remains historical source-release evidence at
   `c39f21372ef837f096aa0d430cced82adc6f3485` and must not be moved,
-  recreated, retargeted, deleted, pushed, or published as the current
-  `develop` line.
-- `v0.1.3-rc1` is the planned current release-candidate tag name, but this
-  metadata gate does not create that tag, push any branch or tag, build release
-  artifacts, or create a public announcement.
+  recreated, retargeted, deleted, or reused as the current `develop` line.
+- No branch push, all-tags push, force push, GitHub Release, package artifact,
+  binary installer, or public announcement was created by the v0.1.3rc1
+  tag-only gates.
 
-### Patch v0.1.2 Final Metadata Prepared
+## 0.1.2 - GitHub Source Release Published
+
+### Patch v0.1.2 Source Release
 
 Final package version: `0.1.2`
 
-Planned final local tag: `v0.1.2`
+Published final tag: `v0.1.2`
 
-- OSW-AUTO-072 prepares final `0.1.2` package metadata after the local
+- OSW-AUTO-072 prepared final `0.1.2` package metadata after the local
   `v0.1.2-rc1` candidate and OSW-AUTO-071 triage reported no P0/P1 blockers.
-  This prompt does not create the final `v0.1.2` tag, push any branch or tag,
-  build release artifacts, or create a public announcement.
+- OSW-AUTO-073 created the local annotated `v0.1.2` tag, and OSW-AUTO-077
+  pushed only `refs/heads/develop:refs/heads/develop` and
+  `refs/tags/v0.1.2:refs/tags/v0.1.2` to GitHub.
+- Remote `develop` and `v0.1.2^{}` both resolve to
+  `c39f21372ef837f096aa0d430cced82adc6f3485`; the remote annotated tag object
+  verified by OSW-AUTO-077 is `353a87897c842ee01aaae18abc4d69f330406e09`.
 - Local `v0.1.2-rc1` remains annotated evidence at
-  `28b30c1f79d4c62d160629e96fc1fcefa2382ebe` and was not pushed. The final
-  `v0.1.2` tag remains pending the dedicated local tag gate.
+  `28b30c1f79d4c62d160629e96fc1fcefa2382ebe` and was not pushed by
+  OSW-AUTO-077.
 - The local `v0.1.1` final tag remains historical local-only evidence at
   `7b232f5003fcc8eb207846570499ffb3442d3197` and must not be published as
   current after the OSW-AUTO-067 GUI workflow fix.
@@ -47,6 +55,8 @@ Planned final local tag: `v0.1.2`
   live runs are environment-specific, manual desktop CUA depth is limited,
   Cantera 3.2 emits a deprecation warning, external URL freshness is outside the
   local docs checker, and packaging smoke is separate.
+- Release artifacts, a GitHub Release page, binary installers, and public
+  announcement text were not created by the source publish gate.
 
 ### Patch v0.1.2rc1 Release Candidate
 
