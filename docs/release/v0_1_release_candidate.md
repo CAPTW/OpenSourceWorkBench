@@ -75,6 +75,7 @@ maintainer-controlled tag/push gate explicitly approves the exact release path.
 
 ## Links
 
+- [v0.1.3rc1 Release Summary Handoff](v0_1_3rc1_release_summary.md)
 - [Packaging and Release Docs](../32_packaging_release_docs.md)
 - [v0.1 Freeze Handoff](v0_1_freeze_handoff.md)
 - [v0.1 Handoff Manifest](v0_1_handoff_manifest.md)

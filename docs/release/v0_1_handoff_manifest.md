@@ -10,9 +10,9 @@ candidate. It records what to inspect, how to smoke test, and what not to stage.
 | Branch | `develop` |
 | Latest committed base before handoff docs | `c2bbee7 feat(plugins): harden local plugin install flow` |
 | Queue status | UI complete; functional queue frozen after `OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF` |
-| Public tag/push | Not created, not pushed |
+| Public tag/push | `v0.1.3-rc1` tag-only push completed; no branch push, all-tags push, force push, GitHub Release, package publication, binary installer, or release asset upload was created. |
 | Package metadata | `0.1.3rc1` |
-| Local tag line | Historical tags exist through `v0.1.2`; current candidate metadata is `0.1.3rc1`, with planned local tag `v0.1.3-rc1` still uncreated pending a dedicated explicit tag gate. |
+| Local tag line | Historical tags exist through `v0.1.2`; current candidate metadata is `0.1.3rc1`, and annotated `v0.1.3-rc1` is pushed to `origin` at `a6e8d3a8211e02359841d10e1947e16ab847b132`. |
 
 The exact handoff commit is the commit containing this manifest and is recorded
 in the final run output.
@@ -23,6 +23,7 @@ in the final run output.
 - [v0.1 Freeze Handoff](v0_1_freeze_handoff.md)
 - [v0.1 Release Notes](v0_1_release_notes.md)
 - [v0.1 Release Candidate](v0_1_release_candidate.md)
+- [v0.1.3rc1 Release Summary Handoff](v0_1_3rc1_release_summary.md)
 - [Known Limitations For v0.1](known_limitations_v0_1.md)
 - [Release Checklist](../10_release_checklist.md)
 - [Validation Matrix](../04_validation_matrix.md)
@@ -128,11 +129,13 @@ warnings:
   do not stage them.
 - Runtime reports and artifacts are untracked by policy.
 - Optional live dependencies and executables may be missing locally.
-- No public tag/push/package publication is part of this handoff.
+- `v0.1.3-rc1` was pushed by a dedicated tag-only gate; no branch push,
+  all-tags push, force push, GitHub Release, package publication, binary
+  installer, or release asset upload is part of this handoff.
 - Local `v0.1.2` exists as historical evidence and must not be moved or pushed
   as the current `develop` line.
-- Current package metadata is `0.1.3rc1`; local `v0.1.3-rc1` is not created in
-  the handoff and must wait for explicit tag-gate approval.
+- Current package metadata is `0.1.3rc1`; `v0.1.3-rc1` is annotated and pushed
+  at `a6e8d3a8211e02359841d10e1947e16ab847b132`. Do not retarget it.
 - No plugin signing, remote plugin store, or dependency auto-install exists.
 
 ## Next-Owner Checklist
@@ -145,5 +148,6 @@ warnings:
 5. Keep generated artifacts and reports untracked.
 6. Clean duplicate `* (1)` files only in a separate hygiene task if they
    reappear.
-7. Prepare `v0.1.3-rc1` only after explicit maintainer approval and a dedicated
-   local tag gate.
+7. Review [v0.1.3rc1 Release Summary Handoff](v0_1_3rc1_release_summary.md)
+   before any branch push, GitHub Release draft, or live optional-solver
+   validation gate.
