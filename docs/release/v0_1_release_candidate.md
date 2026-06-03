@@ -41,6 +41,15 @@ release-candidate documentation on top of that evidence.
 hardening at commit `c2bbee7`. `OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF` writes
 the final local handoff docs without creating a public tag or push.
 
+## Post-Push Verification
+
+`OSW-RELEASE-008_TAG_ONLY_PUSH_GATE` pushed only the annotated
+`v0.1.3-rc1` tag to `origin`. `OSW-RELEASE-009_POST_PUSH_VERIFICATION`
+verified that the remote tag peels to commit
+`a6e8d3a8211e02359841d10e1947e16ab847b132`. No branch push, all-tags push,
+force push, GitHub release, package publication, binary installer, or release
+asset upload was performed by these gates.
+
 ## Warnings
 
 - Optional live dependencies were missing locally during the release gate:
