@@ -22,6 +22,9 @@ Development package version: `0.1.3rc2.dev0`
 - Made the offline release asset fixture byte-stable across CI checkouts so
   `release_asset_manifest.json` checksum verification is not changed by Git
   line-ending normalization.
+- Documented the OSW-MAINT-002 duplicate-file quarantine review for Issue `#1`,
+  retaining 19 divergent archived files under ignored artifacts with no restore,
+  no permanent deletion, and no high-risk secrets found.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.
