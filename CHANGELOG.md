@@ -25,6 +25,9 @@ Development package version: `0.1.3rc2.dev0`
 - Documented the OSW-MAINT-002 duplicate-file quarantine review for Issue `#1`,
   retaining 19 divergent archived files under ignored artifacts with no restore,
   no permanent deletion, and no high-risk secrets found.
+- Added v0.1.3rc2 maintenance issue closure triage for Issues `#1`, `#2`,
+  `#4`, and `#5`, recording evidence-based completion decisions without
+  release, asset, or tag mutation.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.

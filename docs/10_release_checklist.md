@@ -18,6 +18,7 @@ or full solver parity.
 | Asset download smoke | `PASS` | Release asset download smoke verified checksums, manifest, wheel install, sdist install, portable ZIP extraction, and portable executable `--help`. |
 | Duplicate hygiene | `PASS` | `OSW-MAINT-002` quarantined 19 untracked duplicate desktop files under ignored `artifacts/hygiene/duplicate_files_backup/OSW-MAINT-002/`; release gate duplicate warning cleared. |
 | Duplicate quarantine review | `PASS` | [Duplicate file quarantine review](maintenance/duplicate_file_quarantine_review.md) records that all 19 archived files remain divergent, no files were restored or permanently deleted, no high-risk secrets were found, and the ignored archive is retained for optional maintainer review. |
+| Maintenance issue closure triage | `PASS` | [v0.1.3rc2 issue closure triage](maintenance/v0_1_3rc2_issue_closure_triage.md) records evidence-based closure decisions for issues `#1`, `#2`, `#4`, and `#5` without release, asset, or tag mutation. |
 | `v0.1.3rc2` roadmap | `PASS` | Maintenance/revalidation track is documented in [v0.1.3rc2 maintenance](roadmap/v0_1_3rc2.md). |
 | `v0.1.4` roadmap | `PASS` | Next feature line is documented in [v0.1.4 feature line](roadmap/v0_1_4.md). |
 | Live optional validation roadmap | `PASS` | Optional local solver/science evidence plan is documented in [Live optional validation](roadmap/live_optional_validation.md). |
