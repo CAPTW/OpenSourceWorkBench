@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import subprocess
@@ -22,6 +23,7 @@ FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "release_assets"
 PORTABLE_NAME = "OpenSolverWorkbench-v0.1.3rc1-windows-x64-portable.zip"
 WHEEL_NAME = "open_solver_workbench-0.1.3rc1-py3-none-any.whl"
 SDIST_NAME = "open_solver_workbench-0.1.3rc1.tar.gz"
+FIXTURE_MANIFEST_NAME = "release_asset_manifest.json"
 
 README_RUN_FIRST = """OpenSolver Workbench
 
@@ -102,6 +104,51 @@ def _refresh_asset_metadata(asset_dir: Path) -> None:
         f"{release_assets.sha256_file(path)}  {path.name}\n" for path in checksum_paths
     )
     (asset_dir / "SHA256SUMS.txt").write_text(checksums, encoding="utf-8")
+
+
+def test_release_asset_fixture_git_attributes_preserve_bytes() -> None:
+    git = shutil.which("git")
+    if git is None:
+        pytest.skip("git is required to inspect fixture attributes")
+
+    paths = [
+        "tests/fixtures/release_assets/release_asset_manifest.json",
+        "tests/fixtures/release_assets/SHA256SUMS.txt",
+        "tests/fixtures/release_assets/README.md",
+    ]
+    proc = subprocess.run(
+        [git, "check-attr", "text", "--", *paths],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    output = proc.stdout.replace("\\", "/")
+    for path in paths:
+        assert f"{path}: text: unset" in output
+
+
+def test_fixture_manifest_bytes_match_sha256sums_entry() -> None:
+    checksum_entries = release_assets.parse_sha256sums(FIXTURE_DIR / "SHA256SUMS.txt")
+    manifest_path = FIXTURE_DIR / FIXTURE_MANIFEST_NAME
+
+    assert checksum_entries[FIXTURE_MANIFEST_NAME] == release_assets.sha256_file(
+        manifest_path
+    )
+
+
+def test_line_ending_normalized_manifest_would_not_match_fixture_checksum() -> None:
+    checksum_entries = release_assets.parse_sha256sums(FIXTURE_DIR / "SHA256SUMS.txt")
+    raw_manifest = (FIXTURE_DIR / FIXTURE_MANIFEST_NAME).read_bytes()
+    crlf_manifest = raw_manifest.replace(b"\n", b"\r\n")
+
+    assert b"\r\n" not in raw_manifest
+    assert crlf_manifest != raw_manifest
+    assert hashlib.sha256(crlf_manifest).hexdigest() != checksum_entries[
+        FIXTURE_MANIFEST_NAME
+    ]
 
 
 def test_parses_sha256sums_and_verifies_matching_files(tmp_path: Path) -> None:

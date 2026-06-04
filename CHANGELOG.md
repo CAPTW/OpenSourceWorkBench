@@ -19,6 +19,9 @@ Development package version: `0.1.3rc2.dev0`
 - Added a read-only `Release asset smoke` GitHub Actions workflow for Issue
   `#2`: pull requests and `develop` pushes use offline release asset fixtures,
   while live GitHub release downloads are manual `workflow_dispatch` only.
+- Made the offline release asset fixture byte-stable across CI checkouts so
+  `release_asset_manifest.json` checksum verification is not changed by Git
+  line-ending normalization.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.

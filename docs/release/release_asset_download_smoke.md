@@ -60,6 +60,9 @@ CI behavior:
 - Offline fixture mode runs `tests/unit/test_release_asset_smoke.py` and
   `tools/qa/check_release_asset_smoke.py --offline-asset-dir
   tests/fixtures/release_assets`.
+- Offline fixture files under `tests/fixtures/release_assets` are byte-level
+  checksum fixtures and are marked `-text` in `.gitattributes` so CI checkouts
+  do not normalize line endings before hash verification.
 - Live GitHub release asset download smoke is manual only through
   `workflow_dispatch`.
 - Workflow permissions are read-only: `contents: read`.
@@ -134,6 +137,7 @@ For CI-safe offline runs, provide a local asset directory:
 | Asset missing | Confirm the release asset list on the GitHub Release and rerun the manual workflow after the asset appears. |
 | Checksum mismatch | Treat the asset set as invalid; redownload and compare with the published release. |
 | Manifest mismatch | Inspect `release_asset_manifest.json` against the downloaded files before relying on the assets. |
+| CI-only `release_asset_manifest.json` checksum mismatch | Confirm `.gitattributes` still marks `tests/fixtures/release_assets/**` as `-text`; the fixture hash is byte-level and line-ending-sensitive. |
 | Portable executable `--help` fails | Rerun with `--skip-portable-exe` only to isolate archive/hash checks, then investigate the portable build separately. |
 | Path traversal or forbidden archive entry | Treat the archive as unsafe; do not extract or distribute it. |
 
