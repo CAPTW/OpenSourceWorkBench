@@ -57,6 +57,27 @@ is optional. Examples:
 Missing optional dependencies should not break base import, CLI help, plugin
 manifest discovery, report summary generation, or unit tests.
 
+## Tutorial Expectations
+
+The first-run CLI and result dataset tutorials do not require optional solver
+executables or optional science packages. The GUI tutorial requires PySide6 via
+the `gui` extra. Optional backend tutorials and live validation issues should be
+run only on machines where the corresponding tool is intentionally installed.
+
+Useful diagnostics:
+
+```powershell
+python -m osw.cli gmsh-check
+python -m osw.cli octave-check
+python -m osw.cli calculix-check
+python -m osw.cli openfoam-check
+python -m osw.cli coolprop-check
+python -m osw.cli cantera-check
+```
+
+Missing tools mean the matching optional workflow is unavailable; they do not
+mean the base package is broken.
+
 ## Deferred v0.1 Paths
 
 Full CalculiX FRD field parsing, full OpenFOAM field parsing, vector glyphs,

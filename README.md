@@ -76,6 +76,19 @@ committed. For more commands and troubleshooting, see
 [Quickstart](docs/quickstart.md) and the
 [post-public-release roadmap](docs/roadmap/README.md).
 
+## Try It In 10 Minutes
+
+For a guided first run, use the tutorial ladder:
+
+1. [First CLI Walkthrough](docs/tutorials/first_cli_walkthrough.md)
+2. [Result Dataset Walkthrough](docs/tutorials/result_dataset_walkthrough.md)
+3. [First GUI Walkthrough](docs/tutorials/first_gui_walkthrough.md)
+4. [Release Asset Smoke Walkthrough](docs/tutorials/release_asset_smoke_walkthrough.md)
+
+The first two tutorials need only the source checkout and Python environment.
+The GUI tutorial needs the `.[gui]` extra. Optional solver and science backends
+remain diagnostic-only until you install them separately.
+
 Developer checks:
 
 ```powershell
@@ -101,8 +114,9 @@ production readiness.
 ## Examples
 
 Start with [Examples](examples/README.md) or the mirrored
-[examples index](docs/examples.md). The examples use existing fixtures and safe
-preview commands:
+[examples index](docs/examples.md). The examples and
+[tutorials](docs/tutorials/README.md) use existing fixtures and safe preview
+commands:
 
 - Demo project JSON generation and validation.
 - Plugin health diagnostics.
@@ -168,6 +182,7 @@ Useful release docs:
 - [Release Checklist](docs/10_release_checklist.md)
 - [Post-Public Release Checklist](docs/release/post_public_release_checklist.md)
 - [Validation Matrix](docs/04_validation_matrix.md)
+- [Tutorials](docs/tutorials/README.md)
 - [Post-Public-Release Roadmap](docs/roadmap/README.md)
 - [Windows Portable ZIP](docs/release/windows_portable_zip.md)
 - [Optional Dependencies](docs/install/optional_dependencies.md)

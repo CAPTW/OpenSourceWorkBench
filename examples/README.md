@@ -10,7 +10,10 @@ Run commands from the repository root with the repo venv:
 .\.venv\Scripts\python.exe -m osw.cli --help
 ```
 
-## Index
+## Zero-Dependency Examples
+
+These work from a normal source checkout without Gmsh, Octave, CalculiX,
+OpenFOAM, CoolProp, Cantera, PyVista, or meshio.
 
 | Example | Command | Expected result |
 | --- | --- | --- |
@@ -25,6 +28,38 @@ Run commands from the repository root with the repo venv:
 | Result catalog inspect | `result-catalog-inspect tests\fixtures\results\mixed_result_catalog.json` | Summarizes curated result datasets. |
 | Field dataset inspect | `field-dataset-inspect tests\fixtures\fields\scalar_field_dataset.json` | Lists scalar/vector field metadata. |
 | Report export | `report-export artifacts\examples\demo_project.json --out artifacts\examples\report.html` | Writes a deterministic HTML report. |
+
+## GUI Examples
+
+Install `.[gui]`, then launch:
+
+```powershell
+.\.venv\Scripts\python.exe -m osw.cli gui
+```
+
+See [First GUI Walkthrough](../docs/tutorials/first_gui_walkthrough.md) for
+screenshots and pane descriptions. PySide6 is optional, and headless
+environments may skip GUI launch.
+
+## Optional Solver Examples
+
+These examples remain optional and diagnostic-driven:
+
+| Example | Requires | Safe default |
+| --- | --- | --- |
+| [03 Gmsh Meshing](03_gmsh_meshing/README.md) | Gmsh for real mesh generation | Generate `.geo` first and run `gmsh-check`. |
+| [04 CalculiX Cantilever](04_calculix_cantilever/README.md) | CalculiX `ccx` for live solve | Parse fixture results without running `ccx`. |
+| [05 OpenFOAM Cavity And Duct Templates](05_openfoam_cavity/README.md) | OpenFOAM for live run | Write template cases or parse fixture logs. |
+| [08 MATLAB/Octave Figure Preview](08_mscript_figure/README.md) | GNU Octave only for explicit run | Preview and scan `.m` files without execution. |
+
+## Optional Scientific Backend Examples
+
+| Example | Requires | Missing dependency behavior |
+| --- | --- | --- |
+| [06 Cantera Reactor](06_cantera_reactor/README.md) | Cantera | Diagnostic, no hidden success. |
+| [07 CoolProp Property](07_coolprop_property/README.md) | CoolProp | Diagnostic, no hidden success. |
+| MAT and figure inspection | SciPy/hdf5storage/h5py where needed | Friendly MAT support diagnostic. |
+| Mesh/field visualization | meshio/PyVista where needed | Metadata inspection remains available. |
 
 ## Copy-Paste Smoke
 
@@ -59,6 +94,7 @@ Expected result:
 
 ## Safety Notes
 
+- Start with [Tutorials](../docs/tutorials/README.md) for guided onboarding.
 - Preview `.m` files before any execution decision.
 - Keep generated outputs in `artifacts/*`.
 - Do not commit solver runtime directories, logs, generated reports, or caches.

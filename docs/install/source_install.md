@@ -88,3 +88,14 @@ python -m osw.cli result-catalog-inspect tests\fixtures\results\mixed_result_cat
 
 Generated files under `artifacts/release/` are local runtime outputs and should
 remain untracked.
+
+## First-Run Tutorials
+
+After install, start with the no-solver onboarding path:
+
+- [First CLI Walkthrough](../tutorials/first_cli_walkthrough.md)
+- [Result Dataset Walkthrough](../tutorials/result_dataset_walkthrough.md)
+
+Then use [First GUI Walkthrough](../tutorials/first_gui_walkthrough.md) if the
+`gui` extra is installed. These tutorials keep generated files under
+`artifacts/tutorials/` and do not execute external solvers.

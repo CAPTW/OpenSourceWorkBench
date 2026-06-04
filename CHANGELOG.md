@@ -36,6 +36,10 @@ Development package version: `0.1.3rc2.dev0`
   Issue `#13` onboarding examples/tutorials as the next practical public
   usability slice, Issue `#16` as a release-trust fallback, and live optional
   validation only on machines with the relevant tools installed.
+- Improved onboarding examples and tutorials for Issue `#13`, adding a tutorial
+  index, first CLI walkthrough, first GUI walkthrough, result dataset
+  walkthrough, release asset smoke walkthrough, categorized examples, and
+  optional dependency diagnostics for the `0.1.3rc2.dev0` maintenance line.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.

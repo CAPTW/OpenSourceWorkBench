@@ -99,6 +99,10 @@ Expected result:
 
 ## Next Reading
 
+- [Tutorials](tutorials/README.md)
+- [First CLI Walkthrough](tutorials/first_cli_walkthrough.md)
+- [Result Dataset Walkthrough](tutorials/result_dataset_walkthrough.md)
+- [First GUI Walkthrough](tutorials/first_gui_walkthrough.md)
 - [Examples](../examples/README.md)
 - [Examples Index](examples.md)
 - [Known Limitations For v0.1](release/known_limitations_v0_1.md)

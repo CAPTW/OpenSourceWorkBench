@@ -68,6 +68,10 @@ tag changes. It should use existing safe fixtures, expected CLI output, GUI
 screenshots already committed where useful, and explicit optional dependency
 diagnostics.
 
+Follow-up status: OSW-MAINT-011 added the onboarding tutorial ladder and
+examples index updates on `develop`. Issue #13 remains open for maintainer
+review and an explicit closure decision.
+
 Fallback issue: #16 Evaluate code signing and installer strategy.
 
 Reason: #16 is a planning-only release trust slice. It is appropriate if the

@@ -12,6 +12,13 @@ QUICKSTART = REPO_ROOT / "docs" / "quickstart.md"
 DOCS_EXAMPLES = REPO_ROOT / "docs" / "examples.md"
 EXAMPLES_README = REPO_ROOT / "examples" / "README.md"
 KNOWN_LIMITATIONS = REPO_ROOT / "docs" / "release" / "known_limitations_v0_1.md"
+TUTORIAL_INDEX = REPO_ROOT / "docs" / "tutorials" / "README.md"
+FIRST_CLI = REPO_ROOT / "docs" / "tutorials" / "first_cli_walkthrough.md"
+FIRST_GUI = REPO_ROOT / "docs" / "tutorials" / "first_gui_walkthrough.md"
+RESULT_DATASET = REPO_ROOT / "docs" / "tutorials" / "result_dataset_walkthrough.md"
+RELEASE_ASSET_SMOKE = (
+    REPO_ROOT / "docs" / "tutorials" / "release_asset_smoke_walkthrough.md"
+)
 
 REQUIRED_PATHS = (
     README,
@@ -19,6 +26,11 @@ REQUIRED_PATHS = (
     DOCS_EXAMPLES,
     EXAMPLES_README,
     KNOWN_LIMITATIONS,
+    TUTORIAL_INDEX,
+    FIRST_CLI,
+    FIRST_GUI,
+    RESULT_DATASET,
+    RELEASE_ASSET_SMOKE,
     REPO_ROOT / "docs" / "assets" / "screenshots" / "osw_dark.png",
     REPO_ROOT / "docs" / "assets" / "screenshots" / "osw_light.png",
     REPO_ROOT / "docs" / "assets" / "screenshots" / "osw_system.png",
@@ -30,6 +42,7 @@ README_REQUIRED_PHRASES = (
     "Quickstart",
     "Screenshots",
     "Examples",
+    "Try It In 10 Minutes",
     "Optional Dependencies",
     "Known Limitations",
     "Release Status",
@@ -79,7 +92,17 @@ def check_public_docs() -> list[str]:
             if not _contains_phrase(limitations, phrase):
                 errors.append(f"Known limitations missing phrase: {phrase}")
 
-    for markdown_path in (README, QUICKSTART, DOCS_EXAMPLES, EXAMPLES_README):
+    for markdown_path in (
+        README,
+        QUICKSTART,
+        DOCS_EXAMPLES,
+        EXAMPLES_README,
+        TUTORIAL_INDEX,
+        FIRST_CLI,
+        FIRST_GUI,
+        RESULT_DATASET,
+        RELEASE_ASSET_SMOKE,
+    ):
         if markdown_path.exists():
             errors.extend(_missing_local_links(markdown_path))
     return errors

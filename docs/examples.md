@@ -1,9 +1,14 @@
 # Examples
 
 This index mirrors [examples/README.md](../examples/README.md) for readers who
-start in the `docs/` tree. The commands use existing fixtures or generated
-files under `artifacts/*`; they do not execute external solvers unless the
-command name explicitly says it is a runner command.
+start in the `docs/` tree. Use it with the
+[tutorial ladder](tutorials/README.md). Commands use existing fixtures or
+generated files under `artifacts/*`; they do not execute external solvers unless
+the command name explicitly says it is a runner command.
+
+## Zero-Dependency Examples
+
+These should work from the repository venv without external solver executables.
 
 ## Demo Project JSON
 
@@ -94,6 +99,50 @@ Expected result: scalar and vector field metadata for the tiny VTK fixture.
 
 Expected result: deterministic HTML report output under `artifacts/*`. Report
 export is data-only and does not execute solvers or scripts.
+
+## GUI Examples
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -e ".[gui]"
+.\.venv\Scripts\python.exe -m osw.cli gui
+```
+
+Expected result: the optional PySide6 GUI launches on desktop machines. In
+headless shells, use the screenshots in
+[First GUI Walkthrough](tutorials/first_gui_walkthrough.md) to understand the
+layout.
+
+## Optional Solver Examples
+
+These require user-installed external executables and should be run only when
+the matching diagnostic passes:
+
+| Workflow | Diagnostic | Safe fixture or preview path |
+| --- | --- | --- |
+| Gmsh | `gmsh-check` | `gmsh-write-geo` writes `.geo` without running Gmsh. |
+| GNU Octave | `octave-check` | `mscript-preview` and `mscript-scan` do not execute `.m` files. |
+| CalculiX | `calculix-check` | `calculix-results-summary` parses existing fixtures without running `ccx`. |
+| OpenFOAM | `openfoam-check` | `openfoam-parse-log` parses existing log fixtures without running OpenFOAM. |
+
+## Optional Scientific Backend Examples
+
+These require optional Python packages and should report diagnostics when
+missing:
+
+| Workflow | Diagnostic | Notes |
+| --- | --- | --- |
+| MAT files | install `.[mscript]`; run `mat-info` | MAT inspection does not run MATLAB or Octave. |
+| CoolProp | `coolprop-check` | Property examples are bounded and non-certifying. |
+| Cantera | `cantera-check` | Reactor examples are bounded and non-certifying. |
+| PyVista/meshio | install `.[viz,mesh]` | Field rendering and mesh conversion remain optional. |
+
+## Release/Maintenance Examples
+
+- [Release Asset Smoke Walkthrough](tutorials/release_asset_smoke_walkthrough.md)
+  verifies release assets without uploading or editing them.
+- [Post-Public Release Checklist](release/post_public_release_checklist.md)
+  separates tag, branch, asset, issue, and release mutations into explicit
+  gates.
 
 ## Safety Notes
 
