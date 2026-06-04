@@ -40,6 +40,9 @@ Development package version: `0.1.3rc2.dev0`
   index, first CLI walkthrough, first GUI walkthrough, result dataset
   walkthrough, release asset smoke walkthrough, categorized examples, and
   optional dependency diagnostics for the `0.1.3rc2.dev0` maintenance line.
+- Recorded onboarding closure evidence for Issue `#13`, including first-run CLI
+  smoke results, public docs QA coverage, and preserved prerelease/no
+  bundled-solver limitations.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.
