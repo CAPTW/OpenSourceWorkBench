@@ -33,6 +33,7 @@ or full solver parity.
 | Release asset smoke CI | `PASS` | `.github/workflows/release-asset-smoke.yml` runs offline fixture smoke on pull requests and `develop` pushes. Live GitHub release downloads are manual `workflow_dispatch` only with `contents: read` permissions. |
 | Windows portable ZIP UX guidance | `PASS` | [Windows Portable ZIP](release/windows_portable_zip.md) documents extraction layout, `--help` first-run guidance, unsigned/no MSI/no code-signing warnings, no bundled external solver caveat, checksum verification, and troubleshooting. |
 | Validation evidence carry-forward | `PASS_WITH_WARNINGS` | [Live optional solver validation evidence](validation/live_optional_solver_validation.md) records local PySide6/Pillow availability and missing optional solver/science backends. Missing optional stacks remain environment-specific and non-blocking. |
+| Maintenance revalidation baseline | `PASS_WITH_WARNINGS` | [v0.1.3rc2 maintenance revalidation](maintenance/v0_1_3rc2_revalidation.md) records release integrity, workflow safety, asset smoke evidence, known warnings, and next maintenance choices. |
 | Scope discipline | `PASS` | `v0.1.3rc2` is maintenance/revalidation/release polish only. It does not claim stable production status, industrial certification, MATLAB/ANSYS/Simulink cloning, or native commercial CAD direct import. |
 
 ## FUNC-020 Release Gate Snapshot

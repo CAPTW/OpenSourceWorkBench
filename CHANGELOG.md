@@ -19,6 +19,9 @@ Development package version: `0.1.3rc2.dev0`
 - Added a read-only `Release asset smoke` GitHub Actions workflow for Issue
   `#2`: pull requests and `develop` pushes use offline release asset fixtures,
   while live GitHub release downloads are manual `workflow_dispatch` only.
+- Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
+  integrity, workflow safety, asset smoke evidence, known warnings, and next
+  maintenance choices.
 - Opened the `v0.1.3rc2` maintenance development cycle after the public
   `v0.1.3-rc1` prerelease and attached release assets.
 - Carried forward the local validation documentation commit with PySide6/Pillow
