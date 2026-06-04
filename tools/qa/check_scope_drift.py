@@ -9,15 +9,41 @@ from pathlib import Path
 
 from _common import build_base_arg, changed_files, repo_root, text_files
 
-
 FORBIDDEN_PATTERNS = [
     ("Simulink", re.compile(r"\bSimulink\b|\.slx\b", re.IGNORECASE)),
     (".mlapp", re.compile(r"\.mlapp\b", re.IGNORECASE)),
-    ("commercial native CAD", re.compile(r"\b(SolidWorks|CATIA|NX|Creo)\b|native commercial CAD|commercial CAD direct", re.IGNORECASE)),
-    ("full ANSYS clone", re.compile(r"full\s+ANSYS|ANSYS\s+Workbench|ANSYS clone", re.IGNORECASE)),
-    ("full OpenFOAM UI", re.compile(r"full\s+OpenFOAM|OpenFOAM\s+(solver\s+)?UI|broad\s+OpenFOAM", re.IGNORECASE)),
-    ("industrial certification", re.compile(r"industrial certification|certified|compliance claim|production CAE", re.IGNORECASE)),
-    ("GUI direct solver execution", re.compile(r"GUI direct .*subprocess|GUI-triggered direct|GUI.*runs?.*solver", re.IGNORECASE)),
+    (
+        "commercial native CAD",
+        re.compile(
+            r"\b(SolidWorks|CATIA|NX|Creo)\b|native commercial CAD|commercial CAD direct",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "full ANSYS clone",
+        re.compile(r"full\s+ANSYS|ANSYS\s+Workbench|ANSYS clone", re.IGNORECASE),
+    ),
+    (
+        "full OpenFOAM UI",
+        re.compile(
+            r"full\s+OpenFOAM|OpenFOAM\s+(solver\s+)?UI|broad\s+OpenFOAM",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "industrial certification",
+        re.compile(
+            r"industrial certification|certified|compliance claim|production CAE",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "GUI direct solver execution",
+        re.compile(
+            r"GUI direct .*subprocess|GUI-triggered direct|GUI.*runs?.*solver",
+            re.IGNORECASE,
+        ),
+    ),
     ("nonlinear contact/plasticity", re.compile(r"nonlinear contact|plasticity", re.IGNORECASE)),
 ]
 
@@ -121,10 +147,19 @@ def main() -> int:
     if args.text is not None:
         findings.extend(findings_for_text(args.text, label="<text>"))
     else:
-        paths = [root / item for item in args.path] if args.path else default_scan_paths(root, args.base)
+        paths = (
+            [root / item for item in args.path]
+            if args.path
+            else default_scan_paths(root, args.base)
+        )
         for path in text_files(paths):
             if path.exists():
-                findings.extend(findings_for_text(path.read_text(encoding="utf-8"), label=str(path.relative_to(root))))
+                findings.extend(
+                    findings_for_text(
+                        path.read_text(encoding="utf-8"),
+                        label=str(path.relative_to(root)),
+                    )
+                )
 
     if findings:
         print("[fail] Scope drift findings:")

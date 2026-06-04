@@ -7,10 +7,12 @@ or replace expert review.
 ## Product Boundary
 
 - Not industrial certified.
+- No industrial certification.
 - Not a production CAE, CFD, chemistry, or safety-critical decision system.
 - Not a MATLAB, ANSYS, Simulink, OpenFOAM, SolidWorks, CATIA, NX, or Creo
   clone.
 - No native commercial CAD direct import.
+- No native SolidWorks, CATIA, NX, Creo, or other commercial CAD direct import.
 - No Simulink, `.slx`, or `.mlapp` compatibility.
 - No full OpenFOAM GUI/editor or broad solver coverage.
 - No process flowsheet simulator or DWSIM bridge.
@@ -39,6 +41,8 @@ paths before extraction, but v0.1 does not provide plugin signing, a remote
 plugin store/catalog, dependency auto-install, or automatic trust elevation.
 Installed plugin code should run only later through explicit plugin-system
 workflows, not during install or health checks.
+- No plugin signing, remote plugin marketplace, or dependency auto-install is
+  provided in v0.1.
 
 ## Deferred Work
 
@@ -48,6 +52,8 @@ workflows, not during install or health checks.
 - PDF export.
 - Binary desktop installers.
 - Remote plugin store, plugin signing, and dependency auto-install.
+- Published GitHub Release assets, package artifacts, and binary installers for
+  `v0.1.3-rc1`.
 
 For the broader standing limitations document, see
 [Known Limitations](../known_limitations.md).

@@ -1,8 +1,10 @@
 # v0.1 Release Notes
 
 OpenSolver Workbench v0.1 is an internal release candidate for an open-source
-educational and research Engineering Solver and Script Workbench. It is not a
-public final release, binary installer, package publication, or tag push.
+educational and research Engineering Solver and Script Workbench. The
+`v0.1.3-rc1` tag exists and a GitHub Release draft exists, but the release is
+not published and has no binary installer, package publication, or release
+assets.
 
 OSW v0.1 is not industrial certified and is not a production CAE, CFD,
 chemistry, CAD, MATLAB, Simulink, or OpenFOAM replacement. Results and demos are
@@ -103,7 +105,8 @@ smoke or unit tests. GUI paths do not directly execute solver subprocesses.
 - No vector glyphs, streamlines, time animation, or PDF report export.
 - No process flowsheet simulator or DWSIM bridge.
 - No plugin signing, remote plugin store/catalog, or dependency auto-install.
-- No public tag/push/package publication in this handoff step.
+- GitHub Release remains a draft prerelease until an explicit publish gate.
+- No package publication, installer, or release assets in this handoff step.
 
 For full details, see [Known Limitations For v0.1](known_limitations_v0_1.md)
 and [v0.1 Freeze Handoff](v0_1_freeze_handoff.md).

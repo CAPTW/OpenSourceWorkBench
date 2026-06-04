@@ -10,7 +10,11 @@ from _common import capture, repo_root
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--allow-dirty", action="store_true", help="Return success even when status is dirty.")
+    parser.add_argument(
+        "--allow-dirty",
+        action="store_true",
+        help="Return success even when status is dirty.",
+    )
     args = parser.parse_args()
     root = repo_root()
 

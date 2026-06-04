@@ -1,10 +1,11 @@
 # v0.1.3rc1 Release Summary Handoff
 
-This page records the final local handoff for the OpenSolver Workbench
+This page records the public source/tag handoff for the OpenSolver Workbench
 `0.1.3rc1` internal release candidate. The annotated `v0.1.3-rc1` tag was
-pushed to `origin` as a tag-only push. No GitHub Release, binary installer,
-package publication, branch push, all-tags push, force push, or release asset
-upload was created by the release gates.
+pushed to `origin`, `develop` was later advanced with release-status docs, and
+a GitHub Release draft was created as a prerelease. No GitHub Release publish,
+binary installer, package publication, all-tags push, force push, or release
+asset upload was created by the release gates.
 
 ## Release Status
 
@@ -13,7 +14,8 @@ upload was created by the release gates.
 | Package metadata | `0.1.3rc1` |
 | Tag name | `v0.1.3-rc1` |
 | Tag pushed | yes |
-| GitHub Release created | no |
+| GitHub Release draft created | yes |
+| GitHub Release published | no |
 | Binary installer created | no |
 | Release assets uploaded | no |
 
@@ -29,9 +31,9 @@ upload was created by the release gates.
 Important commit distinction:
 
 - Tagged release commit: `a6e8d3a8211e02359841d10e1947e16ab847b132`.
-- Latest local post-push docs/status commit at handoff:
-  `0491fab783202ebbad4e827f8df383f4cbae693f`.
-- The post-push docs/status commit is not included in `v0.1.3-rc1`.
+- Current `develop` before public docs polish:
+  `e26e79261e6ea662298bf53d4468f3ef3655c005`.
+- Post-tag docs/status commits are not included in `v0.1.3-rc1`.
 - Do not move, delete, retarget, or recreate `v0.1.3-rc1`.
 
 ## Push Audit
@@ -39,10 +41,11 @@ Important commit distinction:
 | Item | Result |
 | --- | --- |
 | Tag-only push | yes |
-| Branch push | no |
+| Branch push | yes |
 | All-tags push | no |
 | Force push | no |
-| GitHub Release creation | no |
+| GitHub Release draft creation | yes |
+| GitHub Release publish | no |
 
 ## Feature Readiness Summary
 
@@ -98,6 +101,8 @@ Important commit distinction:
 - Plugin signing, a remote plugin store, and dependency auto-install are not
   present.
 - No binary installer or GitHub Release assets exist for this handoff.
+- The GitHub Release is a draft prerelease until a separate explicit publish
+  gate approves publication.
 
 ## SSH Caveat
 
@@ -114,12 +119,9 @@ remote URL, or pushing branches.
 
 ## Recommended Next Actions
 
-1. Decide whether to push the local post-push docs/status commit
-   `0491fab783202ebbad4e827f8df383f4cbae693f` to `develop` in a separate
-   branch-push policy gate.
-2. Optionally create a GitHub Release draft in a separate explicit release
-   creation gate.
-3. Optionally configure Git to use Windows OpenSSH permanently in a separate
+1. Optionally configure Git to use Windows OpenSSH permanently in a separate
    configuration gate.
-4. Optionally run live dependency and solver validation on a machine with the
+2. Optionally run live dependency and solver validation on a machine with the
    optional stacks installed.
+3. Use a separate explicit gate for binary assets, package artifacts, release
+   publication, or announcement text.

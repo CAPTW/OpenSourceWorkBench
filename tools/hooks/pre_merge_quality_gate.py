@@ -10,7 +10,11 @@ from pathlib import Path
 
 def main() -> int:
     root = Path(__file__).resolve().parents[2]
-    return subprocess.run([sys.executable, "tools/qa/run_pre_merge_qa.py"], cwd=root, check=False).returncode
+    return subprocess.run(
+        [sys.executable, "tools/qa/run_pre_merge_qa.py"],
+        cwd=root,
+        check=False,
+    ).returncode
 
 
 if __name__ == "__main__":

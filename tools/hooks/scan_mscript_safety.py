@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-
 UNSAFE = ["system(", "unix(", "dos(", "!", "webread(", "urlread(", "delete(", "rmdir("]
 
 

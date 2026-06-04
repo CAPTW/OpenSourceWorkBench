@@ -9,7 +9,6 @@ from pathlib import Path
 
 from _common import repo_root
 
-
 GUI_FORBIDDEN_IMPORTS = {"subprocess", "osw.solvers"}
 CORE_FORBIDDEN_IMPORTS = {"PySide6", "pyvista", "gmsh", "meshio", "cantera", "CoolProp"}
 

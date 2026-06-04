@@ -3,10 +3,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from _common import repo_root
-
 
 REQUIRED_FIELDS = {"id", "display_name", "version", "type", "entry_point", "capabilities"}
 

@@ -9,7 +9,13 @@ from pathlib import Path
 
 def main() -> int:
     root = Path.cwd()
-    proc = subprocess.run(["git", "diff", "--name-only", "develop...HEAD"], cwd=root, text=True, capture_output=True, check=False)
+    proc = subprocess.run(
+        ["git", "diff", "--name-only", "develop...HEAD"],
+        cwd=root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
     paths = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
     code_changed = any(path.startswith("src/") and path.endswith(".py") for path in paths)
     docs_changed = any(path.startswith("docs/") or path == "README.md" for path in paths)
