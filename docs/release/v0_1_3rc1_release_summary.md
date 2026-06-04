@@ -1,11 +1,11 @@
 # v0.1.3rc1 Release Summary Handoff
 
 This page records the public source/tag handoff for the OpenSolver Workbench
-`0.1.3rc1` internal release candidate. The annotated `v0.1.3-rc1` tag was
-pushed to `origin`, `develop` was later advanced with release-status docs, and
-a GitHub Release draft was created as a prerelease. No GitHub Release publish,
-binary installer, package publication, all-tags push, force push, or release
-asset upload was created by the release gates.
+`0.1.3rc1` release candidate. The annotated `v0.1.3-rc1` tag was pushed to
+`origin`, `develop` was later advanced with release-status and public docs, and
+the GitHub Release was published as a public prerelease with assets. No
+all-tags push, force push, tag retargeting, MSI installer, code signing, package
+publication, or stable production claim was created by the release gates.
 
 ## Release Status
 
@@ -15,9 +15,9 @@ asset upload was created by the release gates.
 | Tag name | `v0.1.3-rc1` |
 | Tag pushed | yes |
 | GitHub Release draft created | yes |
-| GitHub Release published | no |
-| Binary installer created | no |
-| Release assets uploaded | no |
+| GitHub Release published | yes, public prerelease |
+| Binary installer created | no MSI installer; unsigned portable ZIP only |
+| Release assets uploaded | yes, wheel, sdist, Windows portable ZIP, checksums, and manifest |
 
 ## Tag Details
 
@@ -45,7 +45,7 @@ Important commit distinction:
 | All-tags push | no |
 | Force push | no |
 | GitHub Release draft creation | yes |
-| GitHub Release publish | no |
+| GitHub Release publish | yes, public prerelease |
 
 ## Feature Readiness Summary
 
@@ -100,9 +100,11 @@ Important commit distinction:
 - Process flowsheet/DWSIM workflows are out of v0.1 scope.
 - Plugin signing, a remote plugin store, and dependency auto-install are not
   present.
-- No binary installer or GitHub Release assets exist for this handoff.
-- The GitHub Release is a draft prerelease until a separate explicit publish
-  gate approves publication.
+- Windows portable ZIP is unsigned.
+- No MSI installer or code signing exists for this handoff.
+- Release assets are attached to the public prerelease.
+- The GitHub Release is public prerelease evidence, not a stable production
+  release.
 
 ## SSH Caveat
 
@@ -119,9 +121,10 @@ remote URL, or pushing branches.
 
 ## Recommended Next Actions
 
-1. Optionally configure Git to use Windows OpenSSH permanently in a separate
-   configuration gate.
-2. Optionally run live dependency and solver validation on a machine with the
+1. Triage [post-public-release roadmap](../roadmap/README.md) issues and
+   milestones.
+2. Use `v0.1.3rc2` for maintenance, revalidation, and release polish.
+3. Use `v0.1.4` for the next feature line only after maintenance work is
+   triaged.
+4. Optionally run live dependency and solver validation on a machine with the
    optional stacks installed.
-3. Use a separate explicit gate for binary assets, package artifacts, release
-   publication, or announcement text.

@@ -73,7 +73,8 @@ Demo project and report summary:
 
 Generated files under `artifacts/*` are local runtime outputs and should not be
 committed. For more commands and troubleshooting, see
-[Quickstart](docs/quickstart.md).
+[Quickstart](docs/quickstart.md) and the
+[post-public-release roadmap](docs/roadmap/README.md).
 
 Developer checks:
 
@@ -138,9 +139,9 @@ diagnostics or skips rather than pretending a workflow succeeded.
 - No full CalculiX FRD field parser.
 - No full OpenFOAM field parser.
 - No plugin signing, remote plugin marketplace, or dependency auto-install.
-- No binary installer yet.
-- The GitHub Release for `v0.1.3-rc1` is a draft prerelease; it may not be
-  published yet and has no release assets.
+- No MSI installer or code signing yet.
+- The GitHub Release for `v0.1.3-rc1` is a public prerelease with assets; it is
+  not a stable production release.
 
 See [Known Limitations For v0.1](docs/release/known_limitations_v0_1.md) for
 the full public scope note.
@@ -152,9 +153,13 @@ the full public scope note.
 - Tag target:
   `a6e8d3a8211e02359841d10e1947e16ab847b132`.
 - Current `develop` includes post-tag documentation/status updates.
-- A GitHub Release draft exists for `v0.1.3-rc1`.
-- Release assets, binary installers, package publication, and public
-  announcement text require separate maintainer-approved gates.
+- A public GitHub Release prerelease exists for `v0.1.3-rc1`.
+- Release assets are attached: wheel, sdist, Windows portable ZIP, checksums,
+  and manifest.
+- Future maintenance and feature work are tracked in the
+  [post-public-release roadmap](docs/roadmap/README.md).
+- Package publication, installer/signing work, and public announcement text
+  require separate maintainer-approved gates.
 
 Useful release docs:
 
@@ -162,6 +167,7 @@ Useful release docs:
 - [v0.1 Release Notes](docs/release/v0_1_release_notes.md)
 - [Release Checklist](docs/10_release_checklist.md)
 - [Validation Matrix](docs/04_validation_matrix.md)
+- [Post-Public-Release Roadmap](docs/roadmap/README.md)
 - [Optional Dependencies](docs/install/optional_dependencies.md)
 
 ## License

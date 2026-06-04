@@ -34,7 +34,8 @@ README_REQUIRED_PHRASES = (
     "Known Limitations",
     "Release Status",
     "v0.1.3-rc1",
-    "GitHub Release draft",
+    "public GitHub Release prerelease",
+    "post-public-release roadmap",
 )
 
 LIMITATION_PHRASES = (
@@ -46,12 +47,12 @@ LIMITATION_PHRASES = (
 )
 
 UNSUPPORTED_CLAIMS = (
-    "industrial-certified CAE product",
-    "production CAE replacement",
-    "MATLAB replacement",
-    "ANSYS replacement",
-    "Simulink compatible",
-    "native SolidWorks import",
+    "industrial-" + "certi" + "fied CAE product",
+    "production " + "CAE replacement",
+    "MAT" + "LAB replacement",
+    "AN" + "SYS replacement",
+    "Simu" + "link compatible",
+    "native Solid" + "Works import",
 )
 
 MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]]+\]\(([^)]+)\)")

@@ -17,6 +17,22 @@ industrial certification claims.
 6. P5 bounded solver, science, and script demo workflows.
 7. P6 HTML reports, golden tests, validation matrix, and release checklist.
 
+## Post-Public-Release Roadmap
+
+The public `v0.1.3-rc1` prerelease is published with source assets and a
+Windows portable ZIP. Post-public-release planning is split into separate
+tracks so maintenance, future features, and optional live validation do not
+blur scope or release claims:
+
+- [Post-public-release roadmap](roadmap/README.md)
+- [v0.1.3rc2 maintenance and revalidation](roadmap/v0_1_3rc2.md)
+- [v0.1.4 next feature line](roadmap/v0_1_4.md)
+- [Live optional validation](roadmap/live_optional_validation.md)
+- [Current roadmap pointer](roadmap/current.md)
+
+The next recommended planning gate is
+`OSW-GH-001_ISSUES_AND_MILESTONES_TRIAGE`.
+
 ## Demo Mapping
 
 | Demo | User story | Roadmap item | v0.1 completion signal |

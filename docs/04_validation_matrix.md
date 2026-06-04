@@ -49,6 +49,32 @@ installed.
 | Broad pytest command | Split suite commands including tracked GUI with duplicate-file ignore | Unit, integration, golden, validation, and tracked GUI suites pass; untracked desktop duplicate `* (1).py` files remain a local hygiene warning | 2026-06-02 |
 | Packaging docs | `python tools/qa/check_docs_links.py`; `pytest tests/unit/test_cli_surface.py -q`; CLI quickstart smoke | README, install docs, optional dependency matrix, and release-candidate docs link current v0.1 source-install and diagnostic workflows | 2026-06-02 |
 
+## v0.1.3rc2 Maintenance Validation
+
+The `v0.1.3rc2` line is maintenance and revalidation only. It should not expand
+features unless a critical public-prerelease blocker is identified and scoped in
+a separate gate.
+
+| Area | Evidence target | Pass criterion | Status |
+| --- | --- | --- | --- |
+| Duplicate hygiene | `OSW-MAINT-002_POST_PUBLIC_RELEASE_DUPLICATE_FILE_HYGIENE` evidence and `tools/qa/check_release_gate.py` | No untracked duplicate ` (1)` warning returns. | completed |
+| Release asset smoke | Downloaded assets, `SHA256SUMS.txt`, manifest, wheel install, sdist install, and portable ZIP `--help` evidence | Checksums match and smoke commands pass on a local machine. | completed for `v0.1.3-rc1`; automate for `v0.1.3rc2` |
+| Public release wording | GitHub Release notes body audit | Notes say public prerelease, assets attached, unsigned portable ZIP, no MSI, no code signing, and no bundled solvers. | completed for `v0.1.3-rc1` |
+| Roadmap triage | GitHub issues and milestones | Maintenance tasks are assigned or deferred before feature work starts. | planned |
+
+## Live Optional Validation Placeholder
+
+Live optional validation is environment-specific and should be recorded under
+[Live optional validation](roadmap/live_optional_validation.md). It may include
+Gmsh, GNU Octave, CalculiX `ccx`, OpenFOAM, CoolProp, Cantera, SciPy MAT
+support, PyVista, and meshio when those tools are already installed locally.
+Generated evidence belongs under `artifacts/validation/` and must not be
+committed as runtime output.
+
+This evidence is useful for confidence and diagnostics, but it is not an
+industrial certification claim and does not make optional dependencies mandatory
+for base import, CLI smoke, or unit tests.
+
 ## Limitations
 
 - The matrix records validation evidence for v0.1 demos; it does not certify
