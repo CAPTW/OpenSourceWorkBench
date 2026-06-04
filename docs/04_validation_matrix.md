@@ -65,11 +65,13 @@ a separate gate.
 ## Live Optional Validation Placeholder
 
 Live optional validation is environment-specific and should be recorded under
-[Live optional validation](roadmap/live_optional_validation.md). It may include
-Gmsh, GNU Octave, CalculiX `ccx`, OpenFOAM, CoolProp, Cantera, SciPy MAT
-support, PyVista, and meshio when those tools are already installed locally.
-Generated evidence belongs under `artifacts/validation/` and must not be
-committed as runtime output.
+[Live optional validation](roadmap/live_optional_validation.md). Current local
+evidence is summarized in
+[Live Optional Solver Environment Validation](validation/live_optional_solver_validation.md).
+It may include Gmsh, GNU Octave, CalculiX `ccx`, OpenFOAM, CoolProp, Cantera,
+SciPy MAT support, PyVista, and meshio when those tools are already installed
+locally. Generated evidence belongs under `artifacts/validation/` and must not
+be committed as runtime output.
 
 This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory
