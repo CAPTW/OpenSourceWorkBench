@@ -73,6 +73,18 @@ python -m osw.cli openfoam-check
 Missing tools should produce diagnostics. Do not treat missing Gmsh, Octave,
 `ccx`, or OpenFOAM as a base install failure.
 
+## Portable ZIP
+
+The GitHub Release may include a Windows portable ZIP for convenience. It is not
+an MSI installer, not code-signed, and not a stable production release. Extract
+it to a user-writable folder and run `OpenSolverWorkbench.exe --help` before
+trying GUI or optional solver workflows.
+
+External solver executables are not bundled in the portable ZIP. Verify
+`SHA256SUMS.txt` and `release_asset_manifest.json` before running downloaded
+assets. See [Windows Portable ZIP](../release/windows_portable_zip.md) for the
+full user guide and troubleshooting notes.
+
 ## Activation Troubleshooting
 
 If PowerShell blocks activation:

@@ -13,6 +13,9 @@ Development package version: `0.1.3rc2.dev0`
 - Added reusable release asset download smoke automation for Issue `#2`,
   covering `SHA256SUMS.txt`, `release_asset_manifest.json`, safe archive
   checks, and optional full wheel/sdist/portable ZIP smoke.
+- Improved Windows portable ZIP user guidance for Issue `#4`, including
+  unsigned/no MSI/no code-signing warnings, no bundled external solver wording,
+  checksum verification, and future `README_RUN_FIRST.txt` template guidance.
 - Opened the `v0.1.3rc2` maintenance development cycle after the public
   `v0.1.3-rc1` prerelease and attached release assets.
 - Carried forward the local validation documentation commit with PySide6/Pillow

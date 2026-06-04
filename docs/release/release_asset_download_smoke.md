@@ -63,6 +63,14 @@ The portable ZIP is unsigned. It is not an MSI installer, not code-signed, and
 does not bundle external solvers. Optional solver/science dependencies remain
 local user-provided tools.
 
+The checker also records portable ZIP UX warnings, including missing or
+incomplete `README_RUN_FIRST.txt` guidance, missing checksum guidance, missing
+license files, multi-folder layouts, and absent `OpenSolverWorkbench.exe`.
+Warnings do not mutate or overwrite already-published assets.
+
+For user-facing portable ZIP guidance, see
+[Windows Portable ZIP](windows_portable_zip.md).
+
 ## QA Wrapper
 
 The QA wrapper defaults to the public `v0.1.3-rc1` release:

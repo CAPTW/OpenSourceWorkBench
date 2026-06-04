@@ -59,6 +59,7 @@ a separate gate.
 | --- | --- | --- | --- |
 | Duplicate hygiene | `OSW-MAINT-002_POST_PUBLIC_RELEASE_DUPLICATE_FILE_HYGIENE` evidence and `tools/qa/check_release_gate.py` | No untracked duplicate ` (1)` warning returns. | completed |
 | Release asset smoke | `tools/release/check_release_assets.py`, downloaded assets, `SHA256SUMS.txt`, manifest, wheel install, sdist install, and portable ZIP `--help` evidence | Checksums match, manifest matches, archives are safe to inspect/extract, and optional full smoke commands pass on a local machine. | automated for `v0.1.3-rc1`; reusable for `v0.1.3rc2` |
+| Portable ZIP UX | Current portable ZIP inspection, [Windows Portable ZIP](release/windows_portable_zip.md), and `README_RUN_FIRST.txt` template checks | Docs clearly say unsigned, no MSI, no code signing, no bundled external solvers, prerelease, and checksum verification. Tooling reports portable UX warnings for future builds. | automated warnings added for `v0.1.3rc2` maintenance |
 | Public release wording | GitHub Release notes body audit | Notes say public prerelease, assets attached, unsigned portable ZIP, no MSI, no code signing, and no bundled solvers. | completed for `v0.1.3-rc1` |
 | Roadmap triage | GitHub issues and milestones | Maintenance tasks are assigned or deferred before feature work starts. | planned |
 

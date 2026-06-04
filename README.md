@@ -168,6 +168,7 @@ Useful release docs:
 - [Release Checklist](docs/10_release_checklist.md)
 - [Validation Matrix](docs/04_validation_matrix.md)
 - [Post-Public-Release Roadmap](docs/roadmap/README.md)
+- [Windows Portable ZIP](docs/release/windows_portable_zip.md)
 - [Optional Dependencies](docs/install/optional_dependencies.md)
 
 ## License

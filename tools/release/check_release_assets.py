@@ -30,6 +30,18 @@ SECRET_NAME_PATTERN = re.compile(
     r"(^id_rsa$|^id_ed25519$|\.pem$|\.key$|password|token|secret)",
     re.IGNORECASE,
 )
+PORTABLE_README_NAME = "README_RUN_FIRST.txt"
+PORTABLE_README_CHECKS = {
+    "unsigned_warning": ("unsigned",),
+    "no_msi_warning": ("no msi", "not an msi"),
+    "no_code_signing_warning": ("no code signing", "not code-signed", "not code signed"),
+    "no_bundled_solver_warning": (
+        "no bundled external solvers",
+        "external solvers are not bundled",
+        "external solver executables are not bundled",
+    ),
+    "checksum_reference": ("sha256sums.txt", "sha256", "checksum"),
+}
 
 
 class AssetSmokeError(RuntimeError):
@@ -108,6 +120,83 @@ def safe_extract_zip(path: Path, destination: Path, *, portable: bool = False) -
     destination.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(path) as archive:
         archive.extractall(destination)
+
+
+def _has_any_phrase(text: str, phrases: tuple[str, ...]) -> bool:
+    return any(phrase in text for phrase in phrases)
+
+
+def inspect_portable_zip_ux(path: Path) -> dict[str, Any]:
+    """Inspect portable ZIP user-facing files and warnings."""
+
+    validate_zip_entries(path, portable=True)
+    result: dict[str, Any] = {
+        "asset": path.name,
+        "top_level_entries": [],
+        "executable_paths": [],
+        "has_readme_run_first": False,
+        "readme_run_first_path": None,
+        "has_license": False,
+        "license_paths": [],
+        "checks": {},
+        "warnings": [],
+    }
+
+    with zipfile.ZipFile(path) as archive:
+        names = [info.filename for info in archive.infolist() if not info.is_dir()]
+        top_levels = sorted(
+            {
+                PurePosixPath(name.replace("\\", "/")).parts[0]
+                for name in names
+                if PurePosixPath(name.replace("\\", "/")).parts
+            }
+        )
+        result["top_level_entries"] = top_levels
+        result["executable_paths"] = [
+            name
+            for name in names
+            if PurePosixPath(name.replace("\\", "/")).name == "OpenSolverWorkbench.exe"
+        ]
+        license_paths = [
+            name
+            for name in names
+            if PurePosixPath(name.replace("\\", "/")).name.upper().startswith("LICENSE")
+        ]
+        result["license_paths"] = license_paths
+        result["has_license"] = bool(license_paths)
+
+        readme_names = [
+            name
+            for name in names
+            if PurePosixPath(name.replace("\\", "/")).name.casefold()
+            == PORTABLE_README_NAME.casefold()
+        ]
+        if not readme_names:
+            result["warnings"].append(
+                "portable ZIP does not include README_RUN_FIRST.txt; "
+                "future builds should include it"
+            )
+        else:
+            result["has_readme_run_first"] = True
+            result["readme_run_first_path"] = readme_names[0]
+            raw_text = archive.read(readme_names[0]).decode("utf-8", errors="replace")
+            text = raw_text.lower()
+            for key, phrases in PORTABLE_README_CHECKS.items():
+                passed = _has_any_phrase(text, phrases)
+                result["checks"][key] = passed
+                if not passed:
+                    result["warnings"].append(
+                        f"README_RUN_FIRST.txt missing {key.replace('_', ' ')}"
+                    )
+
+        if not result["has_license"]:
+            result["warnings"].append("portable ZIP does not include a LICENSE file")
+        if len(top_levels) != 1:
+            result["warnings"].append("portable ZIP should use one top-level folder")
+        if not result["executable_paths"]:
+            result["warnings"].append("portable ZIP does not include OpenSolverWorkbench.exe")
+
+    return result
 
 
 def validate_tar_entries(path: Path) -> None:
@@ -445,6 +534,9 @@ def verify_asset_dir(
         validate_tar_entries(sdist.path)
     if portable_zip is not None:
         validate_zip_entries(portable_zip.path, portable=True)
+        portable_ux = inspect_portable_zip_ux(portable_zip.path)
+        summary["portable_ux"] = portable_ux
+        summary["warnings"].extend(portable_ux["warnings"])
 
     if full_smoke:
         wheel = _first_asset(assets, "wheel")
