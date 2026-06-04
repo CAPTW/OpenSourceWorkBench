@@ -32,6 +32,10 @@ Development package version: `0.1.3rc2.dev0`
   the `v0.1.3-rc1` flow from metadata/tag gates through draft, asset upload,
   publish, post-public audit, docs polish, CI/manual smoke, and issue closure
   triage without stable-production, MSI, signing, or bundled-solver claims.
+- Added remaining-open-issue triage for the v0.1.3rc2 cycle, recommending
+  Issue `#13` onboarding examples/tutorials as the next practical public
+  usability slice, Issue `#16` as a release-trust fallback, and live optional
+  validation only on machines with the relevant tools installed.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.
