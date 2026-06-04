@@ -123,8 +123,10 @@ remote URL, or pushing branches.
 
 1. Triage [post-public-release roadmap](../roadmap/README.md) issues and
    milestones.
-2. Use `v0.1.3rc2` for maintenance, revalidation, and release polish.
-3. Use `v0.1.4` for the next feature line only after maintenance work is
+2. Use the [Post-Public Release Checklist](post_public_release_checklist.md)
+   for future public prerelease audits and maintenance gates.
+3. Use `v0.1.3rc2` for maintenance, revalidation, and release polish.
+4. Use `v0.1.4` for the next feature line only after maintenance work is
    triaged.
-4. Optionally run live dependency and solver validation on a machine with the
+5. Optionally run live dependency and solver validation on a machine with the
    optional stacks installed.

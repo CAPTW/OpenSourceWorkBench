@@ -28,6 +28,10 @@ Development package version: `0.1.3rc2.dev0`
 - Added v0.1.3rc2 maintenance issue closure triage for Issues `#1`, `#2`,
   `#4`, and `#5`, recording evidence-based completion decisions without
   release, asset, or tag mutation.
+- Finalized the reusable post-public release checklist for Issue `#3`, covering
+  the `v0.1.3-rc1` flow from metadata/tag gates through draft, asset upload,
+  publish, post-public audit, docs polish, CI/manual smoke, and issue closure
+  triage without stable-production, MSI, signing, or bundled-solver claims.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.

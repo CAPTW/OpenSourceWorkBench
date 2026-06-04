@@ -166,6 +166,7 @@ Useful release docs:
 - [v0.1.3rc1 Release Summary](docs/release/v0_1_3rc1_release_summary.md)
 - [v0.1 Release Notes](docs/release/v0_1_release_notes.md)
 - [Release Checklist](docs/10_release_checklist.md)
+- [Post-Public Release Checklist](docs/release/post_public_release_checklist.md)
 - [Validation Matrix](docs/04_validation_matrix.md)
 - [Post-Public-Release Roadmap](docs/roadmap/README.md)
 - [Windows Portable ZIP](docs/release/windows_portable_zip.md)
