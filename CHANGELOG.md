@@ -6,6 +6,17 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### v0.1.3rc2 Maintenance Development Cycle Opened
+
+Development package version: `0.1.3rc2.dev0`
+
+- Opened the `v0.1.3rc2` maintenance development cycle after the public
+  `v0.1.3-rc1` prerelease and attached release assets.
+- Carried forward the local validation documentation commit with PySide6/Pillow
+  evidence and the missing optional solver/science backend matrix.
+- Kept `v0.1.3-rc1` as the current public prerelease tag; no `v0.1.3-rc2` tag
+  was created by this development-cycle gate.
+
 ### Patch v0.1.3rc1 Release Candidate Tag Published
 
 Release-candidate package version: `0.1.3rc1`

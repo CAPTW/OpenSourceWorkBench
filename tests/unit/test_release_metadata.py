@@ -41,6 +41,7 @@ def _minimal_release_tree(root: Path, *, version: str = "0.1.0rc3") -> None:
         "0.1.2rc1": "v0.1.2-rc1",
         "0.1.2": "v0.1.2",
         "0.1.3rc1": "v0.1.3-rc1",
+        "0.1.3rc2.dev0": "v0.1.3-rc1",
     }
     tag = tag_by_version.get(version, "v0.1.0-rc3")
     _write(
@@ -294,7 +295,7 @@ def test_release_metadata_accepts_aligned_rc3_tree(tmp_path: Path) -> None:
     assert check_release_metadata(tmp_path, expected_version="0.1.0rc3", check_tags=False) == []
 
 
-def test_default_release_metadata_accepts_current_v013rc1_history(
+def test_default_release_metadata_accepts_current_v013rc2_dev_history(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

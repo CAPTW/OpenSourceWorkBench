@@ -13,7 +13,7 @@ from pathlib import Path
 
 from _common import repo_root
 
-TARGET_VERSION = "0.1.3rc1"
+TARGET_VERSION = "0.1.3rc2.dev0"
 TARGET_LICENSE = "GPL-3.0-or-later"
 DEFAULT_RC_TAG = "v0.1.3-rc1"
 DEFAULT_PRIOR_RC1_TAG = "v0.1.0-rc1"

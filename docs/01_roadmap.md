@@ -24,7 +24,12 @@ Windows portable ZIP. Post-public-release planning is split into separate
 tracks so maintenance, future features, and optional live validation do not
 blur scope or release claims:
 
+The active development metadata is `0.1.3rc2.dev0` for the `v0.1.3rc2`
+maintenance line. This is development-only metadata; it does not create a new
+tag or change the public `v0.1.3-rc1` prerelease boundary.
+
 - [Post-public-release roadmap](roadmap/README.md)
+- [Current development cycle](development/current_cycle.md)
 - [v0.1.3rc2 maintenance and revalidation](roadmap/v0_1_3rc2.md)
 - [v0.1.4 next feature line](roadmap/v0_1_4.md)
 - [Live optional validation](roadmap/live_optional_validation.md)

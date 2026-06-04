@@ -22,6 +22,16 @@ or full solver parity.
 | Live optional validation roadmap | `PASS` | Optional local solver/science evidence plan is documented in [Live optional validation](roadmap/live_optional_validation.md). |
 | Next planning gate | `PENDING` | Use `OSW-GH-001_ISSUES_AND_MILESTONES_TRIAGE` to create issues and milestones before implementation work. |
 
+## v0.1.3rc2 Development Cycle Opened
+
+| Item | Status | Evidence / decision |
+| --- | --- | --- |
+| Active development metadata | `PASS` | `pyproject.toml`, `osw.__version__`, CLI `--version`, and version smoke tests are aligned to development version `0.1.3rc2.dev0`. |
+| Current public prerelease boundary | `PASS` | `v0.1.3-rc1` remains the current public prerelease and still points to `a6e8d3a8211e02359841d10e1947e16ab847b132`. No `v0.1.3-rc2` tag is created by the cycle-start gate. |
+| Current cycle docs | `PASS` | [Current development cycle](development/current_cycle.md) records the base public release, maintenance milestone, feature milestone, live-validation milestone, primary goals, and non-goals. |
+| Validation evidence carry-forward | `PASS_WITH_WARNINGS` | [Live optional solver validation evidence](validation/live_optional_solver_validation.md) records local PySide6/Pillow availability and missing optional solver/science backends. Missing optional stacks remain environment-specific and non-blocking. |
+| Scope discipline | `PASS` | `v0.1.3rc2` is maintenance/revalidation/release polish only. It does not claim stable production status, industrial certification, MATLAB/ANSYS/Simulink cloning, or native commercial CAD direct import. |
+
 ## FUNC-020 Release Gate Snapshot
 
 | Item | Status | Evidence / decision |
