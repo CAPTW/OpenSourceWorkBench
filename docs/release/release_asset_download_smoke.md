@@ -48,6 +48,42 @@ Use this when GitHub CLI is installed and authenticated:
 If the target download directory already contains files, the tool creates a
 timestamped subdirectory unless `--reuse-dir` is passed.
 
+## CI And Manual GitHub Actions Smoke
+
+The `Release asset smoke` workflow in
+`.github/workflows/release-asset-smoke.yml` connects the same checker to CI
+without mutating the GitHub Release.
+
+CI behavior:
+
+- `pull_request` and `push` to `develop` run offline fixture checks only.
+- Offline fixture mode runs `tests/unit/test_release_asset_smoke.py` and
+  `tools/qa/check_release_asset_smoke.py --offline-asset-dir
+  tests/fixtures/release_assets`.
+- Live GitHub release asset download smoke is manual only through
+  `workflow_dispatch`.
+- Workflow permissions are read-only: `contents: read`.
+- `GH_TOKEN` is supplied only to the manual live-download job from the GitHub
+  Actions `GITHUB_TOKEN`.
+- The workflow does not upload release assets, edit releases, push branches,
+  push tags, or use clobber/overwrite behavior.
+
+To run the live smoke from GitHub:
+
+1. Open the repository Actions tab.
+2. Select `Release asset smoke`.
+3. Choose `Run workflow`.
+4. Use `tag=v0.1.3-rc1` for the current public prerelease.
+5. Use `full_smoke=false` for a quick checksum/manifest/archive check.
+6. Use `full_smoke=true` for release maintenance evidence.
+7. Leave `skip_portable_exe=true` when the runner desktop/executable context is
+   uncertain; set it to `false` only when executable `--help` smoke is desired.
+
+The live job writes a JSON smoke summary under
+`artifacts/release/download_smoke/ci-<tag>/summary.json` and exposes that
+summary as a workflow artifact. This is a CI evidence artifact, not a GitHub
+Release asset.
+
 ## Full Smoke
 
 Add `--full-smoke` to run deeper checks:
@@ -76,7 +112,9 @@ For user-facing portable ZIP guidance, see
 The QA wrapper defaults to the public `v0.1.3-rc1` release:
 
 ```powershell
-.venv\Scripts\python.exe tools\qa\check_release_asset_smoke.py --full-smoke
+.venv\Scripts\python.exe tools\qa\check_release_asset_smoke.py `
+  --download `
+  --full-smoke
 ```
 
 For CI-safe offline runs, provide a local asset directory:
@@ -91,6 +129,9 @@ For CI-safe offline runs, provide a local asset directory:
 | Symptom | Meaning / action |
 | --- | --- |
 | `gh` is unavailable or unauthenticated | Run offline verification or authenticate with `gh auth login`. |
+| GitHub Actions token error | Confirm the workflow still uses `contents: read`; live smoke only needs read access to download release assets. |
+| Live smoke ran on PR/push | Treat this as a workflow bug; live GitHub release downloads must remain `workflow_dispatch` only. |
+| Asset missing | Confirm the release asset list on the GitHub Release and rerun the manual workflow after the asset appears. |
 | Checksum mismatch | Treat the asset set as invalid; redownload and compare with the published release. |
 | Manifest mismatch | Inspect `release_asset_manifest.json` against the downloaded files before relying on the assets. |
 | Portable executable `--help` fails | Rerun with `--skip-portable-exe` only to isolate archive/hash checks, then investigate the portable build separately. |

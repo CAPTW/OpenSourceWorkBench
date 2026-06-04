@@ -100,6 +100,10 @@ The checker verifies `SHA256SUMS.txt`, `release_asset_manifest.json`, safe
 archive structure, portable ZIP UX warnings, and optional executable `--help`
 smoke on Windows.
 
+The same checker is wired into the `Release asset smoke` GitHub Actions
+workflow. Pull requests and `develop` pushes use offline fixtures; live release
+asset download smoke remains a manual `workflow_dispatch` check.
+
 ## Future Improvements
 
 - MSI or installer strategy.

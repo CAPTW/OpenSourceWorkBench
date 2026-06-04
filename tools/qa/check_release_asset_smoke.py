@@ -22,14 +22,24 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("artifacts/release/download_smoke/v0.1.3-rc1_auto"),
     )
     parser.add_argument("--offline-asset-dir", type=Path)
+    parser.add_argument(
+        "--download",
+        action="store_true",
+        help="Download release assets with gh before verification.",
+    )
     parser.add_argument("--full-smoke", action="store_true")
     parser.add_argument("--skip-download", action="store_true")
     parser.add_argument("--skip-portable-exe", action="store_true")
+    parser.add_argument("--json-out", type=Path, help="Write JSON verification summary.")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.download and args.skip_download:
+        parser.error("--download and --skip-download cannot be combined")
+
     root = repo_root()
     tool = root / "tools" / "release" / "check_release_assets.py"
 
@@ -39,7 +49,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.skip_download:
         print("[skip] release asset smoke download disabled and no offline asset dir provided")
         return 2
-    else:
+    elif args.download:
         if shutil.which("gh") is None:
             print("[skip] GitHub CLI 'gh' is unavailable and no offline asset dir was provided")
             return 2
@@ -52,11 +62,19 @@ def main(argv: list[str] | None = None) -> int:
                 str(root / args.download_dir),
             ]
         )
+    else:
+        print(
+            "[skip] pass --download for live GitHub release asset smoke "
+            "or provide --offline-asset-dir"
+        )
+        return 2
 
     if args.full_smoke:
         command.append("--full-smoke")
     if args.skip_portable_exe:
         command.append("--skip-portable-exe")
+    if args.json_out:
+        command.extend(["--json-out", str(root / args.json_out)])
 
     proc = subprocess.run(command, cwd=root, text=True, check=False)
     return proc.returncode

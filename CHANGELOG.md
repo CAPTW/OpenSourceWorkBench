@@ -16,6 +16,9 @@ Development package version: `0.1.3rc2.dev0`
 - Improved Windows portable ZIP user guidance for Issue `#4`, including
   unsigned/no MSI/no code-signing warnings, no bundled external solver wording,
   checksum verification, and future `README_RUN_FIRST.txt` template guidance.
+- Added a read-only `Release asset smoke` GitHub Actions workflow for Issue
+  `#2`: pull requests and `develop` pushes use offline release asset fixtures,
+  while live GitHub release downloads are manual `workflow_dispatch` only.
 - Opened the `v0.1.3rc2` maintenance development cycle after the public
   `v0.1.3-rc1` prerelease and attached release assets.
 - Carried forward the local validation documentation commit with PySide6/Pillow
