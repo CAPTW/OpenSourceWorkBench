@@ -77,7 +77,9 @@ Fallback issue: #16 Evaluate code signing and installer strategy.
 Reason: #16 is a planning-only release trust slice. It is appropriate if the
 maintainer wants to focus on packaging trust before tutorials, but it must not
 claim code signing, MSI support, SmartScreen safety, or asset replacement until
-those are actually implemented and verified by a later explicit gate.
+those are actually implemented and verified by a later explicit gate. It should
+remain documentation until maintainers explicitly approve signing credentials,
+installer prototypes, or artifact attestation work.
 
 Deferred option: optional full-smoke workflow dispatch and live optional
 validation issues #6 through #11.

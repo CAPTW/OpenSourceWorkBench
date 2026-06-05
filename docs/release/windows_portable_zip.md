@@ -104,6 +104,9 @@ The same checker is wired into the `Release asset smoke` GitHub Actions
 workflow. Pull requests and `develop` pushes use offline fixtures; live release
 asset download smoke remains a manual `workflow_dispatch` check.
 
+For trust and future installer planning, see
+[Code Signing And Installer Strategy](code_signing_installer_strategy.md).
+
 ## Future Improvements
 
 - MSI or installer strategy.

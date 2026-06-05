@@ -19,6 +19,9 @@ RESULT_DATASET = REPO_ROOT / "docs" / "tutorials" / "result_dataset_walkthrough.
 RELEASE_ASSET_SMOKE = (
     REPO_ROOT / "docs" / "tutorials" / "release_asset_smoke_walkthrough.md"
 )
+CODE_SIGNING_STRATEGY = (
+    REPO_ROOT / "docs" / "release" / "code_signing_installer_strategy.md"
+)
 
 REQUIRED_PATHS = (
     README,
@@ -31,6 +34,7 @@ REQUIRED_PATHS = (
     FIRST_GUI,
     RESULT_DATASET,
     RELEASE_ASSET_SMOKE,
+    CODE_SIGNING_STRATEGY,
     REPO_ROOT / "docs" / "assets" / "screenshots" / "osw_dark.png",
     REPO_ROOT / "docs" / "assets" / "screenshots" / "osw_light.png",
     REPO_ROOT / "docs" / "assets" / "screenshots" / "osw_system.png",
@@ -102,6 +106,7 @@ def check_public_docs() -> list[str]:
         FIRST_GUI,
         RESULT_DATASET,
         RELEASE_ASSET_SMOKE,
+        CODE_SIGNING_STRATEGY,
     ):
         if markdown_path.exists():
             errors.extend(_missing_local_links(markdown_path))

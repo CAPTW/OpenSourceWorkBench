@@ -43,6 +43,10 @@ Development package version: `0.1.3rc2.dev0`
 - Recorded onboarding closure evidence for Issue `#13`, including first-run CLI
   smoke results, public docs QA coverage, and preserved prerelease/no
   bundled-solver limitations.
+- Documented the code signing and installer strategy for Issue `#16`, covering
+  current unsigned portable ZIP status, checksum/manifest limits, GitHub
+  artifact attestation distinction, Authenticode signing options, MSI/MSIX/Store
+  tradeoffs, and no-secret signing rules.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.

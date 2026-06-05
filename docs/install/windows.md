@@ -83,7 +83,9 @@ trying GUI or optional solver workflows.
 External solver executables are not bundled in the portable ZIP. Verify
 `SHA256SUMS.txt` and `release_asset_manifest.json` before running downloaded
 assets. See [Windows Portable ZIP](../release/windows_portable_zip.md) for the
-full user guide and troubleshooting notes.
+full user guide and troubleshooting notes. See
+[Code Signing And Installer Strategy](../release/code_signing_installer_strategy.md)
+for why checksums and manifests do not replace Authenticode signing.
 
 ## Activation Troubleshooting
 

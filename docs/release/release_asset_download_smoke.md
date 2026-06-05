@@ -108,7 +108,9 @@ license files, multi-folder layouts, and absent `OpenSolverWorkbench.exe`.
 Warnings do not mutate or overwrite already-published assets.
 
 For user-facing portable ZIP guidance, see
-[Windows Portable ZIP](windows_portable_zip.md).
+[Windows Portable ZIP](windows_portable_zip.md). For the difference between
+checksums, artifact attestations, code signing, and installer packaging, see
+[Code Signing And Installer Strategy](code_signing_installer_strategy.md).
 
 ## QA Wrapper
 

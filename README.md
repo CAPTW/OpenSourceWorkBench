@@ -185,6 +185,7 @@ Useful release docs:
 - [Tutorials](docs/tutorials/README.md)
 - [Post-Public-Release Roadmap](docs/roadmap/README.md)
 - [Windows Portable ZIP](docs/release/windows_portable_zip.md)
+- [Code Signing And Installer Strategy](docs/release/code_signing_installer_strategy.md)
 - [Optional Dependencies](docs/install/optional_dependencies.md)
 
 ## License
