@@ -177,6 +177,108 @@ def test_plugin_manager_dialog_zip_traversal_shows_diagnostic(
     del app
 
 
+def test_plugin_manager_dialog_shows_managed_receipt_safety_and_table_state(
+    app: object,
+    tmp_path: Path,
+) -> None:
+    from osw.gui.dialogs.plugin_manager_dialog import PluginManagerDialog
+    from osw.plugins.installer import PluginInstallManager
+
+    source = tmp_path / "source" / "plugin"
+    _write_install_manifest(source, "demo.gui.ux")
+    dialog = PluginManagerDialog(plugin_paths=[], include_entry_points=False)
+    dialog.set_plugin_installer(PluginInstallManager(tmp_path / "installed"))
+
+    assert dialog.install_plugin_folder(source) is not None
+    _select_plugin(dialog, "demo.gui.ux")
+
+    headers = [
+        dialog.plugin_table.horizontalHeaderItem(index).text()
+        for index in range(dialog.plugin_table.columnCount())
+    ]
+    assert "Source Kind" in headers
+    assert "Install" in headers
+    assert "Managed" in headers
+    assert "Receipt" in headers
+    assert "Diagnostics" in headers
+
+    row = dialog.plugin_table.currentRow()
+    table_text = " ".join(
+        dialog.plugin_table.item(row, column).text()
+        for column in range(dialog.plugin_table.columnCount())
+        if dialog.plugin_table.item(row, column) is not None
+    )
+    assert "local_folder" in table_text
+    assert "installed" in table_text
+    assert "yes" in table_text
+
+    receipt_text = dialog.receipt_panel.toPlainText()
+    safety_text = dialog.safety_panel.toPlainText()
+    assert "Managed install receipt" in receipt_text
+    assert "Installed files count:" in receipt_text
+    assert "Uninstall eligibility: yes" in receipt_text
+    assert "Raw receipt JSON" in receipt_text
+    assert "No remote or network plugin install" in safety_text
+    assert "No dependency auto-install" in safety_text
+    assert "Uninstall is restricted to managed-root receipts" in safety_text
+    assert dialog.uninstall_button.isEnabled()
+
+    del app
+
+
+def test_plugin_manager_dialog_shows_no_receipt_for_unmanaged_discovered_plugin(
+    app: object,
+    tmp_path: Path,
+) -> None:
+    from osw.gui.dialogs.plugin_manager_dialog import PluginManagerDialog
+
+    source = tmp_path / "plugins" / "unmanaged"
+    _write_install_manifest(source, "demo.gui.unmanaged")
+    dialog = PluginManagerDialog(
+        plugin_paths=[tmp_path / "plugins"],
+        include_entry_points=False,
+    )
+
+    _select_plugin(dialog, "demo.gui.unmanaged")
+
+    assert "No managed install receipt" in dialog.receipt_panel.toPlainText()
+    assert "Uninstall eligibility: no" in dialog.receipt_panel.toPlainText()
+    assert "Receipt present: no" in dialog.safety_panel.toPlainText()
+    assert not dialog.uninstall_button.isEnabled()
+
+    del app
+
+
+def test_plugin_manager_dialog_shows_quarantine_records_and_diagnostics(
+    app: object,
+    tmp_path: Path,
+) -> None:
+    from osw.gui.dialogs.plugin_manager_dialog import PluginManagerDialog
+    from osw.plugins.installer import PluginInstallManager
+
+    invalid = tmp_path / "source" / "invalid"
+    invalid.mkdir(parents=True)
+    (invalid / "osw-plugin.json").write_text(
+        json.dumps({"id": "bad.gui.ux", "type": "ui_extension"}),
+        encoding="utf-8",
+    )
+    dialog = PluginManagerDialog(plugin_paths=[], include_entry_points=False)
+    dialog.set_plugin_installer(PluginInstallManager(tmp_path / "installed"))
+
+    assert dialog.install_plugin_folder(invalid) is None
+
+    quarantine_text = dialog.quarantine_panel.toPlainText()
+    diagnostics_text = _install_diagnostics_text(dialog)
+    assert "Quarantine and rejection records" in quarantine_text
+    assert "Quarantine count: 1" in quarantine_text
+    assert "Source kind: local_folder" in quarantine_text
+    assert "missing required field: name" in quarantine_text
+    assert "Raw record JSON" in quarantine_text
+    assert "Folder install rejected" in diagnostics_text
+
+    del app
+
+
 def test_plugin_manager_dialog_surfaces_diagnostics_and_health(app: object) -> None:
     from osw.gui.dialogs.plugin_manager_dialog import PluginManagerDialog
 

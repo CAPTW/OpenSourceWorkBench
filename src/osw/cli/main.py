@@ -837,17 +837,25 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.json:
                 print(json.dumps([r.to_dict() for r in receipts], indent=2, sort_keys=True))
             else:
-                print("Installed plugins:")
+                print(f"Installed managed plugin receipts: {len(receipts)}")
+                print(f"Managed install root: {manager.install_root}")
                 if not receipts:
-                    print("  No installed plugins.")
+                    print("  No managed install receipts.")
+                    print("  Built-in, entry-point, and unmanaged plugins are not listed here.")
                 for r in receipts:
-                    print(f"  - {r.plugin_id} (version: {r.version})")
+                    print(
+                        f"  - {r.plugin_id} "
+                        f"(version: {r.version}, source: {r.source_kind}, "
+                        f"status: {r.status})"
+                    )
+                    print(f"    Installed path: {r.installed_path}")
             return 0
 
         elif args.command == "plugins-uninstall":
             try:
                 manager.uninstall_plugin(args.plugin_id)
-                print(f"Successfully uninstalled plugin: {args.plugin_id}")
+                print(f"Successfully uninstalled managed plugin: {args.plugin_id}")
+                print("Only the managed-root receipt-owned plugin directory was removed.")
                 return 0
             except Exception as exc:
                 print(f"Error: {exc}", file=sys.stderr)
@@ -858,12 +866,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.json:
                 print(json.dumps([r.to_dict() for r in records], indent=2, sort_keys=True))
             else:
-                print("Quarantined plugins:")
+                print(f"Quarantined/rejected plugin installs: {len(records)}")
+                print(f"Managed install root: {manager.install_root}")
                 if not records:
-                    print("  No quarantined plugins.")
+                    print("  No quarantined or rejected plugin installs.")
                 for r in records:
                     print(f"  - Time: {r.created_at}")
                     print(f"    Source: {r.source_path}")
+                    source_kind = r.metadata.get("source_kind", "unknown")
+                    print(f"    Source kind: {source_kind}")
+                    if r.quarantine_path:
+                        print(f"    Quarantine path: {r.quarantine_path}")
                     print(f"    Reason: {r.reason}")
             return 0
 

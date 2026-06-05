@@ -53,6 +53,38 @@ The GUI may prepare cases, preview commands, validate inputs, and inspect
 results. It must not directly run external solver subprocesses from a button
 path in v0.1.
 
+## Plugin Manager Receipts
+
+Open **Plugins > Plugin Manager** to inspect local plugin state.
+
+The plugin table separates discovered plugin metadata from managed install
+state:
+- source kind
+- install status
+- managed-root status
+- receipt presence
+- diagnostic count
+
+For a plugin installed through the local folder or ZIP flow, select the row and
+open the **Receipt** tab. It shows the plugin ID, source path/kind, installed
+path, installed timestamp, manifest path, file count when recorded, uninstall
+eligibility, and a raw receipt JSON preview.
+
+Open the **Quarantine** tab to inspect rejected local install attempts. It lists
+the count, latest reasons, source path/kind, quarantine path when a ZIP copy was
+retained, diagnostics, and raw record JSON.
+
+Open the **Safety** tab before uninstalling. It repeats the boundaries:
+- local folder/ZIP install only
+- no plugin code execution during install or discovery
+- no remote/network plugin install
+- no dependency auto-install
+- no plugin signing or marketplace
+- uninstall is restricted to managed-root receipts
+
+Built-in, entry-point, and unmanaged local plugins do not have install receipts,
+so the uninstall button remains disabled for those rows.
+
 ## Headless Environments
 
 In CI, remote shells, or machines without a desktop session, GUI launch or

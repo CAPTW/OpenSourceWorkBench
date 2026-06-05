@@ -62,6 +62,11 @@ Development package version: `0.1.3rc2.dev0`
   first implementation slice, keeping remote plugin store, dependency
   auto-install, plugin signing, marketplace behavior, plugin code execution
   during install, and GUI solver execution out of scope.
+- Improved Plugin Manager UX for Issue `#15`, adding clearer managed install
+  receipt summaries, quarantine/rejection records, diagnostics/safety
+  messaging, managed-root uninstall eligibility, and CLI wording consistency
+  without adding remote store, dependency auto-install, plugin signing,
+  marketplace behavior, or plugin code execution during install.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.

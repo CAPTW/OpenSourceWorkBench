@@ -33,6 +33,12 @@ First implementation issue: #15 Improve Plugin Manager UX and install receipts.
 
 Next prompt: `OSW-FEAT-001_PLUGIN_MANAGER_UX_RECEIPTS`
 
+Implementation status: `OSW-FEAT-001_PLUGIN_MANAGER_UX_RECEIPTS` has landed on
+`develop`. The Plugin Manager now presents managed install receipts,
+quarantine/rejection records, safety diagnostics, and managed-root uninstall
+eligibility without adding remote plugin store, dependency auto-install, plugin
+signing, marketplace behavior, or plugin code execution during install.
+
 ## Why #15 First
 
 - Bounded scope compared with broader result/field workflow changes.
@@ -133,3 +139,8 @@ Keep #12 open after this scope lock. It can close later in a dedicated closure
 gate after maintainer review, or after the first implementation issue is
 accepted as the v0.1.4 start.
 
+## Issue #15 Closure Policy
+
+Keep #15 open after the implementation commit until a dedicated closure gate
+reviews the Plugin Manager receipt/quarantine UX evidence and maintainer
+acceptance status.

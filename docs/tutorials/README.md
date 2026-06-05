@@ -33,6 +33,8 @@ Level 2, GUI path:
 - install `.[gui]`
 - launch `python -m osw.cli gui`
 - use screenshots to understand layout when running headless
+- open Plugin Manager to inspect local plugin receipts, quarantine/rejection
+  records, and managed-root uninstall safety boundaries
 
 Level 3, optional backend path:
 - Gmsh, GNU Octave, CalculiX `ccx`, OpenFOAM, CoolProp, Cantera, PyVista,

@@ -218,6 +218,41 @@ class PluginQuarantineRecord:
         }
 
 
+@dataclass(frozen=True)
+class PluginInstallStateSummary:
+    plugin_id: str
+    receipt_present: bool
+    install_status: str = "unmanaged"
+    source_kind: str = PluginSourceKind.UNKNOWN.value
+    source_path: str = ""
+    installed_path: str = ""
+    manifest_path: str = ""
+    managed_root: str = ""
+    uninstall_eligible: bool = False
+    diagnostics: tuple[str, ...] = field(default_factory=tuple)
+    quarantine_count: int = 0
+
+    @property
+    def diagnostics_count(self) -> int:
+        return len(self.diagnostics)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "plugin_id": self.plugin_id,
+            "receipt_present": self.receipt_present,
+            "install_status": self.install_status,
+            "source_kind": self.source_kind,
+            "source_path": self.source_path,
+            "installed_path": self.installed_path,
+            "manifest_path": self.manifest_path,
+            "managed_root": self.managed_root,
+            "uninstall_eligible": self.uninstall_eligible,
+            "diagnostics": list(self.diagnostics),
+            "diagnostics_count": self.diagnostics_count,
+            "quarantine_count": self.quarantine_count,
+        }
+
+
 class PluginInstallManager:
     """Install local plugin folders or zip archives into a managed directory."""
 
@@ -259,16 +294,118 @@ class PluginInstallManager:
         q_file.write_text(json.dumps(records, indent=2), encoding="utf-8")
 
     def list_quarantine(self) -> list[PluginQuarantineRecord]:
-        return [PluginQuarantineRecord(**r) for r in self._load_quarantine_records()]
+        records: list[PluginQuarantineRecord] = []
+        for record in self._load_quarantine_records():
+            try:
+                records.append(PluginQuarantineRecord(**record))
+            except TypeError:
+                continue
+        return records
+
+    def list_quarantine_records(self) -> list[PluginQuarantineRecord]:
+        return self.list_quarantine()
 
     def list_receipts(self) -> list[PluginInstallReceipt]:
-        return [PluginInstallReceipt.from_dict(r) for r in self._load_receipts().values()]
+        receipts: list[PluginInstallReceipt] = []
+        for receipt in self._load_receipts().values():
+            try:
+                receipts.append(PluginInstallReceipt.from_dict(receipt))
+            except (KeyError, TypeError):
+                continue
+        return receipts
+
+    def list_installed_receipts(self) -> list[PluginInstallReceipt]:
+        return self.list_receipts()
 
     def get_receipt(self, plugin_id: str) -> PluginInstallReceipt | None:
         receipts = self._load_receipts()
         if plugin_id in receipts:
-            return PluginInstallReceipt.from_dict(receipts[plugin_id])
+            try:
+                return PluginInstallReceipt.from_dict(receipts[plugin_id])
+            except (KeyError, TypeError):
+                return None
         return None
+
+    def receipt_registry_diagnostics(self) -> tuple[str, ...]:
+        receipts_file = self.install_root / "receipts.json"
+        if not receipts_file.exists():
+            return ()
+        try:
+            data = json.loads(receipts_file.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            return (f"Receipt registry is unreadable: {receipts_file} ({exc})",)
+        if not isinstance(data, dict):
+            return (f"Receipt registry has unexpected shape: {receipts_file}",)
+        diagnostics: list[str] = []
+        for plugin_id, receipt in data.items():
+            if not isinstance(receipt, dict):
+                diagnostics.append(f"Receipt for '{plugin_id}' is malformed and was ignored.")
+                continue
+            try:
+                PluginInstallReceipt.from_dict(receipt)
+            except (KeyError, TypeError) as exc:
+                diagnostics.append(f"Receipt for '{plugin_id}' is incomplete: {exc}")
+        return tuple(diagnostics)
+
+    def quarantine_registry_diagnostics(self) -> tuple[str, ...]:
+        q_file = self.install_root / "quarantine_records.json"
+        if not q_file.exists():
+            return ()
+        try:
+            data = json.loads(q_file.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            return (f"Quarantine registry is unreadable: {q_file} ({exc})",)
+        if not isinstance(data, list):
+            return (f"Quarantine registry has unexpected shape: {q_file}",)
+        diagnostics: list[str] = []
+        for index, record in enumerate(data):
+            if not isinstance(record, dict):
+                diagnostics.append(f"Quarantine record {index} is malformed and was ignored.")
+                continue
+            try:
+                PluginQuarantineRecord(**record)
+            except TypeError as exc:
+                diagnostics.append(f"Quarantine record {index} is incomplete: {exc}")
+        return tuple(diagnostics)
+
+    def summarize_plugin_install_state(self, plugin_id: str) -> PluginInstallStateSummary:
+        receipt = self.get_receipt(plugin_id)
+        quarantine_records = self.list_quarantine()
+        registry_diagnostics = (
+            *self.receipt_registry_diagnostics(),
+            *self.quarantine_registry_diagnostics(),
+        )
+        if receipt is None:
+            return PluginInstallStateSummary(
+                plugin_id=plugin_id,
+                receipt_present=False,
+                managed_root=str(self.install_root),
+                uninstall_eligible=False,
+                diagnostics=registry_diagnostics,
+                quarantine_count=len(quarantine_records),
+            )
+
+        diagnostics = list(receipt.diagnostics)
+        diagnostics.extend(registry_diagnostics)
+        uninstall_eligible = _is_managed_child_path(
+            Path(receipt.installed_path),
+            self.install_root,
+        )
+        if not uninstall_eligible:
+            diagnostics.append("Receipt installed path is outside the managed install root.")
+        return PluginInstallStateSummary(
+            plugin_id=plugin_id,
+            receipt_present=True,
+            install_status=receipt.status,
+            source_kind=receipt.source_kind,
+            source_path=receipt.source_path,
+            installed_path=receipt.installed_path,
+            manifest_path=receipt.manifest_path,
+            managed_root=str(self.install_root),
+            uninstall_eligible=uninstall_eligible,
+            diagnostics=tuple(diagnostics),
+            quarantine_count=len(quarantine_records),
+        )
 
     def validate_folder(
         self,
@@ -371,6 +508,7 @@ class PluginInstallManager:
                 installed_path=str(destination.resolve()),
                 manifest_path=str(installed_manifest_path.resolve()),
                 sha256=sha256,
+                metadata={"file_count": _count_regular_files(validation.plugin_root)},
             )
 
             receipts = self._load_receipts()
@@ -470,6 +608,7 @@ class PluginInstallManager:
                     installed_path=str(destination.resolve()),
                     manifest_path=str(installed_manifest_path.resolve()),
                     sha256=sha256,
+                    metadata={"file_count": _count_regular_files(validation.plugin_root)},
                 )
 
                 receipts = self._load_receipts()
@@ -572,6 +711,7 @@ class PluginInstallManager:
             quarantine_path=quarantined_dest,
             reason=reason,
             diagnostics=[reason],
+            metadata={"source_kind": _source_kind_for_path(source_path)},
         )
 
         records = self._load_quarantine_records()
@@ -761,6 +901,15 @@ def _assert_managed_child(path: Path, install_root: Path) -> None:
         )
 
 
+def _is_managed_child_path(path: Path, install_root: Path) -> bool:
+    try:
+        resolved_path = path.resolve()
+        resolved_root = install_root.resolve()
+    except OSError:
+        return False
+    return resolved_path != resolved_root and resolved_root in resolved_path.parents
+
+
 def _install_directory_name(plugin_id: str) -> str:
     encoded = base64.urlsafe_b64encode(plugin_id.encode("utf-8")).decode("ascii")
     return "plugin_" + encoded.rstrip("=")
@@ -793,6 +942,25 @@ def _compute_folder_hash(path: Path) -> str:
         return h.hexdigest()
     except Exception:
         return ""
+
+
+def _count_regular_files(path: Path) -> int:
+    count = 0
+    try:
+        for child in path.rglob("*"):
+            if child.is_file() and not child.is_symlink():
+                count += 1
+        return count
+    except OSError:
+        return 0
+
+
+def _source_kind_for_path(path: Path) -> str:
+    if path.suffix.casefold() == ".zip":
+        return PluginSourceKind.LOCAL_ZIP.value
+    if path.is_dir():
+        return PluginSourceKind.LOCAL_FOLDER.value
+    return PluginSourceKind.UNKNOWN.value
 
 
 def _first_direct_manifest(root: Path) -> Path | None:

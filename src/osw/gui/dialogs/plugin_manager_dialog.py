@@ -18,6 +18,7 @@ from osw.plugins.discovery import (
 )
 from osw.plugins.errors import PluginDiagnostic
 from osw.plugins.health import PluginHealthRecord, build_plugin_health_record
+from osw.plugins.installer import PluginInstallReceipt, PluginInstallStateSummary
 from osw.plugins.manifest import PluginManifest
 from osw.plugins.registry import PluginRegistry
 from osw.plugins.state import PluginStateStore
@@ -432,9 +433,23 @@ class PluginManagerDialog(_BaseDialog):
         splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal, self)
         self.plugin_table = QtWidgets.QTableWidget(splitter)
         self.plugin_table.setObjectName("oswPluginManagerTable")
-        self.plugin_table.setColumnCount(8)
+        self.plugin_table.setColumnCount(13)
         self.plugin_table.setHorizontalHeaderLabels(
-            ["Enabled", "Health", "ID", "Name", "Version", "Type", "Domain", "Source"]
+            [
+                "Enabled",
+                "Health",
+                "ID",
+                "Name",
+                "Version",
+                "Type",
+                "Domain",
+                "Source",
+                "Source Kind",
+                "Install",
+                "Managed",
+                "Receipt",
+                "Diagnostics",
+            ]
         )
         self.plugin_table.setSelectionBehavior(
             QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows
@@ -459,6 +474,7 @@ class PluginManagerDialog(_BaseDialog):
         self.install_diagnostics_list.setObjectName("oswPluginInstallDiagnosticsList")
         self.receipt_panel = _readonly_plain_text("oswPluginInstallReceiptPanel", details)
         self.quarantine_panel = _readonly_plain_text("oswPluginQuarantineList", details)
+        self.safety_panel = _readonly_plain_text("oswPluginInstallSafetyPanel", details)
         self.source_label = QtWidgets.QLabel(details)
         self.source_label.setObjectName("oswPluginInstallSourceLabel")
         self.source_label.setStyleSheet("padding: 2px; font-style: italic;")
@@ -471,6 +487,7 @@ class PluginManagerDialog(_BaseDialog):
         self.details_tabs.addTab(self.install_diagnostics_list, "Install")
         self.details_tabs.addTab(self.receipt_panel, "Receipt")
         self.details_tabs.addTab(self.quarantine_panel, "Quarantine")
+        self.details_tabs.addTab(self.safety_panel, "Safety")
         
         details_layout.addWidget(self.source_label)
         details_layout.addWidget(self.details_tabs)
@@ -561,6 +578,7 @@ class PluginManagerDialog(_BaseDialog):
         for row, row_data in enumerate(self._rows):
             health = self._health_by_id.get(row_data.plugin_id)
             status = _row_status(row_data, health)
+            install_cells = self._install_cells_for_row(row_data)
             enabled = self.state_store.is_enabled(row_data.plugin_id) and row_data.valid
             enabled_item = QtWidgets.QTableWidgetItem("")
             enabled_item.setData(QtCore.Qt.ItemDataRole.UserRole, row_data.plugin_id)
@@ -586,6 +604,11 @@ class PluginManagerDialog(_BaseDialog):
                     row_data.plugin_type,
                     row_data.domain,
                     row_data.source or row_data.source_type,
+                    install_cells["source_kind"],
+                    install_cells["install_status"],
+                    install_cells["managed"],
+                    install_cells["receipt"],
+                    install_cells["diagnostics"],
                 ),
                 start=1,
             ):
@@ -634,37 +657,30 @@ class PluginManagerDialog(_BaseDialog):
         self.disable_button.setEnabled(row_data.valid and row_data.manifest is not None)
         
         # Display Source path
-        self.source_label.setText(f"Source: {row_data.source or 'unknown'}")
+        summary = self._install_summary_for(row_data)
+        self.source_label.setText(
+            "Source: "
+            f"{row_data.source or 'unknown'} | "
+            f"source kind: {summary.source_kind or row_data.source_type} | "
+            f"managed root: {summary.managed_root or 'not configured'}"
+        )
 
         # Load and show receipt details
         receipt = self.installer.get_receipt(row_data.plugin_id) if self.installer else None
-        if receipt:
-            self.receipt_panel.setPlainText(json.dumps(receipt.to_dict(), indent=2))
-            self.uninstall_button.setEnabled(True)
-        else:
-            self.receipt_panel.setPlainText(
-                "No installation receipt. (This is a built-in or entry point plugin.)"
-            )
-            self.uninstall_button.setEnabled(False)
+        self.receipt_panel.setPlainText(_receipt_text(row_data, receipt, summary))
+        self.uninstall_button.setEnabled(summary.uninstall_eligible)
 
         # Load and show quarantine details
         if self.installer:
-            q_records = self.installer.list_quarantine()
-            if q_records:
-                q_text = "Quarantine & Rejection Logs:\n\n"
-                for q in reversed(q_records):
-                    q_text += (
-                        f"Time: {q.created_at}\n"
-                        f"Source: {q.source_path}\n"
-                        f"Quarantine Path: {q.quarantine_path}\n"
-                        f"Reason: {q.reason}\n"
-                        "----------------------------------------\n"
-                    )
-                self.quarantine_panel.setPlainText(q_text)
-            else:
-                self.quarantine_panel.setPlainText("No quarantined or rejected plugins.")
+            self.quarantine_panel.setPlainText(
+                _quarantine_text(
+                    self.installer.list_quarantine_records(),
+                    self.installer.quarantine_registry_diagnostics(),
+                )
+            )
         else:
             self.quarantine_panel.setPlainText("No quarantine records available.")
+        self.safety_panel.setPlainText(_install_safety_text(row_data, summary))
 
     def _show_empty_state(self) -> None:
         self.manifest_viewer.setPlainText("No local plugin manifests discovered.")
@@ -677,8 +693,41 @@ class PluginManagerDialog(_BaseDialog):
         self.uninstall_button.setEnabled(False)
         self.source_label.clear()
         self.receipt_panel.setPlainText("No active plugin selected.")
-        self.quarantine_panel.setPlainText("No active plugin selected.")
+        if self.installer:
+            self.quarantine_panel.setPlainText(
+                _quarantine_text(
+                    self.installer.list_quarantine_records(),
+                    self.installer.quarantine_registry_diagnostics(),
+                )
+            )
+        else:
+            self.quarantine_panel.setPlainText("No active plugin selected.")
+        self.safety_panel.setPlainText(
+            "Plugin install safety boundaries:\n"
+            "- Local folder or ZIP install only.\n"
+            "- No plugin code execution during install or discovery.\n"
+            "- No remote or network plugin install.\n"
+            "- No dependency auto-install.\n"
+            "- Uninstall is restricted to managed-root receipts."
+        )
         self._populate_diagnostics_list()
+
+    def _install_summary_for(self, row_data: PluginManagerRow) -> Any:
+        if self.installer is None:
+            return _unmanaged_install_summary(row_data.plugin_id, "")
+        return self.installer.summarize_plugin_install_state(row_data.plugin_id)
+
+    def _install_cells_for_row(self, row_data: PluginManagerRow) -> dict[str, str]:
+        summary = self._install_summary_for(row_data)
+        diagnostics_count = len(row_data.diagnostics) + summary.diagnostics_count
+        source_kind = summary.source_kind if summary.receipt_present else row_data.source_type
+        return {
+            "source_kind": source_kind or "unknown",
+            "install_status": summary.install_status,
+            "managed": "yes" if summary.uninstall_eligible else "no",
+            "receipt": "yes" if summary.receipt_present else "no",
+            "diagnostics": str(diagnostics_count),
+        }
 
     def _existing_plugin_ids_for_install(self) -> tuple[str, ...]:
         return tuple(row.plugin_id for row in self._rows if row.plugin_id)
@@ -884,6 +933,153 @@ def _executable_text(row: PluginManagerRow, health: PluginHealthRecord | None) -
         lines.append(f"- {executable.executable}: {state}")
         lines.append(f"  {executable.message}")
     return "\n".join(lines)
+
+
+def _receipt_text(
+    row: PluginManagerRow,
+    receipt: PluginInstallReceipt | None,
+    summary: PluginInstallStateSummary,
+) -> str:
+    if receipt is None:
+        source_note = (
+            "This plugin is discovered from an entry point, built-in source, or "
+            "unmanaged local folder."
+        )
+        return "\n".join(
+            [
+                "No managed install receipt.",
+                f"Plugin ID: {row.plugin_id or '<none>'}",
+                f"Name: {row.name or '<unknown>'}",
+                f"Source type: {row.source_type or 'unknown'}",
+                f"Source: {row.source or 'unknown'}",
+                f"Managed install root: {summary.managed_root or 'not configured'}",
+                "Receipt present: no",
+                "Uninstall eligibility: no",
+                source_note,
+                "Only plugins installed by OSW into the managed root have "
+                "receipts and can be uninstalled from this dialog.",
+                *_diagnostic_text_lines(summary.diagnostics),
+            ]
+        )
+
+    file_count = receipt.metadata.get("file_count", "not recorded")
+    lines = [
+        "Managed install receipt.",
+        f"Plugin ID: {receipt.plugin_id}",
+        f"Name: {receipt.name}",
+        f"Version: {receipt.version}",
+        f"Source kind: {receipt.source_kind}",
+        f"Source path: {receipt.source_path}",
+        f"Installed path: {receipt.installed_path}",
+        f"Installed files count: {file_count}",
+        f"Installed timestamp: {receipt.installed_at}",
+        f"Manifest path: {receipt.manifest_path}",
+        f"Status: {receipt.status}",
+        f"Managed install root: {summary.managed_root}",
+        "Managed-root safety: uninstall uses the installer API and removes only "
+        "the receipt-owned directory under the managed root.",
+        "Uninstall eligibility: " + ("yes" if summary.uninstall_eligible else "no"),
+    ]
+    if receipt.sha256:
+        lines.append(f"Source SHA256: {receipt.sha256}")
+    lines.extend(_diagnostic_text_lines(summary.diagnostics))
+    lines.extend(
+        [
+            "",
+            "Raw receipt JSON:",
+            json.dumps(receipt.to_dict(), indent=2, sort_keys=True),
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _quarantine_text(records: list[Any], diagnostics: tuple[str, ...]) -> str:
+    if not records:
+        lines = [
+            "No quarantined or rejected plugin installs.",
+            "Quarantine count: 0",
+            "Rejected folder or ZIP installs will be recorded here without "
+            "executing plugin code.",
+        ]
+        lines.extend(_diagnostic_text_lines(diagnostics))
+        return "\n".join(lines)
+
+    lines = [
+        "Quarantine and rejection records.",
+        f"Quarantine count: {len(records)}",
+        "Latest records first:",
+        "",
+    ]
+    for index, record in enumerate(reversed(records[-5:]), start=1):
+        source_kind = record.metadata.get("source_kind", "unknown")
+        lines.extend(
+            [
+                f"Record {index}",
+                f"Timestamp: {record.created_at}",
+                f"Source kind: {source_kind}",
+                f"Source path: {record.source_path}",
+                f"Quarantine path: {record.quarantine_path or 'not copied'}",
+                f"Reason: {record.reason or 'not recorded'}",
+            ]
+        )
+        if record.diagnostics:
+            lines.append("Diagnostics:")
+            lines.extend(f"- {message}" for message in record.diagnostics)
+        lines.extend(
+            [
+                "Raw record JSON:",
+                json.dumps(record.to_dict(), indent=2, sort_keys=True),
+                "",
+            ]
+        )
+    lines.extend(_diagnostic_text_lines(diagnostics))
+    return "\n".join(lines).rstrip()
+
+
+def _install_safety_text(
+    row: PluginManagerRow,
+    summary: PluginInstallStateSummary,
+) -> str:
+    return "\n".join(
+        [
+            "Plugin install safety boundaries:",
+            "- Local folder or ZIP install only.",
+            "- No plugin code execution during install, discovery, or health display.",
+            "- No remote or network plugin install.",
+            "- No dependency auto-install.",
+            "- No plugin signing, marketplace, or catalog behavior.",
+            "- Duplicate plugin IDs are rejected.",
+            "- ZIP traversal, absolute paths, symlinks, unsafe archives, and local "
+            "link escapes are rejected.",
+            "- Uninstall is restricted to managed-root receipts and calls the "
+            "installer API.",
+            "",
+            f"Selected plugin: {row.plugin_id or '<none>'}",
+            f"Receipt present: {'yes' if summary.receipt_present else 'no'}",
+            f"Install status: {summary.install_status}",
+            f"Managed install root: {summary.managed_root or 'not configured'}",
+            "Uninstall eligibility: " + ("yes" if summary.uninstall_eligible else "no"),
+            f"Quarantine records: {summary.quarantine_count}",
+            *_diagnostic_text_lines(summary.diagnostics),
+        ]
+    )
+
+
+def _diagnostic_text_lines(diagnostics: tuple[str, ...]) -> list[str]:
+    if not diagnostics:
+        return []
+    return ["", "Diagnostics:", *(f"- {message}" for message in diagnostics)]
+
+
+def _unmanaged_install_summary(
+    plugin_id: str,
+    managed_root: str,
+) -> PluginInstallStateSummary:
+    return PluginInstallStateSummary(
+        plugin_id=plugin_id,
+        receipt_present=False,
+        managed_root=managed_root,
+    )
 
 
 def _diagnostic_line(diagnostic: PluginDiagnostic) -> str:

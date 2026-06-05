@@ -47,6 +47,30 @@ This tracking ensures all active plugins are easily audited, discovered, and cle
 
 ---
 
+## Plugin Manager UX
+
+The Plugin Manager exposes the same local records used by the CLI:
+
+- the installed/discovered plugin table includes source kind, install status,
+  managed-root status, receipt presence, and diagnostic counts;
+- the Receipt tab formats the selected managed plugin receipt with plugin ID,
+  source kind/path, installed path, file count when recorded, install timestamp,
+  manifest path, raw JSON, and uninstall eligibility;
+- the Quarantine tab lists rejected install attempts with the count, latest
+  reasons, source path/kind, quarantine path when a ZIP copy was retained,
+  timestamp, diagnostics, and raw record JSON;
+- the Safety tab repeats the operational boundaries: local folder/ZIP install
+  only, no plugin code execution during install or discovery, no remote/network
+  install, no dependency auto-install, no plugin signing or marketplace, and
+  managed-root uninstall only.
+
+Built-in, entry-point, and unmanaged local plugins do not have managed install
+receipts. The Plugin Manager disables uninstall for those rows and explains
+that only receipt-owned directories under the managed install root can be
+removed.
+
+---
+
 ## Quarantine & Rejection Policy
 
 If a plugin fails static manifest validation, contains path traversal indicators, or triggers zip bomb constraints, it is rejected:
@@ -106,7 +130,9 @@ python -m osw.cli plugins-uninstall <PLUGIN_ID>
 
 ### Duplicate Plugin ID
 - **Message**: `Duplicate plugin id: <ID>`
-- **Solution**: Set `--allow-replace` in CLI or check "Allow Replace" in tests if you intend to overwrite the existing version.
+- **Solution**: Use the CLI/API `--allow-replace` path only when you intend to
+  replace an existing managed plugin. The Plugin Manager's default install path
+  rejects duplicates.
 
 ### Safe ZIP Traversal Rejection
 - **Message**: `Plugin zip entry would write outside the install staging folder`
