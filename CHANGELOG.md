@@ -52,6 +52,12 @@ Development package version: `0.1.3rc2.dev0`
   the fallback implementation slice, and live optional validation / full-smoke
   workflow dispatch as deferred unless suitable environments or maintainer
   request are available.
+- Added v0.1.4 feature selection planning for Issue `#12`, recommending a
+  workflow/product-polish feature line with Issue `#15` Plugin Manager
+  UX/install receipts as the first implementation candidate, Issue `#14`
+  ResultViewer/FieldViewer workflow as the second candidate, Issue `#17` VFEA
+  scope as planning-only, and Issues `#6`-`#11` live validation deferred until
+  suitable environments are available.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.
