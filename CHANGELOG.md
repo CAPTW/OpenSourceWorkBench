@@ -47,6 +47,11 @@ Development package version: `0.1.3rc2.dev0`
   current unsigned portable ZIP status, checksum/manifest limits, GitHub
   artifact attestation distinction, Authenticode signing options, MSI/MSIX/Store
   tradeoffs, and no-secret signing rules.
+- Added remaining-open-issue triage after release-trust closure, recommending
+  Issue `#12` v0.1.4 planning as the next gate, Issue `#15` Plugin Manager UX as
+  the fallback implementation slice, and live optional validation / full-smoke
+  workflow dispatch as deferred unless suitable environments or maintainer
+  request are available.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.
