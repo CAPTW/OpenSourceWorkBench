@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import importlib
 import json
-import os
-import stat
 import sys
 import time
 from pathlib import Path
@@ -23,37 +21,28 @@ SIMPLE_DECK = FIXTURE_DIR / "simple_valid.inp"
 FAKE_CCX = FIXTURE_DIR / "fake_ccx.py"
 
 
-def fake_ccx_wrapper(tmp_path: Path, mode: str) -> Path:
-    if os.name == "nt":
-        wrapper = tmp_path / f"fake-ccx-{mode}.cmd"
-        wrapper.write_text(
-            "\n".join(
-                [
-                    "@echo off",
-                    f"set OSW_FAKE_CCX_MODE={mode}",
-                    f'"{sys.executable}" "{FAKE_CCX}" %*',
-                ]
-            ),
-            encoding="utf-8",
-        )
-        return wrapper
-    wrapper = tmp_path / f"fake-ccx-{mode}"
-    wrapper.write_text(
-        "\n".join(
-            [
-                "#!/usr/bin/env sh",
-                f'OSW_FAKE_CCX_MODE={mode} "{sys.executable}" "{FAKE_CCX}" "$@"',
-            ]
-        ),
-        encoding="utf-8",
-    )
-    wrapper.chmod(wrapper.stat().st_mode | stat.S_IXUSR)
-    return wrapper
+class FakeCalculiXRunner(CalculiXRunner):
+    """Run the fake ccx fixture as the direct child process under test."""
+
+    def __init__(self, mode: str) -> None:
+        registry = ExecutablePathRegistry().register("ccx", sys.executable)
+        super().__init__(executable_registry=registry)
+        self._mode = mode
+
+    def build_command(
+        self,
+        request: CalculiXRunRequest,
+        case_dir: str | Path,
+        ccx_path: str | Path,
+        job_name: str | None = None,
+    ) -> list[str]:
+        del request, case_dir
+        return [str(ccx_path), str(FAKE_CCX), "--mode", self._mode, job_name or "calculix"]
 
 
 def runner_with_fake_ccx(tmp_path: Path, mode: str) -> CalculiXRunner:
-    registry = ExecutablePathRegistry().register("ccx", fake_ccx_wrapper(tmp_path, mode))
-    return CalculiXRunner(executable_registry=registry)
+    del tmp_path
+    return FakeCalculiXRunner(mode)
 
 
 def test_module_imports_without_ccx_or_pyside6() -> None:

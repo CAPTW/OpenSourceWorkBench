@@ -7,8 +7,12 @@ from pathlib import Path
 
 
 def main() -> int:
-    job_name = sys.argv[1] if len(sys.argv) > 1 else "calculix"
+    args = sys.argv[1:]
     mode = os.environ.get("OSW_FAKE_CCX_MODE", "success")
+    if args[:1] == ["--mode"]:
+        mode = args[1] if len(args) > 1 else mode
+        args = args[2:]
+    job_name = args[0] if args else "calculix"
     cwd = Path.cwd()
     print(f"fake ccx stdout for {job_name}")
     if mode == "sleep":
