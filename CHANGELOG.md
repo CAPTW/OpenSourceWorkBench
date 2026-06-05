@@ -58,6 +58,10 @@ Development package version: `0.1.3rc2.dev0`
   ResultViewer/FieldViewer workflow as the second candidate, Issue `#17` VFEA
   scope as planning-only, and Issues `#6`-`#11` live validation deferred until
   suitable environments are available.
+- Locked v0.1.4 scope to Issue `#15` Plugin Manager UX/install receipts as the
+  first implementation slice, keeping remote plugin store, dependency
+  auto-install, plugin signing, marketplace behavior, plugin code execution
+  during install, and GUI solver execution out of scope.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.

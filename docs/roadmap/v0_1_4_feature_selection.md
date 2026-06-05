@@ -101,6 +101,10 @@ v0.1.4 until safety boundaries and validation expectations are written.
 Deferred: #6 through #11 live optional validation and full-smoke workflow
 dispatch remain optional and environment-specific.
 
+Scope lock status: [v0.1.4 scope lock](v0_1_4_scope_lock.md) locks #15 as the
+first implementation slice, with #14 as the second candidate and #17 deferred as
+planning-only unless a later scope gate approves experimental work.
+
 ## Proposed Sequence
 
 1. `OSW-PLAN-003_V0_1_4_SCOPE_LOCK`
@@ -148,4 +152,3 @@ dispatch remain optional and environment-specific.
 - Roadmap points to the selected sequence.
 - Issue #12 receives the planning outcome comment.
 - No release, tag, asset, or metadata mutation occurs.
-

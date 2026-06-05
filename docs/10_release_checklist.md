@@ -24,7 +24,7 @@ or full solver parity.
 | Onboarding examples and tutorials | `PASS` | [Tutorials](tutorials/README.md), [Examples](examples.md), and [Examples README](../examples/README.md) now separate zero-dependency, GUI, optional solver, optional science backend, and release-maintainer paths for new users. [Closure evidence](maintenance/v0_1_3rc2_onboarding_closure.md) records the Issue `#13` acceptance review. |
 | Code signing and installer strategy | `PASS` | [Code Signing And Installer Strategy](release/code_signing_installer_strategy.md) records the current unsigned portable ZIP state, no MSI/MSIX/code-signing status, checksum/manifest limits, artifact attestation distinction, future installer options, and security rules. |
 | `v0.1.3rc2` roadmap | `PASS` | Maintenance/revalidation track is documented in [v0.1.3rc2 maintenance](roadmap/v0_1_3rc2.md). |
-| `v0.1.4` roadmap | `PASS` | Next feature line is documented in [v0.1.4 feature line](roadmap/v0_1_4.md) and [v0.1.4 feature selection planning](roadmap/v0_1_4_feature_selection.md), with implementation deferred to an explicit scope-lock gate. |
+| `v0.1.4` roadmap | `PASS` | Next feature line is documented in [v0.1.4 feature line](roadmap/v0_1_4.md), [v0.1.4 feature selection planning](roadmap/v0_1_4_feature_selection.md), and [v0.1.4 scope lock](roadmap/v0_1_4_scope_lock.md), with Issue `#15` locked as the first implementation slice. |
 | Live optional validation roadmap | `PASS` | Optional local solver/science evidence plan is documented in [Live optional validation](roadmap/live_optional_validation.md). |
 | Next planning gate | `PENDING` | Use `OSW-GH-001_ISSUES_AND_MILESTONES_TRIAGE` to create issues and milestones before implementation work. |
 
