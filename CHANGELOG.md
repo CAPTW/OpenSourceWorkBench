@@ -88,6 +88,11 @@ Development package version: `0.1.3rc2.dev0`
   closure, selecting Issue `#17` VFEA experimental scope definition as the next
   planning-only slice while keeping Issues `#6`-`#11` live optional validation
   environment-dependent and deferred.
+- Defined the experimental VFEA scope for Issue `#17`, documenting FEASpec
+  candidate/validator/human-review/benchmark requirements, CalculiX-first
+  planning, optional/non-default Abaqus export planning only, and explicit
+  non-goals against automatic unreviewed solver execution, VLM API integration,
+  topology optimization implementation, and certification claims.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.

@@ -119,6 +119,13 @@ Any VFEA work must preserve human-in-the-loop validation, avoid automatic
 certified FEA claims, and avoid default Abaqus or commercial solver
 dependencies.
 
+[VFEA experimental scope definition](vfea_experimental_scope.md) records the
+issue `#17` planning-only boundary: FEASpec candidate and validator planning,
+human review, benchmark requirements, CalculiX-first export planning, optional
+and non-default Abaqus export planning only, no VLM API integration, no
+automatic unreviewed solver execution, and no topology optimization
+implementation.
+
 ## Environment-Blocked
 
 The live optional validation issues remain open for suitable machines:

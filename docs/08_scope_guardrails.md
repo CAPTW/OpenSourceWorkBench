@@ -14,6 +14,8 @@ request should stop, park, or defer.
 - Bounded educational demos for CalculiX, OpenFOAM templates, Cantera,
   CoolProp, and MATLAB/Octave figure preview.
 - HTML reports, validation matrix, golden tests, and release checklist.
+- Planning-only experimental VFEA scope documentation when it preserves human
+  review, validation gates, and no automatic solver execution.
 
 ## Out of Scope
 
@@ -24,6 +26,10 @@ request should stop, park, or defer.
 - Industrial certification, compliance, accuracy, or production CAE claims.
 - GUI direct subprocess solver execution.
 - Proprietary solver automation that requires licensed commercial software.
+- Automatic unreviewed solver execution from image or VLM output.
+- Mandatory Abaqus dependency, Abaqus exporter implementation, or commercial
+  solver requirement in VFEA planning.
+- Topology optimization implementation inside the initial VFEA scope.
 
 ## Scope Drift Definition
 
@@ -32,6 +38,8 @@ Scope drift is any change that:
 - turns a bounded demo into broad solver/product coverage;
 - implies OSW is a MATLAB, ANSYS, Simulink, or commercial CAD replacement;
 - adds direct GUI execution of external solvers before backend safety exists;
+- adds automatic unreviewed solver execution from image or VLM output;
+- makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;
 - adds user-facing claims that exceed validation evidence.

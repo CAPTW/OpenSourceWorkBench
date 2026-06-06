@@ -44,6 +44,28 @@ FORBIDDEN_PATTERNS = [
             re.IGNORECASE,
         ),
     ),
+    (
+        "automatic unreviewed solver execution",
+        re.compile(
+            r"automatic\s+unreviewed\s+solver\s+execution|"
+            r"unreviewed\s+solver\s+execution\s+from\s+(image|VLM)",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "mandatory Abaqus",
+        re.compile(
+            r"mandatory\s+Abaqus|Abaqus\s+is\s+(required|mandatory)|requires\s+Abaqus",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "implemented VFEA claim",
+        re.compile(
+            r"VFEA\s+(is\s+)?implemented|implemented\s+VFEA|VFEA\s+support\s+is\s+available",
+            re.IGNORECASE,
+        ),
+    ),
     ("nonlinear contact/plasticity", re.compile(r"nonlinear contact|plasticity", re.IGNORECASE)),
 ]
 

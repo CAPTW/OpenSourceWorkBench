@@ -95,6 +95,11 @@ The next prompt should define:
 - Abaqus export as optional and non-default planning only.
 - Topology optimization as future/deferred planning only.
 
+`OSW-EXP-001_VFEA_SCOPE_DEFINITION` completed the first scope document in
+[VFEA experimental scope definition](vfea_experimental_scope.md). Follow-up
+work should either close issue `#17` after maintainer review or continue with
+`OSW-EXP-002_FEASPEC_IR_DESIGN`.
+
 ## Deferred Actions
 
 - Live optional validation for issues `#6` through `#11`.

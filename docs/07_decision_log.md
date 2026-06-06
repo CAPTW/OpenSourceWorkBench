@@ -483,3 +483,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   dedicated maintainer gates. `v0.1.3-rc1` must not be moved, deleted,
   retargeted, recreated, force-updated, or pushed again without an explicit
   maintainer gate.
+
+## ADR-0028: VFEA Is Experimental Planning Before Implementation
+
+- Status: Accepted for planning
+- Date: 2026-06-06
+- Context: After v0.1.4 workflow/product polish closed issues `#15` and `#14`,
+  issue `#17` remained as the strategic planning item. Vision-to-FEA can be
+  useful for educational model setup, but image and VLM interpretation can
+  hallucinate geometry, units, loads, materials, and boundary conditions.
+- Decision: Treat VFEA as an experimental plugin planning line, not a core OSW
+  solver rewrite. The planning architecture uses drawing/image input, optional
+  problem text, a provider layer, `FEASpecCandidate`, `FEASpecValidator`, human
+  review, approved FEASpec, ProjectSchema bridge, CalculiX-first export path,
+  and ResultDataset/report integration. The forbidden path is automatic
+  unreviewed solver execution from image or VLM output. Abaqus export is
+  optional/non-default planning only. Topology optimization remains a separate
+  future plugin topic.
+- Consequences: The next VFEA work should be scope/spec documentation such as
+  `OSW-EXP-002_FEASPEC_IR_DESIGN`, not implementation. No provider API keys,
+  VLM integration, Abaqus dependency, solver execution, release assets, tags, or
+  version metadata changes are part of this decision.
