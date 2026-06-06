@@ -22,6 +22,8 @@ from osw.post.result_view_model import (
     mesh_info_to_view_dataset,
     result_catalog_from_result_datasets,
     result_dataset_to_view_model,
+    summarize_result_catalog_for_view,
+    summarize_result_dataset_for_view,
 )
 
 from .qt_compat import PySide6UnavailableError, pyside6_missing_message
@@ -53,9 +55,15 @@ class ResultViewer(_BaseWidget):
 
         self.dataset_selector = QtWidgets.QComboBox(self)
         self.dataset_selector.setObjectName("oswResultDatasetSelector")
+        self.catalog_summary_panel = QtWidgets.QLabel("No result catalog loaded.", self)
+        self.catalog_summary_panel.setObjectName("oswResultCatalogSummaryPanel")
+        self.catalog_summary_panel.setWordWrap(True)
         self.summary_panel = QtWidgets.QLabel("No result datasets loaded.", self)
         self.summary_panel.setObjectName("oswResultSummaryPanel")
         self.summary_panel.setWordWrap(True)
+        self.handoff_panel = QtWidgets.QLabel("No viewer handoff available.", self)
+        self.handoff_panel.setObjectName("oswResultHandoffPanel")
+        self.handoff_panel.setWordWrap(True)
         self.empty_state = QtWidgets.QLabel("No result datasets loaded.", self)
         self.empty_state.setObjectName("oswResultEmptyState")
         self.empty_state.setWordWrap(True)
@@ -105,8 +113,10 @@ class ResultViewer(_BaseWidget):
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
+        layout.addWidget(self.catalog_summary_panel)
         layout.addWidget(self.dataset_selector)
         layout.addWidget(self.summary_panel)
+        layout.addWidget(self.handoff_panel)
         layout.addWidget(self.empty_state)
         layout.addWidget(self.scalar_cards)
         layout.addWidget(self.series_panel)
@@ -153,6 +163,7 @@ class ResultViewer(_BaseWidget):
             self._show_dataset(self.dataset_selector.currentIndex())
         else:
             self._show_empty_catalog()
+        self._populate_catalog_summary()
 
     def set_result_datasets(
         self,
@@ -258,6 +269,8 @@ class ResultViewer(_BaseWidget):
         )
         self.field_viewer.set_field_view_model(self._field_view_model)
         self.summary_panel.setText("No result datasets loaded.")
+        self.catalog_summary_panel.setText("No result catalog loaded.")
+        self.handoff_panel.setText("No viewer handoff available.")
         self.empty_state.setText("No result datasets loaded.")
         self.empty_state.setVisible(True)
         self.scalar_cards.setRowCount(0)
@@ -269,21 +282,35 @@ class ResultViewer(_BaseWidget):
     def _populate_view_model(self, view_model: ResultViewModel) -> None:
         self.empty_state.setVisible(bool(view_model.empty_state_message))
         self.empty_state.setText(view_model.empty_state_message)
-        self.summary_panel.setText(
-            f"{view_model.title}\n"
-            f"Type: {view_model.kind}\n"
-            f"Source: {view_model.source or 'Not recorded'}\n"
-            f"Scalars: {len(view_model.scalars)} | Series: {len(view_model.series)} | "
-            f"Tables: {len(view_model.tables)} | Figures: {len(view_model.figures)} | "
-            f"Artifacts: {len(view_model.artifacts)} | "
-            f"Fields: {len(self._field_view_model.arrays) if self._field_view_model else 0}"
+        field_count = len(self._field_view_model.arrays) if self._field_view_model else 0
+        dataset = self._dataset_for_view_model(view_model)
+        details = (
+            summarize_result_dataset_for_view(dataset, field_count=field_count)
+            if dataset is not None
+            else None
         )
+        if details is not None:
+            self.summary_panel.setText(_dataset_details_text(details))
+            self.handoff_panel.setText(_handoff_text(details))
+        else:
+            self.summary_panel.setText("No selected result dataset.")
+            self.handoff_panel.setText("No viewer handoff available.")
         self._populate_scalars(view_model)
         self._populate_series(view_model)
         self._populate_table(view_model)
         self._populate_artifacts(view_model)
         self._populate_diagnostics(view_model)
         self.plot_handoff_button.setEnabled(bool(view_model.figures and self._figure_dataset))
+
+    def _populate_catalog_summary(self) -> None:
+        summary = summarize_result_catalog_for_view(self._catalog)
+        self.catalog_summary_panel.setText(_catalog_summary_text(summary))
+
+    def _dataset_for_view_model(self, view_model: ResultViewModel) -> ResultDataset | None:
+        for dataset in self._catalog.datasets:
+            if dataset.dataset_id == view_model.dataset_id:
+                return dataset
+        return self._catalog.selected_dataset()
 
     def _populate_scalars(self, view_model: ResultViewModel) -> None:
         self.scalar_cards.setRowCount(len(view_model.scalars))
@@ -371,3 +398,50 @@ def _format_number(value: object) -> str:
     if isinstance(value, float):
         return f"{value:.12g}"
     return str(value)
+
+
+def _catalog_summary_text(summary: object) -> str:
+    kind_counts = tuple(getattr(summary, "kind_counts", ()) or ())
+    kinds = ", ".join(f"{kind}: {count}" for kind, count in kind_counts) or "none"
+    selected_title = str(getattr(summary, "selected_title", ""))
+    selected_suffix = f" ({selected_title})" if selected_title else ""
+    return (
+        f"Catalog: {getattr(summary, 'catalog_id', '') or 'results'}\n"
+        f"Project: {getattr(summary, 'project_name', '') or 'Not recorded'}\n"
+        f"Datasets: {getattr(summary, 'dataset_count', 0)} | Types: {kinds}\n"
+        f"Active: {getattr(summary, 'selected_dataset_id', '') or 'none'}"
+        f"{selected_suffix}\n"
+        f"Sources: {getattr(summary, 'source_summary', '')}\n"
+        f"Diagnostics: {getattr(summary, 'diagnostics_count', 0)}"
+    )
+
+
+def _dataset_details_text(details: object) -> str:
+    kind = getattr(details, "kind", "")
+    source_kind = getattr(details, "source_kind", "")
+    return (
+        f"{getattr(details, 'title', '')}\n"
+        f"Dataset ID: {getattr(details, 'dataset_id', '')}\n"
+        f"Type: {kind} | Source kind: {source_kind}\n"
+        f"Source: {getattr(details, 'source', '') or 'Not recorded'}\n"
+        f"Scalars: {getattr(details, 'scalar_count', 0)} | "
+        f"Series: {getattr(details, 'series_count', 0)} | "
+        f"Tables: {getattr(details, 'table_count', 0)} | "
+        f"Figures: {getattr(details, 'figure_count', 0)} | "
+        f"Artifacts: {getattr(details, 'artifact_count', 0)} | "
+        f"Fields: {getattr(details, 'field_count', 0)} | "
+        f"Diagnostics: {getattr(details, 'diagnostics_count', 0)}"
+    )
+
+
+def _handoff_text(details: object) -> str:
+    hints = tuple(getattr(details, "handoff_hints", ()) or ())
+    limitations = tuple(getattr(details, "limitations", ()) or ())
+    lines = ["Viewer handoff:"]
+    lines.extend(f"- {hint}" for hint in hints)
+    if getattr(details, "report_compatible", False) and "Report compatible" not in hints:
+        lines.append("- Report compatible")
+    if limitations:
+        lines.append("Limitations:")
+        lines.extend(f"- {limitation}" for limitation in limitations)
+    return "\n".join(lines)

@@ -8,7 +8,11 @@ from typing import Any
 
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
 from osw.post.field_dataset import FieldRenderRequest, FieldRenderResult
-from osw.post.field_view_model import FieldViewModel
+from osw.post.field_view_model import (
+    FieldViewModel,
+    summarize_field_artifacts_for_view,
+    summarize_field_dataset_for_view,
+)
 from osw.post.pyvista_scene import render_field_view
 
 try:
@@ -34,6 +38,9 @@ class FieldViewerPanel(_BaseWidget):
         self.summary_label = QtWidgets.QLabel("No field dataset loaded.", self)
         self.summary_label.setObjectName("oswFieldSummaryLabel")
         self.summary_label.setWordWrap(True)
+        self.workflow_label = QtWidgets.QLabel("No field workflow summary.", self)
+        self.workflow_label.setObjectName("oswFieldWorkflowLabel")
+        self.workflow_label.setWordWrap(True)
         self.empty_state = QtWidgets.QLabel("No mesh field arrays are available.", self)
         self.empty_state.setObjectName("oswFieldEmptyState")
         self.empty_state.setWordWrap(True)
@@ -57,9 +64,9 @@ class FieldViewerPanel(_BaseWidget):
 
         self.artifact_table = QtWidgets.QTableWidget(self)
         self.artifact_table.setObjectName("oswFieldArtifactTable")
-        self.artifact_table.setColumnCount(5)
+        self.artifact_table.setColumnCount(7)
         self.artifact_table.setHorizontalHeaderLabels(
-            ["Role", "Path", "Format", "Exists", "Size"]
+            ["Role", "Path", "Format", "Exists", "Size", "Arrays", "Source"]
         )
 
         self.diagnostics_list = QtWidgets.QListWidget(self)
@@ -75,6 +82,7 @@ class FieldViewerPanel(_BaseWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
         layout.addWidget(self.summary_label)
+        layout.addWidget(self.workflow_label)
         layout.addWidget(self.empty_state)
         layout.addLayout(controls)
         layout.addWidget(self.render_status)
@@ -91,18 +99,21 @@ class FieldViewerPanel(_BaseWidget):
     def set_field_view_model(self, view_model: FieldViewModel) -> None:
         self._view_model = view_model
         self._last_render_result = None
+        workflow = summarize_field_dataset_for_view(view_model)
         self.summary_label.setText(
             f"{view_model.title}\n"
             f"Source: {view_model.source or 'Not recorded'}\n"
-            f"Fields: {len(view_model.arrays)} | Artifacts: {len(view_model.artifacts)}"
+            f"Fields: {len(view_model.arrays)} | Artifacts: {len(view_model.artifacts)}\n"
+            f"Scalar fields: {workflow.scalar_count} | Vector fields: {workflow.vector_count}"
         )
+        self.workflow_label.setText(_workflow_text(workflow))
         self.empty_state.setText(view_model.empty_state_message)
         self.empty_state.setVisible(bool(view_model.empty_state_message))
         self._populate_scalar_selector(view_model)
         self._populate_arrays(view_model)
         self._populate_artifacts(view_model)
         self._populate_diagnostics(view_model)
-        self.render_status.setText("Rendering not requested.")
+        self.render_status.setText(f"Rendering not requested. {workflow.fallback_reason}")
         self._set_controls_enabled(bool(view_model.scalar_fields or view_model.vector_fields))
 
     def current_field_view_model(self) -> FieldViewModel | None:
@@ -192,14 +203,17 @@ class FieldViewerPanel(_BaseWidget):
         self.array_table.resizeColumnsToContents()
 
     def _populate_artifacts(self, view_model: FieldViewModel) -> None:
-        self.artifact_table.setRowCount(len(view_model.artifacts))
-        for row, artifact in enumerate(view_model.artifacts):
+        rows = summarize_field_artifacts_for_view(view_model)
+        self.artifact_table.setRowCount(len(rows))
+        for row, artifact in enumerate(rows):
             values = (
-                artifact.role,
-                artifact.path,
-                artifact.format,
-                "yes" if artifact.exists else "missing",
-                "" if artifact.size_bytes is None else str(artifact.size_bytes),
+                artifact["role"],
+                artifact["path"],
+                artifact["format"],
+                artifact["state"],
+                artifact["size"],
+                artifact["arrays"],
+                artifact["source"],
             )
             for column, value in enumerate(values):
                 self.artifact_table.setItem(row, column, QtWidgets.QTableWidgetItem(value))
@@ -207,7 +221,16 @@ class FieldViewerPanel(_BaseWidget):
 
     def _populate_diagnostics(self, view_model: FieldViewModel) -> None:
         self.diagnostics_list.clear()
-        diagnostics = view_model.diagnostics or ("No field diagnostics.",)
+        workflow = summarize_field_dataset_for_view(view_model)
+        diagnostics = tuple(
+            item
+            for item in (
+                *view_model.diagnostics,
+                workflow.fallback_reason,
+                *workflow.limitations,
+            )
+            if item
+        ) or ("No field diagnostics.",)
         for diagnostic in diagnostics:
             self.diagnostics_list.addItem(diagnostic)
 
@@ -233,3 +256,14 @@ class FieldViewerPanel(_BaseWidget):
 
 def build_field_viewer_panel(parent: object | None = None) -> object:
     return FieldViewerPanel(parent)
+
+
+def _workflow_text(workflow: object) -> str:
+    limitations = tuple(getattr(workflow, "limitations", ()) or ())
+    lines = [
+        f"PyVista: {getattr(workflow, 'pyvista_state', 'missing')} (optional)",
+        f"Fallback: {getattr(workflow, 'fallback_reason', '')}",
+        "Field workflow: summary-first metadata inspection.",
+    ]
+    lines.extend(f"- {limitation}" for limitation in limitations)
+    return "\n".join(lines)

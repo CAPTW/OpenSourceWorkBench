@@ -49,8 +49,13 @@ def test_field_viewer_panel_displays_field_metadata(app: object) -> None:
     assert panel.scalar_selector.objectName() == "oswFieldScalarSelector"
     assert panel.render_button.objectName() == "oswFieldRenderButton"
     assert panel.screenshot_button.objectName() == "oswFieldScreenshotButton"
+    assert panel.workflow_label.objectName() == "oswFieldWorkflowLabel"
     assert panel.array_table.rowCount() == 2
+    assert panel.artifact_table.columnCount() == 7
     assert panel.scalar_selector.count() == 1
+    assert "PyVista:" in panel.workflow_label.text()
+    assert "summary-first metadata inspection" in panel.workflow_label.text()
+    assert "Full CalculiX FRD contour parsing" in panel.workflow_label.text()
     assert panel.empty_state.isHidden()
     del app
 
@@ -67,4 +72,9 @@ def test_field_viewer_panel_missing_pyvista_render_is_friendly(app: object) -> N
     assert result.status == "dependency_missing"
     assert "PyVista is not installed" in result.message
     assert "PyVista is not installed" in panel.render_status.text()
+    diagnostics = [
+        panel.diagnostics_list.item(index).text()
+        for index in range(panel.diagnostics_list.count())
+    ]
+    assert any("OpenFOAM field parsing" in item for item in diagnostics)
     del app

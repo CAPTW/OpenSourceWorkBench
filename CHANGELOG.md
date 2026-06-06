@@ -76,6 +76,11 @@ Development package version: `0.1.3rc2.dev0`
   evidence landed on `develop`; Issue `#14` remains the next feature candidate,
   Issue `#17` remains experimental/deferred, and Issues `#6`-`#11` remain
   environment-dependent live validation.
+- Improved ResultViewer / FieldViewer workflow for Issue `#14`, adding clearer
+  catalog summaries, dataset details, plot/table/field/report handoff hints,
+  field artifact summaries, diagnostics, PyVista optional/fallback state, and
+  summary-first limitations without adding solver execution, script execution,
+  full FRD/OpenFOAM field parsing, or mandatory PyVista.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.

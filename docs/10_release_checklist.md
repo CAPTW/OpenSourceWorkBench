@@ -26,8 +26,9 @@ or full solver parity.
 | `v0.1.3rc2` roadmap | `PASS` | Maintenance/revalidation track is documented in [v0.1.3rc2 maintenance](roadmap/v0_1_3rc2.md). |
 | `v0.1.4` roadmap | `PASS` | Next feature line is documented in [v0.1.4 feature line](roadmap/v0_1_4.md), [v0.1.4 feature selection planning](roadmap/v0_1_4_feature_selection.md), [v0.1.4 scope lock](roadmap/v0_1_4_scope_lock.md), and [v0.1.4 planning issue closure evidence](maintenance/v0_1_4_planning_issue_closure.md), with Issue `#15` implemented/closed as the first slice and Issue `#14` retained as the next feature candidate. |
 | Plugin Manager UX receipts | `PASS` | Issue `#15` implementation surfaces managed install receipts, quarantine/rejection records, safety diagnostics, and managed-root uninstall eligibility in the Plugin Manager while preserving local-only install, no code execution during install, no remote store, no dependency auto-install, no signing, and no marketplace behavior. [Closure evidence](maintenance/v0_1_4_plugin_manager_ux_closure.md) records the acceptance review. |
+| Result/Field Viewer workflow | `PASS` | Issue `#14` implementation makes catalog summaries, dataset details, plot/table/field/report handoff hints, field artifact summaries, diagnostics, PyVista optional/fallback state, and summary-first limitations visible without adding solver execution, script execution, full FRD/OpenFOAM field parsing, vector glyphs, streamlines, animation, or mandatory PyVista. |
 | Live optional validation roadmap | `PASS` | Optional local solver/science evidence plan is documented in [Live optional validation](roadmap/live_optional_validation.md). |
-| Next feature gate | `PENDING` | Use `OSW-FEAT-003_RESULT_FIELD_VIEWER_WORKFLOW` for Issue `#14` if maintainers want to continue the locked v0.1.4 workflow/product polish sequence. |
+| Next feature gate | `PENDING` | Use `OSW-FEAT-004_RESULT_FIELD_VIEWER_CLOSURE` to review Issue `#14` completion evidence, or continue with a later v0.1.4 scope review. |
 
 ## v0.1.3rc2 Development Cycle Opened
 

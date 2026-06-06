@@ -15,6 +15,8 @@ from osw.post.result_view_model import (
     result_catalog_from_result_datasets,
     result_dataset_summary,
     result_dataset_to_view_model,
+    summarize_result_catalog_for_view,
+    summarize_result_dataset_for_view,
 )
 from osw.scripts.mscript.figure_dataset import FigureDataset
 from osw.scripts.mscript.mat_model import MatFileSummary
@@ -187,6 +189,45 @@ def test_result_catalog_helpers_round_trip() -> None:
     assert restored.project_name == "Demo"
     assert len(restored.datasets) == 2
     assert result_dataset_summary(restored.datasets[0]).scalar_count == 2
+
+
+def test_catalog_view_summary_counts_types_and_selection() -> None:
+    catalog = result_catalog_from_result_datasets(
+        (
+            _load_dataset("calculix_summary_result.json"),
+            _load_dataset("openfoam_residual_result.json"),
+        ),
+        project_name="Demo",
+        selected_dataset_id="duct-residuals",
+    )
+
+    summary = summarize_result_catalog_for_view(catalog)
+
+    assert summary.dataset_count == 2
+    assert summary.selected_dataset_id == "duct-residuals"
+    assert ("calculix_summary", 1) in summary.kind_counts
+    assert ("openfoam_residuals", 1) in summary.kind_counts
+    assert "simple_success.dat" in summary.source_summary
+
+
+def test_dataset_view_details_exposes_handoff_and_limitations() -> None:
+    field_fixture = (
+        Path(__file__).parents[1]
+        / "fixtures"
+        / "fields"
+        / "scalar_field_dataset.json"
+    )
+    dataset = ResultDataset.from_dict(
+        json.loads(field_fixture.read_text(encoding="utf-8"))
+    )
+
+    details = summarize_result_dataset_for_view(dataset, field_count=2)
+
+    assert details.source_kind == "vtk"
+    assert details.field_count == 2
+    assert "Shown in Table Viewer" in details.handoff_hints
+    assert "Shown in Field Viewer" in details.handoff_hints
+    assert any("does not execute solvers or scripts" in item for item in details.limitations)
 
 
 def test_result_catalog_from_project_includes_mesh_and_boundary_curve() -> None:

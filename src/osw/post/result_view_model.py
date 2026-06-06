@@ -109,6 +109,47 @@ class ResultViewModel:
         }
 
 
+@dataclass(frozen=True)
+class ResultCatalogViewSummary:
+    catalog_id: str
+    project_name: str = ""
+    dataset_count: int = 0
+    kind_counts: tuple[tuple[str, int], ...] = field(default_factory=tuple)
+    selected_dataset_id: str = ""
+    selected_title: str = ""
+    source_summary: str = "No sources recorded."
+    diagnostics_count: int = 0
+    diagnostics: tuple[str, ...] = field(default_factory=tuple)
+    empty_state_message: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "kind_counts", tuple(self.kind_counts))
+        object.__setattr__(self, "diagnostics", tuple(str(item) for item in self.diagnostics))
+
+
+@dataclass(frozen=True)
+class ResultDatasetViewDetails:
+    dataset_id: str
+    title: str
+    kind: str
+    source_kind: str
+    source: str
+    scalar_count: int = 0
+    series_count: int = 0
+    table_count: int = 0
+    figure_count: int = 0
+    artifact_count: int = 0
+    field_count: int = 0
+    diagnostics_count: int = 0
+    handoff_hints: tuple[str, ...] = field(default_factory=tuple)
+    limitations: tuple[str, ...] = field(default_factory=tuple)
+    report_compatible: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "handoff_hints", tuple(str(item) for item in self.handoff_hints))
+        object.__setattr__(self, "limitations", tuple(str(item) for item in self.limitations))
+
+
 def result_catalog_from_result_datasets(
     datasets: Iterable[ResultDataset | Mapping[str, Any]],
     *,
@@ -178,6 +219,76 @@ def result_dataset_summary(dataset: ResultDataset) -> ResultDatasetSummary:
         + sum(1 for item in view_model.diagnostics if "warning" in item.casefold()),
         diagnostics=view_model.diagnostics,
         metadata={"solver": dataset.solver, "analysis_type": dataset.analysis_type},
+    )
+
+
+def summarize_result_catalog_for_view(
+    catalog: ResultCatalog | Mapping[str, Any],
+) -> ResultCatalogViewSummary:
+    normalized = catalog if isinstance(catalog, ResultCatalog) else ResultCatalog.from_dict(catalog)
+    summaries = tuple(result_dataset_summary(dataset) for dataset in normalized.datasets)
+    kind_counts: dict[str, int] = {}
+    sources: list[str] = []
+    selected_title = ""
+    for summary in summaries:
+        kind_counts[summary.kind] = kind_counts.get(summary.kind, 0) + 1
+        if summary.source:
+            sources.append(summary.source)
+        if summary.dataset_id == normalized.selected_dataset_id:
+            selected_title = summary.title
+    if not selected_title and summaries:
+        selected_title = summaries[0].title
+    source_summary = ", ".join(dict.fromkeys(sources[:3])) if sources else "No sources recorded."
+    if len(sources) > 3:
+        source_summary += f" (+{len(sources) - 3} more)"
+    empty = "" if summaries else "No result catalog is loaded."
+    return ResultCatalogViewSummary(
+        catalog_id=normalized.catalog_id,
+        project_name=normalized.project_name,
+        dataset_count=len(summaries),
+        kind_counts=tuple(sorted(kind_counts.items())),
+        selected_dataset_id=normalized.selected_dataset_id,
+        selected_title=selected_title,
+        source_summary=source_summary,
+        diagnostics_count=len(normalized.diagnostics),
+        diagnostics=normalized.diagnostics,
+        empty_state_message=empty,
+    )
+
+
+def summarize_result_dataset_for_view(
+    dataset: ResultDataset | Mapping[str, Any],
+    *,
+    field_count: int = 0,
+) -> ResultDatasetViewDetails:
+    normalized = dataset if isinstance(dataset, ResultDataset) else ResultDataset.from_dict(dataset)
+    view_model = result_dataset_to_view_model(normalized)
+    source_kind = _source_kind(normalized.source)
+    handoffs = _handoff_hints(view_model, field_count=field_count)
+    limitations = _dataset_limitations(view_model.kind)
+    report_compatible = bool(
+        view_model.scalars
+        or view_model.series
+        or view_model.tables
+        or view_model.figures
+        or view_model.diagnostics
+    )
+    return ResultDatasetViewDetails(
+        dataset_id=normalized.dataset_id,
+        title=view_model.title,
+        kind=view_model.kind,
+        source_kind=source_kind,
+        source=normalized.source,
+        scalar_count=len(view_model.scalars),
+        series_count=len(view_model.series),
+        table_count=len(view_model.tables),
+        figure_count=len(view_model.figures),
+        artifact_count=len(view_model.artifacts),
+        field_count=field_count,
+        diagnostics_count=len(view_model.diagnostics),
+        handoff_hints=handoffs,
+        limitations=limitations,
+        report_compatible=report_compatible,
     )
 
 
@@ -465,6 +576,50 @@ def _dataset_title(dataset: ResultDataset, kind: str) -> str:
     return dataset.dataset_id or "Result Dataset"
 
 
+def _source_kind(source: str) -> str:
+    if not source:
+        return "not recorded"
+    suffix = Path(source).suffix.lower().lstrip(".")
+    if suffix:
+        return suffix
+    if "/" in source or "\\" in source:
+        return "path"
+    return "identifier"
+
+
+def _handoff_hints(view_model: ResultViewModel, *, field_count: int) -> tuple[str, ...]:
+    hints = []
+    hints.append(
+        "Shown in Plot Viewer" if view_model.series else "Plot Viewer: no series data"
+    )
+    hints.append(
+        "Shown in Table Viewer" if view_model.tables else "Table Viewer: no table data"
+    )
+    hints.append(
+        "Shown in Field Viewer" if field_count else "Field Viewer: summary only"
+    )
+    hints.append(
+        "Figure handoff" if view_model.figures else "Figure handoff: no figures"
+    )
+    hints.append("Report compatible")
+    return tuple(hints)
+
+
+def _dataset_limitations(kind: str) -> tuple[str, ...]:
+    limitations = [
+        "Viewer inspection is summary-first and does not execute solvers or scripts.",
+    ]
+    if kind == ResultDatasetKind.FIELD_DATASET.value:
+        limitations.extend(
+            [
+                "Full CalculiX FRD contour parsing is not implemented in this slice.",
+                "OpenFOAM field parsing is not implemented in this slice.",
+                "Vector glyphs, streamlines, and animation remain deferred.",
+            ]
+        )
+    return tuple(limitations)
+
+
 def _scalars_from_dataset(dataset: ResultDataset) -> tuple[ResultScalar, ...]:
     return tuple(
         ResultScalar(
@@ -706,6 +861,8 @@ def _format_cell(value: object) -> str:
 
 __all__ = [
     "ResultFigureRef",
+    "ResultCatalogViewSummary",
+    "ResultDatasetViewDetails",
     "ResultViewModel",
     "boundary_curve_to_view_dataset",
     "calculix_result_to_view_dataset",
@@ -717,4 +874,6 @@ __all__ = [
     "result_catalog_from_result_datasets",
     "result_dataset_summary",
     "result_dataset_to_view_model",
+    "summarize_result_catalog_for_view",
+    "summarize_result_dataset_for_view",
 ]

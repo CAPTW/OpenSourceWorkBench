@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
@@ -73,6 +74,23 @@ class FieldViewModel:
             "metadata": dict(self.metadata),
             "has_mesh_data": self.mesh_data is not None,
         }
+
+
+@dataclass(frozen=True)
+class FieldWorkflowSummary:
+    dataset_id: str
+    title: str
+    source: str = ""
+    scalar_count: int = 0
+    vector_count: int = 0
+    artifact_count: int = 0
+    array_count: int = 0
+    pyvista_state: str = "missing"
+    fallback_reason: str = ""
+    limitations: tuple[str, ...] = field(default_factory=tuple)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "limitations", tuple(str(item) for item in self.limitations))
 
 
 def field_view_model_from_result_dataset(
@@ -179,6 +197,61 @@ def field_view_model_from_artifacts(path: str | Path) -> FieldViewModel:
     )
 
 
+def summarize_field_dataset_for_view(view_model: FieldViewModel) -> FieldWorkflowSummary:
+    pyvista_state = "available" if find_spec("pyvista") is not None else "missing"
+    fallback_reason = _fallback_reason(view_model, pyvista_state=pyvista_state)
+    return FieldWorkflowSummary(
+        dataset_id=view_model.dataset_id,
+        title=view_model.title,
+        source=view_model.source,
+        scalar_count=len(view_model.scalar_fields),
+        vector_count=len(view_model.vector_fields),
+        artifact_count=len(view_model.artifacts),
+        array_count=len(view_model.arrays),
+        pyvista_state=pyvista_state,
+        fallback_reason=fallback_reason,
+        limitations=_field_limitations(),
+    )
+
+
+def summarize_field_artifacts_for_view(
+    view_model: FieldViewModel,
+) -> tuple[dict[str, str], ...]:
+    rows = []
+    for artifact in view_model.artifacts:
+        rows.append(
+            {
+                "role": artifact.role,
+                "path": artifact.path,
+                "format": artifact.format or "unknown",
+                "state": "exists" if artifact.exists else "missing",
+                "size": "" if artifact.size_bytes is None else str(artifact.size_bytes),
+                "arrays": str(len(artifact.arrays)),
+                "source": artifact.source,
+            }
+        )
+    return tuple(rows)
+
+
+def _fallback_reason(view_model: FieldViewModel, *, pyvista_state: str) -> str:
+    if not view_model.arrays:
+        return "Only summary data is available; no field arrays were discovered."
+    if pyvista_state == "missing":
+        return "PyVista is optional and not installed; field metadata remains inspectable."
+    if view_model.mesh_data is None:
+        return "No in-memory mesh geometry is attached for rendering."
+    return "Optional PyVista rendering can be requested for scalar fields."
+
+
+def _field_limitations() -> tuple[str, ...]:
+    return (
+        "Field Viewer does not execute solvers, scripts, or external commands.",
+        "Full CalculiX FRD contour parsing is not implemented in this slice.",
+        "OpenFOAM field parsing is not implemented in this slice.",
+        "Vector glyphs, streamlines, and animation remain deferred.",
+    )
+
+
 def _arrays_from_mesh_info(mesh_info: MeshInfo) -> tuple[FieldArraySummary, ...]:
     arrays: list[FieldArraySummary] = []
     arrays.extend(
@@ -275,10 +348,13 @@ def _dedupe_arrays(arrays: Iterable[FieldArraySummary]) -> tuple[FieldArraySumma
 
 
 __all__ = [
+    "FieldWorkflowSummary",
     "FieldViewModel",
     "field_view_model_from_artifacts",
     "field_view_model_from_field_dataset",
     "field_view_model_from_mesh_info",
     "field_view_model_from_mesh_model",
     "field_view_model_from_result_dataset",
+    "summarize_field_artifacts_for_view",
+    "summarize_field_dataset_for_view",
 ]

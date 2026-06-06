@@ -10,6 +10,8 @@ from osw.post.field_view_model import (
     field_view_model_from_mesh_info,
     field_view_model_from_mesh_model,
     field_view_model_from_result_dataset,
+    summarize_field_artifacts_for_view,
+    summarize_field_dataset_for_view,
 )
 
 FIXTURES = Path(__file__).parents[1] / "fixtures" / "fields"
@@ -65,6 +67,24 @@ def test_result_dataset_metadata_becomes_field_view_model() -> None:
     assert view_model.scalar_fields == ("temperature",)
     assert view_model.vector_fields == ("velocity",)
     assert view_model.artifacts[0].exists
+
+
+def test_field_workflow_summary_exposes_fallback_and_limitations() -> None:
+    dataset = ResultDataset.from_dict(
+        json.loads((FIXTURES / "scalar_field_dataset.json").read_text(encoding="utf-8"))
+    )
+    view_model = field_view_model_from_result_dataset(dataset)
+
+    summary = summarize_field_dataset_for_view(view_model)
+    artifacts = summarize_field_artifacts_for_view(view_model)
+
+    assert summary.scalar_count == 1
+    assert summary.vector_count == 1
+    assert summary.artifact_count == 1
+    assert summary.pyvista_state in {"available", "missing"}
+    assert "Field Viewer does not execute solvers" in summary.limitations[0]
+    assert artifacts[0]["arrays"] == "0"
+    assert artifacts[0]["state"] == "exists"
 
 
 def test_summary_only_dataset_gets_friendly_empty_state() -> None:

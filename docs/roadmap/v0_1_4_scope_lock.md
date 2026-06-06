@@ -91,8 +91,16 @@ signing, marketplace behavior, or plugin code execution during install.
 
 Second candidate: #14 Enhance ResultViewer and FieldViewer workflow.
 
+Status: `OSW-FEAT-003_RESULT_FIELD_VIEWER_WORKFLOW` has landed on `develop`.
+The slice improves catalog summary, dataset details, plot/table/field/report
+handoff hints, field artifact summaries, diagnostics, and optional
+PyVista/fallback messaging without adding solver/script execution, full
+FRD/OpenFOAM field parsing, vector glyphs, streamlines, animation, or mandatory
+heavy visualization dependencies.
+
 Reason: #14 has strong visible user value, but it is broader GUI/result workflow
-work and should follow once #15 establishes a smaller product-polish slice.
+work and follows #15 after the smaller product-polish slice established the
+v0.1.4 implementation path.
 
 ## Experimental / Deferred
 

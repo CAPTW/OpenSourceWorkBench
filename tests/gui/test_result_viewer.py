@@ -98,11 +98,16 @@ def test_result_viewer_displays_catalog_scalars_and_series(app: object) -> None:
     assert viewer.table_viewer.objectName() == "oswResultTableViewer"
     assert viewer.artifacts_panel.objectName() == "oswResultArtifactsPanel"
     assert viewer.diagnostics_list.objectName() == "oswResultDiagnosticsList"
+    assert viewer.catalog_summary_panel.objectName() == "oswResultCatalogSummaryPanel"
+    assert viewer.handoff_panel.objectName() == "oswResultHandoffPanel"
+    assert "Datasets: 2" in viewer.catalog_summary_panel.text()
     assert viewer.scalar_cards.rowCount() == 2
 
     viewer.dataset_selector.setCurrentIndex(1)
     assert viewer.series_panel.rowCount() >= 4
     assert "OpenFOAM" in viewer.summary_panel.text()
+    assert "Shown in Plot Viewer" in viewer.handoff_panel.text()
+    assert "Shown in Table Viewer" in viewer.handoff_panel.text()
 
     del app
 
@@ -179,4 +184,6 @@ def test_result_viewer_displays_field_capable_dataset(app: object) -> None:
     assert viewer.field_viewer.array_table.rowCount() == 2
     assert viewer.current_field_view_model().scalar_fields == ("temperature",)
     assert "Fields: 2" in viewer.summary_panel.text()
+    assert "Shown in Field Viewer" in viewer.handoff_panel.text()
+    assert "Full CalculiX FRD contour parsing" in viewer.handoff_panel.text()
     del app

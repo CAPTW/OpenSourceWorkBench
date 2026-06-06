@@ -30,8 +30,35 @@ OSW v0.1 favors summary-first inspection:
 - report missing optional visualization dependencies as diagnostics
 - avoid claiming full solver field parsing until parser support exists
 
+## ResultViewer / FieldViewer Workflow
+
+The GUI workflow follows the same summary-first path as the CLI:
+
+1. Open or build a result catalog.
+2. Select a dataset in the ResultViewer catalog selector.
+3. Read the catalog summary for dataset count, dataset type counts, active
+   selection, source summary, and diagnostics count.
+4. Read the dataset details for source kind, scalar/series/table/figure/artifact
+   counts, field-array count, and diagnostics.
+5. Use the handoff labels to see whether the current dataset is shown in the
+   Plot Viewer, Table Viewer, Field Viewer, Figure handoff, and report summary
+   paths.
+6. Use the FieldViewer panel for field array and artifact summaries.
+
+The FieldViewer panel lists scalar and vector field metadata, source artifact
+paths, artifact state, and optional PyVista/fallback status. It keeps field
+metadata inspectable even when PyVista is missing. The viewer does not execute
+solvers, scripts, or external commands.
+
+Report handoff remains data-first: datasets with scalar summaries, series,
+tables, figures, or diagnostics are marked as report compatible so the same
+information can be summarized by report tooling where already supported.
+
 ## Current Limitations
 
 - Full CalculiX FRD field parsing is deferred.
 - Full OpenFOAM field parsing is deferred.
 - Vector glyphs, streamlines, and time animation are optional future work.
+- PyVista is optional and is not required for result or field metadata
+  inspection.
+- Users should validate engineering results independently.

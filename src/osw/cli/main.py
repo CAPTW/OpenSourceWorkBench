@@ -2218,13 +2218,24 @@ def _load_result_dataset_source(path: Path) -> object:
 
 
 def _print_result_dataset_summary(dataset: object) -> None:
-    from osw.post.result_view_model import result_dataset_summary, result_dataset_to_view_model
+    from osw.post.field_view_model import field_view_model_from_result_dataset
+    from osw.post.result_view_model import (
+        result_dataset_summary,
+        result_dataset_to_view_model,
+        summarize_result_dataset_for_view,
+    )
 
     summary = result_dataset_summary(dataset)
     view_model = result_dataset_to_view_model(dataset)
+    field_view_model = field_view_model_from_result_dataset(dataset)
+    details = summarize_result_dataset_for_view(
+        dataset,
+        field_count=len(field_view_model.arrays),
+    )
     print(f"ResultDataset: {summary.dataset_id}")
     print(f"Title: {summary.title}")
     print(f"Kind: {summary.kind}")
+    print(f"Source kind: {details.source_kind}")
     print(f"Source: {summary.source or 'Not recorded'}")
     print(f"Scalars: {summary.scalar_count}")
     for scalar in view_model.scalars:
@@ -2235,6 +2246,13 @@ def _print_result_dataset_summary(dataset: object) -> None:
     print(f"Tables: {summary.table_count}")
     print(f"Figures: {summary.figure_count}")
     print(f"Artifacts: {summary.artifact_count}")
+    print(f"Field arrays: {details.field_count}")
+    print("Viewer handoff:")
+    for hint in details.handoff_hints:
+        print(f"  - {hint}")
+    print("Limitations:")
+    for limitation in details.limitations:
+        print(f"  - {limitation}")
     for artifact in view_model.artifacts:
         state = "exists" if artifact.exists else "missing"
         print(f"  - {artifact.role}: {artifact.path} [{state}]")
@@ -2245,15 +2263,22 @@ def _print_result_dataset_summary(dataset: object) -> None:
 
 
 def _print_result_catalog_summary(catalog: object) -> None:
-    from osw.post.result_view_model import result_dataset_summary
+    from osw.post.result_view_model import result_dataset_summary, summarize_result_catalog_for_view
 
     datasets = tuple(getattr(catalog, "datasets", ()) or ())
+    catalog_summary = summarize_result_catalog_for_view(catalog)
     print(f"ResultCatalog: {getattr(catalog, 'catalog_id', '')}")
     print(f"Project: {getattr(catalog, 'project_name', '') or 'Not recorded'}")
     print(f"Datasets: {len(datasets)}")
+    kind_counts = ", ".join(
+        f"{kind}: {count}" for kind, count in catalog_summary.kind_counts
+    )
+    print(f"Dataset types: {kind_counts or 'none'}")
     selected = getattr(catalog, "selected_dataset_id", "")
     if selected:
         print(f"Selected: {selected}")
+    print(f"Sources: {catalog_summary.source_summary}")
+    print(f"Diagnostics: {catalog_summary.diagnostics_count}")
     for dataset in datasets:
         summary = result_dataset_summary(dataset)
         print(
@@ -2264,10 +2289,15 @@ def _print_result_catalog_summary(catalog: object) -> None:
 
 
 def _print_field_view_model(view_model: object, *, artifact_heading: bool = False) -> None:
+    from osw.post.field_view_model import summarize_field_dataset_for_view
+
+    workflow = summarize_field_dataset_for_view(view_model)
     title = getattr(view_model, "title", "") or getattr(view_model, "dataset_id", "")
     print(("Field artifacts" if artifact_heading else "Field Dataset") + f": {title}")
     print(f"Dataset: {getattr(view_model, 'dataset_id', '')}")
     print(f"Source: {getattr(view_model, 'source', '') or 'Not recorded'}")
+    print(f"PyVista: {workflow.pyvista_state} (optional)")
+    print(f"Fallback: {workflow.fallback_reason}")
     scalar_fields = tuple(getattr(view_model, "scalar_fields", ()) or ())
     vector_fields = tuple(getattr(view_model, "vector_fields", ()) or ())
     print("Scalar fields: " + (", ".join(scalar_fields) or "none"))
@@ -2290,6 +2320,9 @@ def _print_field_view_model(view_model: object, *, artifact_heading: bool = Fals
         print("Diagnostics:", file=sys.stderr)
         for diagnostic in diagnostics:
             print(f"  - {diagnostic}", file=sys.stderr)
+    print("Limitations:")
+    for limitation in workflow.limitations:
+        print(f"  - {limitation}")
 
 
 def _print_mscript_preview(preview: object) -> None:
