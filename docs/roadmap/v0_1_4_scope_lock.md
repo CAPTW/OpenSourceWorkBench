@@ -98,6 +98,11 @@ PyVista/fallback messaging without adding solver/script execution, full
 FRD/OpenFOAM field parsing, vector glyphs, streamlines, animation, or mandatory
 heavy visualization dependencies.
 
+[ResultViewer / FieldViewer closure evidence](../maintenance/v0_1_4_result_field_viewer_closure.md)
+records issue `#14` completion review and keeps the remaining v0.1.4 work
+focused on explicit follow-up scope, especially issue `#17` VFEA experimental
+scope definition.
+
 Reason: #14 has strong visible user value, but it is broader GUI/result workflow
 work and follows #15 after the smaller product-polish slice established the
 v0.1.4 implementation path.
