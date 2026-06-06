@@ -153,6 +153,11 @@ Rationale:
 
 This is a decision only. The current active version remains `0.1.3rc2.dev0`.
 
+Follow-up metadata status: the release-boundary decision was accepted by
+[v0.1.4-rc1 candidate metadata alignment](v0_1_4_rc1_candidate.md), which
+aligns package and CLI metadata to `0.1.4rc1` while leaving the `v0.1.4-rc1`
+tag, assets, and GitHub Release for later dedicated gates.
+
 ## Required Next Gates If Accepted
 
 If maintainers accept `v0.1.4-rc1`, run separate gates in order:

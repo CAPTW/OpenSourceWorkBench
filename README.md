@@ -162,11 +162,13 @@ the full public scope note.
 
 ## Release Status
 
-- Package metadata: `0.1.3rc1`.
-- Candidate tag: `v0.1.3-rc1`.
-- Tag target:
+- Current `develop` package metadata: `0.1.4rc1`.
+- Current public prerelease tag: `v0.1.3-rc1`.
+- Current public prerelease tag target:
   `a6e8d3a8211e02359841d10e1947e16ab847b132`.
-- Current `develop` includes post-tag documentation/status updates.
+- Next intended candidate tag: `v0.1.4-rc1` (not created yet).
+- Current `develop` includes post-tag documentation/status updates and
+  v0.1.4-rc1 candidate metadata alignment.
 - A public GitHub Release prerelease exists for `v0.1.3-rc1`.
 - Release assets are attached: wheel, sdist, Windows portable ZIP, checksums,
   and manifest.
@@ -178,6 +180,7 @@ the full public scope note.
 Useful release docs:
 
 - [v0.1.3rc1 Release Summary](docs/release/v0_1_3rc1_release_summary.md)
+- [v0.1.4-rc1 Candidate Metadata Alignment](docs/release/v0_1_4_rc1_candidate.md)
 - [v0.1 Release Notes](docs/release/v0_1_release_notes.md)
 - [Release Checklist](docs/10_release_checklist.md)
 - [Post-Public Release Checklist](docs/release/post_public_release_checklist.md)

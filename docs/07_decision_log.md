@@ -541,3 +541,20 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   package metadata, CLI version, docs, and release notes before any tag or
   release asset work. This decision does not bump version metadata, create tags,
   edit the GitHub Release, upload assets, run live validation, or close issues.
+
+## ADR-0031: Align Metadata To v0.1.4rc1 Before Tagging
+
+- Status: Accepted for release preparation
+- Date: 2026-06-06
+- Context: ADR-0030 selected `v0.1.4-rc1` as the cleaner next prerelease
+  boundary after v0.1.4 planned scope completion. The repository still reported
+  package and CLI version `0.1.3rc2.dev0`, while the current public release
+  remained `v0.1.3-rc1`.
+- Decision: Align package metadata, `osw.__version__`, CLI version, release
+  metadata QA, changelog, and release docs to candidate version `0.1.4rc1`.
+  Treat `v0.1.4-rc1` as the intended future candidate tag, not as an existing
+  tag.
+- Consequences: Final revalidation, local tag creation, asset build/smoke, and
+  GitHub Release publication remain separate gates. This decision does not
+  create or push tags, build or upload release assets, edit the GitHub Release,
+  run live validation, or close issues.

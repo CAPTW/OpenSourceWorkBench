@@ -130,3 +130,7 @@ choose release prep, because the completed user-visible workflow work and VFEA
 scope definition were planned and closed under the v0.1.4 line. A later
 metadata-alignment gate is still required because the active version remains
 `0.1.3rc2.dev0`.
+
+Follow-up release prep: [v0.1.4-rc1 candidate metadata alignment](../release/v0_1_4_rc1_candidate.md)
+aligns package and CLI metadata to `0.1.4rc1` for the next candidate. It does
+not create a tag, build or upload assets, or edit the GitHub Release.

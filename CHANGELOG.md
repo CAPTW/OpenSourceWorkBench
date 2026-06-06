@@ -6,9 +6,18 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### v0.1.4rc1 Candidate Metadata Aligned
+
+Candidate package version: `0.1.4rc1`
+
+- Aligned package, CLI, and release metadata for the `v0.1.4-rc1` prerelease
+  candidate after the release-boundary decision selected the v0.1.4 line. No
+  `v0.1.4-rc1` tag, release assets, or GitHub Release were created by this
+  metadata gate.
+
 ### v0.1.3rc2 Maintenance Development Cycle Opened
 
-Development package version: `0.1.3rc2.dev0`
+Previous development package version: `0.1.3rc2.dev0`
 
 - Added reusable release asset download smoke automation for Issue `#2`,
   covering `SHA256SUMS.txt`, `release_asset_manifest.json`, safe archive
