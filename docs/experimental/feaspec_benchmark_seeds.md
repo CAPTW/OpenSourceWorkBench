@@ -5,8 +5,8 @@ VLM provider runs, solver runs, or benchmark scores exist yet.
 
 The benchmark seeds live under `tests/fixtures/feaspec/benchmark_seeds/`.
 They provide deterministic text prompts, source metadata, approved ground-truth
-FEASpec-style JSON, and planned detection metrics for future FEASpec models and
-validators.
+FEASpec-style JSON, and planned detection metrics for the experimental
+FEASpec model layer and future validators.
 
 ## Seed Folder Layout
 

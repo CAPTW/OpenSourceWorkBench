@@ -1,6 +1,8 @@
 # VFEA experimental scope definition
 
-Status: planning-only, experimental, and not implemented
+Status: planning-only VFEA scope, experimental. The full VFEA workflow is not
+implemented; a later post-release gate adds an experimental FEASpec Python
+model layer only.
 
 Related issue: `#17`
 
@@ -13,8 +15,8 @@ validate engineering results independently.
 
 VFEA means Vision-to-FEA in this planning document. It is a possible future
 experimental plugin line for assisted finite-element setup from drawings,
-images, or problem descriptions. It is not core OSW solver behavior and is not
-implemented in the current codebase.
+images, or problem descriptions. It is not core OSW solver behavior and the
+full workflow is not implemented in the current codebase.
 
 ## Problem Statement
 
@@ -73,6 +75,10 @@ Drawing/Image input
 
 This gate does not add provider code, image processing, VLM integration, API
 keys, credentials, or configuration files.
+
+Later post-release FEASpec work may add Python model objects and structural
+basic checks. That does not implement providers, VFEA, the full validator,
+ProjectSchema bridging, solver adapters, or solver execution.
 
 ### FEASpec Candidate
 

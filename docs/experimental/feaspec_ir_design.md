@@ -1,6 +1,8 @@
 # FEASpec IR design
 
-Status: design-only, experimental, and not implemented
+Status: design-only contract for the full FEASpec flow; experimental model
+layer exists, but the full validator, ProjectSchema bridge, solver adapters,
+VFEA, VLM APIs, and solver execution are not implemented.
 
 Related release: `v0.1.4-rc1`
 
@@ -15,10 +17,11 @@ is closed, and the accepted scope requires an inspectable FEASpec candidate,
 validator requirements, human review, benchmark requirements, and a
 CalculiX-first export path.
 
-FEASpec is not implemented in the current codebase. This document is a
-design-only contract for future work. It does not add Python models, provider
-integrations, validator code, ProjectSchema migrations, solver adapters, VLM
-APIs, credentials, or solver execution.
+The full FEASpec workflow is not implemented in the current codebase. This
+document remains the design contract for future work beyond the experimental
+Python model layer. It does not add provider integrations, full validator
+code, ProjectSchema migrations, solver adapters, VLM APIs, credentials, or
+solver execution.
 
 ## Product Guardrails
 
@@ -30,7 +33,7 @@ preserve these boundaries:
 - no mandatory Abaqus or commercial solver dependency;
 - no bundled external solvers;
 - no VFEA implementation claim;
-- no FEASpec implementation claim;
+- no full FEASpec validator, bridge, or solver-path implementation claim;
 - no native commercial CAD import claim;
 - no stable production claim.
 

@@ -30,6 +30,12 @@ by a dedicated release/tag gate.
   candidate, approved, and invalid diagnostic cases with placeholder source
   metadata and planned metrics only; no generated images, solver outputs, VLM
   runs, mandatory Abaqus, or certification claims are included.
+- Added an experimental FEASpec Python model layer under
+  `src/osw/experimental/feaspec/` that loads, basic-checks, and serializes the
+  examples and benchmark seeds. The layer is structural only and does not add a
+  full validator, ProjectSchema bridge, solver adapter/exporter, VLM API,
+  credential handling, automatic solver execution, mandatory Abaqus, topology
+  optimization, or certification claim.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

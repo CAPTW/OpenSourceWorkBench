@@ -21,6 +21,9 @@ request should stop, park, or defer.
   boundaries without implementing solver behavior.
 - FEASpec documentation examples and synthetic benchmark seed fixtures that
   remain JSON/text-only and do not include generated solver outputs.
+- Experimental FEASpec Python models and structural basic checks that load and
+  serialize documented fixtures without adding a full validator, ProjectSchema
+  bridge, solver adapter, VLM provider, or solver execution.
 
 ## Out of Scope
 
@@ -37,6 +40,8 @@ request should stop, park, or defer.
   solver requirement in VFEA planning.
 - Topology optimization implementation inside the initial VFEA scope.
 - FEASpec examples or benchmark seeds presented as solver-validated results.
+- Treating FEASpec model parsing or basic checks as proof of physical validity,
+  solver readiness, or industrial certification.
 
 ## Scope Drift Definition
 
@@ -47,6 +52,8 @@ Scope drift is any change that:
 - adds direct GUI execution of external solvers before backend safety exists;
 - adds automatic unreviewed solver execution from image or VLM output;
 - treats an unapproved FEASpec candidate as solver-ready;
+- turns FEASpec basic checks into solver execution, solver export, or physical
+  validation without a separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

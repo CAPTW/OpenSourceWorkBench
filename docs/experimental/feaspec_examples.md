@@ -1,11 +1,13 @@
 # FEASpec examples overview
 
-Status: documentation and fixture examples only; FEASpec is not implemented.
+Status: documentation and fixture examples loaded by the experimental FEASpec
+Python model layer; no full validator, ProjectSchema bridge, solver adapter,
+VLM API, or solver execution is implemented.
 
 The canonical examples live under `examples/feaspec/`. They show the expected
-shape of future FEASpec data without adding Python models, validators,
-ProjectSchema bridges, solver adapters, VLM APIs, provider credentials, or
-solver execution.
+shape of FEASpec data for the experimental model layer without adding a full
+validator, ProjectSchema bridge, solver adapter, VLM API, provider credentials,
+or solver execution.
 
 ## Candidate Vs Approved Examples
 
@@ -75,7 +77,8 @@ The examples preserve the human-review boundary:
 
 ## Non-Goals
 
-- No FEASpec implementation.
+- No full FEASpec validator.
+- No ProjectSchema bridge.
 - No VFEA implementation.
 - No production validator.
 - No ProjectSchema bridge.

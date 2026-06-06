@@ -1,0 +1,76 @@
+"""Experimental FEASpec model layer.
+
+The public API is intentionally limited to Python models, JSON I/O, and basic
+structural checks. It does not include VLM providers, ProjectSchema bridging,
+solver adapters, or solver execution.
+"""
+
+from .basic_checks import check_feaspec_dict
+from .errors import FEASpecDiagnosticError, FEASpecModelError
+from .io import dump_feaspec, load_feaspec
+from .models import (
+    LOAD_TYPES,
+    SOLVER_COMPATIBILITY_STATES,
+    SOURCE_TYPES,
+    Assumption,
+    BoundaryConditionSpec,
+    Confidence,
+    CoordinateFrame,
+    Diagnostic,
+    DimensionConstraint,
+    EvidenceRef,
+    FEAEdge,
+    FEANode,
+    FEARegion,
+    FEASource,
+    FEASpec,
+    FEASpecCandidate,
+    FEASpecDocument,
+    FEASpecUnits,
+    GeometryGraph,
+    HumanReview,
+    LoadSpec,
+    MaterialSpec,
+    SectionSpec,
+    SolverCompatibility,
+    SpecType,
+    ValidationInfo,
+    ValidationState,
+    parse_feaspec_dict,
+)
+
+__all__ = [
+    "Assumption",
+    "BoundaryConditionSpec",
+    "Confidence",
+    "CoordinateFrame",
+    "Diagnostic",
+    "DimensionConstraint",
+    "EvidenceRef",
+    "FEAEdge",
+    "FEANode",
+    "FEARegion",
+    "FEASource",
+    "FEASpec",
+    "FEASpecCandidate",
+    "FEASpecDiagnosticError",
+    "FEASpecDocument",
+    "FEASpecModelError",
+    "FEASpecUnits",
+    "GeometryGraph",
+    "HumanReview",
+    "LOAD_TYPES",
+    "LoadSpec",
+    "MaterialSpec",
+    "SOLVER_COMPATIBILITY_STATES",
+    "SOURCE_TYPES",
+    "SectionSpec",
+    "SolverCompatibility",
+    "SpecType",
+    "ValidationInfo",
+    "ValidationState",
+    "check_feaspec_dict",
+    "dump_feaspec",
+    "load_feaspec",
+    "parse_feaspec_dict",
+]

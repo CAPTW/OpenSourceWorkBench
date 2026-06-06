@@ -598,3 +598,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   parsing and validator tests. FEASpec and VFEA remain unimplemented, external
   solvers remain optional and unbundled, Abaqus remains optional/non-default,
   and the public release/tag/assets remain unchanged.
+
+## ADR-0034: FEASpec Model Layer Is Experimental And Non-Executing
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-06
+- Context: FEASpec examples and benchmark seeds need a Python model layer that
+  can load, preserve, basic-check, and serialize the documented JSON without
+  jumping ahead to VFEA implementation or solver handoff.
+- Decision: Place the first FEASpec models under
+  `src/osw/experimental/feaspec/` with standard-library dataclasses, JSON I/O,
+  and structural basic checks only. The package may report required-field,
+  explicit-unit, geometry-reference, target-reference, and approved-review
+  diagnostics. It must not import GUI modules, solver adapters, ProjectSchema
+  bridging, VLM provider/API clients, credential handling, or command-execution
+  libraries.
+- Consequences: Existing examples and benchmark seeds become executable
+  compatibility fixtures for parsing and structural diagnostics. Full
+  validation, ProjectSchema bridging, CalculiX case planning, Abaqus export
+  planning, VLM integration, and any solver execution remain separate future
+  gates.
