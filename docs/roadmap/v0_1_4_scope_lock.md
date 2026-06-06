@@ -31,10 +31,11 @@ marketplace distribution, signing, or certification claims.
 
 First implementation issue: #15 Improve Plugin Manager UX and install receipts.
 
-Next prompt: `OSW-FEAT-001_PLUGIN_MANAGER_UX_RECEIPTS`
+Completed prompt: `OSW-FEAT-001_PLUGIN_MANAGER_UX_RECEIPTS`
 
 Implementation status: `OSW-FEAT-001_PLUGIN_MANAGER_UX_RECEIPTS` has landed on
-`develop`. The Plugin Manager now presents managed install receipts,
+`develop`, and issue `#15` has been closed after the dedicated closure evidence
+gate. The Plugin Manager now presents managed install receipts,
 quarantine/rejection records, safety diagnostics, and managed-root uninstall
 eligibility without adding remote plugin store, dependency auto-install, plugin
 signing, marketplace behavior, or plugin code execution during install.
@@ -135,15 +136,14 @@ maintainer explicitly requests stronger live release-download evidence.
 
 ## Issue #12 Closure Policy
 
-Keep #12 open after this scope lock. It can close later in a dedicated closure
-gate after maintainer review, or after the first implementation issue is
-accepted as the v0.1.4 start.
+Issue `#12` is eligible for closure after the dedicated planning closure gate
+verifies that feature selection, scope lock, first implementation, and first
+implementation closure evidence are all present on `develop`.
 
 ## Issue #15 Closure Policy
 
-Keep #15 open after the implementation commit until a dedicated closure gate
-reviews the Plugin Manager receipt/quarantine UX evidence and maintainer
-acceptance status.
+Issue `#15` is closed after the dedicated closure gate reviewed the Plugin
+Manager receipt/quarantine UX evidence and maintainer acceptance status.
 
 Closure evidence is recorded in
 [v0.1.4 Plugin Manager UX closure evidence](../maintenance/v0_1_4_plugin_manager_ux_closure.md).

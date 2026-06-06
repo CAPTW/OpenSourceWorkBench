@@ -71,6 +71,11 @@ Development package version: `0.1.3rc2.dev0`
   local-only install, manifest-only validation, managed-root uninstall, no
   remote store, no dependency auto-install, no signing, and no marketplace
   boundaries.
+- Recorded v0.1.4 planning closure evidence for Issue `#12` after feature
+  selection, scope lock, Issue `#15` implementation, and Issue `#15` closure
+  evidence landed on `develop`; Issue `#14` remains the next feature candidate,
+  Issue `#17` remains experimental/deferred, and Issues `#6`-`#11` remain
+  environment-dependent live validation.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.

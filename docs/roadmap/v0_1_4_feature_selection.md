@@ -115,8 +115,9 @@ planning-only unless a later scope gate approves experimental work.
    - Execute if #15 is selected as the first implementation slice.
    - Expected impact: clearer local plugin install receipts, rejection messages,
      trust wording, and tests.
-3. `OSW-FEAT-002_RESULT_FIELD_VIEWER_WORKFLOW`
-   - Execute if #14 is selected or after #15 lands.
+3. `OSW-FEAT-003_RESULT_FIELD_VIEWER_WORKFLOW`
+   - Execute after #15 lands and the planning issue closure evidence is
+     accepted.
    - Expected impact: clearer ResultDataset / FieldDataset browsing, metadata,
      and optional visualization diagnostics.
 4. `OSW-EXP-001_VFEA_SCOPE_DEFINITION`
