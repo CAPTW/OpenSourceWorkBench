@@ -134,3 +134,16 @@ metadata-alignment gate is still required because the active version remains
 Follow-up release prep: [v0.1.4-rc1 candidate metadata alignment](../release/v0_1_4_rc1_candidate.md)
 aligns package and CLI metadata to `0.1.4rc1` for the next candidate. It does
 not create a tag, build or upload assets, or edit the GitHub Release.
+
+## Post-Review Release And Validation Follow-Up
+
+`v0.1.4-rc1` has since been published as a public prerelease with tag target
+`f1683b441ab308fd65318ef6de3f1282549946a1` and version `0.1.4rc1`.
+
+[Live optional validation matrix for v0.1.4-rc1](../validation/live_optional_validation_matrix_v0_1_4rc1.md)
+records the installed-only `OSW-VALID-002` audit for issues `#6` through `#11`.
+All six live optional targets were classified as `skipped-missing` on this
+machine because the relevant tools or packages were absent. The completion
+decision is unchanged: the planned v0.1.4 scope is complete, while live optional
+validation remains environment-dependent and issues `#6` through `#11` remain
+open.

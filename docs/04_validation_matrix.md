@@ -75,6 +75,7 @@ a separate gate.
 | v0.1.4 completion review | [v0.1.4 completion review](roadmap/v0_1_4_completion_review.md), issues `#12`, `#14`, `#15`, and `#17`, plus open live validation issues `#6`-`#11` | Planned v0.1.4 workflow/product-polish and VFEA scope-definition work is complete, while live optional validation remains environment-dependent and `v0.1.4` is not released by this review. | completion review |
 | Release boundary decision | [v0.1.3rc2 vs v0.1.4-rc1 release boundary decision](release/v0_1_3rc2_or_v0_1_4_decision.md), release tag verification, issue state, and change classification since `v0.1.3-rc1` | Decision recommends `v0.1.4-rc1` as the cleaner semantic prerelease boundary while preserving active metadata `0.1.3rc2.dev0` until a later metadata gate. No version, tag, release, or asset mutation occurs. | decision gate |
 | v0.1.4-rc1 candidate metadata | [v0.1.4-rc1 candidate metadata alignment](release/v0_1_4_rc1_candidate.md), package metadata, CLI version, release metadata QA, and target tag absence checks | Package and CLI metadata are aligned to `0.1.4rc1`; `v0.1.4-rc1` tag, assets, and GitHub Release remain absent until later gates. | metadata aligned |
+| v0.1.4-rc1 live optional validation matrix | [Live optional validation matrix for v0.1.4-rc1](validation/live_optional_validation_matrix_v0_1_4rc1.md) and local ignored artifacts under `artifacts/validation/live_optional/OSW-VALID-002/` | Installed-only audit for issues `#6`-`#11` records missing optional stacks as `skipped-missing` on this machine. No dependency install, solver install, release mutation, asset upload, issue closure, or certification claim occurs. | completed with warnings |
 | Public release wording | GitHub Release notes body audit | Notes say public prerelease, assets attached, unsigned portable ZIP, no MSI, no code signing, and no bundled solvers. | completed for `v0.1.3-rc1` |
 | Roadmap triage | GitHub issues and milestones | Maintenance tasks are assigned or deferred before feature work starts. | planned |
 
@@ -88,6 +89,12 @@ It may include Gmsh, GNU Octave, CalculiX `ccx`, OpenFOAM, CoolProp, Cantera,
 SciPy MAT support, PyVista, and meshio when those tools are already installed
 locally. Generated evidence belongs under `artifacts/validation/` and must not
 be committed as runtime output.
+
+The `v0.1.4-rc1` installed-only audit is recorded in
+[Live optional validation matrix for v0.1.4-rc1](validation/live_optional_validation_matrix_v0_1_4rc1.md).
+On the current machine, issues `#6` through `#11` were all classified as
+`skipped-missing` because the target optional tools or packages were absent.
+Those issues remain open for prepared validation environments.
 
 This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory

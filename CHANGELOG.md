@@ -6,6 +6,20 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### v0.1.4-rc1 Public Prerelease And Live Optional Validation
+
+- Published `v0.1.4-rc1` as a public prerelease with wheel, sdist, Windows
+  portable ZIP, `SHA256SUMS.txt`, and `release_asset_manifest.json` assets.
+- Recorded an installed-only live optional validation matrix for issues `#6`
+  through `#11`. On this machine, Gmsh, GNU Octave, CalculiX `ccx`, OpenFOAM,
+  CoolProp/Cantera, and PyVista/meshio were missing, so each target was
+  classified as `skipped-missing` and remains open for a prepared validation
+  environment.
+- Preserved the release boundaries: no dependency install, solver install,
+  release mutation, asset upload, issue closure, bundled external solver,
+  stable-production claim, industrial certification claim, or VFEA
+  implementation claim.
+
 ### v0.1.4rc1 Candidate Metadata Aligned
 
 Candidate package version: `0.1.4rc1`
