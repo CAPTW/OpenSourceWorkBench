@@ -123,3 +123,10 @@ Choose one:
   available; or
 - a release planning/revalidation gate if maintainers want to prepare the next
   prerelease boundary.
+
+[v0.1.3rc2 vs v0.1.4-rc1 release boundary decision](../release/v0_1_3rc2_or_v0_1_4_decision.md)
+recommends `v0.1.4-rc1` as the cleaner next prerelease boundary if maintainers
+choose release prep, because the completed user-visible workflow work and VFEA
+scope definition were planned and closed under the v0.1.4 line. A later
+metadata-alignment gate is still required because the active version remains
+`0.1.3rc2.dev0`.

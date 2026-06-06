@@ -523,3 +523,21 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   as a new experimental design gate, live optional validation on a suitable
   environment, or release metadata/revalidation planning for the next prerelease
   boundary. No live validation issue is closed by the completion review.
+
+## ADR-0030: Prefer v0.1.4-rc1 For The Next Prerelease Boundary
+
+- Status: Accepted for planning
+- Date: 2026-06-06
+- Context: The public baseline is `v0.1.3-rc1`, while `develop` now includes
+  post-public maintenance, release trust work, onboarding docs, Plugin Manager
+  UX/install receipts, ResultViewer / FieldViewer workflow, VFEA experimental
+  scope definition, and v0.1.4 completion review. Active metadata still reports
+  `0.1.3rc2.dev0`.
+- Decision: If maintainers choose release preparation now, prefer
+  `v0.1.4-rc1` over `0.1.3rc2` as the next prerelease boundary. The user-facing
+  Plugin Manager and ResultViewer / FieldViewer work plus VFEA scope closure
+  were planned and closed under the v0.1.4 line.
+- Consequences: A later metadata-alignment gate must deliberately update
+  package metadata, CLI version, docs, and release notes before any tag or
+  release asset work. This decision does not bump version metadata, create tags,
+  edit the GitHub Release, upload assets, run live validation, or close issues.

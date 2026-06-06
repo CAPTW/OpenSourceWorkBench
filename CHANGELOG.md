@@ -101,6 +101,9 @@ Development package version: `0.1.3rc2.dev0`
   and `#17` complete the planned workflow/product-polish and VFEA scope line
   while Issues `#6`-`#11` remain live optional validation and no version, tag,
   release, or asset mutation is performed.
+- Added a release-boundary decision recommending `v0.1.4-rc1` as the cleaner
+  next prerelease boundary if maintainers choose release prep, while preserving
+  active metadata `0.1.3rc2.dev0` until a later metadata-alignment gate.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.
