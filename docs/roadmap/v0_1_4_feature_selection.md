@@ -105,6 +105,12 @@ Scope lock status: [v0.1.4 scope lock](v0_1_4_scope_lock.md) locks #15 as the
 first implementation slice, with #14 as the second candidate and #17 deferred as
 planning-only unless a later scope gate approves experimental work.
 
+Remaining scope status:
+[v0.1.4 remaining scope review](v0_1_4_remaining_scope_review.md) records that
+issues `#15` and `#14` are closed and recommends issue `#17` as the next
+planning-only scope definition slice. Issues `#6` through `#11` remain deferred
+live optional validation.
+
 ## Proposed Sequence
 
 1. `OSW-PLAN-003_V0_1_4_SCOPE_LOCK`

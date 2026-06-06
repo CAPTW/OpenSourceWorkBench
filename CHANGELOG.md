@@ -84,6 +84,10 @@ Development package version: `0.1.3rc2.dev0`
 - Recorded ResultViewer / FieldViewer closure evidence for Issue `#14`,
   preserving the no solver execution, no script execution, no external command
   execution, optional PyVista, and no full FRD/OpenFOAM field parser boundaries.
+- Added v0.1.4 remaining scope review after Issue `#14` and Issue `#15`
+  closure, selecting Issue `#17` VFEA experimental scope definition as the next
+  planning-only slice while keeping Issues `#6`-`#11` live optional validation
+  environment-dependent and deferred.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.

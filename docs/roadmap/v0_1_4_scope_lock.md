@@ -103,6 +103,9 @@ records issue `#14` completion review and keeps the remaining v0.1.4 work
 focused on explicit follow-up scope, especially issue `#17` VFEA experimental
 scope definition.
 
+[v0.1.4 remaining scope review](v0_1_4_remaining_scope_review.md) selects issue
+`#17` as the next planning-only slice after issues `#15` and `#14` closed.
+
 Reason: #14 has strong visible user value, but it is broader GUI/result workflow
 work and follows #15 after the smaller product-polish slice established the
 v0.1.4 implementation path.
