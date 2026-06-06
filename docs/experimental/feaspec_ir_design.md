@@ -500,6 +500,13 @@ Follow-up seed evidence is recorded in
 documentation/test assets only. They do not implement FEASpec models,
 validators, VLM providers, solver execution, or benchmark scoring.
 
+[FEASpec validator design](feaspec_validator_design.md) now records the
+design-only rule catalog, diagnostic schema, severity taxonomy, approval rules,
+solver handoff gates, CalculiX-first compatibility checks, Abaqus
+optional/non-default handling, and benchmark readiness rules that future
+validator implementation must follow. It remains documentation and doc-test
+evidence only.
+
 ## Non-Goals
 
 - No implementation in this gate.
@@ -521,11 +528,9 @@ validators, VLM providers, solver execution, or benchmark scoring.
 
 Potential future gates:
 
-- `OSW-EXP-003_FEASPEC_DOC_TESTS_AND_EXAMPLES` (examples and benchmark seed
-  fixtures)
-- `OSW-EXP-004_FEASPEC_PYTHON_MODELS`
-- `OSW-EXP-005_FEASPEC_VALIDATOR_DESIGN`
-- `OSW-EXP-006_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
+- `OSW-EXP-006_FEASPEC_VALIDATOR_IMPLEMENTATION`
+- `OSW-EXP-007_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
+- `OSW-EXP-008_FEASPEC_TO_CALCULIX_CASE_PLANNING`
 
 Each implementation gate must preserve the same guardrails and add focused
 tests before any source behavior is merged.

@@ -36,6 +36,12 @@ by a dedicated release/tag gate.
   full validator, ProjectSchema bridge, solver adapter/exporter, VLM API,
   credential handling, automatic solver execution, mandatory Abaqus, topology
   optimization, or certification claim.
+- Added a design-only FEASpec validator contract covering pipeline phases,
+  diagnostic schema, severity taxonomy, required diagnostic codes, approval
+  rules, solver handoff gates, CalculiX-first compatibility, Abaqus
+  optional/non-default handling, and benchmark readiness. The contract does not
+  implement the production validator, ProjectSchema bridge, solver
+  adapter/exporter, VLM API, credentials, or solver execution.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

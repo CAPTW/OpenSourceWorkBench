@@ -62,6 +62,19 @@ The `basic_checks` module performs only structural checks:
 The checks also make the existing invalid examples surface expected diagnostic
 codes. They are not a full validator.
 
+## Validator Design Follow-Up
+
+[FEASpec validator design](feaspec_validator_design.md) records the future
+semantic validator contract for this model layer. It defines the validation
+pipeline, diagnostic model, severity taxonomy, rule catalog, human-review
+approval rules, solver handoff gate, CalculiX-first compatibility, Abaqus
+optional/non-default handling, and benchmark readiness checks.
+
+That design remains a contract only. This model layer still performs
+structural loading and basic checks; it does not implement the full validator,
+ProjectSchema bridge, SolverAdapter/export handoff, VLM API, credentials, or
+solver execution.
+
 ## Examples Coverage
 
 The model layer loads the current files under `examples/feaspec/`:
@@ -92,6 +105,6 @@ schema and detection targets, not solver accuracy or VLM benchmark scores.
 
 Possible follow-up gates:
 
-- `OSW-EXP-005_FEASPEC_VALIDATOR_DESIGN`
-- `OSW-EXP-006_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
-- `OSW-EXP-007_FEASPEC_TO_CALCULIX_CASE_PLANNING`
+- `OSW-EXP-006_FEASPEC_VALIDATOR_IMPLEMENTATION`
+- `OSW-EXP-007_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
+- `OSW-EXP-008_FEASPEC_TO_CALCULIX_CASE_PLANNING`

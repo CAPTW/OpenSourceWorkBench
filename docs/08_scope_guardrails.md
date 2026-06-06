@@ -24,6 +24,10 @@ request should stop, park, or defer.
 - Experimental FEASpec Python models and structural basic checks that load and
   serialize documented fixtures without adding a full validator, ProjectSchema
   bridge, solver adapter, VLM provider, or solver execution.
+- Design-only FEASpec validator contract documentation that defines future
+  diagnostics, severity taxonomy, human-review gates, solver handoff blockers,
+  CalculiX-first compatibility, Abaqus optional/non-default handling, and
+  benchmark readiness without implementing runtime validator behavior.
 
 ## Out of Scope
 
@@ -42,6 +46,9 @@ request should stop, park, or defer.
 - FEASpec examples or benchmark seeds presented as solver-validated results.
 - Treating FEASpec model parsing or basic checks as proof of physical validity,
   solver readiness, or industrial certification.
+- Treating FEASpec validator design documentation as a production validator,
+  ProjectSchema bridge, solver exporter, VLM provider, or solver execution
+  capability.
 
 ## Scope Drift Definition
 
@@ -54,6 +61,8 @@ Scope drift is any change that:
 - treats an unapproved FEASpec candidate as solver-ready;
 - turns FEASpec basic checks into solver execution, solver export, or physical
   validation without a separate gate;
+- turns FEASpec validator design into runtime validation, ProjectSchema
+  bridging, solver export, or solver execution without a separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

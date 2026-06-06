@@ -44,6 +44,11 @@ Each `expected_metrics.json` records:
 These are planned metrics for future validators and provider benchmarks. They
 are not VLM benchmark scores and are not evidence of solver accuracy.
 
+[FEASpec validator design](feaspec_validator_design.md) defines the future
+benchmark readiness checks for these seeds: ground-truth FEASpec loading,
+expected metrics presence, synthetic placeholder metadata, expected diagnostic
+codes for invalid fixtures, and clear separation from solver accuracy claims.
+
 ## Future Drawing Generation
 
 A later gate may create simple synthetic drawing images from these seeds. That
@@ -69,6 +74,7 @@ A future benchmark gate can be considered complete only after:
 - No VLM API integration.
 - No provider credentials or API keys.
 - No solver execution.
+- No full validator implementation.
 - No CalculiX input deck generation.
 - No Abaqus exporter or mandatory Abaqus dependency.
 - No topology optimization.

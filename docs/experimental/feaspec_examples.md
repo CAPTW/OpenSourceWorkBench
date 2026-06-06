@@ -39,6 +39,12 @@ SolverAdapter handoff. Candidate fixtures must not be treated as solver-ready.
 Invalid examples are diagnostic fixtures. They are deliberately not approved
 and must not be presented as runnable solver cases.
 
+The future validator contract in
+[FEASpec validator design](feaspec_validator_design.md) maps these invalid
+fixtures to stable diagnostic categories and codes. The examples remain
+fixtures only; they do not implement the validator or make any case
+solver-ready.
+
 ## FEASpec IR Field Mapping
 
 Each example includes the design fields from
@@ -97,3 +103,8 @@ Future Python models and validators should use these examples as compatibility
 fixtures. An implementation gate should first make these examples parse through
 the future model layer, then add validation checks that preserve the
 candidate/approved boundary and explicit-unit requirements.
+
+The next validator implementation gate should follow the design-only
+diagnostic catalog in [FEASpec validator design](feaspec_validator_design.md)
+before any ProjectSchema bridge, SolverAdapter/export path, or solver
+execution gate is considered.

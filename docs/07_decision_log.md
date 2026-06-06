@@ -618,3 +618,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   validation, ProjectSchema bridging, CalculiX case planning, Abaqus export
   planning, VLM integration, and any solver execution remain separate future
   gates.
+
+## ADR-0035: FEASpec Validator Contract Precedes Runtime Validation
+
+- Status: Accepted for experimental design
+- Date: 2026-06-07
+- Context: The FEASpec Python model layer can load, basic-check, and serialize
+  examples and benchmark seeds, but it is intentionally structural only. A
+  future semantic validator needs stable diagnostic categories, severity
+  taxonomy, approval rules, solver handoff blockers, and benchmark readiness
+  rules before any runtime validator, ProjectSchema bridge, or solver exporter
+  exists.
+- Decision: Define the FEASpec validator as a design-only contract first. The
+  contract reserves required diagnostic codes, requires human review before an
+  approved FEASpec can proceed toward future solver handoff, keeps
+  CalculiX-first compatibility planning, and treats Abaqus as optional and
+  non-default only.
+- Consequences: Runtime validator implementation, ProjectSchema bridging,
+  CalculiX case planning, Abaqus export planning, VLM integration, and solver
+  execution remain separate future gates. Candidates remain untrusted and must
+  not be treated as solver-ready.

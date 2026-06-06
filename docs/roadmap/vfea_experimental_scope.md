@@ -280,5 +280,13 @@ canonical JSON examples and synthetic benchmark seed fixtures for future model
 and validator work. They remain docs/fixtures only and do not add solver output,
 VLM integration, or certification claims.
 
+Validator design evidence:
+[FEASpec validator design](../experimental/feaspec_validator_design.md) defines
+the future diagnostic taxonomy, rule catalog, human-review approval gates,
+solver handoff block rules, CalculiX-first compatibility checks, Abaqus
+optional/non-default handling, and benchmark readiness requirements. It is
+design-only and does not implement a production validator, ProjectSchema
+bridge, solver exporter, VLM provider, or solver execution.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.
