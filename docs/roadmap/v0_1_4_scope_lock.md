@@ -144,3 +144,6 @@ accepted as the v0.1.4 start.
 Keep #15 open after the implementation commit until a dedicated closure gate
 reviews the Plugin Manager receipt/quarantine UX evidence and maintainer
 acceptance status.
+
+Closure evidence is recorded in
+[v0.1.4 Plugin Manager UX closure evidence](../maintenance/v0_1_4_plugin_manager_ux_closure.md).

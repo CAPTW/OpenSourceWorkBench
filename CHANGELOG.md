@@ -67,6 +67,10 @@ Development package version: `0.1.3rc2.dev0`
   messaging, managed-root uninstall eligibility, and CLI wording consistency
   without adding remote store, dependency auto-install, plugin signing,
   marketplace behavior, or plugin code execution during install.
+- Recorded Plugin Manager UX closure evidence for Issue `#15`, preserving the
+  local-only install, manifest-only validation, managed-root uninstall, no
+  remote store, no dependency auto-install, no signing, and no marketplace
+  boundaries.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.
