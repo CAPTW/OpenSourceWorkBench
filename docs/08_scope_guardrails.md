@@ -19,6 +19,8 @@ request should stop, park, or defer.
 - Planning-only FEASpec IR design that records candidate data, explicit units,
   evidence, diagnostics, human approval, and future ProjectSchema/SolverAdapter
   boundaries without implementing solver behavior.
+- FEASpec documentation examples and synthetic benchmark seed fixtures that
+  remain JSON/text-only and do not include generated solver outputs.
 
 ## Out of Scope
 
@@ -34,6 +36,7 @@ request should stop, park, or defer.
 - Mandatory Abaqus dependency, Abaqus exporter implementation, or commercial
   solver requirement in VFEA planning.
 - Topology optimization implementation inside the initial VFEA scope.
+- FEASpec examples or benchmark seeds presented as solver-validated results.
 
 ## Scope Drift Definition
 

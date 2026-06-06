@@ -1,0 +1,2 @@
+Create a 2D portal frame with two 3.0 m columns and a 4.0 m top beam, fixed
+base supports, and a 2000 N horizontal load at the upper right joint.

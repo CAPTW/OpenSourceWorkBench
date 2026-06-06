@@ -1,0 +1,2 @@
+Create a 2D linear-static cantilever beam. The beam is 1.0 m long, fixed at
+the left end, and has a 100 N downward point load at the right tip.

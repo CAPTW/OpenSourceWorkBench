@@ -491,6 +491,12 @@ before model-assisted provider output is trusted. Suggested metrics include:
 Benchmarks are evidence for educational quality and regression testing. They
 are not industrial certification.
 
+Follow-up seed evidence is recorded in
+[FEASpec examples](feaspec_examples.md) and
+[FEASpec benchmark seeds](feaspec_benchmark_seeds.md). Those fixtures are
+documentation/test assets only. They do not implement FEASpec models,
+validators, VLM providers, solver execution, or benchmark scoring.
+
 ## Non-Goals
 
 - No implementation in this gate.
@@ -512,7 +518,8 @@ are not industrial certification.
 
 Potential future gates:
 
-- `OSW-EXP-003_FEASPEC_DOC_TESTS_AND_EXAMPLES`
+- `OSW-EXP-003_FEASPEC_DOC_TESTS_AND_EXAMPLES` (examples and benchmark seed
+  fixtures)
 - `OSW-EXP-004_FEASPEC_PYTHON_MODELS`
 - `OSW-EXP-005_FEASPEC_VALIDATOR_DESIGN`
 - `OSW-EXP-006_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`

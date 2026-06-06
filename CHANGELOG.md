@@ -25,6 +25,11 @@ by a dedicated release/tag gate.
   and CalculiX-first compatibility without implementing FEASpec/VFEA, VLM APIs,
   solver execution, mandatory Abaqus, topology optimization, or certification
   claims.
+- Added canonical FEASpec JSON examples and six synthetic benchmark seed
+  folders for future FEASpec model and validator work. The fixtures cover
+  candidate, approved, and invalid diagnostic cases with placeholder source
+  metadata and planned metrics only; no generated images, solver outputs, VLM
+  runs, mandatory Abaqus, or certification claims are included.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

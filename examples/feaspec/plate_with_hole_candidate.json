@@ -1,0 +1,69 @@
+{
+  "schema_version": "0.1-draft",
+  "spec_type": "candidate",
+  "source": {
+    "source_type": "synthetic_drawing_placeholder",
+    "source_id": "plate_with_hole_candidate",
+    "summary": "Rectangular plate with a centered circular hole, fixed left edge, and pressure on the right edge.",
+    "provider_id": "manual_seed",
+    "trust": "untrusted_candidate",
+    "notes": "No image, VLM API, credential, or solver execution is used."
+  },
+  "problem_type": "linear_static_2d_plane_stress",
+  "units": {"system": "SI", "length": "m", "force": "N", "pressure": "Pa", "stress": "Pa"},
+  "geometry": {
+    "geometry_graph": {
+      "nodes": [
+        {"id": "n1", "coordinates": [0.0, 0.0], "units": "m", "evidence_refs": ["ev_placeholder"], "confidence": 0.9},
+        {"id": "n2", "coordinates": [2.0, 0.0], "units": "m", "evidence_refs": ["ev_placeholder"], "confidence": 0.9},
+        {"id": "n3", "coordinates": [2.0, 1.0], "units": "m", "evidence_refs": ["ev_placeholder"], "confidence": 0.9},
+        {"id": "n4", "coordinates": [0.0, 1.0], "units": "m", "evidence_refs": ["ev_placeholder"], "confidence": 0.9},
+        {"id": "c_hole", "coordinates": [1.0, 0.5], "units": "m", "evidence_refs": ["ev_placeholder"], "confidence": 0.7}
+      ],
+      "edges": [
+        {"id": "e_bottom", "node_refs": ["n1", "n2"], "kind": "line", "evidence_refs": ["ev_placeholder"], "confidence": 0.9},
+        {"id": "e_right", "node_refs": ["n2", "n3"], "kind": "line", "evidence_refs": ["ev_placeholder"], "confidence": 0.9},
+        {"id": "e_top", "node_refs": ["n3", "n4"], "kind": "line", "evidence_refs": ["ev_placeholder"], "confidence": 0.9},
+        {"id": "e_left", "node_refs": ["n4", "n1"], "kind": "line", "evidence_refs": ["ev_placeholder"], "confidence": 0.9},
+        {"id": "e_hole", "node_refs": ["c_hole"], "kind": "circle", "radius": {"value": 0.15, "units": "m"}, "evidence_refs": ["ev_placeholder"], "confidence": 0.65}
+      ],
+      "regions": [
+        {"id": "r_plate", "boundary_edge_refs": ["e_bottom", "e_right", "e_top", "e_left"], "void_edge_refs": ["e_hole"], "region_type": "plane_stress_surface", "evidence_refs": ["ev_placeholder"], "confidence": 0.75}
+      ],
+      "coordinate_frames": [{"id": "global_xy", "type": "cartesian_2d"}],
+      "scale_constraints": [{"id": "width", "dimension_ref": "dim_width"}],
+      "dimension_constraints": ["dim_width", "dim_height", "dim_hole_radius"]
+    }
+  },
+  "materials": [
+    {"id": "mat_aluminum", "name": "aluminum candidate", "model": "isotropic_elastic", "properties": {"youngs_modulus": {"value": 70000000000.0, "units": "Pa"}}, "units": {"stress": "Pa"}, "source_evidence": ["ev_assumption"], "confidence": 0.6}
+  ],
+  "sections": [
+    {"id": "sec_plate", "target_refs": ["r_plate"], "section_type": "plane_stress_thickness", "properties": {"thickness": {"value": 0.01, "units": "m"}}, "units": {"length": "m"}, "source_evidence": ["ev_assumption"], "confidence": 0.6}
+  ],
+  "boundary_conditions": [
+    {"id": "bc_left_edge", "target_refs": ["e_left"], "kind": "fixed_edge", "degrees_of_freedom": ["ux", "uy"], "values": [0.0, 0.0], "units": {"translation": "m"}, "coordinate_frame": "global_xy", "evidence_refs": ["ev_placeholder"], "confidence": 0.8}
+  ],
+  "loads": [
+    {"id": "pressure_right", "target_refs": ["e_right"], "kind": "pressure", "magnitude": {"value": 10000.0, "units": "Pa"}, "direction": "positive_x", "vector": [10000.0, 0.0], "coordinate_frame": "global_xy", "evidence_refs": ["ev_placeholder"], "confidence": 0.65}
+  ],
+  "dimensions": [
+    {"id": "dim_width", "target_refs": ["e_bottom"], "value": 2.0, "units": "m", "source": "placeholder", "evidence_refs": ["ev_placeholder"], "confidence": 0.9, "review_status": "unreviewed"},
+    {"id": "dim_height", "target_refs": ["e_left"], "value": 1.0, "units": "m", "source": "placeholder", "evidence_refs": ["ev_placeholder"], "confidence": 0.9, "review_status": "unreviewed"},
+    {"id": "dim_hole_radius", "target_refs": ["e_hole"], "value": 0.15, "units": "m", "source": "placeholder", "evidence_refs": ["ev_placeholder"], "confidence": 0.65, "review_status": "unreviewed"}
+  ],
+  "assumptions": ["plane stress", "uniform thickness", "hole radius is approximate and requires review"],
+  "evidence": [
+    {"id": "ev_placeholder", "kind": "synthetic_drawing_placeholder", "text": "No image generated in this gate.", "confidence": 0.8},
+    {"id": "ev_assumption", "kind": "manual_assumption", "text": "Material and thickness are benchmark seed assumptions.", "confidence": 0.6}
+  ],
+  "confidence": {"overall": 0.69, "geometry": 0.78, "loads": 0.65, "materials": 0.6},
+  "diagnostics": [
+    {"severity": "warning", "code": "approximate_hole_radius", "target_refs": ["e_hole"], "message": "Hole radius is a placeholder and requires review."}
+  ],
+  "validation": {"state": "valid-with-warnings", "review_required": true, "approval_required_before_solver_case_generation": true},
+  "solver_compatibility": {
+    "calculix": {"state": "planned_after_approval", "notes": "Preparation only in a future gate; no solver run is implied."},
+    "abaqus": {"state": "optional_non_default", "notes": "Not required."}
+  }
+}

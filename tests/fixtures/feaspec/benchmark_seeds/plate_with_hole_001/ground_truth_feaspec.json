@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.1-draft",
+  "spec_type": "approved",
+  "source": {"source_type": "synthetic_drawing_placeholder", "source_id": "plate_with_hole_001", "provider_id": "manual_seed", "notes": "No VLM API or solver execution is used."},
+  "problem_type": "linear_static_2d_plane_stress",
+  "units": {"system": "SI", "length": "m", "force": "N", "pressure": "Pa", "stress": "Pa"},
+  "geometry": {"geometry_graph": {"nodes": [{"id": "n1", "coordinates": [0.0, 0.0], "units": "m"}, {"id": "n2", "coordinates": [2.0, 0.0], "units": "m"}, {"id": "n3", "coordinates": [2.0, 1.0], "units": "m"}, {"id": "n4", "coordinates": [0.0, 1.0], "units": "m"}, {"id": "c_hole", "coordinates": [1.0, 0.5], "units": "m"}], "edges": [{"id": "e_bottom", "node_refs": ["n1", "n2"], "kind": "line"}, {"id": "e_right", "node_refs": ["n2", "n3"], "kind": "line"}, {"id": "e_top", "node_refs": ["n3", "n4"], "kind": "line"}, {"id": "e_left", "node_refs": ["n4", "n1"], "kind": "line"}, {"id": "e_hole", "node_refs": ["c_hole"], "kind": "circle", "radius": {"value": 0.15, "units": "m"}}], "regions": [{"id": "r_plate", "boundary_edge_refs": ["e_bottom", "e_right", "e_top", "e_left"], "void_edge_refs": ["e_hole"], "region_type": "plane_stress_surface"}], "coordinate_frames": [{"id": "global_xy", "type": "cartesian_2d"}], "scale_constraints": [{"id": "width", "dimension_ref": "dim_width"}], "dimension_constraints": ["dim_width", "dim_height", "dim_hole_radius"]}},
+  "materials": [{"id": "mat_aluminum", "name": "aluminum educational default", "model": "isotropic_elastic", "properties": {"youngs_modulus": {"value": 70000000000.0, "units": "Pa"}}, "units": {"stress": "Pa"}, "confidence": 1.0}],
+  "sections": [{"id": "sec_plate", "target_refs": ["r_plate"], "section_type": "plane_stress_thickness", "properties": {"thickness": {"value": 0.01, "units": "m"}}, "units": {"length": "m"}, "confidence": 1.0}],
+  "boundary_conditions": [{"id": "bc_left_edge", "target_refs": ["e_left"], "kind": "fixed_edge", "degrees_of_freedom": ["ux", "uy"], "values": [0.0, 0.0], "units": {"translation": "m"}, "coordinate_frame": "global_xy", "confidence": 1.0}],
+  "loads": [{"id": "pressure_right", "target_refs": ["e_right"], "kind": "pressure", "magnitude": {"value": 10000.0, "units": "Pa"}, "direction": "positive_x", "vector": [10000.0, 0.0], "coordinate_frame": "global_xy", "confidence": 1.0}],
+  "dimensions": [{"id": "dim_width", "target_refs": ["e_bottom"], "value": 2.0, "units": "m", "source": "ground_truth", "confidence": 1.0, "review_status": "approved"}, {"id": "dim_height", "target_refs": ["e_left"], "value": 1.0, "units": "m", "source": "ground_truth", "confidence": 1.0, "review_status": "approved"}, {"id": "dim_hole_radius", "target_refs": ["e_hole"], "value": 0.15, "units": "m", "source": "ground_truth", "confidence": 1.0, "review_status": "approved"}],
+  "assumptions": ["plane stress", "uniform thickness", "approval is required before solver case generation"],
+  "evidence": [{"id": "ev_seed", "kind": "generated_ground_truth", "confidence": 1.0}],
+  "confidence": {"overall": 1.0},
+  "diagnostics": [],
+  "validation": {"state": "approved", "review_required": true, "approval_required_before_solver_case_generation": true},
+  "human_review": {"reviewer": "local_user", "action": "approved", "timestamp": "2026-06-06T00:00:00Z", "notes": "Approved benchmark seed. No solver execution was performed."},
+  "solver_compatibility": {"calculix": {"state": "planned"}, "abaqus": {"state": "optional_non_default"}}
+}

@@ -1,0 +1,7 @@
+{
+  "source_type": "synthetic_drawing_placeholder",
+  "image_file": null,
+  "note": "No image generated in this gate; this seed is text and metadata only.",
+  "units": {"system": "SI", "length": "m", "force": "N", "stress": "Pa"},
+  "problem_type": "linear_static_2d_beam"
+}

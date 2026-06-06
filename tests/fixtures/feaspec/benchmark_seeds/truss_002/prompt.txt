@@ -1,0 +1,3 @@
+Create a 2D four-node truss with a 2.0 m bottom span, a center bottom node, an
+upper node at 1.0 m height, fixed left support, vertical roller right support,
+and two downward point loads.

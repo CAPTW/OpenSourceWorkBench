@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.1-draft",
+  "spec_type": "approved",
+  "source": {"source_type": "synthetic_drawing_placeholder", "source_id": "cantilever_001", "provider_id": "manual_seed", "notes": "No VLM API or solver execution is used."},
+  "problem_type": "linear_static_2d_beam",
+  "units": {"system": "SI", "length": "m", "force": "N", "stress": "Pa", "angle": "rad"},
+  "geometry": {"geometry_graph": {"nodes": [{"id": "n_left", "coordinates": [0.0, 0.0], "units": "m"}, {"id": "n_tip", "coordinates": [1.0, 0.0], "units": "m"}], "edges": [{"id": "e_beam", "node_refs": ["n_left", "n_tip"], "kind": "beam_axis"}], "regions": [], "coordinate_frames": [{"id": "global_xy", "type": "cartesian_2d"}], "scale_constraints": [{"id": "scale_length", "dimension_ref": "dim_length"}], "dimension_constraints": ["dim_length"]}},
+  "materials": [{"id": "mat_steel", "name": "steel educational default", "model": "isotropic_elastic", "properties": {"youngs_modulus": {"value": 200000000000.0, "units": "Pa"}}, "units": {"stress": "Pa"}, "confidence": 1.0}],
+  "sections": [{"id": "sec_beam", "target_refs": ["e_beam"], "section_type": "rectangular_beam", "properties": {"width": {"value": 0.02, "units": "m"}, "height": {"value": 0.04, "units": "m"}}, "units": {"length": "m"}, "confidence": 1.0}],
+  "boundary_conditions": [{"id": "bc_fixed", "target_refs": ["n_left"], "kind": "fixed", "degrees_of_freedom": ["ux", "uy", "rz"], "values": [0.0, 0.0, 0.0], "units": {"translation": "m", "rotation": "rad"}, "coordinate_frame": "global_xy", "confidence": 1.0}],
+  "loads": [{"id": "load_tip", "target_refs": ["n_tip"], "kind": "point_force", "magnitude": {"value": 100.0, "units": "N"}, "direction": "downward", "vector": [0.0, -100.0], "coordinate_frame": "global_xy", "confidence": 1.0}],
+  "dimensions": [{"id": "dim_length", "target_refs": ["e_beam"], "value": 1.0, "units": "m", "source": "ground_truth", "confidence": 1.0, "review_status": "approved"}],
+  "assumptions": ["linear static", "small displacement", "approval is required before solver case generation"],
+  "evidence": [{"id": "ev_seed", "kind": "generated_ground_truth", "confidence": 1.0}],
+  "confidence": {"overall": 1.0},
+  "diagnostics": [],
+  "validation": {"state": "approved", "review_required": true, "approval_required_before_solver_case_generation": true},
+  "human_review": {"reviewer": "local_user", "action": "approved", "timestamp": "2026-06-06T00:00:00Z", "notes": "Approved benchmark seed. No solver execution was performed."},
+  "solver_compatibility": {"calculix": {"state": "planned"}, "abaqus": {"state": "optional_non_default"}}
+}

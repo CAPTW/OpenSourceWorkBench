@@ -1,0 +1,54 @@
+{
+  "schema_version": "0.1-draft",
+  "spec_type": "candidate",
+  "source": {
+    "source_type": "text_problem_statement",
+    "source_id": "invalid_missing_units",
+    "summary": "Invalid candidate with a load missing per-entity units.",
+    "provider_id": "manual_negative_seed",
+    "trust": "untrusted_candidate",
+    "notes": "Diagnostic fixture only. No VLM API, credential, or solver execution is used."
+  },
+  "problem_type": "linear_static_2d_beam",
+  "units": {"system": "SI", "length": "m", "force": "N", "stress": "Pa"},
+  "geometry": {
+    "geometry_graph": {
+      "nodes": [
+        {"id": "n1", "coordinates": [0.0, 0.0], "units": "m", "evidence_refs": ["ev_negative"], "confidence": 1.0},
+        {"id": "n2", "coordinates": [1.0, 0.0], "units": "m", "evidence_refs": ["ev_negative"], "confidence": 1.0}
+      ],
+      "edges": [{"id": "e1", "node_refs": ["n1", "n2"], "kind": "beam_axis", "evidence_refs": ["ev_negative"], "confidence": 1.0}],
+      "regions": [],
+      "coordinate_frames": [{"id": "global_xy", "type": "cartesian_2d"}],
+      "scale_constraints": [],
+      "dimension_constraints": ["dim_length"]
+    }
+  },
+  "materials": [
+    {"id": "mat1", "name": "steel", "model": "isotropic_elastic", "properties": {"youngs_modulus": {"value": 200000000000.0, "units": "Pa"}}, "units": {"stress": "Pa"}, "source_evidence": ["ev_negative"], "confidence": 1.0}
+  ],
+  "sections": [
+    {"id": "sec1", "target_refs": ["e1"], "section_type": "rectangular_beam", "properties": {"height": {"value": 0.04, "units": "m"}}, "units": {"length": "m"}, "source_evidence": ["ev_negative"], "confidence": 1.0}
+  ],
+  "boundary_conditions": [
+    {"id": "bc1", "target_refs": ["n1"], "kind": "fixed", "degrees_of_freedom": ["ux", "uy", "rz"], "values": [0.0, 0.0, 0.0], "units": {"translation": "m", "rotation": "rad"}, "coordinate_frame": "global_xy", "evidence_refs": ["ev_negative"], "confidence": 1.0}
+  ],
+  "loads": [
+    {"id": "load_missing_units", "target_refs": ["n2"], "kind": "point_force", "magnitude": {"value": 100.0}, "direction": "downward", "vector": [0.0, -100.0], "coordinate_frame": "global_xy", "evidence_refs": ["ev_negative"], "confidence": 1.0}
+  ],
+  "dimensions": [
+    {"id": "dim_length", "target_refs": ["e1"], "value": 1.0, "units": "m", "source": "negative_fixture", "evidence_refs": ["ev_negative"], "confidence": 1.0, "review_status": "rejected"}
+  ],
+  "assumptions": ["negative fixture for missing per-entity load units"],
+  "evidence": [{"id": "ev_negative", "kind": "negative_fixture", "text": "Load magnitude intentionally omits units.", "confidence": 1.0}],
+  "confidence": {"overall": 1.0},
+  "diagnostics": [
+    {"severity": "error", "code": "missing_units", "target_refs": ["load_missing_units"], "message": "Load magnitude is missing units."}
+  ],
+  "validation": {"state": "invalid", "review_required": true, "approval_required_before_solver_case_generation": true},
+  "expected_diagnostics": ["missing_units"],
+  "solver_compatibility": {
+    "calculix": {"state": "blocked", "notes": "Invalid units block future preparation."},
+    "abaqus": {"state": "optional_non_default", "notes": "Not required."}
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.1-draft",
+  "spec_type": "approved",
+  "source": {"source_type": "synthetic_drawing_placeholder", "source_id": "truss_002", "provider_id": "manual_seed", "notes": "No VLM API or solver execution is used."},
+  "problem_type": "linear_static_2d_truss",
+  "units": {"system": "SI", "length": "m", "force": "N", "stress": "Pa", "area": "m^2"},
+  "geometry": {"geometry_graph": {"nodes": [{"id": "n_left", "coordinates": [0.0, 0.0], "units": "m"}, {"id": "n_mid", "coordinates": [1.0, 0.0], "units": "m"}, {"id": "n_right", "coordinates": [2.0, 0.0], "units": "m"}, {"id": "n_top", "coordinates": [1.0, 1.0], "units": "m"}], "edges": [{"id": "e_left_bottom", "node_refs": ["n_left", "n_mid"], "kind": "truss_bar"}, {"id": "e_right_bottom", "node_refs": ["n_mid", "n_right"], "kind": "truss_bar"}, {"id": "e_left_top", "node_refs": ["n_left", "n_top"], "kind": "truss_bar"}, {"id": "e_right_top", "node_refs": ["n_right", "n_top"], "kind": "truss_bar"}, {"id": "e_mid_top", "node_refs": ["n_mid", "n_top"], "kind": "truss_bar"}], "regions": [], "coordinate_frames": [{"id": "global_xy", "type": "cartesian_2d"}], "scale_constraints": [{"id": "span", "dimension_ref": "dim_span"}], "dimension_constraints": ["dim_span", "dim_half_span", "dim_height"]}},
+  "materials": [{"id": "mat_steel", "name": "steel educational default", "model": "isotropic_elastic", "properties": {"youngs_modulus": {"value": 200000000000.0, "units": "Pa"}}, "units": {"stress": "Pa"}, "confidence": 1.0}],
+  "sections": [{"id": "sec_bar", "target_refs": ["e_left_bottom", "e_right_bottom", "e_left_top", "e_right_top", "e_mid_top"], "section_type": "truss_area", "properties": {"area": {"value": 0.00012, "units": "m^2"}}, "units": {"area": "m^2"}, "confidence": 1.0}],
+  "boundary_conditions": [{"id": "bc_left", "target_refs": ["n_left"], "kind": "pin", "degrees_of_freedom": ["ux", "uy"], "values": [0.0, 0.0], "units": {"translation": "m"}, "coordinate_frame": "global_xy", "confidence": 1.0}, {"id": "bc_right", "target_refs": ["n_right"], "kind": "roller", "degrees_of_freedom": ["uy"], "values": [0.0], "units": {"translation": "m"}, "coordinate_frame": "global_xy", "confidence": 1.0}],
+  "loads": [{"id": "load_top", "target_refs": ["n_top"], "kind": "point_force", "magnitude": {"value": 1500.0, "units": "N"}, "direction": "downward", "vector": [0.0, -1500.0], "coordinate_frame": "global_xy", "confidence": 1.0}, {"id": "load_mid", "target_refs": ["n_mid"], "kind": "point_force", "magnitude": {"value": 500.0, "units": "N"}, "direction": "downward", "vector": [0.0, -500.0], "coordinate_frame": "global_xy", "confidence": 1.0}],
+  "dimensions": [{"id": "dim_span", "target_refs": ["n_left", "n_right"], "value": 2.0, "units": "m", "source": "ground_truth", "confidence": 1.0, "review_status": "approved"}, {"id": "dim_half_span", "target_refs": ["n_left", "n_mid"], "value": 1.0, "units": "m", "source": "ground_truth", "confidence": 1.0, "review_status": "approved"}, {"id": "dim_height", "target_refs": ["n_top"], "value": 1.0, "units": "m", "source": "ground_truth", "confidence": 1.0, "review_status": "approved"}],
+  "assumptions": ["pin-jointed truss", "small displacement", "approval is required before solver case generation"],
+  "evidence": [{"id": "ev_seed", "kind": "generated_ground_truth", "confidence": 1.0}],
+  "confidence": {"overall": 1.0},
+  "diagnostics": [],
+  "validation": {"state": "approved", "review_required": true, "approval_required_before_solver_case_generation": true},
+  "human_review": {"reviewer": "local_user", "action": "approved", "timestamp": "2026-06-06T00:00:00Z", "notes": "Approved benchmark seed. No solver execution was performed."},
+  "solver_compatibility": {"calculix": {"state": "planned"}, "abaqus": {"state": "optional_non_default"}}
+}

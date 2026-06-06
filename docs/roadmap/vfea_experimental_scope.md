@@ -267,5 +267,12 @@ confidence/evidence, and keeps solver compatibility CalculiX-first with Abaqus
 optional and non-default. It does not implement FEASpec, VFEA, VLM APIs,
 credentials, solver execution, or topology optimization.
 
+Example and seed evidence:
+[FEASpec examples](../experimental/feaspec_examples.md) and
+[FEASpec benchmark seeds](../experimental/feaspec_benchmark_seeds.md) provide
+canonical JSON examples and synthetic benchmark seed fixtures for future model
+and validator work. They remain docs/fixtures only and do not add solver output,
+VLM integration, or certification claims.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

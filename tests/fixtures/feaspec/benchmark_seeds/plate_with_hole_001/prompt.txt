@@ -1,0 +1,3 @@
+Create a 2D plane-stress rectangular plate, 2.0 m wide and 1.0 m tall, with a
+0.15 m radius center hole, fixed left edge, and 10000 Pa pressure on the right
+edge.

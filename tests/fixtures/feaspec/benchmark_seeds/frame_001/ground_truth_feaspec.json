@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.1-draft",
+  "spec_type": "approved",
+  "source": {"source_type": "synthetic_drawing_placeholder", "source_id": "frame_001", "provider_id": "manual_seed", "notes": "No VLM API or solver execution is used."},
+  "problem_type": "linear_static_2d_frame",
+  "units": {"system": "SI", "length": "m", "force": "N", "stress": "Pa", "angle": "rad"},
+  "geometry": {"geometry_graph": {"nodes": [{"id": "n_bl", "coordinates": [0.0, 0.0], "units": "m"}, {"id": "n_tl", "coordinates": [0.0, 3.0], "units": "m"}, {"id": "n_tr", "coordinates": [4.0, 3.0], "units": "m"}, {"id": "n_br", "coordinates": [4.0, 0.0], "units": "m"}], "edges": [{"id": "e_left_col", "node_refs": ["n_bl", "n_tl"], "kind": "frame_member"}, {"id": "e_top_beam", "node_refs": ["n_tl", "n_tr"], "kind": "frame_member"}, {"id": "e_right_col", "node_refs": ["n_br", "n_tr"], "kind": "frame_member"}], "regions": [], "coordinate_frames": [{"id": "global_xy", "type": "cartesian_2d"}], "scale_constraints": [{"id": "width", "dimension_ref": "dim_width"}], "dimension_constraints": ["dim_width", "dim_height"]}},
+  "materials": [{"id": "mat_steel", "name": "steel educational default", "model": "isotropic_elastic", "properties": {"youngs_modulus": {"value": 200000000000.0, "units": "Pa"}}, "units": {"stress": "Pa"}, "confidence": 1.0}],
+  "sections": [{"id": "sec_frame", "target_refs": ["e_left_col", "e_top_beam", "e_right_col"], "section_type": "frame_rectangular", "properties": {"width": {"value": 0.1, "units": "m"}, "height": {"value": 0.2, "units": "m"}}, "units": {"length": "m"}, "confidence": 1.0}],
+  "boundary_conditions": [{"id": "bc_bl", "target_refs": ["n_bl"], "kind": "fixed", "degrees_of_freedom": ["ux", "uy", "rz"], "values": [0.0, 0.0, 0.0], "units": {"translation": "m", "rotation": "rad"}, "coordinate_frame": "global_xy", "confidence": 1.0}, {"id": "bc_br", "target_refs": ["n_br"], "kind": "fixed", "degrees_of_freedom": ["ux", "uy", "rz"], "values": [0.0, 0.0, 0.0], "units": {"translation": "m", "rotation": "rad"}, "coordinate_frame": "global_xy", "confidence": 1.0}],
+  "loads": [{"id": "load_top_right", "target_refs": ["n_tr"], "kind": "point_force", "magnitude": {"value": 2000.0, "units": "N"}, "direction": "positive_x", "vector": [2000.0, 0.0], "coordinate_frame": "global_xy", "confidence": 1.0}],
+  "dimensions": [{"id": "dim_width", "target_refs": ["e_top_beam"], "value": 4.0, "units": "m", "source": "ground_truth", "confidence": 1.0, "review_status": "approved"}, {"id": "dim_height", "target_refs": ["e_left_col", "e_right_col"], "value": 3.0, "units": "m", "source": "ground_truth", "confidence": 1.0, "review_status": "approved"}],
+  "assumptions": ["2D frame members", "small displacement", "approval is required before solver case generation"],
+  "evidence": [{"id": "ev_seed", "kind": "generated_ground_truth", "confidence": 1.0}],
+  "confidence": {"overall": 1.0},
+  "diagnostics": [],
+  "validation": {"state": "approved", "review_required": true, "approval_required_before_solver_case_generation": true},
+  "human_review": {"reviewer": "local_user", "action": "approved", "timestamp": "2026-06-06T00:00:00Z", "notes": "Approved benchmark seed. No solver execution was performed."},
+  "solver_compatibility": {"calculix": {"state": "planned"}, "abaqus": {"state": "optional_non_default"}}
+}

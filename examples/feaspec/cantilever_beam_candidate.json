@@ -1,0 +1,114 @@
+{
+  "schema_version": "0.1-draft",
+  "spec_type": "candidate",
+  "source": {
+    "source_type": "text_problem_statement",
+    "source_id": "cantilever_beam_candidate",
+    "summary": "Cantilever beam with fixed left end, 1 m span, and 100 N downward tip load.",
+    "provider_id": "manual_seed",
+    "trust": "untrusted_candidate",
+    "notes": "No image, VLM API, credential, or solver execution is used."
+  },
+  "problem_type": "linear_static_2d_beam",
+  "units": {
+    "system": "SI",
+    "length": "m",
+    "force": "N",
+    "stress": "Pa",
+    "angle": "rad"
+  },
+  "geometry": {
+    "geometry_graph": {
+      "nodes": [
+        {"id": "n_left", "coordinates": [0.0, 0.0], "units": "m", "evidence_refs": ["ev_prompt"], "confidence": 0.95},
+        {"id": "n_tip", "coordinates": [1.0, 0.0], "units": "m", "evidence_refs": ["ev_prompt"], "confidence": 0.95}
+      ],
+      "edges": [
+        {"id": "e_beam", "node_refs": ["n_left", "n_tip"], "kind": "beam_axis", "evidence_refs": ["ev_prompt"], "confidence": 0.9}
+      ],
+      "regions": [],
+      "coordinate_frames": [{"id": "global_xy", "type": "cartesian_2d"}],
+      "scale_constraints": [{"id": "scale_length", "dimension_ref": "dim_length"}],
+      "dimension_constraints": ["dim_length"]
+    }
+  },
+  "materials": [
+    {
+      "id": "mat_steel_candidate",
+      "name": "steel placeholder",
+      "model": "isotropic_elastic",
+      "properties": {},
+      "units": {"stress": "Pa"},
+      "source_evidence": ["ev_assumption"],
+      "confidence": 0.4
+    }
+  ],
+  "sections": [
+    {
+      "id": "sec_rect_candidate",
+      "target_refs": ["e_beam"],
+      "section_type": "rectangular_beam",
+      "properties": {},
+      "units": {"length": "m"},
+      "source_evidence": ["ev_missing_section"],
+      "confidence": 0.2
+    }
+  ],
+  "boundary_conditions": [
+    {
+      "id": "bc_fixed_left",
+      "target_refs": ["n_left"],
+      "kind": "fixed",
+      "degrees_of_freedom": ["ux", "uy", "rz"],
+      "values": [0.0, 0.0, 0.0],
+      "units": {"translation": "m", "rotation": "rad"},
+      "coordinate_frame": "global_xy",
+      "evidence_refs": ["ev_prompt"],
+      "confidence": 0.9
+    }
+  ],
+  "loads": [
+    {
+      "id": "load_tip",
+      "target_refs": ["n_tip"],
+      "kind": "point_force",
+      "magnitude": {"value": 100.0, "units": "N"},
+      "direction": "downward",
+      "vector": [0.0, -100.0],
+      "coordinate_frame": "global_xy",
+      "evidence_refs": ["ev_prompt"],
+      "confidence": 0.9
+    }
+  ],
+  "dimensions": [
+    {"id": "dim_length", "target_refs": ["e_beam"], "value": 1.0, "units": "m", "source": "text", "evidence_refs": ["ev_prompt"], "confidence": 0.95, "review_status": "unreviewed"}
+  ],
+  "assumptions": [
+    "linear static educational beam idealization",
+    "section dimensions are missing and must be reviewed"
+  ],
+  "evidence": [
+    {"id": "ev_prompt", "kind": "text_span", "text": "length 1 m, tip load 100 N", "confidence": 0.95},
+    {"id": "ev_assumption", "kind": "manual_assumption", "text": "material family inferred from example name", "confidence": 0.4},
+    {"id": "ev_missing_section", "kind": "diagnostic_seed", "text": "section properties omitted intentionally", "confidence": 1.0}
+  ],
+  "confidence": {
+    "overall": 0.62,
+    "geometry": 0.95,
+    "materials": 0.4,
+    "loads": 0.9
+  },
+  "diagnostics": [
+    {"severity": "warning", "code": "missing_material_properties", "target_refs": ["mat_steel_candidate"], "message": "Material constants require review."},
+    {"severity": "warning", "code": "missing_section_properties", "target_refs": ["sec_rect_candidate"], "message": "Section dimensions require review."}
+  ],
+  "validation": {
+    "state": "valid-with-warnings",
+    "review_required": true,
+    "approval_required_before_solver_case_generation": true
+  },
+  "solver_compatibility": {
+    "calculix": {"state": "planned_after_approval", "notes": "Preparation only in a future gate; no solver run is implied."},
+    "abaqus": {"state": "optional_non_default", "notes": "Not required."}
+  }
+}

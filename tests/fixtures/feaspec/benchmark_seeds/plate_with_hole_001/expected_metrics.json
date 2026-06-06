@@ -1,0 +1,19 @@
+{
+  "schema_validity_required": true,
+  "required_validation_state": "approved",
+  "node_count": 5,
+  "edge_count": 5,
+  "bc_count": 1,
+  "load_count": 1,
+  "material_count": 1,
+  "dimension_count": 3,
+  "solver_compatibility_expected": {"calculix": "planned", "abaqus": "optional_non_default"},
+  "detection_metrics_later": {
+    "node_precision": "planned",
+    "node_recall": "planned",
+    "connectivity_f1": "planned",
+    "bc_accuracy": "planned",
+    "load_accuracy": "planned",
+    "dimension_accuracy": "planned"
+  }
+}

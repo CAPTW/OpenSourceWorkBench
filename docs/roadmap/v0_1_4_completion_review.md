@@ -164,3 +164,9 @@ compatibility boundaries.
 The completion decision remains unchanged: the planned v0.1.4 scope is
 complete, VFEA and FEASpec remain unimplemented, and live optional validation
 for issues `#6` through `#11` remains environment-dependent.
+
+[FEASpec examples](../experimental/feaspec_examples.md) and
+[FEASpec benchmark seeds](../experimental/feaspec_benchmark_seeds.md) now add
+documentation and fixture evidence for future FEASpec models and validators.
+They do not change the completion decision, release state, or live optional
+validation status.

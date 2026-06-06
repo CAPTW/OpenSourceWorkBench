@@ -579,3 +579,22 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   optimization, release edits, asset uploads, tags, or issue mutation. Future
   implementation gates must preserve the candidate/approved boundary and add
   focused tests before any production behavior is merged.
+
+## ADR-0033: FEASpec Examples And Benchmark Seeds Are Text Fixtures
+
+- Status: Accepted for experimental fixtures
+- Date: 2026-06-06
+- Context: ADR-0032 defines the FEASpec IR contract, but future Python models
+  and validators need deterministic examples and seed fixtures before source
+  behavior is implemented. The examples must preserve the same human-review and
+  no-execution boundaries as the design document.
+- Decision: Add canonical JSON examples and synthetic benchmark seed folders as
+  docs/test fixtures only. Examples cover candidate, approved, and invalid
+  diagnostic cases. Benchmark seeds contain prompt text, placeholder source
+  metadata, approved ground-truth FEASpec-style JSON, and expected metrics for
+  future detection work. No images, VLM runs, solver outputs, CalculiX decks,
+  or benchmark scores are generated in this gate.
+- Consequences: Future implementation gates can use these fixtures for model
+  parsing and validator tests. FEASpec and VFEA remain unimplemented, external
+  solvers remain optional and unbundled, Abaqus remains optional/non-default,
+  and the public release/tag/assets remain unchanged.
