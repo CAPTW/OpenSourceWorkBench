@@ -97,6 +97,10 @@ Development package version: `0.1.3rc2.dev0`
   planning-only status, human-review requirement, no automatic solver execution,
   no mandatory Abaqus, no credentials, no topology optimization implementation,
   no certification, and no native commercial CAD import boundaries.
+- Added a v0.1.4 completion review, recording that Issues `#12`, `#15`, `#14`,
+  and `#17` complete the planned workflow/product-polish and VFEA scope line
+  while Issues `#6`-`#11` remain live optional validation and no version, tag,
+  release, or asset mutation is performed.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.

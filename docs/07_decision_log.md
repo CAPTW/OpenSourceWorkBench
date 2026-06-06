@@ -504,3 +504,22 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   `OSW-EXP-002_FEASPEC_IR_DESIGN`, not implementation. No provider API keys,
   VLM integration, Abaqus dependency, solver execution, release assets, tags, or
   version metadata changes are part of this decision.
+
+## ADR-0029: v0.1.4 Planned Scope Completion
+
+- Status: Accepted for planning
+- Date: 2026-06-06
+- Context: Issues `#12`, `#15`, `#14`, and `#17` are closed after v0.1.4
+  planning, Plugin Manager UX/install receipts, ResultViewer / FieldViewer
+  workflow, and VFEA experimental scope definition landed with evidence. Issues
+  `#6` through `#11` remain open in the live optional validation milestone and
+  require external solvers or optional Python packages.
+- Decision: Treat the planned v0.1.4 workflow/product-polish and VFEA
+  scope-definition line as complete. Keep live optional validation separate and
+  environment-dependent. This decision does not release `v0.1.4`, bump version
+  metadata, create tags, edit the GitHub Release, upload assets, or implement
+  VFEA.
+- Consequences: The next work should be selected explicitly: FEASpec IR design
+  as a new experimental design gate, live optional validation on a suitable
+  environment, or release metadata/revalidation planning for the next prerelease
+  boundary. No live validation issue is closed by the completion review.
