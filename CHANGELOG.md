@@ -18,6 +18,13 @@ by a dedicated release/tag gate.
 - Added a prepared-machine plan for issues `#6` through `#11`, defining
   required packages/executables, future installed-only validation commands,
   pass/partial/keep-open criteria, and separate closure-gate requirements.
+- Added a design-only FEASpec IR contract for future VFEA work, defining
+  `FEASpecCandidate` versus approved FEASpec, explicit units, GeometryGraph,
+  materials/sections, boundary conditions, loads, dimensions, assumptions,
+  evidence/confidence, diagnostics, validation states, serialization examples,
+  and CalculiX-first compatibility without implementing FEASpec/VFEA, VLM APIs,
+  solver execution, mandatory Abaqus, topology optimization, or certification
+  claims.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

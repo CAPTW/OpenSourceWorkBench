@@ -259,5 +259,13 @@ The next prompt may work on:
 
 Recommended next prompt: `OSW-EXP-002_FEASPEC_IR_DESIGN`.
 
+Follow-up design evidence: [FEASpec IR design](../experimental/feaspec_ir_design.md)
+defines the planning-only intermediate representation contract for future
+Vision-to-FEA work. It keeps `FEASpecCandidate` untrusted until validation and
+human approval, requires explicit units and diagnostics, preserves
+confidence/evidence, and keeps solver compatibility CalculiX-first with Abaqus
+optional and non-default. It does not implement FEASpec, VFEA, VLM APIs,
+credentials, solver execution, or topology optimization.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

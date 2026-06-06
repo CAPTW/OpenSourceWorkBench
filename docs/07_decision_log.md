@@ -558,3 +558,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   GitHub Release publication remain separate gates. This decision does not
   create or push tags, build or upload release assets, edit the GitHub Release,
   run live validation, or close issues.
+
+## ADR-0032: FEASpec IR Is Design-Only Before Implementation
+
+- Status: Accepted for experimental design
+- Date: 2026-06-06
+- Context: The public `v0.1.4-rc1` prerelease is published and VFEA scope issue
+  `#17` is closed. The next experimental line needs a precise FEASpec
+  intermediate representation before any Python models, validators, provider
+  integrations, ProjectSchema bridge, or solver-adapter work is considered.
+- Decision: Define FEASpec as a design-only IR contract with untrusted
+  `FEASpecCandidate` data, explicit units, GeometryGraph entities,
+  materials/sections, boundary conditions, loads, dimensions, assumptions,
+  evidence/confidence, diagnostics, validation states, solver compatibility,
+  and serialization examples. Only a human-approved FEASpec may proceed to a
+  future ProjectSchema or SolverAdapter handoff. Planning remains
+  CalculiX-first, while Abaqus is optional and non-default.
+- Consequences: FEASpec and VFEA remain unimplemented. This decision does not
+  add source code, VLM APIs, credentials, solver execution, topology
+  optimization, release edits, asset uploads, tags, or issue mutation. Future
+  implementation gates must preserve the candidate/approved boundary and add
+  focused tests before any production behavior is merged.

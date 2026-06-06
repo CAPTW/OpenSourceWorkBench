@@ -151,3 +151,16 @@ open.
 [Prepared environment plan for live optional validation](../validation/live_optional_validation_environment_plan.md)
 records the required packages/executables, future smoke commands, pass criteria,
 and separate closure-gate rule for those open issues.
+
+## FEASpec IR Follow-Up
+
+[FEASpec IR design](../experimental/feaspec_ir_design.md) continues the
+experimental VFEA line as a design/spec contract after the public
+`v0.1.4-rc1` prerelease. It defines candidate versus approved FEASpec,
+GeometryGraph, explicit units, materials/sections, loads, boundary conditions,
+evidence/confidence, diagnostics, validation states, and CalculiX-first solver
+compatibility boundaries.
+
+The completion decision remains unchanged: the planned v0.1.4 scope is
+complete, VFEA and FEASpec remain unimplemented, and live optional validation
+for issues `#6` through `#11` remains environment-dependent.
