@@ -131,4 +131,7 @@ missing, so the issue remains open for a prepared environment.
   missing.
 - Rerun this matrix on a prepared validation machine with the relevant tools
   already installed.
+- Use the [prepared environment plan](live_optional_validation_environment_plan.md)
+  to select required packages/executables, validation commands, pass criteria,
+  and closure-gate boundaries before rerunning.
 - Use separate closure gates only for issues with passing live evidence.

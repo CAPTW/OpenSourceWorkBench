@@ -147,3 +147,7 @@ machine because the relevant tools or packages were absent. The completion
 decision is unchanged: the planned v0.1.4 scope is complete, while live optional
 validation remains environment-dependent and issues `#6` through `#11` remain
 open.
+
+[Prepared environment plan for live optional validation](../validation/live_optional_validation_environment_plan.md)
+records the required packages/executables, future smoke commands, pass criteria,
+and separate closure-gate rule for those open issues.

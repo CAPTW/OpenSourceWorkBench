@@ -15,6 +15,9 @@ by a dedicated release/tag gate.
   CoolProp/Cantera, and PyVista/meshio were missing, so each target was
   classified as `skipped-missing` and remains open for a prepared validation
   environment.
+- Added a prepared-machine plan for issues `#6` through `#11`, defining
+  required packages/executables, future installed-only validation commands,
+  pass/partial/keep-open criteria, and separate closure-gate requirements.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA
