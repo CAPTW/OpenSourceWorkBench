@@ -93,6 +93,10 @@ Development package version: `0.1.3rc2.dev0`
   planning, optional/non-default Abaqus export planning only, and explicit
   non-goals against automatic unreviewed solver execution, VLM API integration,
   topology optimization implementation, and certification claims.
+- Recorded VFEA scope closure evidence for Issue `#17`, preserving the
+  planning-only status, human-review requirement, no automatic solver execution,
+  no mandatory Abaqus, no credentials, no topology optimization implementation,
+  no certification, and no native commercial CAD import boundaries.
 - Recorded a `v0.1.3rc2` maintenance revalidation baseline covering release
   integrity, workflow safety, asset smoke evidence, known warnings, and next
   maintenance choices.
