@@ -177,5 +177,8 @@ Potential follow-up gates:
   records the design-only CalculiX-first case planning boundary in
   [FEASpec to CalculiX case planning](feaspec_to_calculix_case_planning.md).
 - `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL`
-- `OSW-EXP-011_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-012_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
+  adds the bounded experimental case-plan object in
+  [FEASpec to CalculiX case-plan model](feaspec_to_calculix_case_plan_model.md).
+- `OSW-EXP-011_FEASPEC_TO_CALCULIX_INP_WRITER_DESIGN`
+- `OSW-EXP-012_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-013_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`

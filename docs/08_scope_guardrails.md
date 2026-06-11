@@ -47,6 +47,11 @@ request should stop, park, or defer.
   CalculiX-first case-plan object, mesh requirements, mapping diagnostics, and
   issue `#8` separation without implementing a case generator, `.inp` writer,
   SolverAdapter/exporter call, live `ccx` validation, or solver execution.
+- Experimental FEASpec to CalculiX case-plan model that consumes only approved
+  FEASpec bridge plans, returns serializable planning records and `FC_*`
+  diagnostics, reports missing explicit mesh topology, and still does not write
+  `.inp` files, call solver adapters/exporters, mutate ProjectSchema, run
+  `ccx`, call VLM APIs, or execute solvers.
 
 ## Out of Scope
 
@@ -80,6 +85,9 @@ request should stop, park, or defer.
 - Treating FEASpec to CalculiX case planning as a case generator, `.inp`
   writer, SolverAdapter/exporter implementation, live `ccx` validation, or
   permission to execute solvers.
+- Treating FEASpec to CalculiX case-plan model output as a solver deck,
+  `.inp` writer handoff, SolverAdapter/exporter implementation, ProjectSchema
+  mutation, live `ccx` validation, or permission to execute solvers.
 
 ## Scope Drift Definition
 
@@ -107,6 +115,9 @@ Scope drift is any change that:
 - turns FEASpec to CalculiX case planning into case generation, `.inp` writing,
   SolverAdapter/export behavior, live `ccx` validation, dependency install, or
   solver execution without a separate gate;
+- turns FEASpec to CalculiX case-plan model output into solver deck writing,
+  solver adapter/export behavior, live `ccx` validation, ProjectSchema
+  mutation, dependency install, or solver execution without a separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

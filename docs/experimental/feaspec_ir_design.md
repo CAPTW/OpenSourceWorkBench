@@ -532,6 +532,14 @@ preconditions, mesh requirements, node/element/material/section/BC/load/step
 planning, `FC_*` diagnostics, issue `#8` separation, and the no `.inp`
 writer/no solver execution boundary.
 
+[FEASpec to CalculiX case-plan model](feaspec_to_calculix_case_plan_model.md)
+adds the bounded experimental planning object for that boundary. It maps an
+approved FEASpec bridge plan into serializable CalculiX planning records and
+`FC_*` diagnostics, keeps `ready_for_solver_execution` always `false`, and
+blocks `.inp` writer readiness until explicit mesh or element topology exists.
+It does not write solver files, export cases, call a runner, run `ccx`, mutate
+ProjectSchema, or add VLM APIs.
+
 ## Non-Goals
 
 - No implementation in this gate.
@@ -556,8 +564,10 @@ Potential future gates:
 - `OSW-EXP-006_FEASPEC_VALIDATOR_IMPLEMENTATION`
 - `OSW-EXP-007_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
 - `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
-- `OSW-EXP-010_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-011_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
+- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL`
+- `OSW-EXP-011_FEASPEC_TO_CALCULIX_INP_WRITER_DESIGN`
+- `OSW-EXP-012_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-013_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
 
 Each implementation gate must preserve the same guardrails and add focused
 tests before any source behavior is merged.

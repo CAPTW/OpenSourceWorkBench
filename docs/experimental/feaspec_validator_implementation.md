@@ -122,6 +122,12 @@ and the no-export/no-execution safety boundary. It does not implement a case
 generator, `.inp` writer, SolverAdapter/exporter, runner call, or live `ccx`
 validation.
 
+[FEASpec to CalculiX case-plan model](feaspec_to_calculix_case_plan_model.md)
+adds an experimental plan object that consumes approved bridge plans and
+surfaces validator/bridge blockers as `FC_*` diagnostics. It preserves the
+same no-export/no-execution boundary and keeps `ready_for_solver_execution`
+always `false`.
+
 ## Examples And Benchmark Coverage
 
 The validator is covered against:
@@ -156,4 +162,5 @@ scores and do not execute solvers.
 - `OSW-EXP-008_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_IMPLEMENTATION`
 - `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
 - `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL`
-- `OSW-EXP-011_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-011_FEASPEC_TO_CALCULIX_INP_WRITER_DESIGN`
+- `OSW-EXP-012_FEASPEC_HUMAN_REVIEW_UI_DESIGN`

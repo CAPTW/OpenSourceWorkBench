@@ -323,5 +323,13 @@ validator, and bridge evidence. It remains design-only and separate from issue
 writer, SolverAdapter/exporter, runner call, live validation, or solver
 execution.
 
+Case-plan model evidence:
+[FEASpec to CalculiX case-plan model](../experimental/feaspec_to_calculix_case_plan_model.md)
+adds the experimental serializable planning object for approved bridge plans.
+It preserves reviewed records and `FC_*` diagnostics, keeps
+`ready_for_solver_execution` false, and still does not write `.inp` files,
+export CalculiX cases, mutate ProjectSchema, run `ccx`, call VLM APIs, or close
+issue `#8`.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

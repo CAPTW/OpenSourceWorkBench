@@ -1,9 +1,10 @@
-"""Experimental FEASpec model, validator, and bridge planning layer.
+"""Experimental FEASpec model, validator, bridge, and case planning layer.
 
 The public API is intentionally limited to Python models, JSON I/O, basic
-structural checks, validator reports, and bridge draft planning. It does not
-include VLM providers, full ProjectSchema persistence, ProjectSchema mutation,
-solver adapters, or solver execution.
+structural checks, validator reports, bridge draft planning, and CalculiX
+case-plan records. It does not include VLM providers, full ProjectSchema
+persistence, ProjectSchema mutation, solver adapters, solver deck writing, or
+solver execution.
 """
 
 from .basic_checks import check_feaspec_dict
@@ -11,6 +12,26 @@ from .bridge_diagnostics import (
     BridgeDiagnosticCode,
     BridgeSeverity,
     FEASpecBridgeDiagnostic,
+)
+from .calculix_case_plan import (
+    CalculiXCaseBoundaryConditionPlan,
+    CalculiXCaseElementPlan,
+    CalculiXCaseLoadPlan,
+    CalculiXCaseMaterialPlan,
+    CalculiXCaseNodePlan,
+    CalculiXCaseOutputRequestPlan,
+    CalculiXCaseSectionPlan,
+    CalculiXCaseStatus,
+    CalculiXCaseStepPlan,
+    FEASpecCalculiXCasePlan,
+    explain_calculix_case_plan,
+    plan_calculix_case_from_bridge,
+    plan_calculix_case_from_feaspec,
+)
+from .calculix_diagnostics import (
+    CalculiXPlanDiagnosticCode,
+    CalculiXPlanSeverity,
+    FEASpecCalculiXPlanDiagnostic,
 )
 from .diagnostics import (
     DiagnosticCategory,
@@ -74,6 +95,17 @@ __all__ = [
     "BridgeDiagnosticCode",
     "BridgeSeverity",
     "BridgeStatus",
+    "CalculiXCaseBoundaryConditionPlan",
+    "CalculiXCaseElementPlan",
+    "CalculiXCaseLoadPlan",
+    "CalculiXCaseMaterialPlan",
+    "CalculiXCaseNodePlan",
+    "CalculiXCaseOutputRequestPlan",
+    "CalculiXCaseSectionPlan",
+    "CalculiXCaseStatus",
+    "CalculiXCaseStepPlan",
+    "CalculiXPlanDiagnosticCode",
+    "CalculiXPlanSeverity",
     "Confidence",
     "CoordinateFrame",
     "Diagnostic",
@@ -87,6 +119,8 @@ __all__ = [
     "FEARegion",
     "FEASource",
     "FEASpecBridgeDiagnostic",
+    "FEASpecCalculiXCasePlan",
+    "FEASpecCalculiXPlanDiagnostic",
     "FEASpec",
     "FEASpecCandidate",
     "FEASpecDiagnosticError",
@@ -114,10 +148,13 @@ __all__ = [
     "ValidationState",
     "check_feaspec_dict",
     "dump_feaspec",
+    "explain_calculix_case_plan",
     "explain_bridge_plan",
     "explain_diagnostics",
     "load_feaspec",
     "parse_feaspec_dict",
+    "plan_calculix_case_from_bridge",
+    "plan_calculix_case_from_feaspec",
     "plan_project_from_feaspec",
     "validate_benchmark_seed",
     "validate_feaspec",

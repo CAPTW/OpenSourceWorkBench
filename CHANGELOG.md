@@ -72,6 +72,16 @@ by a dedicated release/tag gate.
   and output planning; `FC_*` diagnostics; and issue `#8` separation. It does
   not add a case generator, `.inp` writer, SolverAdapter/exporter call, live
   `ccx` validation, or solver execution.
+- Added an experimental FEASpec to CalculiX case-plan model under
+  `src/osw/experimental/feaspec/`, with `plan_calculix_case_from_feaspec`,
+  `plan_calculix_case_from_bridge`, `explain_calculix_case_plan`,
+  `FEASpecCalculiXCasePlan`, node/element/material/section/BC/load/step/output
+  planning records, and `FC_*` diagnostics. It preserves approved bridge
+  evidence, blocks candidates and validator/bridge blockers, marks examples
+  without explicit mesh topology as `FC_MESH_REQUIRED`, keeps
+  `ready_for_solver_execution` false, and does not write `.inp` files, call
+  solver adapters/exporters, run `ccx`, mutate ProjectSchema, add VLM APIs, or
+  execute solvers.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

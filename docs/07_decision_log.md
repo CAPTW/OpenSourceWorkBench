@@ -717,3 +717,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   `ccx` validation, dependency install, and solver execution remain separate
   future gates. The planning document is not proof of solver readiness or
   physical correctness.
+
+## ADR-0040: FEASpec CalculiX Case-Plan Model Is Non-Executing
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-12
+- Context: ADR-0039 defined the CalculiX-first case-plan boundary. The next
+  implementation step needs a serializable planning object that preserves
+  approved FEASpec bridge evidence and exposes writer-readiness diagnostics
+  without creating solver files or crossing into live validation.
+- Decision: Implement `FEASpecCalculiXCasePlan` and `FC_*` diagnostics under
+  `src/osw/experimental/feaspec/`. The planner accepts approved FEASpec or
+  draft-ready bridge plans, blocks candidates and bridge/validator blockers,
+  preserves units, node-like geometry evidence, materials, sections, boundary
+  conditions, loads, default static step metadata, output request metadata, and
+  provenance comments, and reports `FC_MESH_REQUIRED` until explicit reviewed
+  element topology exists.
+- Consequences: `ready_for_solver_execution` is always false, examples without
+  mesh topology are not writer-ready, and `.inp` writer design, CalculiX export,
+  SolverAdapter handoff, runner handoff, live `ccx` validation, ProjectSchema
+  mutation, VLM integration, dependency install, and solver execution remain
+  separate future gates.

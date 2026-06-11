@@ -107,6 +107,12 @@ validator, and bridge evidence exist. It remains design-only and does not add a
 case generator, `.inp` writer, SolverAdapter/exporter, runner call, live
 optional validation, or solver execution.
 
+[FEASpec to CalculiX case-plan model](feaspec_to_calculix_case_plan_model.md)
+adds the bounded experimental case-plan object after bridge planning. It
+preserves reviewed records and diagnostics, blocks candidates and bridge
+blockers, reports `FC_MESH_REQUIRED` for examples without explicit mesh
+topology, and keeps writer/export/execution behavior out of scope.
+
 ## Examples Coverage
 
 The model layer loads the current files under `examples/feaspec/`:
@@ -141,5 +147,6 @@ Possible follow-up gates:
 - `OSW-EXP-007_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
 - `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
 - `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL`
-- `OSW-EXP-011_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-012_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
+- `OSW-EXP-011_FEASPEC_TO_CALCULIX_INP_WRITER_DESIGN`
+- `OSW-EXP-012_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-013_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`

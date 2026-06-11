@@ -7,6 +7,13 @@ execution in this gate.
 
 Related release: `v0.1.4-rc1`
 
+Follow-up implementation evidence:
+[FEASpec to CalculiX case-plan model](feaspec_to_calculix_case_plan_model.md)
+adds the scoped experimental model described here. The model returns
+serializable planning records and diagnostics only; it still does not add a
+case generator, `.inp` writer, CalculiX export, SolverAdapter call, runner
+call, live `ccx` validation, or solver execution.
+
 ## Release Context
 
 `v0.1.4-rc1` is a public prerelease. This planning document is post-release
@@ -252,10 +259,13 @@ optional dependencies:
 
 ## Future Implementation Slices
 
-- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL`
+- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL` implemented the bounded
+  experimental planning object in
+  [FEASpec to CalculiX case-plan model](feaspec_to_calculix_case_plan_model.md).
 - `OSW-EXP-011_FEASPEC_TO_CALCULIX_INP_WRITER_DESIGN`
-- `OSW-EXP-012_FEASPEC_CALCULIX_EXPORTER_IMPLEMENTATION_NO_RUN`
-- `OSW-EXP-013_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-012_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-013_FEASPEC_CALCULIX_EXPORTER_IMPLEMENTATION_NO_RUN`
+- `OSW-EXP-014_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
 
 ## Non-Goals
 
