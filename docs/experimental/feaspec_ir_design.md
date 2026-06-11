@@ -1,8 +1,9 @@
 # FEASpec IR design
 
-Status: design-only contract for the full FEASpec flow; experimental model and
-semantic validator report layers exist, but the production/full physics
-validator, ProjectSchema bridge, solver adapters, VFEA, VLM APIs, and solver
+Status: design contract for the full FEASpec flow; experimental model,
+semantic validator report, and bridge plan layers exist, but the
+production/full physics validator, full ProjectSchema persistence,
+ProjectSchema schema mutation, solver adapters, VFEA, VLM APIs, and solver
 execution are not implemented.
 
 Related release: `v0.1.4-rc1`
@@ -86,9 +87,8 @@ has explicit accepted warnings. Approval means the user inspected the draft and
 accepted its assumptions for an educational/research workflow. It does not mean
 the model is certified, production-ready, or physically correct.
 
-Only an approved FEASpec may proceed to ProjectSchema bridging or solver case
-generation. A candidate must not be used for automatic unreviewed solver
-execution.
+Only an approved FEASpec may proceed to bridge planning or solver case planning.
+A candidate must not be used for automatic unreviewed solver execution.
 
 ## Top-Level Schema Fields
 
@@ -512,16 +512,19 @@ evidence only.
 [FEASpec validator implementation](feaspec_validator_implementation.md) records
 the follow-up experimental semantic validator report layer. It implements
 field-level diagnostics and benchmark readiness reports, but still does not add
-full physics validation, ProjectSchema bridging, solver adapters/exporters, VLM
-APIs, credentials, or solver execution.
+full physics validation, full ProjectSchema persistence, ProjectSchema
+mutation, solver adapters/exporters, VLM APIs, credentials, or solver
+execution.
 
 [FEASpec to ProjectSchema bridge design](feaspec_to_projectschema_bridge_design.md)
-records the next design-only conversion boundary. It defines approved-FEASpec
-preconditions, validator-report requirements, explicit-unit handling, field
-mapping expectations, provenance/evidence preservation, bridge diagnostic codes,
-unmapped-field reporting, ProjectSchema extension needs, and the solver handoff
-boundary. It does not implement bridge code, mutate ProjectSchema, generate
-solver cases, call VLM APIs, handle credentials, or execute solvers.
+records the conversion boundary. The follow-up
+[FEASpec to ProjectSchema bridge implementation](feaspec_to_projectschema_bridge_implementation.md)
+adds an experimental draft-plan layer with approved-FEASpec preconditions,
+validator-report requirements, explicit-unit handling, field mapping,
+provenance/evidence preservation, bridge diagnostic codes, unmapped-field
+reporting, ProjectSchema extension needs, and the solver handoff boundary. It
+does not mutate ProjectSchema, implement full ProjectSchema persistence,
+generate solver cases, call VLM APIs, handle credentials, or execute solvers.
 
 ## Non-Goals
 
@@ -546,9 +549,9 @@ Potential future gates:
 
 - `OSW-EXP-006_FEASPEC_VALIDATOR_IMPLEMENTATION`
 - `OSW-EXP-007_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
-- `OSW-EXP-008_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_IMPLEMENTATION`
-- `OSW-EXP-009_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLANNING`
+- `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
+- `OSW-EXP-010_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-011_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
 
 Each implementation gate must preserve the same guardrails and add focused
 tests before any source behavior is merged.

@@ -1,14 +1,15 @@
 # FEASpec examples overview
 
 Status: documentation and fixture examples loaded by the experimental FEASpec
-Python model and semantic validator report layers; no production/full physics
-validator, ProjectSchema bridge, solver adapter, VLM API, or solver execution
-is implemented.
+Python model, semantic validator report, and bridge plan layers; no
+production/full physics validator, full ProjectSchema persistence,
+ProjectSchema mutation, solver adapter, VLM API, or solver execution is
+implemented.
 
 The canonical examples live under `examples/feaspec/`. They show the expected
 shape of FEASpec data for the experimental model layer without adding a full
-physics validator, ProjectSchema bridge, solver adapter, VLM API, provider
-credentials, or solver execution.
+physics validator, full ProjectSchema persistence, ProjectSchema mutation,
+solver adapter, VLM API, provider credentials, or solver execution.
 
 ## Candidate Vs Approved Examples
 
@@ -52,6 +53,12 @@ reports without blockers, candidates remain not solver-ready, and invalid
 examples produce expected diagnostic categories. No example performs solver
 execution or becomes a solver case.
 
+[FEASpec to ProjectSchema bridge implementation](feaspec_to_projectschema_bridge_implementation.md)
+uses the approved examples as bridge-plan fixtures. It returns draft plans,
+diagnostics, provenance, extension needs, and unmapped-field records without
+persisting project files, mutating ProjectSchema, exporting solver decks, or
+executing solvers.
+
 ## FEASpec IR Field Mapping
 
 Each example includes the design fields from
@@ -91,10 +98,10 @@ The examples preserve the human-review boundary:
 ## Non-Goals
 
 - No production/full physics FEASpec validator.
-- No ProjectSchema bridge.
+- No full ProjectSchema persistence.
+- No ProjectSchema mutation.
 - No VFEA implementation.
 - No production validator.
-- No ProjectSchema bridge.
 - No SolverAdapter or CalculiX case generator.
 - No solver execution.
 - No VLM API integration.
@@ -106,10 +113,11 @@ The examples preserve the human-review boundary:
 
 ## Future Use
 
-Future Python models and validators should use these examples as compatibility
-fixtures. Implementation gates should keep validation checks bounded to the
-approved scope and preserve the
-candidate/approved boundary and explicit-unit requirements.
+Future Python models, validators, and bridge planning should use these examples
+as compatibility fixtures. Implementation gates should keep validation checks
+bounded to the approved scope and preserve the candidate/approved boundary and
+explicit-unit requirements.
 
-Any next ProjectSchema bridge, SolverAdapter/export path, or solver execution
-gate remains separate from the current validator report layer.
+Any next full ProjectSchema persistence, schema mutation, SolverAdapter/export
+path, or solver execution gate remains separate from the current bridge plan
+layer.

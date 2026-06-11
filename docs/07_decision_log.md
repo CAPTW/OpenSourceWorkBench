@@ -615,9 +615,9 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   libraries.
 - Consequences: Existing examples and benchmark seeds become executable
   compatibility fixtures for parsing and structural diagnostics. Full
-  validation, ProjectSchema bridging, CalculiX case planning, Abaqus export
-  planning, VLM integration, and any solver execution remain separate future
-  gates.
+  validation, full ProjectSchema persistence, ProjectSchema mutation,
+  CalculiX case planning, Abaqus export planning, VLM integration, and any
+  solver execution remain separate future gates.
 
 ## ADR-0035: FEASpec Validator Contract Precedes Runtime Validation
 
@@ -627,17 +627,17 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   examples and benchmark seeds, but it is intentionally structural only. A
   future semantic validator needs stable diagnostic categories, severity
   taxonomy, approval rules, solver handoff blockers, and benchmark readiness
-  rules before any runtime validator, ProjectSchema bridge, or solver exporter
-  exists.
+  rules before any runtime validator, full ProjectSchema persistence, schema
+  mutation, or solver exporter exists.
 - Decision: Define the FEASpec validator as a design-only contract first. The
   contract reserves required diagnostic codes, requires human review before an
   approved FEASpec can proceed toward future solver handoff, keeps
   CalculiX-first compatibility planning, and treats Abaqus as optional and
   non-default only.
-- Consequences: Runtime validator implementation, ProjectSchema bridging,
-  CalculiX case planning, Abaqus export planning, VLM integration, and solver
-  execution remain separate future gates. Candidates remain untrusted and must
-  not be treated as solver-ready.
+- Consequences: Runtime validator implementation, full ProjectSchema
+  persistence, ProjectSchema mutation, CalculiX case planning, Abaqus export
+  planning, VLM integration, and solver execution remain separate future gates.
+  Candidates remain untrusted and must not be treated as solver-ready.
 
 ## ADR-0036: FEASpec Semantic Validator Is Field-Level And Non-Executing
 
@@ -654,9 +654,9 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   diagnostics, and benchmark readiness checks.
 - Consequences: Candidates remain untrusted and not solver-ready. The validator
   does not perform full physics validation, numerical rigid-body mode solving,
-  mesh generation, ProjectSchema bridging, CalculiX or Abaqus export, VLM
-  provider/API integration, credential handling, or solver execution. Those
-  remain separate future gates.
+  mesh generation, full ProjectSchema persistence, ProjectSchema mutation,
+  CalculiX or Abaqus export, VLM provider/API integration, credential handling,
+  or solver execution. Those remain separate future gates.
 
 ## ADR-0037: FEASpec To ProjectSchema Bridge Is Design-Only Before Conversion
 
@@ -672,8 +672,28 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   preservation, bridge diagnostics, unmapped-field reporting, and clear
   ProjectSchema extension needs. The bridge ends at a ProjectSchema draft and
   diagnostics boundary.
-- Consequences: ProjectSchema mutation, source bridge implementation,
+- Consequences: ProjectSchema mutation, full ProjectSchema persistence,
   SolverAdapter/export handoff, CalculiX or Abaqus case generation, VLM
   provider/API integration, credential handling, mesh generation, and solver
   execution remain separate future gates. Candidates remain untrusted, and
   unmapped FEASpec fields must stay visible rather than being silently dropped.
+
+## ADR-0038: FEASpec Bridge Produces Draft Plans Without ProjectSchema Mutation
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-12
+- Context: ADR-0037 defined the FEASpec to ProjectSchema bridge boundary. The
+  next step needs executable compatibility evidence for approved FEASpec
+  examples without changing core ProjectSchema, exporting solver cases, or
+  executing external tools.
+- Decision: Implement an experimental bridge plan layer under
+  `src/osw/experimental/feaspec/`. The bridge accepts only approved FEASpec
+  data, validates it with the existing validator report layer, blocks
+  candidates and invalid fixtures, returns a draft plan with provenance,
+  diagnostics, extension needs, unmapped fields, and a ProjectSchema-compatible
+  dictionary, and records that no solver export or solver execution occurred.
+- Consequences: Full ProjectSchema persistence, ProjectSchema schema mutation,
+  SolverAdapter/exporter calls, CalculiX or Abaqus case generation, VLM
+  provider/API integration, credential handling, GUI workflow, and solver
+  execution remain separate future gates. The bridge plan is preview evidence,
+  not authorization for unreviewed solver handoff.

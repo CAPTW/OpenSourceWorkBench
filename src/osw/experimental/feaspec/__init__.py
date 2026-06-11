@@ -1,11 +1,17 @@
-"""Experimental FEASpec model layer.
+"""Experimental FEASpec model, validator, and bridge planning layer.
 
-The public API is intentionally limited to Python models, JSON I/O, and basic
-structural checks. It does not include VLM providers, ProjectSchema bridging,
+The public API is intentionally limited to Python models, JSON I/O, basic
+structural checks, validator reports, and bridge draft planning. It does not
+include VLM providers, full ProjectSchema persistence, ProjectSchema mutation,
 solver adapters, or solver execution.
 """
 
 from .basic_checks import check_feaspec_dict
+from .bridge_diagnostics import (
+    BridgeDiagnosticCode,
+    BridgeSeverity,
+    FEASpecBridgeDiagnostic,
+)
 from .diagnostics import (
     DiagnosticCategory,
     DiagnosticCode,
@@ -46,6 +52,15 @@ from .models import (
     ValidationState,
     parse_feaspec_dict,
 )
+from .project_bridge import (
+    BridgeStatus,
+    FEASpecProjectBridgePlan,
+    FEASpecProjectDraft,
+    FEASpecProjectExtensionNeed,
+    FEASpecProjectProvenance,
+    explain_bridge_plan,
+    plan_project_from_feaspec,
+)
 from .validator import (
     explain_diagnostics,
     validate_benchmark_seed,
@@ -56,6 +71,9 @@ from .validator import (
 __all__ = [
     "Assumption",
     "BoundaryConditionSpec",
+    "BridgeDiagnosticCode",
+    "BridgeSeverity",
+    "BridgeStatus",
     "Confidence",
     "CoordinateFrame",
     "Diagnostic",
@@ -68,11 +86,16 @@ __all__ = [
     "FEANode",
     "FEARegion",
     "FEASource",
+    "FEASpecBridgeDiagnostic",
     "FEASpec",
     "FEASpecCandidate",
     "FEASpecDiagnosticError",
     "FEASpecDocument",
     "FEASpecModelError",
+    "FEASpecProjectBridgePlan",
+    "FEASpecProjectDraft",
+    "FEASpecProjectExtensionNeed",
+    "FEASpecProjectProvenance",
     "FEASpecUnits",
     "FEASpecValidationDiagnostic",
     "FEASpecValidationReport",
@@ -91,9 +114,11 @@ __all__ = [
     "ValidationState",
     "check_feaspec_dict",
     "dump_feaspec",
+    "explain_bridge_plan",
     "explain_diagnostics",
     "load_feaspec",
     "parse_feaspec_dict",
+    "plan_project_from_feaspec",
     "validate_benchmark_seed",
     "validate_feaspec",
     "validate_for_solver",

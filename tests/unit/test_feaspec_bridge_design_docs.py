@@ -31,9 +31,10 @@ def test_feaspec_bridge_design_doc_exists() -> None:
 
 def test_bridge_design_status_and_non_execution_boundaries() -> None:
     text = _read().lower()
-    assert "design-only" in text
-    assert "bridge not implemented" in text
-    assert "no source bridge implementation" in text
+    assert "design contract" in text
+    assert "experimental bridge plan layer is implemented" in text
+    assert "full projectschema persistence" in text
+    assert "projectschema mutation" in text
     assert "no solver execution" in text
     assert "no vlm api" in text
     assert "credentials" in text
@@ -90,6 +91,7 @@ def test_bridge_design_does_not_claim_forbidden_implementation() -> None:
     forbidden_positive_claims = (
         "bridge is implemented",
         "projectschema bridge is implemented",
+        "full projectschema persistence exists",
         "projectschema mutation is implemented",
         "solveradapter is implemented",
         "calculix export is implemented",

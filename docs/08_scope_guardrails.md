@@ -23,21 +23,26 @@ request should stop, park, or defer.
   remain JSON/text-only and do not include generated solver outputs.
 - Experimental FEASpec Python models and structural basic checks that load and
   serialize documented fixtures without adding a production/full physics
-  validator, ProjectSchema bridge, solver adapter, VLM provider, or solver
-  execution.
+  validator, full ProjectSchema persistence, ProjectSchema mutation, solver
+  adapter, VLM provider, or solver execution.
 - Design-only FEASpec validator contract documentation that defines future
   diagnostics, severity taxonomy, human-review gates, solver handoff blockers,
   CalculiX-first compatibility, Abaqus optional/non-default handling, and
   benchmark readiness without implementing runtime validator behavior.
 - Experimental FEASpec semantic validator reports that validate documented
   model fields, examples, and benchmark readiness without mesh generation,
-  numerical physics validation, ProjectSchema bridging, solver export, VLM
-  integration, or solver execution.
+  numerical physics validation, full ProjectSchema persistence, ProjectSchema
+  mutation, solver export, VLM integration, or solver execution.
 - Design-only FEASpec to ProjectSchema bridge documentation that defines
   approved-spec preconditions, validator-report requirements, explicit-unit
   mapping, provenance/evidence preservation, bridge diagnostics, unmapped-field
-  reporting, and ProjectSchema extension needs without implementing the bridge
-  or mutating ProjectSchema.
+  reporting, and ProjectSchema extension needs without full ProjectSchema
+  persistence or schema mutation.
+- Experimental FEASpec to ProjectSchema bridge plan layer that accepts only
+  approved FEASpec, requires a validator report with no blockers, returns a
+  draft plan with diagnostics, extension needs, unmapped fields, and a
+  ProjectSchema-compatible dictionary, and still does not persist ProjectSchema,
+  mutate ProjectSchema, call solver adapters/exporters, or execute solvers.
 
 ## Out of Scope
 
@@ -65,6 +70,9 @@ request should stop, park, or defer.
 - Treating FEASpec to ProjectSchema bridge design as a source bridge
   implementation, ProjectSchema migration, SolverAdapter/export path, VLM
   provider, or permission to execute solvers.
+- Treating FEASpec bridge plan output as full ProjectSchema persistence,
+  ProjectSchema schema mutation, solver export, SolverAdapter handoff, VLM
+  provider output, or permission to execute solvers.
 
 ## Scope Drift Definition
 
@@ -78,13 +86,17 @@ Scope drift is any change that:
 - turns FEASpec basic checks into solver execution, solver export, or physical
   validation without a separate gate;
 - turns FEASpec validator design into runtime validation, ProjectSchema
-  bridging, solver export, or solver execution without a separate gate;
+  persistence, solver export, or solver execution without a separate gate;
 - turns FEASpec semantic validation into mesh generation, numerical physics
-  validation, ProjectSchema bridging, solver export, VLM API integration, or
-  solver execution without a separate gate;
+  validation, full ProjectSchema persistence, ProjectSchema mutation, solver
+  export, VLM API integration, or solver execution without a separate gate;
 - turns FEASpec bridge design into ProjectSchema mutation, source conversion
   behavior, solver adapter/export behavior, VLM API integration, or solver
   execution without a separate gate;
+- turns FEASpec bridge plan behavior into full ProjectSchema persistence,
+  ProjectSchema schema mutation, solver deck generation, solver
+  adapter/export behavior, VLM API integration, or solver execution without a
+  separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

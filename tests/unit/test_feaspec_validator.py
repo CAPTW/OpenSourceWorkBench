@@ -184,14 +184,16 @@ def test_validator_does_not_execute_commands() -> None:
 def test_validator_implementation_doc_preserves_non_goals() -> None:
     text = IMPLEMENTATION_DOC.read_text(encoding="utf-8").lower()
 
-    assert "no projectSchema bridge".lower() in text
+    assert "no full projectschema persistence" in text
+    assert "schema mutation" in text
     assert "no vlm api" in text
     assert "no solver execution" in text
     assert "no topology optimization implementation" in text
     assert "no industrial certification" in text
     for forbidden_claim in (
         "vfea is implemented",
-        "projectschema bridge is implemented",
+        "full projectschema persistence is implemented",
+        "projectschema mutation is implemented",
         "solver execution is implemented",
         "abaqus is mandatory",
         "industrial certification is provided",

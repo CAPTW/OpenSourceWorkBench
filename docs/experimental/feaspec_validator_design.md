@@ -19,8 +19,8 @@ units, geometry IDs and references, target references, and approved review
 state for documented examples.
 
 This validator design defines semantic validation. It is the contract the
-experimental report-layer implementation follows before any ProjectSchema
-bridge or SolverAdapter handoff is considered.
+experimental report-layer implementation follows before any full ProjectSchema
+persistence, ProjectSchema mutation, or SolverAdapter handoff is considered.
 
 ## Validator Goals
 
@@ -35,7 +35,7 @@ bridge or SolverAdapter handoff is considered.
 
 - No implementation in this gate.
 - No production/full physics validator implementation.
-- No ProjectSchema bridge.
+- No full ProjectSchema persistence or ProjectSchema mutation.
 - No solver adapter or exporter.
 - No CalculiX case generator.
 - No Abaqus exporter.
@@ -164,17 +164,22 @@ Only an approved FEASpec may proceed toward future solver handoff. There must
 be no automatic unreviewed solver execution from image, drawing, heuristic, or
 VLM output.
 
-The ProjectSchema bridge is future work. SolverAdapter handoff is future work.
-CalculiX or Abaqus export is future work. This gate defines the validation
-contract only and does not generate or run solver cases.
+The ProjectSchema bridge plan layer is implemented separately. Full
+ProjectSchema persistence and ProjectSchema mutation are future work.
+SolverAdapter handoff is future work. CalculiX or Abaqus export is future work.
+This gate defines the validation contract only and does not generate or run
+solver cases.
 
 [FEASpec to ProjectSchema bridge design](feaspec_to_projectschema_bridge_design.md)
-records that later bridge boundary in design-only form. It requires approved
-FEASpec data, a validator report with no blockers, explicit units,
-provenance/evidence preservation, bridge diagnostics, and unmapped-field
-reporting before a future ProjectSchema draft can be considered. It does not
-implement the bridge, mutate ProjectSchema, generate solver exports, call VLM
-APIs, handle credentials, or execute solvers.
+records that bridge boundary. It requires approved FEASpec data, a validator
+report with no blockers, explicit units, provenance/evidence preservation,
+bridge diagnostics, and unmapped-field reporting before a ProjectSchema draft
+plan can be considered.
+
+[FEASpec to ProjectSchema bridge implementation](feaspec_to_projectschema_bridge_implementation.md)
+adds the experimental draft-plan layer. It does not implement full
+ProjectSchema persistence, mutate ProjectSchema, generate solver exports, call
+VLM APIs, handle credentials, or execute solvers.
 
 ## CalculiX-First Compatibility
 
@@ -246,7 +251,8 @@ documented in
 
 - `OSW-EXP-006_FEASPEC_VALIDATOR_IMPLEMENTATION`
 - `OSW-EXP-007_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
-- `OSW-EXP-008_FEASPEC_TO_CALCULIX_CASE_PLANNING`
+- `OSW-EXP-008_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_IMPLEMENTATION`
+- `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
 
 Each future slice must preserve the candidate/approved boundary, human review,
 no automatic unreviewed solver execution, no mandatory Abaqus, and no
@@ -270,7 +276,7 @@ industrial certification claim.
 - No full physics validation.
 - No numerical rigid-body mode solve.
 - No mesh generation.
-- No ProjectSchema bridge.
+- No full ProjectSchema persistence or ProjectSchema mutation.
 - No solver adapter or exporter.
 - No solver execution.
 - No VLM API or credentials.

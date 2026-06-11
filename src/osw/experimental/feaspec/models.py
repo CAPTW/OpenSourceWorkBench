@@ -2,8 +2,8 @@
 
 This module is intentionally limited to parsing, preserving, and serializing
 FEASpec-style dictionaries plus structural basic checks. It does not implement
-ProjectSchema bridging, solver adapters, VLM provider integration, or solver
-execution.
+full ProjectSchema persistence, ProjectSchema mutation, solver adapters, VLM
+provider integration, or solver execution.
 """
 
 from __future__ import annotations

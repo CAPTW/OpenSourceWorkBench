@@ -78,8 +78,8 @@ keys, credentials, or configuration files.
 
 Later post-release FEASpec work may add Python model objects, structural basic
 checks, and field-level semantic validator reports. That does not implement
-providers, VFEA, the full physics validator, ProjectSchema bridging, solver
-adapters, exporters, or solver execution.
+providers, VFEA, the full physics validator, full ProjectSchema persistence,
+ProjectSchema mutation, solver adapters, exporters, or solver execution.
 
 ### FEASpec Candidate
 
@@ -93,7 +93,8 @@ experimental report layer now covers field-level diagnostics for missing units,
 missing materials, disconnected geometry, invalid load targets, human-review
 state, solver compatibility, and benchmark readiness. It still does not perform
 full physics validation, numerical rigid-body mode solving, mesh generation,
-ProjectSchema bridging, exporter generation, or solver execution.
+full ProjectSchema persistence, ProjectSchema mutation, exporter generation, or
+solver execution.
 
 ### Human Review UI
 
@@ -288,8 +289,9 @@ Validator design evidence:
 the future diagnostic taxonomy, rule catalog, human-review approval gates,
 solver handoff block rules, CalculiX-first compatibility checks, Abaqus
 optional/non-default handling, and benchmark readiness requirements. It is
-design-only and does not implement a production validator, ProjectSchema
-bridge, solver exporter, VLM provider, or solver execution.
+design-only and does not implement a production validator, full ProjectSchema
+persistence, ProjectSchema mutation, solver exporter, VLM provider, or solver
+execution.
 
 Validator implementation evidence:
 [FEASpec validator implementation](../experimental/feaspec_validator_implementation.md)
@@ -297,17 +299,19 @@ adds an experimental semantic validator report layer for existing FEASpec
 models, examples, and benchmark seed fixtures. It produces structured
 diagnostics and solver handoff blockers, keeps candidates untrusted, and keeps
 CalculiX compatibility field-level only. It does not implement VFEA,
-ProjectSchema bridging, CalculiX or Abaqus export, VLM provider integration,
-credentials, mesh generation, numerical physics validation, or solver
-execution.
+full ProjectSchema persistence, ProjectSchema mutation, CalculiX or Abaqus
+export, VLM provider integration, credentials, mesh generation, numerical
+physics validation, or solver execution.
 
 Bridge design evidence:
 [FEASpec to ProjectSchema bridge design](../experimental/feaspec_to_projectschema_bridge_design.md)
-defines a future design-only bridge from approved FEASpec plus a validator
-report with no blockers into a ProjectSchema draft. It records field mappings,
-explicit-unit handling, provenance/evidence preservation, bridge diagnostic
-codes, unmapped-field reporting, ProjectSchema extension needs, and the solver
-handoff boundary. It does not implement bridge code, mutate ProjectSchema,
+defines the bridge boundary from approved FEASpec plus a validator report with
+no blockers into a ProjectSchema draft plan. The follow-up
+[FEASpec to ProjectSchema bridge implementation](../experimental/feaspec_to_projectschema_bridge_implementation.md)
+adds an experimental plan layer with field mappings, explicit-unit handling,
+provenance/evidence preservation, bridge diagnostic codes, unmapped-field
+reporting, ProjectSchema extension needs, and the solver handoff boundary. It
+does not implement full ProjectSchema persistence, mutate ProjectSchema,
 generate CalculiX or Abaqus exports, add VLM APIs or credentials, or execute
 solvers.
 

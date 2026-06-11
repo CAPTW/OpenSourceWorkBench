@@ -1,8 +1,9 @@
 # FEASpec Python models
 
 Status: implemented as an experimental model layer with an experimental
-semantic validator report layer; no full physics validator, no ProjectSchema
-bridge, and no solver execution.
+semantic validator report layer and a follow-up experimental bridge plan layer;
+no full physics validator, no full ProjectSchema persistence or schema
+mutation, and no solver execution.
 
 ## Release Context
 
@@ -58,7 +59,8 @@ solver execution.
 
 `FEASpec` represents the approved document shape. An approved document requires
 `human_review` and `validation.state: "approved"`. That approval only prepares
-data for a future bridge design; the bridge is not implemented in this gate.
+data for bounded bridge planning; full ProjectSchema persistence and
+ProjectSchema mutation are not implemented in this gate.
 
 ## Basic Checks
 
@@ -86,15 +88,18 @@ optional/non-default handling, and benchmark readiness checks.
 
 [FEASpec validator implementation](feaspec_validator_implementation.md) adds an
 experimental semantic report layer for those rules. It remains field-level and
-does not implement a full physics validator, ProjectSchema bridge,
-SolverAdapter/export handoff, VLM API, credentials, or solver execution.
+does not implement a full physics validator, full ProjectSchema persistence,
+ProjectSchema mutation, SolverAdapter/export handoff, VLM API, credentials, or
+solver execution.
 
 [FEASpec to ProjectSchema bridge design](feaspec_to_projectschema_bridge_design.md)
-records a later design-only mapping from approved FEASpec data and validator
-reports into a future ProjectSchema draft. It defines preconditions, field
-mappings, bridge diagnostics, provenance handling, unmapped-field reporting, and
-ProjectSchema extension needs without adding bridge source code, mutating
-ProjectSchema, implementing solver adapters/exporters, or executing solvers.
+records the mapping from approved FEASpec data and validator reports into a
+ProjectSchema draft plan. The follow-up
+[FEASpec to ProjectSchema bridge implementation](feaspec_to_projectschema_bridge_implementation.md)
+adds the experimental plan layer with preconditions, field mappings, bridge
+diagnostics, provenance handling, unmapped-field reporting, and ProjectSchema
+extension needs. It does not mutate ProjectSchema, implement full ProjectSchema
+persistence, implement solver adapters/exporters, or execute solvers.
 
 ## Examples Coverage
 
@@ -128,6 +133,6 @@ Possible follow-up gates:
 
 - `OSW-EXP-006_FEASPEC_VALIDATOR_IMPLEMENTATION`
 - `OSW-EXP-007_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
-- `OSW-EXP-008_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_IMPLEMENTATION`
-- `OSW-EXP-009_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLANNING`
+- `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
+- `OSW-EXP-010_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-011_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`

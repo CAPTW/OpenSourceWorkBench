@@ -1,9 +1,10 @@
 # FEASpec to ProjectSchema bridge design
 
-Status: design-only bridge contract. The bridge not implemented in this gate;
-no source bridge implementation, ProjectSchema mutation, solver adapter,
-exporter, VLM API, credentials, topology optimization, or solver execution is
-added.
+Status: design contract for the FEASpec bridge boundary. A follow-up
+experimental bridge plan layer is implemented on `develop`; full ProjectSchema
+persistence, ProjectSchema mutation, solver adapter/exporter integration, VLM
+API, credentials, topology optimization, and solver execution are still not
+implemented.
 
 Related release: `v0.1.4-rc1`
 
@@ -20,10 +21,10 @@ Related evidence:
 development on `develop` and does not change the public release, release tag,
 release assets, or version metadata.
 
-The current codebase has experimental FEASpec Python models and a field-level
-semantic validator report layer. It does not have a FEASpec to ProjectSchema
-converter. This document records the future bridge contract before any source
-implementation is attempted.
+The current codebase has experimental FEASpec Python models, a field-level
+semantic validator report layer, and a follow-up experimental bridge plan
+layer. This document remains the contract for that boundary and for any future
+ProjectSchema persistence or schema-extension decision.
 
 ## Goals
 
@@ -261,8 +262,8 @@ of heavy optional dependencies:
 
 ## Non-Goals
 
-- No source bridge implementation in this gate.
-- No ProjectSchema mutation in this gate.
+- No full ProjectSchema persistence.
+- No ProjectSchema mutation.
 - No ProjectSchema migration.
 - No mesh generation.
 - No CalculiX exporter or case generation.
@@ -279,9 +280,9 @@ of heavy optional dependencies:
 
 Suggested follow-up gates:
 
-- `OSW-EXP-008_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_IMPLEMENTATION`
-- `OSW-EXP-009_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLANNING`
+- `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
+- `OSW-EXP-010_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-011_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
 
 Any implementation gate must start from the preconditions, diagnostics, and
 non-goals above and must keep solver execution out of the bridge.

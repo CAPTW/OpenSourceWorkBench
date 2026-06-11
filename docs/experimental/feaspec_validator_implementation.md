@@ -1,8 +1,10 @@
 # FEASpec validator implementation
 
 Status: experimental semantic validator implemented. This is not a full
-physics validator, does not execute solvers, and does not implement a
-ProjectSchema bridge.
+physics validator and does not execute solvers. A follow-up experimental
+FEASpec bridge plan layer exists, but full ProjectSchema persistence,
+ProjectSchema mutation, solver adapter/exporter handoff, and solver execution
+remain out of scope.
 
 ## Release Context
 
@@ -101,15 +103,17 @@ Solver compatibility checks are field-level only.
 ## Bridge Design Follow-Up
 
 [FEASpec to ProjectSchema bridge design](feaspec_to_projectschema_bridge_design.md)
-records the next design-only boundary after this validator report layer. It
-requires an approved FEASpec, a validator report with no blockers, explicit
-units, provenance/evidence preservation, bridge diagnostics, and unmapped-field
-reporting before any future ProjectSchema draft can be produced.
+records the bridge boundary after this validator report layer. The follow-up
+[FEASpec to ProjectSchema bridge implementation](feaspec_to_projectschema_bridge_implementation.md)
+adds an experimental plan layer that requires an approved FEASpec, a validator
+report with no blockers, explicit units, provenance/evidence preservation,
+bridge diagnostics, and unmapped-field reporting before a draft can be
+previewed.
 
-That bridge design remains documentation only. It does not add source bridge
-implementation, mutate ProjectSchema, implement SolverAdapter/export handoff,
-generate CalculiX or Abaqus files, call VLM APIs, handle credentials, or execute
-solvers.
+That bridge implementation remains a plan layer. It does not mutate
+ProjectSchema, implement full ProjectSchema persistence, call SolverAdapter or
+exporter code, generate CalculiX or Abaqus files, call VLM APIs, handle
+credentials, or execute solvers.
 
 ## Examples And Benchmark Coverage
 
@@ -130,7 +134,7 @@ scores and do not execute solvers.
 - No full physics validation.
 - No numerical rigid-body mode solve.
 - No mesh generation.
-- No ProjectSchema bridge.
+- No full ProjectSchema persistence or schema mutation.
 - No solver adapter or exporter.
 - No CalculiX case generation.
 - No Abaqus export.

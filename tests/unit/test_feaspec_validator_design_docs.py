@@ -129,7 +129,9 @@ def test_validator_design_approval_and_handoff_rules() -> None:
     assert "requires a `human_review` block" in text
     assert "only an approved feaspec may proceed toward future solver handoff" in text
     assert "no automatic unreviewed solver execution" in text
-    assert "the projectschema bridge is future work" in text
+    assert "projectschema bridge plan layer is implemented separately" in text
+    assert "full projectschema persistence" in text
+    assert "projectschema mutation are future work" in text
     assert "solveradapter handoff is future work" in text
 
 
@@ -152,7 +154,8 @@ def test_validator_design_does_not_claim_forbidden_implementation() -> None:
         "vfea implementation exists",
         "vfea is implemented",
         "automatic unreviewed solver execution is allowed",
-        "projectschema bridge is implemented",
+        "full projectschema persistence is implemented",
+        "projectschema mutation is implemented",
         "solveradapter is implemented",
         "calculix export is implemented",
         "abaqus exporter is implemented",
