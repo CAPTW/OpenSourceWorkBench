@@ -33,15 +33,23 @@ by a dedicated release/tag gate.
 - Added an experimental FEASpec Python model layer under
   `src/osw/experimental/feaspec/` that loads, basic-checks, and serializes the
   examples and benchmark seeds. The layer is structural only and does not add a
-  full validator, ProjectSchema bridge, solver adapter/exporter, VLM API,
-  credential handling, automatic solver execution, mandatory Abaqus, topology
-  optimization, or certification claim.
+  production/full physics validator, ProjectSchema bridge, solver
+  adapter/exporter, VLM API, credential handling, automatic solver execution,
+  mandatory Abaqus, topology optimization, or certification claim.
 - Added a design-only FEASpec validator contract covering pipeline phases,
   diagnostic schema, severity taxonomy, required diagnostic codes, approval
   rules, solver handoff gates, CalculiX-first compatibility, Abaqus
   optional/non-default handling, and benchmark readiness. The contract does not
   implement the production validator, ProjectSchema bridge, solver
   adapter/exporter, VLM API, credentials, or solver execution.
+- Added an experimental FEASpec semantic validator report layer under
+  `src/osw/experimental/feaspec/`, with structured severities, diagnostic
+  categories, stable diagnostic codes, phase results, approval and solver
+  handoff blockers, CalculiX-first field-level compatibility, Abaqus
+  optional/non-default diagnostics, and benchmark readiness checks for existing
+  examples and seed fixtures. It does not implement full physics validation,
+  ProjectSchema bridging, solver adapters/exporters, VLM APIs, credentials, or
+  solver execution.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

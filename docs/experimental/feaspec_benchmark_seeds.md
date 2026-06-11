@@ -6,7 +6,7 @@ VLM provider runs, solver runs, or benchmark scores exist yet.
 The benchmark seeds live under `tests/fixtures/feaspec/benchmark_seeds/`.
 They provide deterministic text prompts, source metadata, approved ground-truth
 FEASpec-style JSON, and planned detection metrics for the experimental
-FEASpec model layer and future validators.
+FEASpec model and semantic validator report layers.
 
 ## Seed Folder Layout
 
@@ -49,6 +49,11 @@ benchmark readiness checks for these seeds: ground-truth FEASpec loading,
 expected metrics presence, synthetic placeholder metadata, expected diagnostic
 codes for invalid fixtures, and clear separation from solver accuracy claims.
 
+[FEASpec validator implementation](feaspec_validator_implementation.md) now
+implements those readiness checks for seed folders. It verifies metadata and
+ground-truth FEASpec loading only; it does not generate drawings, call a VLM,
+compute provider scores, or run solvers.
+
 ## Future Drawing Generation
 
 A later gate may create simple synthetic drawing images from these seeds. That
@@ -74,7 +79,7 @@ A future benchmark gate can be considered complete only after:
 - No VLM API integration.
 - No provider credentials or API keys.
 - No solver execution.
-- No full validator implementation.
+- No production/full physics validator implementation.
 - No CalculiX input deck generation.
 - No Abaqus exporter or mandatory Abaqus dependency.
 - No topology optimization.

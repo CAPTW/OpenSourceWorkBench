@@ -638,3 +638,22 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   CalculiX case planning, Abaqus export planning, VLM integration, and solver
   execution remain separate future gates. Candidates remain untrusted and must
   not be treated as solver-ready.
+
+## ADR-0036: FEASpec Semantic Validator Is Field-Level And Non-Executing
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-11
+- Context: ADR-0035 reserved the validator contract before runtime validation.
+  The next implementation step needs structured diagnostics for existing
+  FEASpec models, examples, and benchmark seed fixtures without crossing into
+  ProjectSchema conversion, solver export, or execution.
+- Decision: Implement an experimental semantic validator report layer under
+  `src/osw/experimental/feaspec/` with stable severities, categories,
+  diagnostic codes, phase results, approval blockers, solver handoff blockers,
+  CalculiX-first field-level compatibility, Abaqus optional/non-default
+  diagnostics, and benchmark readiness checks.
+- Consequences: Candidates remain untrusted and not solver-ready. The validator
+  does not perform full physics validation, numerical rigid-body mode solving,
+  mesh generation, ProjectSchema bridging, CalculiX or Abaqus export, VLM
+  provider/API integration, credential handling, or solver execution. Those
+  remain separate future gates.

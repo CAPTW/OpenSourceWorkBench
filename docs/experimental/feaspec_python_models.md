@@ -1,7 +1,8 @@
 # FEASpec Python models
 
-Status: implemented as an experimental model layer; no full validator, no
-ProjectSchema bridge, and no solver execution.
+Status: implemented as an experimental model layer with an experimental
+semantic validator report layer; no full physics validator, no ProjectSchema
+bridge, and no solver execution.
 
 ## Release Context
 
@@ -33,6 +34,18 @@ The first public API is:
 - `FEASpecModelError`
 - `FEASpecDiagnosticError`
 
+Validator report API:
+
+- `validate_feaspec`
+- `validate_for_solver`
+- `validate_benchmark_seed`
+- `explain_diagnostics`
+- `FEASpecValidationReport`
+- `FEASpecValidationDiagnostic`
+- `DiagnosticSeverity`
+- `DiagnosticCategory`
+- `DiagnosticCode`
+
 The implementation uses Python standard-library dataclasses and JSON helpers.
 No new dependency is required.
 
@@ -60,20 +73,21 @@ The `basic_checks` module performs only structural checks:
 - approved documents require approved validation state.
 
 The checks also make the existing invalid examples surface expected diagnostic
-codes. They are not a full validator.
+codes. They are structural checks, not the semantic validator report layer or a
+production/full physics validator.
 
 ## Validator Design Follow-Up
 
-[FEASpec validator design](feaspec_validator_design.md) records the future
-semantic validator contract for this model layer. It defines the validation
+[FEASpec validator design](feaspec_validator_design.md) records the semantic
+validator contract for this model layer. It defines the validation
 pipeline, diagnostic model, severity taxonomy, rule catalog, human-review
 approval rules, solver handoff gate, CalculiX-first compatibility, Abaqus
 optional/non-default handling, and benchmark readiness checks.
 
-That design remains a contract only. This model layer still performs
-structural loading and basic checks; it does not implement the full validator,
-ProjectSchema bridge, SolverAdapter/export handoff, VLM API, credentials, or
-solver execution.
+[FEASpec validator implementation](feaspec_validator_implementation.md) adds an
+experimental semantic report layer for those rules. It remains field-level and
+does not implement a full physics validator, ProjectSchema bridge,
+SolverAdapter/export handoff, VLM API, credentials, or solver execution.
 
 ## Examples Coverage
 
@@ -89,7 +103,7 @@ schema and detection targets, not solver accuracy or VLM benchmark scores.
 
 ## Non-Goals
 
-- No full FEASpec validator.
+- No full physics validator.
 - No VFEA implementation.
 - No VLM API, provider client, credential, or API key handling.
 - No automatic solver execution.

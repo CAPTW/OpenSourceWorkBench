@@ -1,8 +1,9 @@
 # FEASpec IR design
 
-Status: design-only contract for the full FEASpec flow; experimental model
-layer exists, but the full validator, ProjectSchema bridge, solver adapters,
-VFEA, VLM APIs, and solver execution are not implemented.
+Status: design-only contract for the full FEASpec flow; experimental model and
+semantic validator report layers exist, but the production/full physics
+validator, ProjectSchema bridge, solver adapters, VFEA, VLM APIs, and solver
+execution are not implemented.
 
 Related release: `v0.1.4-rc1`
 
@@ -19,9 +20,9 @@ CalculiX-first export path.
 
 The full FEASpec workflow is not implemented in the current codebase. This
 document remains the design contract for future work beyond the experimental
-Python model layer. It does not add provider integrations, full validator
-code, ProjectSchema migrations, solver adapters, VLM APIs, credentials, or
-solver execution.
+Python model and semantic validator report layers. It does not add provider
+integrations, production/full physics validator code, ProjectSchema migrations,
+solver adapters, VLM APIs, credentials, or solver execution.
 
 ## Product Guardrails
 
@@ -33,7 +34,8 @@ preserve these boundaries:
 - no mandatory Abaqus or commercial solver dependency;
 - no bundled external solvers;
 - no VFEA implementation claim;
-- no full FEASpec validator, bridge, or solver-path implementation claim;
+- no production/full physics FEASpec validator, bridge, or solver-path
+  implementation claim;
 - no native commercial CAD import claim;
 - no stable production claim.
 
@@ -507,11 +509,17 @@ optional/non-default handling, and benchmark readiness rules that future
 validator implementation must follow. It remains documentation and doc-test
 evidence only.
 
+[FEASpec validator implementation](feaspec_validator_implementation.md) records
+the follow-up experimental semantic validator report layer. It implements
+field-level diagnostics and benchmark readiness reports, but still does not add
+full physics validation, ProjectSchema bridging, solver adapters/exporters, VLM
+APIs, credentials, or solver execution.
+
 ## Non-Goals
 
 - No implementation in this gate.
 - No FEASpec Python model implementation.
-- No production validator implementation.
+- No production/full physics validator implementation.
 - No ProjectSchema migration implementation.
 - No SolverAdapter implementation.
 - No VLM API integration.

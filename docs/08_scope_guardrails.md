@@ -22,12 +22,17 @@ request should stop, park, or defer.
 - FEASpec documentation examples and synthetic benchmark seed fixtures that
   remain JSON/text-only and do not include generated solver outputs.
 - Experimental FEASpec Python models and structural basic checks that load and
-  serialize documented fixtures without adding a full validator, ProjectSchema
-  bridge, solver adapter, VLM provider, or solver execution.
+  serialize documented fixtures without adding a production/full physics
+  validator, ProjectSchema bridge, solver adapter, VLM provider, or solver
+  execution.
 - Design-only FEASpec validator contract documentation that defines future
   diagnostics, severity taxonomy, human-review gates, solver handoff blockers,
   CalculiX-first compatibility, Abaqus optional/non-default handling, and
   benchmark readiness without implementing runtime validator behavior.
+- Experimental FEASpec semantic validator reports that validate documented
+  model fields, examples, and benchmark readiness without mesh generation,
+  numerical physics validation, ProjectSchema bridging, solver export, VLM
+  integration, or solver execution.
 
 ## Out of Scope
 
@@ -49,6 +54,9 @@ request should stop, park, or defer.
 - Treating FEASpec validator design documentation as a production validator,
   ProjectSchema bridge, solver exporter, VLM provider, or solver execution
   capability.
+- Treating FEASpec semantic validator reports as proof of physical correctness,
+  generated solver cases, ProjectSchema conversion, VLM interpretation, or
+  permission for unreviewed solver execution.
 
 ## Scope Drift Definition
 
@@ -63,6 +71,9 @@ Scope drift is any change that:
   validation without a separate gate;
 - turns FEASpec validator design into runtime validation, ProjectSchema
   bridging, solver export, or solver execution without a separate gate;
+- turns FEASpec semantic validation into mesh generation, numerical physics
+  validation, ProjectSchema bridging, solver export, VLM API integration, or
+  solver execution without a separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

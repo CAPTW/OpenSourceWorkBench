@@ -1,8 +1,9 @@
 # FEASpec validator design
 
-Status: design-only. The full validator is not implemented, no solver
-execution is added, and this document defines the future validator contract
-only.
+Status: design-only contract. The follow-up experimental semantic validator
+report layer is implemented on `develop`; the full validator is not implemented
+as a production or full physics validator, no solver execution is added, and
+this document remains the validator contract.
 
 ## Release Context
 
@@ -17,9 +18,9 @@ structural loading and basic checks only. It verifies required fields, explicit
 units, geometry IDs and references, target references, and approved review
 state for documented examples.
 
-This validator design defines future semantic validation. It is the contract a
-later implementation must follow before any ProjectSchema bridge or
-SolverAdapter handoff is considered.
+This validator design defines semantic validation. It is the contract the
+experimental report-layer implementation follows before any ProjectSchema
+bridge or SolverAdapter handoff is considered.
 
 ## Validator Goals
 
@@ -33,7 +34,7 @@ SolverAdapter handoff is considered.
 ## Non-Goals
 
 - No implementation in this gate.
-- No full validator implementation.
+- No production/full physics validator implementation.
 - No ProjectSchema bridge.
 - No solver adapter or exporter.
 - No CalculiX case generator.
@@ -219,9 +220,9 @@ Future benchmark checks should require:
 - benchmark reports distinguish schema/diagnostic readiness from solver
   accuracy.
 
-## Proposed Future API
+## Public API Contract
 
-Future implementation may use these API names:
+The implementation follow-up uses these API names:
 
 ```python
 validate_feaspec(spec) -> FEASpecValidationReport
@@ -229,7 +230,9 @@ validate_for_solver(spec, solver_id) -> FEASpecValidationReport
 explain_diagnostics(report) -> list[str]
 ```
 
-These names are proposals only. No implementation is added in this gate.
+The design gate did not implement them. Current implementation evidence is
+documented in
+[FEASpec validator implementation](feaspec_validator_implementation.md).
 
 ## Future Implementation Slices
 

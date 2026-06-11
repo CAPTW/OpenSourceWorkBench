@@ -1,8 +1,8 @@
 # VFEA experimental scope definition
 
 Status: planning-only VFEA scope, experimental. The full VFEA workflow is not
-implemented; a later post-release gate adds an experimental FEASpec Python
-model layer only.
+implemented; later post-release gates add an experimental FEASpec Python model
+layer and an experimental semantic validator report layer only.
 
 Related issue: `#17`
 
@@ -76,9 +76,10 @@ Drawing/Image input
 This gate does not add provider code, image processing, VLM integration, API
 keys, credentials, or configuration files.
 
-Later post-release FEASpec work may add Python model objects and structural
-basic checks. That does not implement providers, VFEA, the full validator,
-ProjectSchema bridging, solver adapters, or solver execution.
+Later post-release FEASpec work may add Python model objects, structural basic
+checks, and field-level semantic validator reports. That does not implement
+providers, VFEA, the full physics validator, ProjectSchema bridging, solver
+adapters, exporters, or solver execution.
 
 ### FEASpec Candidate
 
@@ -87,10 +88,12 @@ It can be incomplete and can contain confidence, evidence, and diagnostics.
 
 ### FEASpec Validator
 
-`FEASpecValidator` is the planned validation boundary. It should reject or warn
-on missing units, missing materials, disconnected geometry, invalid load
-targets, solver-incompatible elements, and likely rigid body modes before any
-project bridge or export path can be approved.
+`FEASpecValidator` is the planned validation boundary. A post-release
+experimental report layer now covers field-level diagnostics for missing units,
+missing materials, disconnected geometry, invalid load targets, human-review
+state, solver compatibility, and benchmark readiness. It still does not perform
+full physics validation, numerical rigid-body mode solving, mesh generation,
+ProjectSchema bridging, exporter generation, or solver execution.
 
 ### Human Review UI
 
@@ -240,7 +243,7 @@ The next prompt may work on:
 - Provider credentials, API keys, or secrets.
 - Image processing implementation.
 - Drawing annotation UI implementation.
-- FEASpec validator implementation.
+- FEASpec full physics validator implementation.
 - Automatic solver execution.
 - CalculiX exporter implementation.
 - Abaqus exporter implementation.
@@ -287,6 +290,16 @@ solver handoff block rules, CalculiX-first compatibility checks, Abaqus
 optional/non-default handling, and benchmark readiness requirements. It is
 design-only and does not implement a production validator, ProjectSchema
 bridge, solver exporter, VLM provider, or solver execution.
+
+Validator implementation evidence:
+[FEASpec validator implementation](../experimental/feaspec_validator_implementation.md)
+adds an experimental semantic validator report layer for existing FEASpec
+models, examples, and benchmark seed fixtures. It produces structured
+diagnostics and solver handoff blockers, keeps candidates untrusted, and keeps
+CalculiX compatibility field-level only. It does not implement VFEA,
+ProjectSchema bridging, CalculiX or Abaqus export, VLM provider integration,
+credentials, mesh generation, numerical physics validation, or solver
+execution.
 
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

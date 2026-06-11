@@ -1,13 +1,14 @@
 # FEASpec examples overview
 
 Status: documentation and fixture examples loaded by the experimental FEASpec
-Python model layer; no full validator, ProjectSchema bridge, solver adapter,
-VLM API, or solver execution is implemented.
+Python model and semantic validator report layers; no production/full physics
+validator, ProjectSchema bridge, solver adapter, VLM API, or solver execution
+is implemented.
 
 The canonical examples live under `examples/feaspec/`. They show the expected
 shape of FEASpec data for the experimental model layer without adding a full
-validator, ProjectSchema bridge, solver adapter, VLM API, provider credentials,
-or solver execution.
+physics validator, ProjectSchema bridge, solver adapter, VLM API, provider
+credentials, or solver execution.
 
 ## Candidate Vs Approved Examples
 
@@ -44,6 +45,12 @@ The future validator contract in
 fixtures to stable diagnostic categories and codes. The examples remain
 fixtures only; they do not implement the validator or make any case
 solver-ready.
+
+[FEASpec validator implementation](feaspec_validator_implementation.md) now
+uses these examples as compatibility fixtures. Approved examples produce
+reports without blockers, candidates remain not solver-ready, and invalid
+examples produce expected diagnostic categories. No example performs solver
+execution or becomes a solver case.
 
 ## FEASpec IR Field Mapping
 
@@ -83,7 +90,7 @@ The examples preserve the human-review boundary:
 
 ## Non-Goals
 
-- No full FEASpec validator.
+- No production/full physics FEASpec validator.
 - No ProjectSchema bridge.
 - No VFEA implementation.
 - No production validator.
@@ -100,11 +107,9 @@ The examples preserve the human-review boundary:
 ## Future Use
 
 Future Python models and validators should use these examples as compatibility
-fixtures. An implementation gate should first make these examples parse through
-the future model layer, then add validation checks that preserve the
+fixtures. Implementation gates should keep validation checks bounded to the
+approved scope and preserve the
 candidate/approved boundary and explicit-unit requirements.
 
-The next validator implementation gate should follow the design-only
-diagnostic catalog in [FEASpec validator design](feaspec_validator_design.md)
-before any ProjectSchema bridge, SolverAdapter/export path, or solver
-execution gate is considered.
+Any next ProjectSchema bridge, SolverAdapter/export path, or solver execution
+gate remains separate from the current validator report layer.

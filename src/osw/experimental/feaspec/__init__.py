@@ -6,6 +6,14 @@ solver adapters, or solver execution.
 """
 
 from .basic_checks import check_feaspec_dict
+from .diagnostics import (
+    DiagnosticCategory,
+    DiagnosticCode,
+    DiagnosticSeverity,
+    FEASpecValidationDiagnostic,
+    FEASpecValidationReport,
+    ValidationPhaseResult,
+)
 from .errors import FEASpecDiagnosticError, FEASpecModelError
 from .io import dump_feaspec, load_feaspec
 from .models import (
@@ -38,6 +46,12 @@ from .models import (
     ValidationState,
     parse_feaspec_dict,
 )
+from .validator import (
+    explain_diagnostics,
+    validate_benchmark_seed,
+    validate_feaspec,
+    validate_for_solver,
+)
 
 __all__ = [
     "Assumption",
@@ -45,6 +59,9 @@ __all__ = [
     "Confidence",
     "CoordinateFrame",
     "Diagnostic",
+    "DiagnosticCategory",
+    "DiagnosticCode",
+    "DiagnosticSeverity",
     "DimensionConstraint",
     "EvidenceRef",
     "FEAEdge",
@@ -57,6 +74,8 @@ __all__ = [
     "FEASpecDocument",
     "FEASpecModelError",
     "FEASpecUnits",
+    "FEASpecValidationDiagnostic",
+    "FEASpecValidationReport",
     "GeometryGraph",
     "HumanReview",
     "LOAD_TYPES",
@@ -68,9 +87,14 @@ __all__ = [
     "SolverCompatibility",
     "SpecType",
     "ValidationInfo",
+    "ValidationPhaseResult",
     "ValidationState",
     "check_feaspec_dict",
     "dump_feaspec",
+    "explain_diagnostics",
     "load_feaspec",
     "parse_feaspec_dict",
+    "validate_benchmark_seed",
+    "validate_feaspec",
+    "validate_for_solver",
 ]
