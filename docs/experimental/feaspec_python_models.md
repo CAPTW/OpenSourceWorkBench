@@ -113,6 +113,11 @@ preserves reviewed records and diagnostics, blocks candidates and bridge
 blockers, reports `FC_MESH_REQUIRED` for examples without explicit mesh
 topology, and keeps writer/export/execution behavior out of scope.
 
+[FEASpec to CalculiX INP writer design](feaspec_to_calculix_inp_writer_design.md)
+defines the future no-run writer contract after the case-plan model. It is
+design-only and adds no writer implementation, `.inp` output, SolverAdapter
+handoff, runner call, or solver execution.
+
 ## Examples Coverage
 
 The model layer loads the current files under `examples/feaspec/`:

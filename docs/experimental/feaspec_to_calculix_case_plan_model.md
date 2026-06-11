@@ -8,6 +8,12 @@ Related release: `v0.1.4-rc1`
 
 Related design: [FEASpec to CalculiX case planning](feaspec_to_calculix_case_planning.md)
 
+Follow-up design: [FEASpec to CalculiX INP writer design](feaspec_to_calculix_inp_writer_design.md)
+defines the future no-run `.inp` renderer contract, writer diagnostics,
+section ordering, and golden fixture strategy. It still does not implement a
+writer, generate `.inp` files, call solver adapters, run `ccx`, or close issue
+`#8`.
+
 ## Release Context
 
 `v0.1.4-rc1` is a public prerelease. This implementation is post-release
@@ -141,4 +147,6 @@ create solver artifacts.
 ## Next Recommended Gates
 
 - `OSW-EXP-011_FEASPEC_TO_CALCULIX_INP_WRITER_DESIGN`
-- `OSW-EXP-012_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+  records the design-only future writer boundary in
+  [FEASpec to CalculiX INP writer design](feaspec_to_calculix_inp_writer_design.md).
+- `OSW-EXP-012_FEASPEC_CALCULIX_INP_RENDERER_IMPLEMENTATION_NO_RUN`

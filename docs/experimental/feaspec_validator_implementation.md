@@ -128,6 +128,12 @@ surfaces validator/bridge blockers as `FC_*` diagnostics. It preserves the
 same no-export/no-execution boundary and keeps `ready_for_solver_execution`
 always `false`.
 
+[FEASpec to CalculiX INP writer design](feaspec_to_calculix_inp_writer_design.md)
+records the follow-up writer contract for a future no-run renderer. It defines
+writer preconditions, `FW_*` diagnostics, section ordering, and golden fixture
+strategy without implementing a writer, generating `.inp` files, or running
+CalculiX.
+
 ## Examples And Benchmark Coverage
 
 The validator is covered against:

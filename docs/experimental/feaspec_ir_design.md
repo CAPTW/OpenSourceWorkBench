@@ -540,6 +540,12 @@ blocks `.inp` writer readiness until explicit mesh or element topology exists.
 It does not write solver files, export cases, call a runner, run `ccx`, mutate
 ProjectSchema, or add VLM APIs.
 
+[FEASpec to CalculiX INP writer design](feaspec_to_calculix_inp_writer_design.md)
+records the next no-run writer boundary. It proposes a future renderer API,
+result objects, `FW_*` diagnostics, deterministic section ordering, provenance
+comments, and golden fixture strategy without implementing a writer, generating
+`.inp` files, calling SolverAdapter or runner code, or executing CalculiX.
+
 ## Non-Goals
 
 - No implementation in this gate.

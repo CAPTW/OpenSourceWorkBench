@@ -262,9 +262,11 @@ optional dependencies:
 - `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL` implemented the bounded
   experimental planning object in
   [FEASpec to CalculiX case-plan model](feaspec_to_calculix_case_plan_model.md).
-- `OSW-EXP-011_FEASPEC_TO_CALCULIX_INP_WRITER_DESIGN`
-- `OSW-EXP-012_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-013_FEASPEC_CALCULIX_EXPORTER_IMPLEMENTATION_NO_RUN`
+- `OSW-EXP-011_FEASPEC_TO_CALCULIX_INP_WRITER_DESIGN` records the design-only
+  future `.inp` renderer boundary in
+  [FEASpec to CalculiX INP writer design](feaspec_to_calculix_inp_writer_design.md).
+- `OSW-EXP-012_FEASPEC_CALCULIX_INP_RENDERER_IMPLEMENTATION_NO_RUN`
+- `OSW-EXP-013_FEASPEC_CALCULIX_INP_GOLDEN_FIXTURES`
 - `OSW-EXP-014_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
 
 ## Non-Goals

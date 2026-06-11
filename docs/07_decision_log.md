@@ -738,3 +738,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   SolverAdapter handoff, runner handoff, live `ccx` validation, ProjectSchema
   mutation, VLM integration, dependency install, and solver execution remain
   separate future gates.
+
+## ADR-0041: FEASpec CalculiX INP Writer Requires A No-Run Design Gate
+
+- Status: Accepted for experimental design
+- Date: 2026-06-12
+- Context: The FEASpec CalculiX case-plan model can expose writer readiness
+  only after approved FEASpec, validator, bridge, explicit node topology,
+  explicit element topology, materials, sections, boundary conditions, loads,
+  static step metadata, output request metadata, and provenance evidence are
+  present. The repository also has existing CalculiX deck and runner layers,
+  so the FEASpec writer boundary must be explicit before any renderer code is
+  added.
+- Decision: Define the FEASpec-to-CalculiX `.inp` writer as design-only before
+  implementation. The future writer may render deterministic CalculiX text from
+  a `FEASpecCalculiXCasePlan` only when `ready_for_inp_writer` is true, while
+  `ready_for_solver_execution` remains false until a separate installed-only
+  run gate. The design reserves `FW_*` diagnostics, deterministic section
+  ordering, provenance comments, and golden fixture strategy.
+- Consequences: No writer implementation, generated `.inp` files, SolverAdapter
+  calls, runner calls, ProjectSchema mutation, live `ccx` validation, VLM API,
+  dependency install, or solver execution is added by the design gate. Issue
+  `#8` remains the separate live CalculiX validation track.

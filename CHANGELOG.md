@@ -82,6 +82,13 @@ by a dedicated release/tag gate.
   `ready_for_solver_execution` false, and does not write `.inp` files, call
   solver adapters/exporters, run `ccx`, mutate ProjectSchema, add VLM APIs, or
   execute solvers.
+- Added a design-only FEASpec to CalculiX `.inp` writer contract that defines
+  future writer preconditions, proposed render/write APIs, result objects,
+  deterministic file-section ordering, provenance comments, `FW_*` diagnostics,
+  golden fixture strategy, issue `#8` separation, and the no-run safety
+  boundary. It does not implement a writer, generate `.inp` files, call
+  SolverAdapter or runner code, mutate ProjectSchema, run CalculiX, add VLM
+  APIs, or execute solvers.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA
