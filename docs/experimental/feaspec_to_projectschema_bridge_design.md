@@ -281,8 +281,16 @@ of heavy optional dependencies:
 Suggested follow-up gates:
 
 - `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
-- `OSW-EXP-010_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-011_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
+- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL`
+- `OSW-EXP-011_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-012_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
 
 Any implementation gate must start from the preconditions, diagnostics, and
 non-goals above and must keep solver execution out of the bridge.
+
+Follow-up planning evidence:
+[FEASpec to CalculiX case planning](feaspec_to_calculix_case_planning.md)
+defines the CalculiX-first case-plan boundary after bridge planning. It remains
+design-only and does not implement a case generator, `.inp` writer,
+SolverAdapter/exporter call, runner call, live `ccx` validation, or solver
+execution.

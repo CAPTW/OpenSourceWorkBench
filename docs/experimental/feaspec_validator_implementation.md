@@ -115,6 +115,13 @@ ProjectSchema, implement full ProjectSchema persistence, call SolverAdapter or
 exporter code, generate CalculiX or Abaqus files, call VLM APIs, handle
 credentials, or execute solvers.
 
+[FEASpec to CalculiX case planning](feaspec_to_calculix_case_planning.md)
+records the next design-only boundary after the bridge plan. It defines future
+case-plan preconditions, object shape, mesh requirements, mapping diagnostics,
+and the no-export/no-execution safety boundary. It does not implement a case
+generator, `.inp` writer, SolverAdapter/exporter, runner call, or live `ccx`
+validation.
+
 ## Examples And Benchmark Coverage
 
 The validator is covered against:
@@ -147,5 +154,6 @@ scores and do not execute solvers.
 
 - `OSW-EXP-007_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
 - `OSW-EXP-008_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_IMPLEMENTATION`
-- `OSW-EXP-009_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLANNING`
+- `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
+- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL`
+- `OSW-EXP-011_FEASPEC_HUMAN_REVIEW_UI_DESIGN`

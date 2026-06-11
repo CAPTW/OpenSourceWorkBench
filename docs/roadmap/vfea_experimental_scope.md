@@ -315,5 +315,13 @@ does not implement full ProjectSchema persistence, mutate ProjectSchema,
 generate CalculiX or Abaqus exports, add VLM APIs or credentials, or execute
 solvers.
 
+CalculiX planning evidence:
+[FEASpec to CalculiX case planning](../experimental/feaspec_to_calculix_case_planning.md)
+defines the future CalculiX-first case-plan contract after approved FEASpec,
+validator, and bridge evidence. It remains design-only and separate from issue
+`#8` live `ccx` validation. It does not implement a case generator, `.inp`
+writer, SolverAdapter/exporter, runner call, live validation, or solver
+execution.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

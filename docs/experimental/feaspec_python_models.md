@@ -101,6 +101,12 @@ diagnostics, provenance handling, unmapped-field reporting, and ProjectSchema
 extension needs. It does not mutate ProjectSchema, implement full ProjectSchema
 persistence, implement solver adapters/exporters, or execute solvers.
 
+[FEASpec to CalculiX case planning](feaspec_to_calculix_case_planning.md)
+defines the future CalculiX-first case-plan contract after approved FEASpec,
+validator, and bridge evidence exist. It remains design-only and does not add a
+case generator, `.inp` writer, SolverAdapter/exporter, runner call, live
+optional validation, or solver execution.
+
 ## Examples Coverage
 
 The model layer loads the current files under `examples/feaspec/`:
@@ -134,5 +140,6 @@ Possible follow-up gates:
 - `OSW-EXP-006_FEASPEC_VALIDATOR_IMPLEMENTATION`
 - `OSW-EXP-007_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
 - `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
-- `OSW-EXP-010_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-011_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
+- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL`
+- `OSW-EXP-011_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-012_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`

@@ -66,6 +66,12 @@ by a dedicated release/tag gate.
   candidates and invalid fixtures and does not persist ProjectSchema files,
   mutate ProjectSchema, call SolverAdapter/exporter code, generate solver
   decks, call VLM APIs, handle credentials, or execute solvers.
+- Added a design-only FEASpec to CalculiX case-planning contract that defines
+  approved-FEASpec, validator, and bridge preconditions; a future case-plan
+  object shape; mesh requirements; node/element/material/section/BC/load/step
+  and output planning; `FC_*` diagnostics; and issue `#8` separation. It does
+  not add a case generator, `.inp` writer, SolverAdapter/exporter call, live
+  `ccx` validation, or solver execution.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

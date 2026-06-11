@@ -697,3 +697,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   provider/API integration, credential handling, GUI workflow, and solver
   execution remain separate future gates. The bridge plan is preview evidence,
   not authorization for unreviewed solver handoff.
+
+## ADR-0039: FEASpec To CalculiX Planning Stays Design-Only Before Export
+
+- Status: Accepted for experimental design
+- Date: 2026-06-12
+- Context: The FEASpec bridge plan layer can produce approved, previewable
+  draft evidence, but CalculiX deck generation requires explicit mesh topology,
+  element choices, material/section mappings, target sets, and output requests.
+  Issue `#8` live `ccx` validation also remains a separate installed-only
+  validation track.
+- Decision: Define the FEASpec to CalculiX case-plan boundary as design-only.
+  The future contract requires approved FEASpec data, validator reports with no
+  blockers, bridge plans that are draft-ready or draft-ready-with-warnings,
+  explicit units, reviewed material/section/BC/load targets, explicit mesh
+  source, CalculiX-first target metadata, and `FC_*` planning diagnostics.
+- Consequences: Case-plan model implementation, `.inp` writer design,
+  CalculiX exporter implementation, SolverAdapter calls, runner calls, live
+  `ccx` validation, dependency install, and solver execution remain separate
+  future gates. The planning document is not proof of solver readiness or
+  physical correctness.

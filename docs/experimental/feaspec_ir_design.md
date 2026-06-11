@@ -526,6 +526,12 @@ reporting, ProjectSchema extension needs, and the solver handoff boundary. It
 does not mutate ProjectSchema, implement full ProjectSchema persistence,
 generate solver cases, call VLM APIs, handle credentials, or execute solvers.
 
+[FEASpec to CalculiX case planning](feaspec_to_calculix_case_planning.md)
+records the next CalculiX-first design boundary. It defines future case-plan
+preconditions, mesh requirements, node/element/material/section/BC/load/step
+planning, `FC_*` diagnostics, issue `#8` separation, and the no `.inp`
+writer/no solver execution boundary.
+
 ## Non-Goals
 
 - No implementation in this gate.

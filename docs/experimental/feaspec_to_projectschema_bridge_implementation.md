@@ -174,5 +174,8 @@ Focused tests cover:
 Potential follow-up gates:
 
 - `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
-- `OSW-EXP-010_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-011_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
+  records the design-only CalculiX-first case planning boundary in
+  [FEASpec to CalculiX case planning](feaspec_to_calculix_case_planning.md).
+- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL`
+- `OSW-EXP-011_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-012_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
