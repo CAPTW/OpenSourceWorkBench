@@ -168,6 +168,14 @@ The ProjectSchema bridge is future work. SolverAdapter handoff is future work.
 CalculiX or Abaqus export is future work. This gate defines the validation
 contract only and does not generate or run solver cases.
 
+[FEASpec to ProjectSchema bridge design](feaspec_to_projectschema_bridge_design.md)
+records that later bridge boundary in design-only form. It requires approved
+FEASpec data, a validator report with no blockers, explicit units,
+provenance/evidence preservation, bridge diagnostics, and unmapped-field
+reporting before a future ProjectSchema draft can be considered. It does not
+implement the bridge, mutate ProjectSchema, generate solver exports, call VLM
+APIs, handle credentials, or execute solvers.
+
 ## CalculiX-First Compatibility
 
 The first planned compatibility path is CalculiX-first for small,

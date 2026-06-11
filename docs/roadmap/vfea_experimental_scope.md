@@ -301,5 +301,15 @@ ProjectSchema bridging, CalculiX or Abaqus export, VLM provider integration,
 credentials, mesh generation, numerical physics validation, or solver
 execution.
 
+Bridge design evidence:
+[FEASpec to ProjectSchema bridge design](../experimental/feaspec_to_projectschema_bridge_design.md)
+defines a future design-only bridge from approved FEASpec plus a validator
+report with no blockers into a ProjectSchema draft. It records field mappings,
+explicit-unit handling, provenance/evidence preservation, bridge diagnostic
+codes, unmapped-field reporting, ProjectSchema extension needs, and the solver
+handoff boundary. It does not implement bridge code, mutate ProjectSchema,
+generate CalculiX or Abaqus exports, add VLM APIs or credentials, or execute
+solvers.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

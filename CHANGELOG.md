@@ -50,6 +50,13 @@ by a dedicated release/tag gate.
   examples and seed fixtures. It does not implement full physics validation,
   ProjectSchema bridging, solver adapters/exporters, VLM APIs, credentials, or
   solver execution.
+- Added a design-only FEASpec to ProjectSchema bridge contract that requires an
+  approved FEASpec and validator report with no blockers, maps reviewed fields
+  to current ProjectSchema concepts where safe, preserves explicit units,
+  provenance/evidence, confidence, diagnostics, and unmapped fields, and records
+  ProjectSchema extension needs. It does not implement bridge source code,
+  mutate ProjectSchema, generate solver exports, call VLM APIs, handle
+  credentials, or execute solvers.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

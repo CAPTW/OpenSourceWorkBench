@@ -515,6 +515,14 @@ field-level diagnostics and benchmark readiness reports, but still does not add
 full physics validation, ProjectSchema bridging, solver adapters/exporters, VLM
 APIs, credentials, or solver execution.
 
+[FEASpec to ProjectSchema bridge design](feaspec_to_projectschema_bridge_design.md)
+records the next design-only conversion boundary. It defines approved-FEASpec
+preconditions, validator-report requirements, explicit-unit handling, field
+mapping expectations, provenance/evidence preservation, bridge diagnostic codes,
+unmapped-field reporting, ProjectSchema extension needs, and the solver handoff
+boundary. It does not implement bridge code, mutate ProjectSchema, generate
+solver cases, call VLM APIs, handle credentials, or execute solvers.
+
 ## Non-Goals
 
 - No implementation in this gate.
@@ -538,7 +546,9 @@ Potential future gates:
 
 - `OSW-EXP-006_FEASPEC_VALIDATOR_IMPLEMENTATION`
 - `OSW-EXP-007_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
-- `OSW-EXP-008_FEASPEC_TO_CALCULIX_CASE_PLANNING`
+- `OSW-EXP-008_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_IMPLEMENTATION`
+- `OSW-EXP-009_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLANNING`
 
 Each implementation gate must preserve the same guardrails and add focused
 tests before any source behavior is merged.

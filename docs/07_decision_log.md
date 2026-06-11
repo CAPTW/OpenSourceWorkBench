@@ -657,3 +657,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   mesh generation, ProjectSchema bridging, CalculiX or Abaqus export, VLM
   provider/API integration, credential handling, or solver execution. Those
   remain separate future gates.
+
+## ADR-0037: FEASpec To ProjectSchema Bridge Is Design-Only Before Conversion
+
+- Status: Accepted for experimental design
+- Date: 2026-06-11
+- Context: The experimental FEASpec model layer and semantic validator report
+  layer can represent and diagnose approved FEASpec data, but ProjectSchema
+  conversion needs a separate boundary before any source bridge code or schema
+  changes are considered.
+- Decision: Define the FEASpec to ProjectSchema bridge as a design-only
+  contract first. The future bridge must require an approved FEASpec, a
+  validator report with no blockers, explicit units, source/provenance/evidence
+  preservation, bridge diagnostics, unmapped-field reporting, and clear
+  ProjectSchema extension needs. The bridge ends at a ProjectSchema draft and
+  diagnostics boundary.
+- Consequences: ProjectSchema mutation, source bridge implementation,
+  SolverAdapter/export handoff, CalculiX or Abaqus case generation, VLM
+  provider/API integration, credential handling, mesh generation, and solver
+  execution remain separate future gates. Candidates remain untrusted, and
+  unmapped FEASpec fields must stay visible rather than being silently dropped.

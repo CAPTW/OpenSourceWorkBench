@@ -33,6 +33,11 @@ request should stop, park, or defer.
   model fields, examples, and benchmark readiness without mesh generation,
   numerical physics validation, ProjectSchema bridging, solver export, VLM
   integration, or solver execution.
+- Design-only FEASpec to ProjectSchema bridge documentation that defines
+  approved-spec preconditions, validator-report requirements, explicit-unit
+  mapping, provenance/evidence preservation, bridge diagnostics, unmapped-field
+  reporting, and ProjectSchema extension needs without implementing the bridge
+  or mutating ProjectSchema.
 
 ## Out of Scope
 
@@ -57,6 +62,9 @@ request should stop, park, or defer.
 - Treating FEASpec semantic validator reports as proof of physical correctness,
   generated solver cases, ProjectSchema conversion, VLM interpretation, or
   permission for unreviewed solver execution.
+- Treating FEASpec to ProjectSchema bridge design as a source bridge
+  implementation, ProjectSchema migration, SolverAdapter/export path, VLM
+  provider, or permission to execute solvers.
 
 ## Scope Drift Definition
 
@@ -74,6 +82,9 @@ Scope drift is any change that:
 - turns FEASpec semantic validation into mesh generation, numerical physics
   validation, ProjectSchema bridging, solver export, VLM API integration, or
   solver execution without a separate gate;
+- turns FEASpec bridge design into ProjectSchema mutation, source conversion
+  behavior, solver adapter/export behavior, VLM API integration, or solver
+  execution without a separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

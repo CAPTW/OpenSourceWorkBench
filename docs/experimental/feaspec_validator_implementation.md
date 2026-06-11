@@ -98,6 +98,19 @@ Solver compatibility checks are field-level only.
 - No exporter, input deck, script, mesh, external command, or solver run is
   generated.
 
+## Bridge Design Follow-Up
+
+[FEASpec to ProjectSchema bridge design](feaspec_to_projectschema_bridge_design.md)
+records the next design-only boundary after this validator report layer. It
+requires an approved FEASpec, a validator report with no blockers, explicit
+units, provenance/evidence preservation, bridge diagnostics, and unmapped-field
+reporting before any future ProjectSchema draft can be produced.
+
+That bridge design remains documentation only. It does not add source bridge
+implementation, mutate ProjectSchema, implement SolverAdapter/export handoff,
+generate CalculiX or Abaqus files, call VLM APIs, handle credentials, or execute
+solvers.
+
 ## Examples And Benchmark Coverage
 
 The validator is covered against:
@@ -129,5 +142,6 @@ scores and do not execute solvers.
 ## Next Implementation Slices
 
 - `OSW-EXP-007_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
-- `OSW-EXP-008_FEASPEC_TO_CALCULIX_CASE_PLANNING`
+- `OSW-EXP-008_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_IMPLEMENTATION`
 - `OSW-EXP-009_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLANNING`

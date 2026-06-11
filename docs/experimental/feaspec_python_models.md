@@ -89,6 +89,13 @@ experimental semantic report layer for those rules. It remains field-level and
 does not implement a full physics validator, ProjectSchema bridge,
 SolverAdapter/export handoff, VLM API, credentials, or solver execution.
 
+[FEASpec to ProjectSchema bridge design](feaspec_to_projectschema_bridge_design.md)
+records a later design-only mapping from approved FEASpec data and validator
+reports into a future ProjectSchema draft. It defines preconditions, field
+mappings, bridge diagnostics, provenance handling, unmapped-field reporting, and
+ProjectSchema extension needs without adding bridge source code, mutating
+ProjectSchema, implementing solver adapters/exporters, or executing solvers.
+
 ## Examples Coverage
 
 The model layer loads the current files under `examples/feaspec/`:
@@ -121,4 +128,6 @@ Possible follow-up gates:
 
 - `OSW-EXP-006_FEASPEC_VALIDATOR_IMPLEMENTATION`
 - `OSW-EXP-007_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_DESIGN`
-- `OSW-EXP-008_FEASPEC_TO_CALCULIX_CASE_PLANNING`
+- `OSW-EXP-008_FEASPEC_TO_PROJECTSCHEMA_BRIDGE_IMPLEMENTATION`
+- `OSW-EXP-009_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLANNING`
