@@ -86,8 +86,11 @@ refuses to overwrite an existing path unless `overwrite=True` is supplied. It
 does not create parent directories implicitly; callers must create the target
 directory before writing.
 
-Focused tests write only under pytest `tmp_path`. This gate adds no tracked
-generated `.inp` fixtures.
+Focused write tests use only pytest `tmp_path`. The follow-up
+[FEASpec CalculiX INP golden fixtures](feaspec_to_calculix_inp_golden_fixtures.md)
+gate adds controlled no-run golden text fixtures under
+`tests/fixtures/feaspec/calculix_golden/`. Those fixtures are not solver
+outputs, were not produced by running CalculiX, and do not validate issue `#8`.
 
 ## Diagnostics
 
@@ -135,10 +138,10 @@ Existing approved FEASpec examples currently block with mesh-required behavior
 because they preserve reviewed graph and target evidence but do not include
 explicit mesh or element topology.
 
-Focused tests include a synthetic in-memory writer-ready case plan with explicit
-nodes, one element, material, section, boundary condition, load, static step,
-and output requests. That test demonstrates rendering without adding tracked
-golden `.inp` files.
+Focused tests include synthetic in-memory writer-ready case plans with explicit
+nodes, elements, material, section, boundary condition, load, static step, and
+output requests. The golden fixture tests compare normalized renderer text for
+the cantilever and truss cases against the controlled no-run fixture files.
 
 Candidates and invalid examples remain blocked by validation, bridge, or
 case-plan diagnostics before renderer handoff.

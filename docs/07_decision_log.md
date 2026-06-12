@@ -783,3 +783,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   dependency install, live validation, release edit, asset upload, tag mutation,
   or issue closure is added by this gate. Golden fixtures, exporter behavior,
   and installed-only runs remain separate future gates.
+
+## ADR-0043: FEASpec CalculiX Golden Fixtures Are No-Run Text Evidence
+
+- Status: Accepted for experimental test evidence
+- Date: 2026-06-13
+- Context: ADR-0042 added a no-run FEASpec CalculiX INP renderer. Renderer
+  behavior needs deterministic regression fixtures, but those fixtures must not
+  be confused with CalculiX execution, live issue `#8` validation, solver
+  output, or proof of engineering correctness.
+- Decision: Add controlled `.inp` golden text fixtures only under
+  `tests/fixtures/feaspec/calculix_golden/`, with README and manifest metadata
+  stating that the files are no-run renderer regression fixtures. Tests compare
+  normalized renderer output against the static text and verify SHA-256
+  manifest entries. QA guardrails reject arbitrary `.inp` or solver-output file
+  drops outside curated fixture locations.
+- Consequences: The fixtures improve renderer regression coverage without
+  invoking `ccx`, calling SolverAdapter or runner code, using subprocess APIs,
+  mutating ProjectSchema, adding VLM APIs, closing issue `#8`, editing the
+  public release, uploading assets, or pushing tags. Exporter and installed-only
+  run gates remain separate future work.

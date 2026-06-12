@@ -97,6 +97,12 @@ by a dedicated release/tag gate.
   stay under pytest `tmp_path`, and the renderer does not run `ccx`, call
   SolverAdapter or runner code, mutate ProjectSchema, validate issue `#8`, add
   VLM APIs, or add tracked `.inp` fixtures.
+- Added controlled no-run FEASpec CalculiX `.inp` golden text fixtures under
+  `tests/fixtures/feaspec/calculix_golden/`, with README/manifest metadata,
+  SHA-256 checks, normalized renderer comparisons for synthetic cantilever and
+  truss cases, and QA allowlist coverage for arbitrary `.inp` rejection. These
+  fixtures are not solver outputs, do not run `ccx`, do not validate issue
+  `#8`, and do not claim engineering correctness or certification.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

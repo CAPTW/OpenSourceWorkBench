@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import importlib.util
 import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+from types import ModuleType
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PYTHON_BIN = Path(sys.executable).resolve().parent
@@ -34,6 +36,19 @@ def run_tool(*args: str) -> subprocess.CompletedProcess[str]:
         capture_output=True,
         check=False,
     )
+
+
+def load_module(path: Path, name: str) -> ModuleType:
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.path.insert(0, str(path.parent))
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.pop(0)
+    return module
 
 
 def test_scope_drift_flags_forbidden_positive_claim() -> None:
@@ -75,3 +90,17 @@ def test_release_gate_checker_runs_on_current_repo() -> None:
 
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert "Release gate queue" in proc.stdout
+
+
+def test_solver_artifact_checker_allows_only_curated_solver_fixture_paths() -> None:
+    checker = load_module(
+        REPO_ROOT / "tools" / "qa" / "check_no_solver_artifacts_committed.py",
+        "check_no_solver_artifacts_committed_for_test",
+    )
+
+    assert checker.is_allowed(
+        "tests/fixtures/feaspec/calculix_golden/cantilever_minimal.inp"
+    )
+    assert checker.is_allowed("tests/fixtures/calculix/results/simple_success.frd")
+    assert not checker.is_allowed("tests/tmp/generated_case.inp")
+    assert not checker.is_allowed("tests/unit/generated_result.frd")

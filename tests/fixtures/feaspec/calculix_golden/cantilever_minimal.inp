@@ -1,0 +1,40 @@
+** OpenSolver Workbench experimental FEASpec CalculiX INP renderer
+** Case plan: synthetic-ready-calculix-case-plan
+** Source FEASpec: synthetic_ready
+** This file is generated from experimental, human-reviewed FEASpec evidence.
+** No industrial certification, compliance, production CAE, or accuracy claim.
+** Solver execution was not performed by this renderer.
+** Unit context: force=N, length=m, name=SI, stress=Pa
+** Provenance: Human review: synthetic ready case approved for renderer unit tests.
+** Provenance: Source FEASpec: synthetic_ready.
+*NODE
+1, 0, 0, 0
+2, 1, 0, 0
+3, 1, 1, 0
+4, 0, 1, 0
+5, 0, 0, 1
+6, 1, 0, 1
+7, 1, 1, 1
+8, 0, 1, 1
+*ELEMENT, TYPE=C3D8, ELSET=EALL
+1, 1, 2, 3, 4, 5, 6, 7, 8
+*MATERIAL, NAME=mat_steel
+** FEASpec material model: isotropic_linear_elastic
+*ELASTIC
+210000000000, 0.3
+*DENSITY
+7850
+*SOLID SECTION, ELSET=EALL, MATERIAL=mat_steel
+*BOUNDARY
+1, 1, 1, 0
+1, 2, 2, 0
+1, 3, 3, 0
+*CLOAD
+2, 2, -100
+*STEP, NAME=linear_static
+*STATIC
+*NODE PRINT, NSET=NALL
+U
+*EL PRINT, ELSET=EALL
+S
+*END STEP

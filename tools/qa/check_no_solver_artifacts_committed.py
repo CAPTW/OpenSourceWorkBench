@@ -17,7 +17,7 @@ PATTERNS = [
         r"snappyHexMesh|reconstructPar)$",
         re.IGNORECASE,
     ),
-    re.compile(r"\.(frd|sta|cvg|12d|eig|mtx|nam|fcv|rout)$", re.IGNORECASE),
+    re.compile(r"\.(inp|frd|dat|sta|cvg|12d|eig|mtx|nam|fcv|rout|out|err)$", re.IGNORECASE),
     re.compile(
         r"(^|/)(solver_runs|solver-runs|run_cases|scratch|work|tmp|temp)(/|$)",
         re.IGNORECASE,
@@ -25,9 +25,22 @@ PATTERNS = [
     re.compile(r"(^|/)octave-workspace$", re.IGNORECASE),
 ]
 
+CURATED_SOLVER_FIXTURE_PREFIXES = (
+    "tests/fixtures/feaspec/calculix_golden/",
+    "tests/fixtures/calculix/",
+    "tests/golden/calculix/",
+    "tests/fixtures/openfoam/",
+    "tests/golden/openfoam/",
+)
+
 
 def is_allowed(path: str) -> bool:
     lowered = path.replace("\\", "/").lower()
+    if any(pattern.search(lowered) for pattern in PATTERNS):
+        return any(
+            lowered.startswith(prefix)
+            for prefix in CURATED_SOLVER_FIXTURE_PREFIXES
+        )
     return lowered.startswith("examples/") or lowered.startswith("tests/")
 
 

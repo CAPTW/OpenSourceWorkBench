@@ -62,6 +62,10 @@ request should stop, park, or defer.
   caller-provided paths with overwrite protection, and still does not run
   `ccx`, call SolverAdapter or runner code, mutate ProjectSchema, validate
   issue `#8`, add VLM APIs, or add tracked generated `.inp` fixtures.
+- Controlled FEASpec CalculiX `.inp` golden text fixtures under
+  `tests/fixtures/feaspec/calculix_golden/` that lock deterministic renderer
+  output without running CalculiX, producing solver outputs, validating issue
+  `#8`, or claiming engineering correctness.
 
 ## Out of Scope
 
@@ -105,6 +109,9 @@ request should stop, park, or defer.
   SolverAdapter integration, runner integration, live `ccx` validation,
   ProjectSchema mutation, physical validation, or permission to execute
   solvers.
+- Treating FEASpec CalculiX `.inp` golden fixtures as solver outputs, live
+  `ccx` validation, engineering-correctness evidence, or permission to execute
+  solvers.
 
 ## Scope Drift Definition
 
@@ -142,6 +149,9 @@ Scope drift is any change that:
   behavior, runner behavior, live `ccx` validation, dependency install,
   generated tracked `.inp` fixtures, ProjectSchema mutation, or solver
   execution without a separate gate;
+- turns FEASpec CalculiX golden `.inp` fixtures into solver outputs, live
+  validation evidence, physical validation, runner behavior, dependency
+  install, or solver execution without a separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

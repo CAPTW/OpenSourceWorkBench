@@ -21,6 +21,11 @@ adds the scoped no-run text renderer for writer-ready case plans. It keeps
 overwrite guard, and still does not run `ccx`, call SolverAdapter or runner
 code, mutate ProjectSchema, or close issue `#8`.
 
+[FEASpec CalculiX INP golden fixtures](feaspec_to_calculix_inp_golden_fixtures.md)
+adds no-run renderer regression fixtures under
+`tests/fixtures/feaspec/calculix_golden/`. They compare deterministic text only
+and remain separate from live CalculiX validation.
+
 ## Release Context
 
 `v0.1.4-rc1` is a public prerelease. This implementation is post-release
@@ -160,4 +165,4 @@ create solver artifacts.
   adds the no-run renderer described in
   [FEASpec CalculiX INP renderer implementation](feaspec_to_calculix_inp_renderer_implementation.md).
 - `OSW-EXP-013_FEASPEC_CALCULIX_INP_GOLDEN_FIXTURES`
-  remains the next text-fixture gate and must not run CalculiX.
+  adds no-run text fixtures and must not run CalculiX.

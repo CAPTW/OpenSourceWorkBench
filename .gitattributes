@@ -8,7 +8,9 @@
 *.json text eol=lf
 *.toml text eol=lf
 *.sh text eol=lf
+.gitattributes text eol=lf
 .githooks/* text eol=lf
+tests/fixtures/feaspec/calculix_golden/*.inp text eol=lf
 
 # Release asset smoke fixtures contain checksum-sensitive bytes. Keep Git from
 # normalizing line endings so local and CI hash verification use the same bytes.

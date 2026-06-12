@@ -238,17 +238,18 @@ be returned only when they remain visible to the reviewer.
 
 ## Golden Fixture Strategy
 
-Future golden `.inp` files should live under:
+Golden `.inp` files for the FEASpec renderer live under:
 
 ```text
 tests/fixtures/feaspec/calculix_golden/
 ```
 
-Those fixtures must be generated only in a future writer implementation gate.
-This design gate creates no `.inp` output. Future golden writer tests should
-compare normalized text. There is no solver execution in golden writer tests:
-they should not execute `ccx`, call a runner, or require CalculiX to be
-installed.
+The OSW-EXP-013 follow-up fixture gate records those fixtures in
+[FEASpec CalculiX INP golden fixtures](feaspec_to_calculix_inp_golden_fixtures.md).
+They are no-run golden text fixtures, not solver outputs and not validation
+results. Golden writer tests compare normalized text only. There is no solver
+execution in golden writer tests: they do not execute `ccx`, call a runner, or
+require CalculiX to be installed.
 
 Golden fixtures should cover:
 

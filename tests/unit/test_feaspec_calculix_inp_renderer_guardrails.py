@@ -101,10 +101,14 @@ def test_renderer_does_not_mutate_project_schema_source() -> None:
     assert "render_calculix_inp" not in text
 
 
-def test_no_tracked_feaspec_inp_golden_fixtures_are_required() -> None:
+def test_tracked_feaspec_inp_golden_fixtures_stay_in_dedicated_directory() -> None:
     fixture_root = REPO_ROOT / "tests" / "fixtures" / "feaspec"
+    allowed_root = fixture_root / "calculix_golden"
+    fixtures = list(fixture_root.rglob("*.inp"))
 
-    assert not list(fixture_root.rglob("*.inp"))
+    assert fixtures
+    for fixture in fixtures:
+        assert fixture.is_relative_to(allowed_root)
 
 
 def test_renderer_docs_keep_no_run_and_live_validation_boundaries() -> None:

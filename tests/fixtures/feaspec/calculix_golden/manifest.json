@@ -1,0 +1,48 @@
+{
+  "fixture_set": "FEASpec CalculiX INP golden fixtures",
+  "generated_by": "OSW-EXP-013_FEASPEC_CALCULIX_INP_GOLDEN_FIXTURES",
+  "renderer_status": "no-run",
+  "fixtures": [
+    {
+      "filename": "cantilever_minimal.inp",
+      "source_case": "synthetic-ready-calculix-case-plan",
+      "expected_sections": [
+        "header/provenance comments",
+        "*NODE",
+        "*ELEMENT",
+        "material cards",
+        "section/property cards",
+        "boundary cards",
+        "load cards",
+        "*STEP",
+        "output request cards",
+        "*END STEP"
+      ],
+      "sha256": "95bdcb18a5578ddca3fac9148006145426a71f57602d62c66db57effea80afdc",
+      "note": "No solver was run; this is deterministic renderer text only."
+    },
+    {
+      "filename": "truss_minimal.inp",
+      "source_case": "synthetic-truss-calculix-case-plan",
+      "expected_sections": [
+        "header/provenance comments",
+        "*NODE",
+        "*ELEMENT",
+        "material cards",
+        "section/property cards",
+        "boundary cards",
+        "load cards",
+        "*STEP",
+        "output request cards",
+        "*END STEP"
+      ],
+      "sha256": "27bdb81ff9fbd4691f2239aa9a9b909c9d2ac7196f0f6bde7ccb6fc98bc82b2c",
+      "note": "No solver was run; this is deterministic renderer text only."
+    }
+  ],
+  "limitations": [
+    "No live CalculiX validation.",
+    "No production certification.",
+    "Educational/test fixture only."
+  ]
+}
