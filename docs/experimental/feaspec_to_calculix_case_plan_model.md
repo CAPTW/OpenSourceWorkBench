@@ -14,6 +14,13 @@ section ordering, and golden fixture strategy. It still does not implement a
 writer, generate `.inp` files, call solver adapters, run `ccx`, or close issue
 `#8`.
 
+Follow-up implementation evidence:
+[FEASpec CalculiX INP renderer implementation](feaspec_to_calculix_inp_renderer_implementation.md)
+adds the scoped no-run text renderer for writer-ready case plans. It keeps
+`ready_for_solver_execution` false, writes only to caller-provided paths with an
+overwrite guard, and still does not run `ccx`, call SolverAdapter or runner
+code, mutate ProjectSchema, or close issue `#8`.
+
 ## Release Context
 
 `v0.1.4-rc1` is a public prerelease. This implementation is post-release
@@ -150,3 +157,7 @@ create solver artifacts.
   records the design-only future writer boundary in
   [FEASpec to CalculiX INP writer design](feaspec_to_calculix_inp_writer_design.md).
 - `OSW-EXP-012_FEASPEC_CALCULIX_INP_RENDERER_IMPLEMENTATION_NO_RUN`
+  adds the no-run renderer described in
+  [FEASpec CalculiX INP renderer implementation](feaspec_to_calculix_inp_renderer_implementation.md).
+- `OSW-EXP-013_FEASPEC_CALCULIX_INP_GOLDEN_FIXTURES`
+  remains the next text-fixture gate and must not run CalculiX.

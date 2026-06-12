@@ -89,6 +89,14 @@ by a dedicated release/tag gate.
   boundary. It does not implement a writer, generate `.inp` files, call
   SolverAdapter or runner code, mutate ProjectSchema, run CalculiX, add VLM
   APIs, or execute solvers.
+- Added an experimental no-run FEASpec CalculiX `.inp` renderer under
+  `src/osw/experimental/feaspec/`, with public render/write/explain APIs,
+  `FW_*` diagnostics, deterministic section ordering, provenance and
+  no-certification comments, and overwrite-guarded caller-path writes. Approved
+  examples still block until explicit mesh topology exists, test file writes
+  stay under pytest `tmp_path`, and the renderer does not run `ccx`, call
+  SolverAdapter or runner code, mutate ProjectSchema, validate issue `#8`, add
+  VLM APIs, or add tracked `.inp` fixtures.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

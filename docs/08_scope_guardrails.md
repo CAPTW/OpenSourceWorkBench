@@ -57,6 +57,11 @@ request should stop, park, or defer.
   ordering, provenance comments, golden fixture strategy, and issue `#8`
   separation without implementing a writer, generating `.inp` files, calling
   solver adapters/runners, mutating ProjectSchema, or executing solvers.
+- Experimental FEASpec CalculiX `.inp` renderer implementation that renders
+  deterministic text only from writer-ready case plans, writes only to
+  caller-provided paths with overwrite protection, and still does not run
+  `ccx`, call SolverAdapter or runner code, mutate ProjectSchema, validate
+  issue `#8`, add VLM APIs, or add tracked generated `.inp` fixtures.
 
 ## Out of Scope
 
@@ -96,6 +101,10 @@ request should stop, park, or defer.
 - Treating FEASpec to CalculiX `.inp` writer design as an implemented writer,
   generated deck fixture, SolverAdapter/exporter implementation, live `ccx`
   validation, ProjectSchema mutation, or permission to execute solvers.
+- Treating the FEASpec CalculiX `.inp` renderer as a CalculiX exporter,
+  SolverAdapter integration, runner integration, live `ccx` validation,
+  ProjectSchema mutation, physical validation, or permission to execute
+  solvers.
 
 ## Scope Drift Definition
 
@@ -129,6 +138,10 @@ Scope drift is any change that:
 - turns FEASpec to CalculiX `.inp` writer design into writer implementation,
   generated `.inp` fixtures, solver adapter/export behavior, live `ccx`
   validation, dependency install, or solver execution without a separate gate;
+- turns the FEASpec CalculiX `.inp` renderer into SolverAdapter/exporter
+  behavior, runner behavior, live `ccx` validation, dependency install,
+  generated tracked `.inp` fixtures, ProjectSchema mutation, or solver
+  execution without a separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

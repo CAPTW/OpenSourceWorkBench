@@ -33,6 +33,19 @@ from .calculix_diagnostics import (
     CalculiXPlanSeverity,
     FEASpecCalculiXPlanDiagnostic,
 )
+from .calculix_inp_diagnostics import (
+    CalculiXInpDiagnosticCode,
+    CalculiXInpSeverity,
+    FEASpecCalculiXInpDiagnostic,
+)
+from .calculix_inp_renderer import (
+    CalculiXInpRenderResult,
+    CalculiXInpSection,
+    CalculiXInpWriteResult,
+    explain_inp_render_result,
+    render_calculix_inp,
+    write_calculix_inp,
+)
 from .diagnostics import (
     DiagnosticCategory,
     DiagnosticCode,
@@ -104,6 +117,11 @@ __all__ = [
     "CalculiXCaseSectionPlan",
     "CalculiXCaseStatus",
     "CalculiXCaseStepPlan",
+    "CalculiXInpDiagnosticCode",
+    "CalculiXInpRenderResult",
+    "CalculiXInpSection",
+    "CalculiXInpSeverity",
+    "CalculiXInpWriteResult",
     "CalculiXPlanDiagnosticCode",
     "CalculiXPlanSeverity",
     "Confidence",
@@ -120,6 +138,7 @@ __all__ = [
     "FEASource",
     "FEASpecBridgeDiagnostic",
     "FEASpecCalculiXCasePlan",
+    "FEASpecCalculiXInpDiagnostic",
     "FEASpecCalculiXPlanDiagnostic",
     "FEASpec",
     "FEASpecCandidate",
@@ -148,6 +167,7 @@ __all__ = [
     "ValidationState",
     "check_feaspec_dict",
     "dump_feaspec",
+    "explain_inp_render_result",
     "explain_calculix_case_plan",
     "explain_bridge_plan",
     "explain_diagnostics",
@@ -156,7 +176,9 @@ __all__ = [
     "plan_calculix_case_from_bridge",
     "plan_calculix_case_from_feaspec",
     "plan_project_from_feaspec",
+    "render_calculix_inp",
     "validate_benchmark_seed",
     "validate_feaspec",
     "validate_for_solver",
+    "write_calculix_inp",
 ]

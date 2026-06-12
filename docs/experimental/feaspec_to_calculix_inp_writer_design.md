@@ -6,6 +6,13 @@ solver execution in this gate.
 
 Related release: `v0.1.4-rc1`
 
+Follow-up implementation evidence:
+[FEASpec CalculiX INP renderer implementation](feaspec_to_calculix_inp_renderer_implementation.md)
+records the later OSW-EXP-012 no-run renderer. That follow-up renders
+deterministic text only from writer-ready case plans and preserves this design
+boundary: no `ccx` invocation, no SolverAdapter or runner call, no ProjectSchema
+mutation, no live issue `#8` validation, and no solver execution.
+
 ## Release Context
 
 `v0.1.4-rc1` is a public prerelease. This document records post-release

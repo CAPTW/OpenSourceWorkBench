@@ -266,6 +266,9 @@ optional dependencies:
   future `.inp` renderer boundary in
   [FEASpec to CalculiX INP writer design](feaspec_to_calculix_inp_writer_design.md).
 - `OSW-EXP-012_FEASPEC_CALCULIX_INP_RENDERER_IMPLEMENTATION_NO_RUN`
+  adds a bounded no-run text renderer for writer-ready case plans, documented
+  in
+  [FEASpec CalculiX INP renderer implementation](feaspec_to_calculix_inp_renderer_implementation.md).
 - `OSW-EXP-013_FEASPEC_CALCULIX_INP_GOLDEN_FIXTURES`
 - `OSW-EXP-014_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
 

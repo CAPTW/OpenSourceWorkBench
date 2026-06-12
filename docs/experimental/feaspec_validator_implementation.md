@@ -134,6 +134,12 @@ writer preconditions, `FW_*` diagnostics, section ordering, and golden fixture
 strategy without implementing a writer, generating `.inp` files, or running
 CalculiX.
 
+[FEASpec CalculiX INP renderer implementation](feaspec_to_calculix_inp_renderer_implementation.md)
+adds the later experimental no-run renderer for writer-ready case plans. It
+preserves validator and case-plan blockers, keeps
+`ready_for_solver_execution` false, writes only under caller control, and still
+does not execute CalculiX or satisfy issue `#8` live validation.
+
 ## Examples And Benchmark Coverage
 
 The validator is covered against:
@@ -169,4 +175,5 @@ scores and do not execute solvers.
 - `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
 - `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL`
 - `OSW-EXP-011_FEASPEC_TO_CALCULIX_INP_WRITER_DESIGN`
-- `OSW-EXP-012_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-012_FEASPEC_CALCULIX_INP_RENDERER_IMPLEMENTATION_NO_RUN`
+- `OSW-EXP-013_FEASPEC_HUMAN_REVIEW_UI_DESIGN`

@@ -331,5 +331,13 @@ It preserves reviewed records and `FC_*` diagnostics, keeps
 export CalculiX cases, mutate ProjectSchema, run `ccx`, call VLM APIs, or close
 issue `#8`.
 
+INP renderer evidence:
+[FEASpec CalculiX INP renderer implementation](../experimental/feaspec_to_calculix_inp_renderer_implementation.md)
+adds a no-run renderer for writer-ready case plans only. It renders
+deterministic `.inp` text, writes only to caller-provided paths with overwrite
+protection, keeps `ready_for_solver_execution` false, and still does not run
+`ccx`, call SolverAdapter or runner code, mutate ProjectSchema, add VLM APIs,
+or close issue `#8`.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

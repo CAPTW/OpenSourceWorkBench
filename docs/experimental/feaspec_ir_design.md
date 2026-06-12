@@ -546,6 +546,12 @@ result objects, `FW_*` diagnostics, deterministic section ordering, provenance
 comments, and golden fixture strategy without implementing a writer, generating
 `.inp` files, calling SolverAdapter or runner code, or executing CalculiX.
 
+[FEASpec CalculiX INP renderer implementation](feaspec_to_calculix_inp_renderer_implementation.md)
+adds the later experimental no-run renderer for writer-ready case plans. It
+keeps file writing caller-directed and overwrite-guarded, keeps
+`ready_for_solver_execution` false, and still does not run `ccx`, call
+SolverAdapter or runner code, mutate ProjectSchema, or validate issue `#8`.
+
 ## Non-Goals
 
 - No implementation in this gate.
@@ -572,7 +578,8 @@ Potential future gates:
 - `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
 - `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL`
 - `OSW-EXP-011_FEASPEC_TO_CALCULIX_INP_WRITER_DESIGN`
-- `OSW-EXP-012_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-012_FEASPEC_CALCULIX_INP_RENDERER_IMPLEMENTATION_NO_RUN`
+- `OSW-EXP-013_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
 - `OSW-EXP-013_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
 
 Each implementation gate must preserve the same guardrails and add focused

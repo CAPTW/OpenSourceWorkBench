@@ -118,6 +118,12 @@ defines the future no-run writer contract after the case-plan model. It is
 design-only and adds no writer implementation, `.inp` output, SolverAdapter
 handoff, runner call, or solver execution.
 
+[FEASpec CalculiX INP renderer implementation](feaspec_to_calculix_inp_renderer_implementation.md)
+adds the later no-run renderer for writer-ready case plans. It renders
+deterministic text only, writes only to caller-provided paths with overwrite
+protection, and still does not run `ccx`, call SolverAdapter or runner code,
+mutate ProjectSchema, or validate issue `#8`.
+
 ## Examples Coverage
 
 The model layer loads the current files under `examples/feaspec/`:
@@ -153,5 +159,6 @@ Possible follow-up gates:
 - `OSW-EXP-009_FEASPEC_TO_CALCULIX_CASE_PLANNING`
 - `OSW-EXP-010_FEASPEC_TO_CALCULIX_CASE_PLAN_MODEL`
 - `OSW-EXP-011_FEASPEC_TO_CALCULIX_INP_WRITER_DESIGN`
-- `OSW-EXP-012_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-013_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
+- `OSW-EXP-012_FEASPEC_CALCULIX_INP_RENDERER_IMPLEMENTATION_NO_RUN`
+- `OSW-EXP-013_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-014_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`

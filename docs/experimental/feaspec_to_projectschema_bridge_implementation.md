@@ -182,5 +182,10 @@ Potential follow-up gates:
 - `OSW-EXP-011_FEASPEC_TO_CALCULIX_INP_WRITER_DESIGN`
   records the design-only no-run `.inp` writer boundary in
   [FEASpec to CalculiX INP writer design](feaspec_to_calculix_inp_writer_design.md).
-- `OSW-EXP-012_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-013_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`
+- `OSW-EXP-012_FEASPEC_CALCULIX_INP_RENDERER_IMPLEMENTATION_NO_RUN`
+  adds the no-run renderer in
+  [FEASpec CalculiX INP renderer implementation](feaspec_to_calculix_inp_renderer_implementation.md).
+  The renderer still does not mutate ProjectSchema, call SolverAdapter or
+  runner code, execute CalculiX, or validate issue `#8`.
+- `OSW-EXP-013_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-014_FEASPEC_PROJECTSCHEMA_EXTENSION_DECISION`

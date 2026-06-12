@@ -760,3 +760,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   calls, runner calls, ProjectSchema mutation, live `ccx` validation, VLM API,
   dependency install, or solver execution is added by the design gate. Issue
   `#8` remains the separate live CalculiX validation track.
+
+## ADR-0042: FEASpec CalculiX INP Renderer Is No-Run Text Generation
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-12
+- Context: ADR-0041 defined the FEASpec CalculiX `.inp` writer contract before
+  source behavior. The next implementation step needs deterministic text
+  rendering for writer-ready `FEASpecCalculiXCasePlan` records without crossing
+  into CalculiX export, SolverAdapter handoff, runner execution, or live issue
+  `#8` validation.
+- Decision: Implement an experimental no-run renderer under
+  `src/osw/experimental/feaspec/`. The renderer accepts only case plans with
+  `ready_for_inp_writer=true`, maps incomplete or unsupported records into
+  `FW_*` diagnostics, renders deterministic sections in the documented order,
+  preserves provenance and no-certification comments, and writes only to
+  caller-provided paths with overwrite protection. Every result keeps
+  `ready_for_solver_execution=false`.
+- Consequences: Approved examples without explicit mesh topology remain
+  blocked. No tracked generated `.inp` fixtures, SolverAdapter calls, runner
+  calls, `ccx` invocation, subprocess use, ProjectSchema mutation, VLM API,
+  dependency install, live validation, release edit, asset upload, tag mutation,
+  or issue closure is added by this gate. Golden fixtures, exporter behavior,
+  and installed-only runs remain separate future gates.
