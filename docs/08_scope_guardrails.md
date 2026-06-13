@@ -177,6 +177,11 @@ Scope drift is any change that:
   behavior, output directory creation, SolverAdapter integration, runner
   behavior, live `ccx` validation, dependency install, automatic solver
   execution, or ProjectSchema mutation without a separate gate;
+- turns the FEASpec CalculiX export write CLI into CalculiX execution,
+  SolverAdapter integration, runner behavior, live `ccx` validation,
+  dependency install, automatic solver execution, ProjectSchema mutation,
+  release asset generation, or hidden file writes outside explicit
+  caller-provided output directories without a separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

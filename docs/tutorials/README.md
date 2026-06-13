@@ -14,6 +14,7 @@ ANSYS clone, Simulink clone, or commercial CAD replacement.
 | First CLI walkthrough | [first_cli_walkthrough.md](first_cli_walkthrough.md) | Python venv only; no external solvers | Run version/help, create a demo project, validate it, and print a report summary. |
 | Result dataset walkthrough | [result_dataset_walkthrough.md](result_dataset_walkthrough.md) | Python venv only; no external solvers | Inspect tiny ResultDataset and field metadata fixtures. |
 | FEASpec CalculiX export preview | [feaspec_calculix_export_preview.md](feaspec_calculix_export_preview.md) | Python venv only; no external solvers | Preview FEASpec-to-CalculiX no-run export readiness, diagnostics, and planned files without writing bundles or running solvers. |
+| FEASpec CalculiX export write | [feaspec_calculix_export_write_no_run.md](feaspec_calculix_export_write_no_run.md) | Python venv only; no external solvers | Write an explicit local no-run export bundle only when FEASpec/CasePlan diagnostics allow it. |
 | First GUI walkthrough | [first_gui_walkthrough.md](first_gui_walkthrough.md) | `.[gui]` / PySide6 | Launch the GUI and understand the main panes. |
 | Release asset smoke walkthrough | [release_asset_smoke_walkthrough.md](release_asset_smoke_walkthrough.md) | Python venv; GitHub CLI only for live download mode | Verify release assets without editing releases or uploading files. |
 
@@ -30,6 +31,8 @@ Level 1, no optional solver dependencies:
 - inspect result fixtures
 - preview FEASpec CalculiX export readiness without writing files or running
   external solvers
+- write reviewed FEASpec CalculiX no-run bundles into explicit ignored output
+  directories when diagnostics allow it
 - keep generated files under ignored `artifacts/*`
 
 Level 2, GUI path:

@@ -28,6 +28,14 @@ adds `feaspec-calculix-export-preview`, a diagnostic-only command that previews
 validation, bridge, case-plan, in-memory render status, and planned bundle file
 names without calling the write-capable exporter path.
 
+Follow-up CLI write evidence:
+[FEASpec CalculiX exporter CLI write no-run](feaspec_calculix_exporter_cli_write_no_run.md)
+adds `feaspec-calculix-export-write`, an explicit caller-output-directory
+command that writes the local no-run bundle only when exporter diagnostics
+permit it. The CLI write path still performs no solver execution, no `ccx`
+validation, no SolverAdapter handoff, no runner handoff, no subprocess use, and
+no ProjectSchema mutation.
+
 ## Public API
 
 The exporter exposes:
@@ -142,6 +150,10 @@ export.
 
 The CLI preview command reports those same blocked states without writing an
 export bundle or creating output directories.
+
+The CLI write command reports those blocked states with exit code `2` and still
+writes no bundle files. Successful CLI write coverage uses synthetic
+writer-ready case-plan JSON in pytest temporary directories.
 
 ## Relationship To Issue #8
 

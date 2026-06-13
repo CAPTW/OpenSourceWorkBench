@@ -351,5 +351,12 @@ status without writing files, creating output directories, running `ccx`,
 calling SolverAdapter or runner code, mutating ProjectSchema, adding VLM APIs,
 or closing issue `#8`.
 
+[FEASpec CalculiX exporter CLI write no-run](../experimental/feaspec_calculix_exporter_cli_write_no_run.md)
+adds the explicit local write command for the no-run bundle. It requires a
+caller-provided output directory, blocks unready examples, writes only expected
+bundle files when exporter diagnostics allow it, and still does not run `ccx`,
+call SolverAdapter or runner code, mutate ProjectSchema, add VLM APIs, or close
+issue `#8`.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

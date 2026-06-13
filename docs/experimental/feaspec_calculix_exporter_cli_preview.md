@@ -120,6 +120,11 @@ would target:
 
 The preview does not create those files.
 
+The follow-up explicit write command is documented in
+[FEASpec CalculiX exporter CLI write no-run](feaspec_calculix_exporter_cli_write_no_run.md).
+Use the write command only when a local no-run bundle is intentionally needed
+and an explicit output directory has been reviewed.
+
 ## Safety Boundary
 
 The CLI preview performs:

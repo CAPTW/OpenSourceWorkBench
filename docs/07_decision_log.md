@@ -843,3 +843,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   external commands, mutates no ProjectSchema, validates no issue `#8`, and
   stages no runtime export bundles. A future write CLI and installed-only run
   gate remain separate.
+
+## ADR-0046: FEASpec CalculiX Export Write CLI Is A No-Run Local Bundle Boundary
+
+- Status: Accepted for experimental CLI implementation
+- Date: 2026-06-13
+- Context: ADR-0044 added the no-run exporter API and ADR-0045 added a
+  diagnostic-only preview command. Users now need an explicit CLI write command
+  that can create a reviewed local export bundle without crossing into
+  CalculiX execution, live issue `#8` validation, release asset generation, or
+  solver adapter/runner integration.
+- Decision: Add `feaspec-calculix-export-write` as an experimental no-run CLI
+  command. It accepts FEASpec JSON or an experimental writer-ready
+  `FEASpecCalculiXCasePlan` JSON path, requires `--output-dir`, supports text
+  and JSON output, blocks unsafe basenames and missing mesh/topology examples,
+  honors explicit `--create-dir` and `--overwrite`, and calls only the no-run
+  exporter boundary. Successful exports write only `.inp`, manifest JSON,
+  diagnostics JSON, and `README_RUN_FIRST.txt` files, with
+  `solver_execution_performed=false`.
+- Consequences: The command does not run `ccx`, call SolverAdapter or runner
+  code, invoke external commands, mutate ProjectSchema, validate issue `#8`,
+  install dependencies, edit releases/assets, push tags, add VLM APIs, or stage
+  runtime export bundles. Installed-only run validation and human-review UI
+  work remain separate future gates.

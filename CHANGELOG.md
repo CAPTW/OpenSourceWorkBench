@@ -118,6 +118,13 @@ by a dedicated release/tag gate.
   blocked-preview exit code `2`, writes no files, creates no output
   directories, runs no `ccx`, calls no SolverAdapter or runner code, mutates no
   ProjectSchema, validates no issue `#8`, and stages no runtime export bundles.
+- Added `feaspec-calculix-export-write`, an experimental no-run CLI command
+  that requires an explicit output directory and writes local export bundles
+  only through the no-run exporter API. It blocks missing mesh/topology examples,
+  supports text and JSON output plus explicit `--create-dir`/`--overwrite`,
+  writes only `.inp`, manifest JSON, diagnostics JSON, and README files on
+  success, runs no `ccx`, calls no SolverAdapter or runner code, mutates no
+  ProjectSchema, validates no issue `#8`, and stages no runtime export bundles.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

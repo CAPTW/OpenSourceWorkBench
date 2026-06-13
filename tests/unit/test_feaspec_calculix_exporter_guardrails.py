@@ -7,8 +7,12 @@ from pathlib import Path
 
 from osw.cli.main import (
     _build_feaspec_calculix_export_preview,
+    _feaspec_calculix_export_write_limitations,
+    _load_feaspec_calculix_case_plan_json,
     _planned_feaspec_calculix_files,
     _print_feaspec_calculix_export_preview,
+    _print_feaspec_calculix_export_write,
+    _run_feaspec_calculix_export_write,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -30,6 +34,12 @@ CLI_DOC_PATH = (
     / "docs"
     / "experimental"
     / "feaspec_calculix_exporter_cli_preview.md"
+)
+CLI_WRITE_DOC_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "experimental"
+    / "feaspec_calculix_exporter_cli_write_no_run.md"
 )
 
 
@@ -150,6 +160,37 @@ def test_export_preview_cli_helper_has_no_write_or_execution_calls() -> None:
         assert re.search(pattern, source) is None
 
 
+def test_export_write_cli_helper_uses_only_no_run_export_boundary() -> None:
+    source = "\n".join(
+        (
+            inspect.getsource(_run_feaspec_calculix_export_write),
+            inspect.getsource(_load_feaspec_calculix_case_plan_json),
+            inspect.getsource(_print_feaspec_calculix_export_write),
+            inspect.getsource(_feaspec_calculix_export_write_limitations),
+        )
+    )
+
+    forbidden_tokens = (
+        "SolverAdapter",
+        "CalculiXRunner",
+        "ExternalCommandRunner",
+        "sub" + "process",
+        "Popen",
+        "run_input_deck",
+        "ccx.exe",
+        "write_calculix_inp(",
+    )
+    for token in forbidden_tokens:
+        assert token not in source
+    for pattern in (
+        r"\bos\.system\s*\(",
+        r"\bos\.popen\s*\(",
+        r"\bspawn\s*\(",
+        r"\bexecv",
+    ):
+        assert re.search(pattern, source) is None
+
+
 def test_feaspec_tracked_inp_fixtures_stay_in_dedicated_directory() -> None:
     fixture_root = REPO_ROOT / "tests" / "fixtures" / "feaspec"
     allowed_root = fixture_root / "calculix_golden"
@@ -201,6 +242,34 @@ def test_export_preview_cli_docs_keep_no_write_and_live_validation_boundaries() 
     assert "live calculix validation remains separate" in text
     assert "no bundled solver" in text
     assert "no industrial certification" in text
+    for forbidden_claim in (
+        "ccx validation passed",
+        "external solvers are bundled",
+        "solver execution exists",
+        "industrial certification is provided",
+        "stable production",
+        "vlm api is implemented",
+    ):
+        assert forbidden_claim not in text
+
+
+def test_export_write_cli_docs_keep_no_run_and_live_validation_boundaries() -> None:
+    text = CLI_WRITE_DOC_PATH.read_text(encoding="utf-8").lower()
+
+    assert "experimental no-run write command" in text
+    assert "writes local bundle only" in text
+    assert "no solver execution" in text
+    assert "no ccx" in text
+    assert "no solveradapter" in text
+    assert "no runner" in text
+    assert "no subprocess" in text
+    assert "no external command" in text
+    assert "no projectschema mutation" in text
+    assert "issue `#8`" in text
+    assert "live calculix validation remains separate" in text
+    assert "no bundled solver" in text
+    assert "no industrial certification" in text
+    assert "no production-readiness claim" in text
     for forbidden_claim in (
         "ccx validation passed",
         "external solvers are bundled",

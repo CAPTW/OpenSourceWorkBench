@@ -7,8 +7,9 @@ import importlib.util
 import platform
 import sys
 import tempfile
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 from osw import __version__
 from osw.core.executables import ExecutablePathRegistry
@@ -327,6 +328,69 @@ def build_parser() -> argparse.ArgumentParser:
         "--planned-output-dir",
         default="",
         help="Planned output directory used only for previewed filenames.",
+    )
+    feaspec_calculix_write_parser = subparsers.add_parser(
+        "feaspec-calculix-export-write",
+        help="Write a FEASpec CalculiX no-run export bundle.",
+        description=(
+            "Write an experimental FEASpec-to-CalculiX no-run export bundle to an "
+            "explicit output directory. The command performs no solver execution, "
+            "does not validate installed ccx, and keeps issue #8 live validation separate."
+        ),
+    )
+    feaspec_calculix_write_input = feaspec_calculix_write_parser.add_mutually_exclusive_group(
+        required=True
+    )
+    feaspec_calculix_write_input.add_argument(
+        "--feaspec",
+        help="FEASpec JSON path to validate, bridge, plan, render, and export.",
+    )
+    feaspec_calculix_write_input.add_argument(
+        "--case-plan",
+        help=(
+            "Experimental FEASpecCalculiXCasePlan JSON path for already reviewed, "
+            "writer-ready no-run export."
+        ),
+    )
+    feaspec_calculix_write_parser.add_argument(
+        "--output-dir",
+        required=True,
+        help="Existing output directory for the bundle, unless --create-dir is supplied.",
+    )
+    feaspec_calculix_write_parser.add_argument(
+        "--target-solver",
+        default="calculix",
+        choices=("calculix",),
+        help="Target solver for no-run export.",
+    )
+    feaspec_calculix_write_parser.add_argument(
+        "--format",
+        default="text",
+        choices=("text", "json"),
+        help="Write command output format.",
+    )
+    feaspec_calculix_write_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help=(
+            "Preserve blocked export exit code 2; exported-with-warnings remains "
+            "exit code 0 for this write boundary."
+        ),
+    )
+    feaspec_calculix_write_parser.add_argument(
+        "--basename",
+        default="feaspec_calculix_case",
+        help="Export bundle basename.",
+    )
+    feaspec_calculix_write_parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite only the expected export bundle target files.",
+    )
+    feaspec_calculix_write_parser.add_argument(
+        "--create-dir",
+        action="store_true",
+        help="Create the final output directory if its parent already exists.",
     )
     calculix_run_parser = subparsers.add_parser(
         "calculix-run-inp",
@@ -1124,6 +1188,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             _print_feaspec_calculix_export_preview(preview)
         if args.strict and preview["export_preview_status"] == "blocked":
+            return 2
+        return 0
+
+    if args.command == "feaspec-calculix-export-write":
+        import json
+
+        try:
+            export_record = _run_feaspec_calculix_export_write(
+                feaspec_path=Path(args.feaspec) if args.feaspec else None,
+                case_plan_path=Path(args.case_plan) if args.case_plan else None,
+                output_dir=Path(args.output_dir),
+                target_solver=args.target_solver,
+                basename=args.basename,
+                overwrite=args.overwrite,
+                create_dir=args.create_dir,
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        if args.format == "json":
+            print(json.dumps(export_record, indent=2, sort_keys=True))
+        else:
+            _print_feaspec_calculix_export_write(export_record)
+        if export_record["export_status"] == "blocked":
             return 2
         return 0
 
@@ -2159,6 +2247,327 @@ def _print_feaspec_calculix_export_preview(preview: dict[str, object]) -> None:
         print("  - none")
     print("Limitations:")
     for item in preview["limitations"]:
+        print(f"  - {item}")
+
+
+def _run_feaspec_calculix_export_write(
+    *,
+    feaspec_path: Path | None,
+    case_plan_path: Path | None,
+    output_dir: Path,
+    target_solver: str,
+    basename: str,
+    overwrite: bool,
+    create_dir: bool,
+) -> dict[str, object]:
+    from osw.experimental.feaspec.calculix_exporter import (
+        export_calculix_case,
+        export_calculix_case_from_feaspec,
+    )
+
+    if target_solver != "calculix":
+        msg = "FEASpec CalculiX export write currently supports only target solver 'calculix'."
+        raise ValueError(msg)
+    if feaspec_path is None and case_plan_path is None:
+        msg = "Provide either --feaspec or --case-plan."
+        raise ValueError(msg)
+
+    if case_plan_path is not None:
+        source = case_plan_path.expanduser()
+        if not source.is_file():
+            msg = f"FEASpec CalculiX case-plan JSON path is not readable: {source}"
+            raise FileNotFoundError(msg)
+        result = export_calculix_case(
+            _load_feaspec_calculix_case_plan_json(source),
+            output_dir,
+            basename=basename,
+            overwrite=overwrite,
+            create_dir=create_dir,
+        )
+        input_kind = "case_plan"
+    else:
+        source = Path(feaspec_path).expanduser()
+        if not source.is_file():
+            msg = f"FEASpec JSON path is not readable: {source}"
+            raise FileNotFoundError(msg)
+        result = export_calculix_case_from_feaspec(
+            source,
+            output_dir,
+            basename=basename,
+            overwrite=overwrite,
+            create_dir=create_dir,
+        )
+        input_kind = "feaspec"
+
+    return {
+        "version": __version__,
+        "input_path": str(source.resolve()),
+        "input_kind": input_kind,
+        "output_dir": str(output_dir.expanduser().resolve()),
+        "target_solver": target_solver,
+        "export_status": result.status,
+        "files_written": bool(result.files),
+        "solver_execution_performed": False,
+        "written_files": [item.to_dict() for item in result.files],
+        "diagnostics": _feaspec_calculix_export_diagnostic_records(result),
+        "limitations": _feaspec_calculix_export_write_limitations(),
+    }
+
+
+def _load_feaspec_calculix_case_plan_json(path: Path) -> object:
+    import json
+
+    from osw.experimental.feaspec.calculix_case_plan import (
+        CalculiXCaseBoundaryConditionPlan,
+        CalculiXCaseElementPlan,
+        CalculiXCaseLoadPlan,
+        CalculiXCaseMaterialPlan,
+        CalculiXCaseNodePlan,
+        CalculiXCaseOutputRequestPlan,
+        CalculiXCaseSectionPlan,
+        CalculiXCaseStatus,
+        CalculiXCaseStepPlan,
+        FEASpecCalculiXCasePlan,
+    )
+    from osw.experimental.feaspec.calculix_diagnostics import (
+        CalculiXPlanDiagnosticCode,
+        CalculiXPlanSeverity,
+        FEASpecCalculiXPlanDiagnostic,
+    )
+    from osw.experimental.feaspec.project_bridge import (
+        BridgeStatus,
+        FEASpecProjectExtensionNeed,
+    )
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, Mapping):
+        msg = "FEASpec CalculiX case-plan JSON must contain an object."
+        raise ValueError(msg)
+
+    diagnostics = tuple(
+        FEASpecCalculiXPlanDiagnostic.make(
+            CalculiXPlanDiagnosticCode(str(item.get("code", "FC_BRIDGE_BLOCKED"))),
+            CalculiXPlanSeverity(str(item.get("severity", "blocker"))),
+            str(item.get("message", "")),
+            target_ref=str(item.get("target_ref", "")),
+            source_field=str(item.get("source_field", "")),
+            suggested_fix=str(item.get("suggested_fix", "")),
+            blocks_case_plan=bool(item.get("blocks_case_plan", True)),
+            blocks_solver_handoff=bool(item.get("blocks_solver_handoff", True)),
+        )
+        for item in _mapping_items(payload.get("diagnostics", ()))
+    )
+    extension_needs = tuple(
+        FEASpecProjectExtensionNeed(
+            source_field=str(item.get("source_field", "")),
+            reason=str(item.get("reason", "")),
+            suggested_target=str(item.get("suggested_target", "")),
+            required_before_solver_handoff=bool(
+                item.get("required_before_solver_handoff", False)
+            ),
+        )
+        for item in _mapping_items(payload.get("extension_needs", ()))
+    )
+    bridge_status_text = str(payload.get("bridge_status", ""))
+    bridge_status = BridgeStatus(bridge_status_text) if bridge_status_text else None
+
+    return FEASpecCalculiXCasePlan(
+        status=CalculiXCaseStatus(str(payload.get("status", "blocked"))),
+        case_id=str(payload.get("case_id", "")),
+        source_feaspec_id=str(payload.get("source_feaspec_id", "")),
+        target_solver=str(payload.get("target_solver", "calculix")),
+        unit_context=dict(_mapping_value(payload.get("unit_context", {}))),
+        nodes=tuple(
+            CalculiXCaseNodePlan(
+                node_id=str(item.get("node_id", "")),
+                coordinates=tuple(_sequence_value(item.get("coordinates", ()))),
+                coordinate_frame=str(item.get("coordinate_frame", "")),
+                source_ref=str(item.get("source_ref", "")),
+                metadata=dict(_mapping_value(item.get("metadata", {}))),
+            )
+            for item in _mapping_items(payload.get("nodes", ()))
+        ),
+        elements=tuple(
+            CalculiXCaseElementPlan(
+                element_id=str(item.get("element_id", "")),
+                element_type=str(item.get("element_type", "")),
+                node_refs=tuple(str(ref) for ref in _sequence_value(item.get("node_refs", ()))),
+                source_ref=str(item.get("source_ref", "")),
+                metadata=dict(_mapping_value(item.get("metadata", {}))),
+            )
+            for item in _mapping_items(payload.get("elements", ()))
+        ),
+        materials=tuple(
+            CalculiXCaseMaterialPlan(
+                material_id=str(item.get("material_id", "")),
+                name=str(item.get("name", "")),
+                model=str(item.get("model", "")),
+                properties=dict(_mapping_value(item.get("properties", {}))),
+                units=dict(_mapping_value(item.get("units", {}))),
+                source_ref=str(item.get("source_ref", "")),
+                metadata=dict(_mapping_value(item.get("metadata", {}))),
+            )
+            for item in _mapping_items(payload.get("materials", ()))
+        ),
+        sections=tuple(
+            CalculiXCaseSectionPlan(
+                section_id=str(item.get("section_id", "")),
+                material_ref=str(item.get("material_ref", "")),
+                target_refs=tuple(
+                    str(ref) for ref in _sequence_value(item.get("target_refs", ()))
+                ),
+                section_type=str(item.get("section_type", "")),
+                properties=dict(_mapping_value(item.get("properties", {}))),
+                units=dict(_mapping_value(item.get("units", {}))),
+                source_ref=str(item.get("source_ref", "")),
+                metadata=dict(_mapping_value(item.get("metadata", {}))),
+            )
+            for item in _mapping_items(payload.get("sections", ()))
+        ),
+        boundary_conditions=tuple(
+            CalculiXCaseBoundaryConditionPlan(
+                bc_id=str(item.get("bc_id", "")),
+                kind=str(item.get("kind", "")),
+                target_refs=tuple(
+                    str(ref) for ref in _sequence_value(item.get("target_refs", ()))
+                ),
+                degrees_of_freedom=tuple(
+                    str(ref) for ref in _sequence_value(item.get("degrees_of_freedom", ()))
+                ),
+                values=tuple(_sequence_value(item.get("values", ()))),
+                units=dict(_mapping_value(item.get("units", {}))),
+                coordinate_frame=str(item.get("coordinate_frame", "")),
+                source_ref=str(item.get("source_ref", "")),
+                metadata=dict(_mapping_value(item.get("metadata", {}))),
+            )
+            for item in _mapping_items(payload.get("boundary_conditions", ()))
+        ),
+        loads=tuple(
+            CalculiXCaseLoadPlan(
+                load_id=str(item.get("load_id", "")),
+                kind=str(item.get("kind", "")),
+                target_refs=tuple(
+                    str(ref) for ref in _sequence_value(item.get("target_refs", ()))
+                ),
+                magnitude=dict(_mapping_value(item.get("magnitude", {}))),
+                direction=str(item.get("direction", "")),
+                vector=tuple(_sequence_value(item.get("vector", ()))),
+                units=dict(_mapping_value(item.get("units", {}))),
+                coordinate_frame=str(item.get("coordinate_frame", "")),
+                source_ref=str(item.get("source_ref", "")),
+                metadata=dict(_mapping_value(item.get("metadata", {}))),
+            )
+            for item in _mapping_items(payload.get("loads", ()))
+        ),
+        steps=tuple(
+            CalculiXCaseStepPlan(
+                step_id=str(item.get("step_id", "linear_static")),
+                analysis_type=str(item.get("analysis_type", "static")),
+                nonlinear=bool(item.get("nonlinear", False)),
+                metadata=dict(_mapping_value(item.get("metadata", {}))),
+            )
+            for item in _mapping_items(payload.get("steps", ()))
+        ),
+        output_requests=tuple(
+            CalculiXCaseOutputRequestPlan(
+                request_id=str(item.get("request_id", "")),
+                kind=str(item.get("kind", "field")),
+                target=str(item.get("target", "all")),
+                variables=tuple(str(ref) for ref in _sequence_value(item.get("variables", ()))),
+                metadata=dict(_mapping_value(item.get("metadata", {}))),
+            )
+            for item in _mapping_items(payload.get("output_requests", ()))
+        ),
+        provenance_comments=tuple(
+            str(item) for item in _sequence_value(payload.get("provenance_comments", ()))
+        ),
+        diagnostics=diagnostics,
+        unmapped_fields=tuple(
+            str(item) for item in _sequence_value(payload.get("unmapped_fields", ()))
+        ),
+        extension_needs=extension_needs,
+        bridge_status=bridge_status,
+        validator_report=dict(_mapping_value(payload.get("validator_report", {}))),
+        ready_for_inp_writer=bool(payload.get("ready_for_inp_writer", False)),
+        ready_for_solver_execution=False,
+        inp_writer_performed=bool(payload.get("inp_writer_performed", False)),
+        solver_execution_performed=False,
+    )
+
+
+def _mapping_value(value: object) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _sequence_value(value: object) -> Sequence[Any]:
+    if value is None or isinstance(value, str) or not isinstance(value, Sequence):
+        return ()
+    return value
+
+
+def _mapping_items(value: object) -> list[Mapping[str, Any]]:
+    return [item for item in _sequence_value(value) if isinstance(item, Mapping)]
+
+
+def _feaspec_calculix_export_diagnostic_records(result: object) -> list[dict[str, object]]:
+    records = _diagnostic_records("exporter", getattr(result, "diagnostics", ()))
+    render_result = getattr(result, "render_result", None)
+    if render_result is not None:
+        records.extend(
+            _diagnostic_records(
+                "inp_renderer",
+                getattr(render_result, "diagnostics", ()),
+            )
+        )
+    return records
+
+
+def _feaspec_calculix_export_write_limitations() -> list[str]:
+    return [
+        "No CalculiX solver execution was performed.",
+        "External solvers are optional and not bundled.",
+        "Issue #8 live CalculiX validation remains separate.",
+        "The write command creates a local no-run bundle only.",
+        "FEASpec CalculiX export remains experimental.",
+    ]
+
+
+def _print_feaspec_calculix_export_write(export_record: dict[str, object]) -> None:
+    print("FEASpec CalculiX export write")
+    print(f"Input: {export_record['input_path']}")
+    print(f"Input kind: {export_record['input_kind']}")
+    print(f"Output dir: {export_record['output_dir']}")
+    print(f"Target solver: {export_record['target_solver']}")
+    print(f"Export status: {export_record['export_status']}")
+    print(f"Files written: {str(export_record['files_written']).lower()}")
+    print("Solver execution performed: false")
+    print("No solver execution was performed.")
+    print("External solvers are optional and not bundled.")
+    print("Issue #8 live CalculiX validation remains separate.")
+    print("Written files:")
+    written_files = export_record["written_files"]
+    if written_files:
+        for item in written_files:
+            if isinstance(item, dict):
+                print(f"  - {item['role']}: {item['path']}")
+    else:
+        print("  - none")
+    print("Diagnostics:")
+    diagnostics = export_record["diagnostics"]
+    if diagnostics:
+        for item in diagnostics:
+            if not isinstance(item, dict):
+                continue
+            code = item.get("code", "diagnostic")
+            severity = str(item.get("severity", "")).upper() or "INFO"
+            source = item.get("source", "exporter")
+            target = item.get("target_ref", item.get("path", ""))
+            suffix = f" [{target}]" if target else ""
+            print(f"  - {source}: {severity} {code}{suffix}: {item.get('message', '')}")
+    else:
+        print("  - none")
+    print("Limitations:")
+    for item in export_record["limitations"]:
         print(f"  - {item}")
 
 
