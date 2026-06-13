@@ -46,6 +46,11 @@ manifest JSON, diagnostics JSON, and `README_RUN_FIRST.txt`. The exporter keeps
 the same no-run boundary: no `ccx`, no SolverAdapter, no runner, no subprocess,
 and no issue `#8` validation.
 
+Follow-up CLI preview evidence:
+[FEASpec CalculiX exporter CLI preview](feaspec_calculix_exporter_cli_preview.md)
+reports renderer readiness and planned bundle names without writing `.inp`
+text, manifest JSON, diagnostics JSON, or README files.
+
 ## Preconditions
 
 Rendering requires:
@@ -176,4 +181,5 @@ already installed and under a separate validation or closure gate.
 
 - `OSW-EXP-014_FEASPEC_CALCULIX_EXPORTER_NO_RUN`
 - `OSW-EXP-015_FEASPEC_CALCULIX_EXPORTER_CLI_PREVIEW`
-- `OSW-EXP-016_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-016_FEASPEC_CALCULIX_EXPORTER_CLI_WRITE_NO_RUN`
+- `OSW-EXP-017_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`

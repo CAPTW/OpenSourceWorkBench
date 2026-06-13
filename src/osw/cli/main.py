@@ -287,6 +287,47 @@ def build_parser() -> argparse.ArgumentParser:
         "calculix-check",
         help="Resolve the CalculiX ccx executable without executing it.",
     )
+    feaspec_calculix_preview_parser = subparsers.add_parser(
+        "feaspec-calculix-export-preview",
+        help="Preview FEASpec CalculiX export readiness without writing files.",
+        description=(
+            "Preview experimental FEASpec-to-CalculiX no-run export readiness. "
+            "The command writes no files, creates no directories, performs no solver "
+            "execution, and keeps issue #8 live validation separate."
+        ),
+    )
+    feaspec_calculix_preview_parser.add_argument(
+        "--feaspec",
+        required=True,
+        help="FEASpec JSON path to preview.",
+    )
+    feaspec_calculix_preview_parser.add_argument(
+        "--target-solver",
+        default="calculix",
+        choices=("calculix",),
+        help="Target solver for preview planning.",
+    )
+    feaspec_calculix_preview_parser.add_argument(
+        "--format",
+        default="text",
+        choices=("text", "json"),
+        help="Preview output format.",
+    )
+    feaspec_calculix_preview_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit 2 when preview diagnostics block export readiness.",
+    )
+    feaspec_calculix_preview_parser.add_argument(
+        "--basename",
+        default="feaspec_calculix_case",
+        help="Planned export bundle basename used only for previewed filenames.",
+    )
+    feaspec_calculix_preview_parser.add_argument(
+        "--planned-output-dir",
+        default="",
+        help="Planned output directory used only for previewed filenames.",
+    )
     calculix_run_parser = subparsers.add_parser(
         "calculix-run-inp",
         help="Explicitly run a CalculiX .inp deck through the backend runner.",
@@ -1064,6 +1105,27 @@ def main(argv: Sequence[str] | None = None) -> int:
         if resolution.diagnostics.messages:
             print(resolution.diagnostics.summary(), file=sys.stderr)
         return 0 if resolution.found else 1
+
+    if args.command == "feaspec-calculix-export-preview":
+        import json
+
+        try:
+            preview = _build_feaspec_calculix_export_preview(
+                Path(args.feaspec),
+                target_solver=args.target_solver,
+                basename=args.basename,
+                planned_output_dir=args.planned_output_dir,
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        if args.format == "json":
+            print(json.dumps(preview, indent=2, sort_keys=True))
+        else:
+            _print_feaspec_calculix_export_preview(preview)
+        if args.strict and preview["export_preview_status"] == "blocked":
+            return 2
+        return 0
 
     if args.command == "calculix-run-inp":
         from osw.solvers.calculix.runner import (
@@ -1939,6 +2001,165 @@ def _print_calculix_diagnostics(
             path = str(item.get("path", ""))
             message = str(item.get("message", ""))
             print(f"{severity} {path}: {message}", file=stream)
+
+
+def _build_feaspec_calculix_export_preview(
+    feaspec_path: Path,
+    *,
+    target_solver: str,
+    basename: str,
+    planned_output_dir: str,
+) -> dict[str, object]:
+    from osw.experimental.feaspec.calculix_case_plan import (
+        plan_calculix_case_from_bridge,
+    )
+    from osw.experimental.feaspec.calculix_inp_renderer import render_calculix_inp
+    from osw.experimental.feaspec.io import load_feaspec
+    from osw.experimental.feaspec.project_bridge import plan_project_from_feaspec
+    from osw.experimental.feaspec.validator import validate_for_solver
+
+    source = feaspec_path.expanduser()
+    if not source.is_file():
+        msg = f"FEASpec JSON path is not readable: {source}"
+        raise FileNotFoundError(msg)
+
+    spec = load_feaspec(source, allow_diagnostics=True)
+    validation_report = validate_for_solver(spec, target_solver)
+    bridge_plan = plan_project_from_feaspec(spec, target_solver=target_solver)
+    case_plan = plan_calculix_case_from_bridge(bridge_plan)
+    render_result = None
+    if case_plan.ready_for_inp_writer and not case_plan.is_blocked:
+        render_result = render_calculix_inp(case_plan)
+
+    diagnostics = [
+        *_diagnostic_records("validation", validation_report.diagnostics),
+        *_diagnostic_records("bridge", bridge_plan.diagnostics),
+        *_diagnostic_records("case_plan", case_plan.diagnostics),
+    ]
+    render_status = "not-attempted"
+    if render_result is not None:
+        render_status = str(render_result.status)
+        diagnostics.extend(_diagnostic_records("inp_renderer", render_result.diagnostics))
+
+    blocked = (
+        validation_report.has_blockers
+        or validation_report.has_errors
+        or bridge_plan.is_blocked
+        or case_plan.is_blocked
+        or not case_plan.ready_for_inp_writer
+        or (render_result is not None and render_result.is_blocked)
+    )
+    export_status = "blocked" if blocked else _ready_preview_status(render_status, diagnostics)
+
+    return {
+        "version": __version__,
+        "input_path": str(source.resolve()),
+        "target_solver": target_solver,
+        "spec_type": getattr(getattr(spec, "spec_type", ""), "value", ""),
+        "validation_status": validation_report.validation_state.value,
+        "bridge_status": bridge_plan.status.value,
+        "case_plan_status": case_plan.status.value,
+        "render_status": render_status,
+        "export_preview_status": export_status,
+        "planned_files": _planned_feaspec_calculix_files(
+            basename=basename,
+            planned_output_dir=planned_output_dir,
+        ),
+        "diagnostics": diagnostics,
+        "solver_execution_performed": False,
+        "files_written": False,
+        "limitations": [
+            "Preview only; no export files were written.",
+            "No CalculiX solver execution was performed.",
+            "External solvers are optional and not bundled.",
+            "Issue #8 live CalculiX validation remains separate.",
+            "FEASpec CalculiX export remains experimental.",
+        ],
+    }
+
+
+def _planned_feaspec_calculix_files(
+    *,
+    basename: str,
+    planned_output_dir: str,
+) -> list[dict[str, str]]:
+    output_dir = Path(planned_output_dir) if planned_output_dir else Path("")
+    filenames = (
+        ("inp", f"{basename}.inp"),
+        ("manifest", f"{basename}.manifest.json"),
+        ("diagnostics", f"{basename}.diagnostics.json"),
+        ("readme", "README_RUN_FIRST.txt"),
+    )
+    return [
+        {
+            "role": role,
+            "filename": filename,
+            "path": str(output_dir / filename),
+        }
+        for role, filename in filenames
+    ]
+
+
+def _diagnostic_records(
+    source: str,
+    diagnostics: Sequence[object],
+) -> list[dict[str, object]]:
+    records: list[dict[str, object]] = []
+    for diagnostic in diagnostics:
+        to_dict = getattr(diagnostic, "to_dict", None)
+        payload = dict(to_dict()) if callable(to_dict) else {"message": str(diagnostic)}
+        payload["source"] = source
+        records.append(payload)
+    return records
+
+
+def _ready_preview_status(
+    render_status: str,
+    diagnostics: Sequence[dict[str, object]],
+) -> str:
+    if render_status.endswith("warnings") or any(
+        str(item.get("severity", "")).casefold() == "warning" for item in diagnostics
+    ):
+        return "ready-with-warnings"
+    return "ready"
+
+
+def _print_feaspec_calculix_export_preview(preview: dict[str, object]) -> None:
+    print("FEASpec CalculiX export preview")
+    print(f"Input: {preview['input_path']}")
+    print(f"Target solver: {preview['target_solver']}")
+    print(f"Validation status: {preview['validation_status']}")
+    print(f"Bridge status: {preview['bridge_status']}")
+    print(f"Case-plan status: {preview['case_plan_status']}")
+    print(f"Render status: {preview['render_status']}")
+    print(f"Export preview status: {preview['export_preview_status']}")
+    print("Files written: false")
+    print("Solver execution performed: false")
+    print("No files written; no output directories were created.")
+    print("No solver execution was performed.")
+    print("External solvers are optional and not bundled.")
+    print("Issue #8 live CalculiX validation remains separate.")
+    print("Planned files:")
+    for item in preview["planned_files"]:
+        if isinstance(item, dict):
+            print(f"  - {item['role']}: {item['path']}")
+    print("Diagnostics:")
+    diagnostics = preview["diagnostics"]
+    if diagnostics:
+        for item in diagnostics:
+            if not isinstance(item, dict):
+                continue
+            code = item.get("code", "diagnostic")
+            severity = str(item.get("severity", "")).upper() or "INFO"
+            source = item.get("source", "preview")
+            target = item.get("target_ref", item.get("path", ""))
+            suffix = f" [{target}]" if target else ""
+            print(f"  - {source}: {severity} {code}{suffix}: {item.get('message', '')}")
+    else:
+        print("  - none")
+    print("Limitations:")
+    for item in preview["limitations"]:
+        print(f"  - {item}")
 
 
 def _print_calculix_run_result(result: object) -> None:

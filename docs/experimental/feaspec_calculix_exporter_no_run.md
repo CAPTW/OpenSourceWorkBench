@@ -22,6 +22,12 @@ The implementation lives under the experimental FEASpec package:
 The public package exports the no-run exporter API from
 `osw.experimental.feaspec`.
 
+Follow-up CLI preview evidence:
+[FEASpec CalculiX exporter CLI preview](feaspec_calculix_exporter_cli_preview.md)
+adds `feaspec-calculix-export-preview`, a diagnostic-only command that previews
+validation, bridge, case-plan, in-memory render status, and planned bundle file
+names without calling the write-capable exporter path.
+
 ## Public API
 
 The exporter exposes:
@@ -134,6 +140,9 @@ Approved FEASpec examples without explicit mesh topology still block with
 renderer diagnostics. Candidate and invalid examples also remain blocked before
 export.
 
+The CLI preview command reports those same blocked states without writing an
+export bundle or creating output directories.
+
 ## Relationship To Issue #8
 
 Issue `#8` is live CalculiX `ccx` validation and remains separate. This
@@ -159,5 +168,6 @@ Live CalculiX validation remains separate from this exporter.
 ## Next Implementation Slices
 
 - `OSW-EXP-015_FEASPEC_CALCULIX_EXPORTER_CLI_PREVIEW`
-- `OSW-EXP-016_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
-- `OSW-EXP-017_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-016_FEASPEC_CALCULIX_EXPORTER_CLI_WRITE_NO_RUN`
+- `OSW-EXP-017_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-018_FEASPEC_HUMAN_REVIEW_UI_DESIGN`

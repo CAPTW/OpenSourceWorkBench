@@ -825,3 +825,21 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   SolverAdapter calls, runner calls, external command invocation, ProjectSchema
   mutation, dependency install, VLM integration, release edits, asset uploads,
   tag mutation, and issue closure remain separate future gates.
+
+## ADR-0045: FEASpec CalculiX Export Preview CLI Is Diagnostic-Only
+
+- Status: Accepted for experimental CLI implementation
+- Date: 2026-06-13
+- Context: ADR-0044 added a write-capable no-run export bundle API for
+  writer-ready case plans. Users also need a CLI way to inspect readiness,
+  diagnostics, and planned bundle names before any write path is called.
+- Decision: Add `feaspec-calculix-export-preview` as a diagnostic-only CLI
+  command. It reads FEASpec JSON, runs validator, bridge, case-plan, and safe
+  in-memory renderer preview layers, emits text or JSON, supports strict
+  blocked-preview exit code `2`, and reports planned `.inp`, manifest,
+  diagnostics, and README file names without creating them.
+- Consequences: The command writes no files, creates no output directories,
+  executes no solver, calls no SolverAdapter or runner code, invokes no
+  external commands, mutates no ProjectSchema, validates no issue `#8`, and
+  stages no runtime export bundles. A future write CLI and installed-only run
+  gate remain separate.

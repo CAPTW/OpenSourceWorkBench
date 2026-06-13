@@ -25,6 +25,7 @@ EXPECTED_COMMANDS = {
     "report-export",
     "report-summary",
     "calculix-check",
+    "feaspec-calculix-export-preview",
     "openfoam-check",
     "result-catalog-inspect",
     "field-dataset-inspect",

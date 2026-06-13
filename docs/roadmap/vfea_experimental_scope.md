@@ -339,5 +339,17 @@ protection, keeps `ready_for_solver_execution` false, and still does not run
 `ccx`, call SolverAdapter or runner code, mutate ProjectSchema, add VLM APIs,
 or close issue `#8`.
 
+No-run export and preview evidence:
+[FEASpec CalculiX INP golden fixtures](../experimental/feaspec_to_calculix_inp_golden_fixtures.md),
+[FEASpec CalculiX no-run exporter](../experimental/feaspec_calculix_exporter_no_run.md),
+and
+[FEASpec CalculiX exporter CLI preview](../experimental/feaspec_calculix_exporter_cli_preview.md)
+extend the CalculiX-first path with controlled renderer fixtures, an explicit
+caller-directory no-run bundle API, and a preview-only CLI. The CLI preview
+reports validation, bridge, case-plan, render, planned-file, and diagnostic
+status without writing files, creating output directories, running `ccx`,
+calling SolverAdapter or runner code, mutating ProjectSchema, adding VLM APIs,
+or closing issue `#8`.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

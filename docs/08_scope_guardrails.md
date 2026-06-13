@@ -72,6 +72,11 @@ request should stop, park, or defer.
   preserving overwrite review, and still not running CalculiX, calling
   SolverAdapter or runner code, validating issue `#8`, or staging runtime
   export bundles.
+- Experimental FEASpec CalculiX export preview CLI that reads FEASpec JSON,
+  reports validation/bridge/case-plan/render diagnostics and planned bundle
+  names, and still writes no files, creates no directories, runs no solver,
+  calls no SolverAdapter or runner code, validates no issue `#8`, and stages no
+  runtime export bundles.
 
 ## Out of Scope
 
@@ -121,6 +126,9 @@ request should stop, park, or defer.
 - Treating FEASpec CalculiX no-run export bundles as SolverAdapter
   integration, runner integration, installed `ccx` validation, engineering
   correctness evidence, or permission to execute solvers.
+- Treating FEASpec CalculiX export preview CLI output as generated export
+  files, live `ccx` validation, engineering correctness evidence, or permission
+  to execute solvers.
 
 ## Scope Drift Definition
 
@@ -165,6 +173,10 @@ Scope drift is any change that:
   runner behavior, live `ccx` validation, dependency install, automatic solver
   execution, release asset generation, or ProjectSchema mutation without a
   separate gate;
+- turns the FEASpec CalculiX export preview CLI into file-writing export
+  behavior, output directory creation, SolverAdapter integration, runner
+  behavior, live `ccx` validation, dependency install, automatic solver
+  execution, or ProjectSchema mutation without a separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

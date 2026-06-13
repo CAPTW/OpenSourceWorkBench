@@ -112,6 +112,12 @@ by a dedicated release/tag gate.
   basenames and overwrite risks, keeps `ready_for_solver_execution` false, and
   does not run `ccx`, call SolverAdapter or runner code, mutate ProjectSchema,
   validate issue `#8`, add VLM APIs, or stage runtime export bundles.
+- Added `feaspec-calculix-export-preview`, an experimental no-run CLI command
+  that reads FEASpec JSON and reports validation, bridge, case-plan, render,
+  planned-file, and diagnostic status in text or JSON. It supports strict
+  blocked-preview exit code `2`, writes no files, creates no output
+  directories, runs no `ccx`, calls no SolverAdapter or runner code, mutates no
+  ProjectSchema, validates no issue `#8`, and stages no runtime export bundles.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA
