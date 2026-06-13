@@ -77,6 +77,18 @@ request should stop, park, or defer.
   names, and still writes no files, creates no directories, runs no solver,
   calls no SolverAdapter or runner code, validates no issue `#8`, and stages no
   runtime export bundles.
+- Experimental FEASpec CalculiX export write CLI that creates local no-run
+  bundles only under explicit caller-provided output directories, blocks
+  unsafe or unready inputs, writes only expected `.inp`, manifest, diagnostics,
+  and README files, and still does not run CalculiX, call SolverAdapter or
+  runner code, mutate ProjectSchema, validate issue `#8`, or stage runtime
+  export bundles.
+- Design-only FEASpec CalculiX result import / run gate planning that keeps
+  export, human review, installed-only run, result import, and ResultDataset
+  summary as separate future gates, defines `FR_*` and `FI_*` diagnostics, and
+  does not implement result import, run commands, solver execution,
+  SolverAdapter/runner/subprocess paths, ProjectSchema mutation, or issue `#8`
+  closure.
 
 ## Out of Scope
 
@@ -129,6 +141,13 @@ request should stop, park, or defer.
 - Treating FEASpec CalculiX export preview CLI output as generated export
   files, live `ccx` validation, engineering correctness evidence, or permission
   to execute solvers.
+- Treating FEASpec CalculiX export write CLI output as live `ccx` validation,
+  release asset generation, engineering correctness evidence, SolverAdapter or
+  runner integration, ProjectSchema mutation, or permission to execute solvers.
+- Treating FEASpec CalculiX result import / run gate design as implemented
+  result import, implemented run commands, SolverAdapter or runner integration,
+  subprocess use, live `ccx` validation, release mutation, or permission to
+  execute solvers.
 
 ## Scope Drift Definition
 
@@ -182,6 +201,11 @@ Scope drift is any change that:
   dependency install, automatic solver execution, ProjectSchema mutation,
   release asset generation, or hidden file writes outside explicit
   caller-provided output directories without a separate gate;
+- turns the FEASpec CalculiX result import / run gate design into result import
+  implementation, run command implementation, SolverAdapter integration,
+  runner behavior, subprocess or external command invocation, live `ccx`
+  validation, dependency install, ProjectSchema mutation, release mutation, or
+  issue closure without a separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

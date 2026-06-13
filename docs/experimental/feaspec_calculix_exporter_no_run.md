@@ -36,6 +36,13 @@ permit it. The CLI write path still performs no solver execution, no `ccx`
 validation, no SolverAdapter handoff, no runner handoff, no subprocess use, and
 no ProjectSchema mutation.
 
+Follow-up result/run gate design:
+[FEASpec CalculiX result import and run gate design](feaspec_calculix_result_import_or_run_gate_design.md)
+keeps export, human review, installed-only run, result import, and
+ResultDataset/report summary as separate future gates. It is design-only and
+does not add result import code, run commands, SolverAdapter/runner/subprocess
+calls, solver execution, live issue `#8` validation, or release mutation.
+
 ## Public API
 
 The exporter exposes:
@@ -179,7 +186,7 @@ Live CalculiX validation remains separate from this exporter.
 
 ## Next Implementation Slices
 
-- `OSW-EXP-015_FEASPEC_CALCULIX_EXPORTER_CLI_PREVIEW`
-- `OSW-EXP-016_FEASPEC_CALCULIX_EXPORTER_CLI_WRITE_NO_RUN`
-- `OSW-EXP-017_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-017_FEASPEC_CALCULIX_EXPORTER_RESULT_IMPORT_OR_RUN_GATE_DESIGN`
 - `OSW-EXP-018_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-019_FEASPEC_CALCULIX_RESULT_IMPORT_MODEL`
+- `OSW-EXP-020_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`

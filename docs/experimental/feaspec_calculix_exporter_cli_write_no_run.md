@@ -172,6 +172,13 @@ close issue `#8`.
 
 Live CalculiX validation remains separate from the CLI write command.
 
+The next boundary is design-only:
+[FEASpec CalculiX result import and run gate design](feaspec_calculix_result_import_or_run_gate_design.md)
+defines separate future gates for human review, installed-only run, result
+import, and ResultDataset/report summary. It does not add a result importer,
+run command, SolverAdapter/runner/subprocess call, solver execution, or live
+issue `#8` validation.
+
 ## Non-Goals
 
 - No solver execution.
@@ -184,5 +191,7 @@ Live CalculiX validation remains separate from the CLI write command.
 
 ## Next Implementation Slices
 
-- `OSW-EXP-017_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
 - `OSW-EXP-018_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-019_FEASPEC_CALCULIX_RESULT_IMPORT_MODEL`
+- `OSW-EXP-020_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-021_FEASPEC_CALCULIX_RESULT_IMPORT_CLI`

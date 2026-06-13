@@ -866,3 +866,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   install dependencies, edit releases/assets, push tags, add VLM APIs, or stage
   runtime export bundles. Installed-only run validation and human-review UI
   work remain separate future gates.
+
+## ADR-0047: FEASpec CalculiX Result Import And Run Gates Stay Separate
+
+- Status: Accepted for experimental design
+- Date: 2026-06-13
+- Context: The FEASpec CalculiX no-run exporter and CLI write command can
+  create a local reviewed export bundle, but the next post-export flow must not
+  blur bundle writing, human review, installed-only solver runs, result import,
+  ResultDataset/report summary, and live issue `#8` validation.
+- Decision: Record a design-only result import / run gate sequence. FEASpec
+  human review, no-run export preview, no-run export write, optional manual
+  inspection, installed-only run, result import, and ResultDataset/report
+  summary remain separate gates. The design defines run preconditions and
+  outputs, explicit result import inputs and outputs, `FR_*` and `FI_*`
+  diagnostics, ResultDataset mapping, path-safety rules, and issue `#8`
+  separation.
+- Consequences: This decision does not implement result import, run commands,
+  SolverAdapter or runner integration, subprocess or external command
+  invocation, ProjectSchema mutation, dependency install, live `ccx`
+  validation, release mutation, asset upload, tag mutation, or issue closure.
+  Result import and installed-only run behavior require separate future gates.

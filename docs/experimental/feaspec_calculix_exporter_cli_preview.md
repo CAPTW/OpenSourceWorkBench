@@ -125,6 +125,13 @@ The follow-up explicit write command is documented in
 Use the write command only when a local no-run bundle is intentionally needed
 and an explicit output directory has been reviewed.
 
+The next result/run planning boundary is documented in
+[FEASpec CalculiX result import and run gate design](feaspec_calculix_result_import_or_run_gate_design.md).
+That design keeps export, review, installed-only run, and result import as
+separate gates and does not add result import implementation, run commands,
+SolverAdapter/runner/subprocess calls, solver execution, live issue `#8`
+validation, or release mutation.
+
 ## Safety Boundary
 
 The CLI preview performs:
@@ -166,6 +173,7 @@ Live CalculiX validation remains separate from the CLI preview.
 
 ## Next Implementation Slices
 
-- `OSW-EXP-016_FEASPEC_CALCULIX_EXPORTER_CLI_WRITE_NO_RUN`
-- `OSW-EXP-017_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-017_FEASPEC_CALCULIX_EXPORTER_RESULT_IMPORT_OR_RUN_GATE_DESIGN`
 - `OSW-EXP-018_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
+- `OSW-EXP-019_FEASPEC_CALCULIX_RESULT_IMPORT_MODEL`
+- `OSW-EXP-020_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`

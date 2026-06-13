@@ -51,6 +51,14 @@ Follow-up CLI preview evidence:
 reports renderer readiness and planned bundle names without writing `.inp`
 text, manifest JSON, diagnostics JSON, or README files.
 
+Follow-up result/run gate design:
+[FEASpec CalculiX result import and run gate design](feaspec_calculix_result_import_or_run_gate_design.md)
+keeps no-run export, human review, installed-only run, result import, and
+ResultDataset/report summary as separate future gates. It does not add result
+import implementation, a run gate implementation, SolverAdapter/runner calls,
+subprocess use, solver execution, live issue `#8` validation, or release
+mutation.
+
 ## Preconditions
 
 Rendering requires:
@@ -182,4 +190,4 @@ already installed and under a separate validation or closure gate.
 - `OSW-EXP-014_FEASPEC_CALCULIX_EXPORTER_NO_RUN`
 - `OSW-EXP-015_FEASPEC_CALCULIX_EXPORTER_CLI_PREVIEW`
 - `OSW-EXP-016_FEASPEC_CALCULIX_EXPORTER_CLI_WRITE_NO_RUN`
-- `OSW-EXP-017_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-017_FEASPEC_CALCULIX_EXPORTER_RESULT_IMPORT_OR_RUN_GATE_DESIGN`

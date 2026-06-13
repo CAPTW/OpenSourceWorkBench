@@ -125,6 +125,13 @@ by a dedicated release/tag gate.
   writes only `.inp`, manifest JSON, diagnostics JSON, and README files on
   success, runs no `ccx`, calls no SolverAdapter or runner code, mutates no
   ProjectSchema, validates no issue `#8`, and stages no runtime export bundles.
+- Added a design-only FEASpec CalculiX result import / run gate document for
+  post-export sequencing. It keeps FEASpec human review, no-run export
+  preview/write, installed-only run, result import, and ResultDataset/report
+  summary as separate future gates; defines `FR_*` and `FI_*` diagnostics; and
+  does not implement result import, run commands, SolverAdapter/runner or
+  subprocess paths, ProjectSchema mutation, solver execution, live issue `#8`
+  validation, or release mutation.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

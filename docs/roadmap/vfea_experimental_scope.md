@@ -358,5 +358,12 @@ bundle files when exporter diagnostics allow it, and still does not run `ccx`,
 call SolverAdapter or runner code, mutate ProjectSchema, add VLM APIs, or close
 issue `#8`.
 
+[FEASpec CalculiX result import and run gate design](../experimental/feaspec_calculix_result_import_or_run_gate_design.md)
+defines the future post-export flow without implementing it. Export, human
+review, installed-only run, result import, and ResultDataset/report summary stay
+separate gates; issue `#8` remains the live CalculiX validation track; and the
+design does not add solver execution, SolverAdapter/runner/subprocess calls,
+ProjectSchema mutation, VLM APIs, release mutation, or issue closure.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.
