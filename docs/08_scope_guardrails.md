@@ -66,6 +66,12 @@ request should stop, park, or defer.
   `tests/fixtures/feaspec/calculix_golden/` that lock deterministic renderer
   output without running CalculiX, producing solver outputs, validating issue
   `#8`, or claiming engineering correctness.
+- Experimental FEASpec CalculiX no-run export bundles that wrap successful
+  renderer output into caller-provided directories with `.inp`, manifest JSON,
+  diagnostics JSON, and README files while blocking unsafe basenames,
+  preserving overwrite review, and still not running CalculiX, calling
+  SolverAdapter or runner code, validating issue `#8`, or staging runtime
+  export bundles.
 
 ## Out of Scope
 
@@ -112,6 +118,9 @@ request should stop, park, or defer.
 - Treating FEASpec CalculiX `.inp` golden fixtures as solver outputs, live
   `ccx` validation, engineering-correctness evidence, or permission to execute
   solvers.
+- Treating FEASpec CalculiX no-run export bundles as SolverAdapter
+  integration, runner integration, installed `ccx` validation, engineering
+  correctness evidence, or permission to execute solvers.
 
 ## Scope Drift Definition
 
@@ -152,6 +161,10 @@ Scope drift is any change that:
 - turns FEASpec CalculiX golden `.inp` fixtures into solver outputs, live
   validation evidence, physical validation, runner behavior, dependency
   install, or solver execution without a separate gate;
+- turns the FEASpec CalculiX no-run exporter into SolverAdapter integration,
+  runner behavior, live `ccx` validation, dependency install, automatic solver
+  execution, release asset generation, or ProjectSchema mutation without a
+  separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

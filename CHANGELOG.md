@@ -103,6 +103,15 @@ by a dedicated release/tag gate.
   truss cases, and QA allowlist coverage for arbitrary `.inp` rejection. These
   fixtures are not solver outputs, do not run `ccx`, do not validate issue
   `#8`, and do not claim engineering correctness or certification.
+- Added an experimental no-run FEASpec CalculiX export bundle layer under
+  `src/osw/experimental/feaspec/`, with `export_calculix_case`,
+  `export_calculix_case_from_feaspec`, `export_calculix_case_from_bridge`, and
+  `explain_calculix_export_result`. It writes only caller-directory `.inp`,
+  manifest JSON, diagnostics JSON, and `README_RUN_FIRST.txt` bundles after
+  renderer success, includes checksums and no-run metadata, blocks unsafe
+  basenames and overwrite risks, keeps `ready_for_solver_execution` false, and
+  does not run `ccx`, call SolverAdapter or runner code, mutate ProjectSchema,
+  validate issue `#8`, add VLM APIs, or stage runtime export bundles.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

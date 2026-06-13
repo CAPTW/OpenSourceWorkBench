@@ -39,6 +39,13 @@ The result objects are diagnostic-first:
 
 Every render and write result keeps `ready_for_solver_execution` false.
 
+Follow-up exporter evidence:
+[FEASpec CalculiX no-run exporter](feaspec_calculix_exporter_no_run.md)
+wraps this renderer into a caller-directory export bundle with `.inp`,
+manifest JSON, diagnostics JSON, and `README_RUN_FIRST.txt`. The exporter keeps
+the same no-run boundary: no `ccx`, no SolverAdapter, no runner, no subprocess,
+and no issue `#8` validation.
+
 ## Preconditions
 
 Rendering requires:
@@ -167,6 +174,6 @@ already installed and under a separate validation or closure gate.
 
 ## Next Implementation Slices
 
-- `OSW-EXP-013_FEASPEC_CALCULIX_INP_GOLDEN_FIXTURES`
 - `OSW-EXP-014_FEASPEC_CALCULIX_EXPORTER_NO_RUN`
-- `OSW-EXP-015_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-015_FEASPEC_CALCULIX_EXPORTER_CLI_PREVIEW`
+- `OSW-EXP-016_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`

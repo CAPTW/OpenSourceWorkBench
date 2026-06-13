@@ -803,3 +803,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   mutating ProjectSchema, adding VLM APIs, closing issue `#8`, editing the
   public release, uploading assets, or pushing tags. Exporter and installed-only
   run gates remain separate future work.
+
+## ADR-0044: FEASpec CalculiX Exporter Is A No-Run Bundle Boundary
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-13
+- Context: The FEASpec CalculiX renderer can produce deterministic no-run
+  `.inp` text for writer-ready case plans, and golden fixtures lock that text.
+  The next useful boundary is a safe local export bundle for reviewed files,
+  but it must not become live `ccx` validation, SolverAdapter integration,
+  runner execution, ProjectSchema mutation, or release asset generation.
+- Decision: Implement an experimental no-run exporter under
+  `src/osw/experimental/feaspec/`. The exporter wraps successful renderer
+  output and writes only caller-directory `.inp`, manifest JSON, diagnostics
+  JSON, and `README_RUN_FIRST.txt` files. It records checksums, OSW version,
+  release tag context, source FEASpec ID, `solver_execution_performed=false`,
+  `ready_for_solver_execution=false`, limitations, `FX_*` diagnostics, safe
+  basename checks, missing-directory checks, nonempty-directory checks, and
+  overwrite guards.
+- Consequences: Issue `#8` remains the separate live CalculiX validation track.
+  SolverAdapter calls, runner calls, external command invocation, ProjectSchema
+  mutation, dependency install, VLM integration, release edits, asset uploads,
+  tag mutation, and issue closure remain separate future gates.

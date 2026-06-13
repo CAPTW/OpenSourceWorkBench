@@ -33,6 +33,21 @@ from .calculix_diagnostics import (
     CalculiXPlanSeverity,
     FEASpecCalculiXPlanDiagnostic,
 )
+from .calculix_export_diagnostics import (
+    CalculiXExportDiagnosticCode,
+    CalculiXExportSeverity,
+    FEASpecCalculiXExportDiagnostic,
+)
+from .calculix_exporter import (
+    FEASpecCalculiXExportedFile,
+    FEASpecCalculiXExportManifest,
+    FEASpecCalculiXExportResult,
+    FEASpecCalculiXExportStatus,
+    explain_calculix_export_result,
+    export_calculix_case,
+    export_calculix_case_from_bridge,
+    export_calculix_case_from_feaspec,
+)
 from .calculix_inp_diagnostics import (
     CalculiXInpDiagnosticCode,
     CalculiXInpSeverity,
@@ -117,6 +132,8 @@ __all__ = [
     "CalculiXCaseSectionPlan",
     "CalculiXCaseStatus",
     "CalculiXCaseStepPlan",
+    "CalculiXExportDiagnosticCode",
+    "CalculiXExportSeverity",
     "CalculiXInpDiagnosticCode",
     "CalculiXInpRenderResult",
     "CalculiXInpSection",
@@ -138,6 +155,11 @@ __all__ = [
     "FEASource",
     "FEASpecBridgeDiagnostic",
     "FEASpecCalculiXCasePlan",
+    "FEASpecCalculiXExportDiagnostic",
+    "FEASpecCalculiXExportManifest",
+    "FEASpecCalculiXExportResult",
+    "FEASpecCalculiXExportStatus",
+    "FEASpecCalculiXExportedFile",
     "FEASpecCalculiXInpDiagnostic",
     "FEASpecCalculiXPlanDiagnostic",
     "FEASpec",
@@ -167,6 +189,10 @@ __all__ = [
     "ValidationState",
     "check_feaspec_dict",
     "dump_feaspec",
+    "export_calculix_case",
+    "export_calculix_case_from_bridge",
+    "export_calculix_case_from_feaspec",
+    "explain_calculix_export_result",
     "explain_inp_render_result",
     "explain_calculix_case_plan",
     "explain_bridge_plan",

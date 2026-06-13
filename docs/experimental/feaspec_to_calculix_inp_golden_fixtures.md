@@ -43,6 +43,11 @@ This gate verifies renderer regression behavior only. It does not prove that a
 deck solves, that the model is physically correct, or that CalculiX is
 installed.
 
+The follow-up [FEASpec CalculiX no-run exporter](feaspec_calculix_exporter_no_run.md)
+uses renderer output to create a caller-directory bundle with manifest,
+diagnostics, and README files. That bundle is still no-run evidence and does
+not validate issue `#8`.
+
 ## Safety Boundary
 
 The golden fixture tests are no-run:
@@ -76,4 +81,5 @@ CalculiX, and do not close issue `#8`.
 ## Next Implementation Slices
 
 - `OSW-EXP-014_FEASPEC_CALCULIX_EXPORTER_NO_RUN`
-- `OSW-EXP-015_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-015_FEASPEC_CALCULIX_EXPORTER_CLI_PREVIEW`
+- `OSW-EXP-016_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`

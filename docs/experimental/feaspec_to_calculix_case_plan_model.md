@@ -26,6 +26,11 @@ adds no-run renderer regression fixtures under
 `tests/fixtures/feaspec/calculix_golden/`. They compare deterministic text only
 and remain separate from live CalculiX validation.
 
+[FEASpec CalculiX no-run exporter](feaspec_calculix_exporter_no_run.md)
+adds a caller-directory export bundle around the renderer. It writes `.inp`,
+manifest JSON, diagnostics JSON, and `README_RUN_FIRST.txt` only after render
+success and still performs no solver execution.
+
 ## Release Context
 
 `v0.1.4-rc1` is a public prerelease. This implementation is post-release
@@ -166,3 +171,5 @@ create solver artifacts.
   [FEASpec CalculiX INP renderer implementation](feaspec_to_calculix_inp_renderer_implementation.md).
 - `OSW-EXP-013_FEASPEC_CALCULIX_INP_GOLDEN_FIXTURES`
   adds no-run text fixtures and must not run CalculiX.
+- `OSW-EXP-014_FEASPEC_CALCULIX_EXPORTER_NO_RUN`
+  adds the no-run export bundle and must not run CalculiX.
