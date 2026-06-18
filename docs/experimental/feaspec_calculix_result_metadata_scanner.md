@@ -15,6 +15,9 @@ No numerical parser. No ResultDataset write. No solver execution.
 - `src/osw/experimental/feaspec/calculix_result_parser_diagnostics.py`
 - `src/osw/experimental/feaspec/calculix_result_status_scanner.py` consumes this
   metadata for `.sta` / `.cvg` text-only status summaries.
+- [FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md)
+  uses this metadata as the future provenance source for `.dat` preview
+  candidates. It does not add `.dat` parser implementation.
 
 ## Public API
 
@@ -91,6 +94,8 @@ The scanner uses `FP_*` diagnostics from
   parser phase, and parse-not-implemented flag.
 - `.sta` and `.cvg` artifacts may also include text-only `status_scan` and
   `status_summary` payloads from the status scanner.
+- `.dat` artifacts remain metadata-only until a separate implementation gate
+  adds the reviewed minimal parser subset.
 - FI parse-not-implemented warnings remain warnings; no numerical parse is added.
 
 ## Safety boundary
@@ -128,4 +133,5 @@ Issue `#8` remains open until a dedicated installed-only validation gate.
 
 - `OSW-EXP-032_FEASPEC_RESULT_PARSER_STA_CVG_STATUS_SCANNER`
 - `OSW-EXP-033_FEASPEC_RESULT_PARSER_DAT_MINIMAL_DESIGN`
+- `OSW-EXP-034_FEASPEC_RESULT_PARSER_DAT_METADATA_SECTION_SCANNER`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

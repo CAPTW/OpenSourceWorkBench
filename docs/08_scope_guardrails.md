@@ -111,6 +111,13 @@ request should stop, park, or defer.
   ResultDataset persistence, solver execution, SolverAdapter/runner paths,
   ProjectSchema mutation, live issue `#8` validation, bundled solvers, and
   certification claims.
+- Design-only FEASpec CalculiX `.dat` minimal parser planning that defines a
+  future bounded text subset, accepted known headings, scalar/table preview
+  candidates, unsupported content, safety limits, unit-handling rules,
+  `FP_DAT_*` diagnostics, ResultDataset preview mapping, fixture strategy, and
+  issue `#8` separation without implementing `.dat` parsing, numerical
+  extraction, ResultDataset writes, solver execution, SolverAdapter/runner
+  paths, ProjectSchema mutation, bundled solvers, or certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
@@ -207,6 +214,11 @@ request should stop, park, or defer.
   persistence, live `ccx` validation, SolverAdapter/runner integration,
   ProjectSchema mutation, engineering-correctness evidence, or permission to
   execute solvers.
+- Treating FEASpec CalculiX `.dat` minimal parser design as implemented `.dat`
+  parsing, numerical value extraction, ResultDataset persistence, live `ccx`
+  validation, SolverAdapter/runner integration, ProjectSchema mutation,
+  engineering-correctness evidence, bundled-solver evidence, certification, or
+  permission to execute solvers.
 - Treating the FEASpec CalculiX installed-only run gate as result import,
   SolverAdapter integration, broad runner integration, GUI direct execution,
   dependency or solver installation, bundled solver evidence, live issue `#8`
@@ -302,6 +314,12 @@ Scope drift is any change that:
   dependency install, bundled-solver evidence, live issue `#8` closure,
   ProjectSchema mutation, release mutation, hidden execution, or execution
   without explicit run authorization and isolated runtime artifacts;
+- turns the FEASpec CalculiX `.dat` minimal parser design into parser
+  implementation, numerical extraction, table extraction implementation,
+  ResultDataset persistence, SolverAdapter/runner integration, subprocess or
+  external command invocation, ProjectSchema mutation, dependency install, live
+  issue `#8` validation, release mutation, issue closure, certification, or
+  solver execution without a separate gate;
 - turns the FEASpec human review record model into GUI approval workflow, run
   gate behavior, result import behavior, SolverAdapter/runner integration,
   subprocess or external command invocation, live `ccx` validation,

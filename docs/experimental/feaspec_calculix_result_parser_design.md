@@ -6,6 +6,8 @@ This document defines a staged parsing strategy. The `.sta` / `.cvg` status
 scanner is now implemented as a text-only scanner; `.dat` and `.frd` numerical
 parsers remain unimplemented. This design does not implement numerical result
 parsing, does not write ResultDataset files, and does not execute CalculiX.
+The dedicated `.dat` minimal parser design refines the future `.dat` subset
+without adding parser implementation.
 
 ## Release context
 
@@ -77,6 +79,8 @@ parsing, does not write ResultDataset files, and does not execute CalculiX.
 
 - Controlled educational linear-static subset:
   best-effort extraction of known scalar summaries and small text tables only.
+- The detailed design lives in
+  [FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md).
 - Recognize known heading prefixes and table-like blocks only.
 - Unknown `.dat` headings are reported as `FP_UNSUPPORTED_SECTION`.
 - Table rows are stored as candidate row/column pairs with a strict numeric parsing
@@ -155,6 +159,20 @@ The parser layer exposes deterministic parser diagnostics with these codes:
 - `FP_STATUS_NO_RECOGNIZED_LINES`
 - `FP_STATUS_PARTIAL_SUMMARY`
 - `FP_STATUS_NUMERIC_VALUES_NOT_PARSED`
+- `FP_DAT_PARSE_NOT_IMPLEMENTED`
+- `FP_DAT_SECTION_UNSUPPORTED`
+- `FP_DAT_TABLE_HEADER_UNSUPPORTED`
+- `FP_DAT_TABLE_TOO_LARGE`
+- `FP_DAT_ROW_LIMIT_EXCEEDED`
+- `FP_DAT_COLUMN_LIMIT_EXCEEDED`
+- `FP_DAT_NUMERIC_VALUE_UNPARSED`
+- `FP_DAT_NUMERIC_CONVERSION_FAILED`
+- `FP_DAT_UNITS_MISSING`
+- `FP_DAT_AMBIGUOUS_UNIT_CONTEXT`
+- `FP_DAT_EMPTY_SECTION`
+- `FP_DAT_PARTIAL_PARSE`
+- `FP_DAT_PROVENANCE_MISSING`
+- `FP_DAT_RESULT_DATASET_WRITE_FORBIDDEN`
 
 ## Parser output model
 
@@ -215,12 +233,15 @@ Result import can map parser output into future ResultDataset contracts as:
 - `OSW-EXP-031_FEASPEC_RESULT_PARSER_METADATA_SCANNER_IMPLEMENTATION`
 - `OSW-EXP-032_FEASPEC_RESULT_PARSER_STA_CVG_STATUS_SCANNER`
 - `OSW-EXP-033_FEASPEC_RESULT_PARSER_DAT_MINIMAL_DESIGN`
-- `OSW-EXP-033_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN_OR_IMPLEMENTATION`
+- `OSW-EXP-034_FEASPEC_RESULT_PARSER_DAT_METADATA_SECTION_SCANNER`
+- `OSW-EXP-035_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
+- `OSW-EXP-036_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
 
 ## Non-goals
 
 - No numerical parser implementation in this gate.
+- No `.dat` parser implementation in this gate.
 - No resultdataset write.
 - No solver execution.
 - No SolverAdapter/runner wiring.

@@ -398,6 +398,14 @@ existing result directories. It does not parse numeric convergence values,
 write ResultDataset files, execute CalculiX, validate issue `#8`, or complete
 VFEA.
 
+[FEASpec CalculiX `.dat` minimal parser design](../experimental/feaspec_calculix_result_dat_minimal_parser_design.md)
+records the future `.dat` preview subset before implementation. It defines
+accepted known headers, scalar candidates, small text tables, rejected
+free-form or unitless content, `FP_DAT_*` diagnostics, safety limits, and
+ResultDataset preview mapping while adding no parser code, numerical
+extraction, solver execution, issue `#8` validation, ProjectSchema mutation, or
+VFEA completion claim.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

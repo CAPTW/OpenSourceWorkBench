@@ -1157,3 +1157,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   credentials, validates no issue `#8`, mutates no release/tag/asset state, and
   closes no issues. Numerical parsers and live prepared-machine validation
   remain separate future gates.
+
+## ADR-0060: FEASpec CalculiX DAT Parser Starts With A Minimal Design
+
+- Status: Accepted for experimental design
+- Date: 2026-06-19
+- Context: Metadata and status scanning can classify CalculiX result artifacts,
+  but `.dat` output can contain broad, solver-version-dependent text tables and
+  numeric values. The next step needs a safe subset before any parser code can
+  be reviewed.
+- Decision: Define a design-only `.dat` minimal parser contract before
+  implementation. The future parser may accept only explicit `.dat` files,
+  known educational headings, bounded scalar summary candidates, and bounded
+  small text-table candidates with line provenance. Unknown sections,
+  ambiguous unitless values, oversized tables, malformed numeric cells, and
+  missing units must produce `FP_DAT_*` diagnostics rather than hidden success.
+- Consequences: This gate adds no `.dat` parser implementation, numerical
+  extraction, ResultDataset persistence, SolverAdapter or runner integration,
+  subprocess invocation, ProjectSchema mutation, dependency install, VLM API,
+  release mutation, asset upload, tag mutation, issue mutation, live issue `#8`
+  validation, bundled-solver claim, or certification claim. Implementation and
+  live validation require separate future gates.

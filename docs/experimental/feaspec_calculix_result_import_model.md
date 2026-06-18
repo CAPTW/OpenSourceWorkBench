@@ -51,6 +51,9 @@ The `.dat`, `.frd`, `.sta`, and `.cvg` files are classified by path, suffix,
 size, SHA-256, and parser metadata scans. `.sta` and `.cvg` files may also
 carry text-only status summaries. Numerical result content and numeric
 convergence values are not parsed.
+[FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md)
+records the future `.dat` subset; this model still includes no `.dat` parser
+implementation.
 
 ## Artifact Classification
 
@@ -176,6 +179,7 @@ This result import model does not validate local `ccx`, does not record issue
 - No numerical parsing.
 - No `.frd` parser.
 - No `.dat` parser.
+- No `.dat` parser implementation.
 - No ResultDataset persistence.
 - No certification.
 - No industrial certification.
@@ -190,4 +194,5 @@ This result import model does not validate local `ccx`, does not record issue
 
 - `OSW-EXP-029_FEASPEC_RESULT_IMPORT_CLI_PREVIEW`
 - `OSW-EXP-030_FEASPEC_RESULT_IMPORT_PARSER_DESIGN`
+- `OSW-EXP-033_FEASPEC_RESULT_PARSER_DAT_MINIMAL_DESIGN`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

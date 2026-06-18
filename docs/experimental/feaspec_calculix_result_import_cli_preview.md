@@ -109,6 +109,9 @@ The preview can classify:
 The `.dat` and `.frd` files are classified by path, suffix, size, and hash only.
 The `.sta` and `.cvg` files may include text-only status summaries. There is no
 numerical parser and no numeric convergence-value parsing capability.
+The future `.dat` subset is design-only in
+[FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md);
+this CLI preview does not add `.dat` parser implementation.
 
 ## Safety Boundary
 
@@ -154,5 +157,6 @@ issue `#8` pass evidence, and does not close issue `#8`.
 ## Next Implementation Slices
 
 - `OSW-EXP-030_FEASPEC_RESULT_IMPORT_PARSER_DESIGN`
+- `OSW-EXP-033_FEASPEC_RESULT_PARSER_DAT_MINIMAL_DESIGN`
 - `OSW-EXP-031_FEASPEC_RESULTDATASET_DRAFT_REVIEW`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

@@ -235,6 +235,14 @@ by a dedicated release/tag gate.
   SolverAdapter or runner code, mutate ProjectSchema, validate or close issue
   `#8`, add VLM APIs, bundle external solvers, or claim industrial
   certification.
+- Added a design-only FEASpec CalculiX `.dat` minimal parser contract. It
+  defines the future accepted header/scalar/table preview subset, rejected
+  unknown or unitless content, safety limits, unit-handling rules, `FP_DAT_*`
+  diagnostics, output model, ResultDataset preview mapping, and fixture
+  strategy without adding `.dat` parser implementation, numerical extraction,
+  ResultDataset writes, solver execution, SolverAdapter/runner paths,
+  ProjectSchema mutation, issue `#8` validation, bundled solvers, or
+  certification claims.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

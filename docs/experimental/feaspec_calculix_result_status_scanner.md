@@ -30,6 +30,8 @@ The API returns pure Python data objects and performs no file writes.
 
 Other suffixes are rejected for this scanner. `.dat` and `.frd` remain
 metadata-only in this phase.
+[FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md)
+defines a future `.dat` subset separately and does not change this scanner.
 
 ## Captured status summary
 
@@ -135,5 +137,6 @@ passes.
 ## Next implementation slices
 
 - `OSW-EXP-033_FEASPEC_RESULT_PARSER_DAT_MINIMAL_DESIGN`
-- `OSW-EXP-034_FEASPEC_RESULT_PARSER_DAT_STATUS_TABLE_IMPLEMENTATION`
+- `OSW-EXP-034_FEASPEC_RESULT_PARSER_DAT_METADATA_SECTION_SCANNER`
+- `OSW-EXP-035_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
