@@ -132,6 +132,14 @@ by a dedicated release/tag gate.
   does not implement result import, run commands, SolverAdapter/runner or
   subprocess paths, ProjectSchema mutation, solver execution, live issue `#8`
   validation, or release mutation.
+- Added an experimental FEASpec human review record model under
+  `src/osw/experimental/feaspec/`, with JSON-serializable reviewer state,
+  action, accepted warnings, diagnostic decisions, validator summary/hash,
+  bridge/case/export summaries, acknowledgements, and solver-execution flags.
+  It records `solver_execution_performed=false` and does not implement a GUI,
+  CLI approval command, result import, run gate, SolverAdapter/runner path,
+  ProjectSchema mutation, VLM API, credential handling, issue `#8`
+  validation, or solver execution.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

@@ -164,6 +164,11 @@ is the diagnostic-first command for checking readiness and planned filenames.
 `feaspec-calculix-export-write` writes local no-run bundle files only after the
 user explicitly supplies `--output-dir` and the exporter reports success.
 
+The [FEASpec human review record model](feaspec_human_review_record_model.md)
+exists as a separate experimental data boundary for reviewer decisions and
+summary hashes. This CLI write command does not create, require, or persist
+human review records yet.
+
 ## Relationship To Issue #8
 
 Issue `#8` remains live CalculiX `ccx` validation. This write command does not

@@ -6,6 +6,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DESIGN_DOC = (
     REPO_ROOT / "docs" / "experimental" / "feaspec_human_review_ui_design.md"
 )
+RECORD_MODEL_DOC = (
+    REPO_ROOT / "docs" / "experimental" / "feaspec_human_review_record_model.md"
+)
 
 
 def _read() -> str:
@@ -18,6 +21,10 @@ def _normalized() -> str:
 
 def test_human_review_ui_design_doc_exists() -> None:
     assert DESIGN_DOC.exists()
+
+
+def test_human_review_record_model_doc_exists() -> None:
+    assert RECORD_MODEL_DOC.exists()
 
 
 def test_design_scope_is_docs_only() -> None:
@@ -117,6 +124,14 @@ def test_required_review_record_fields_defined() -> None:
     assert "source feaspec identifier" in text
     assert "validator report hash or summary" in text
     assert "bridge/case/export summary" in text
+
+
+def test_review_record_model_evidence_is_linked() -> None:
+    text = _normalized()
+
+    assert "feaspec human review record model" in text
+    assert "experimental data boundary" in text
+    assert "the record model is not a gui implementation" in text
 
 
 def test_approval_blockers_defined() -> None:

@@ -887,3 +887,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   invocation, ProjectSchema mutation, dependency install, live `ccx`
   validation, release mutation, asset upload, tag mutation, or issue closure.
   Result import and installed-only run behavior require separate future gates.
+
+## ADR-0048: FEASpec Human Review Record Is A Data Boundary
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-18
+- Context: The FEASpec CalculiX no-run exporter and result import / run gate
+  design depend on auditable human-review evidence, but the repository still
+  needs to keep GUI approval, CLI approval, installed-only run behavior, result
+  import, SolverAdapter handoff, runner handoff, and live issue `#8`
+  validation as separate gates.
+- Decision: Add an experimental FEASpec human review record model under
+  `src/osw/experimental/feaspec/`. The record captures reviewer state/action,
+  source FEASpec id, validator summary/hash, accepted-warning reasons,
+  diagnostic decisions, bridge/case/export summaries, acknowledgements, and
+  solver-execution flags in JSON-serializable form. The model requires
+  `solver_execution_performed=false` and treats installed-only run request
+  approval as intent only, not execution.
+- Consequences: Human review evidence can be summarized and persisted as JSON,
+  but no GUI, CLI approval command, result importer, run gate, SolverAdapter or
+  runner integration, subprocess or external command invocation, ProjectSchema
+  mutation, VLM API, dependency install, live `ccx` validation, release
+  mutation, asset upload, tag mutation, or issue closure is added by this gate.

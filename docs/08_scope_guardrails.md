@@ -89,6 +89,12 @@ request should stop, park, or defer.
   does not implement result import, run commands, solver execution,
   SolverAdapter/runner/subprocess paths, ProjectSchema mutation, or issue `#8`
   closure.
+- Experimental FEASpec human review record model that serializes reviewer
+  state/action, accepted-warning reasons, diagnostic decisions, validator
+  summary/hash, bridge/case/export summaries, acknowledgements, and
+  solver-execution flags without implementing a GUI, CLI approval command,
+  result importer, run gate, SolverAdapter/runner path, ProjectSchema mutation,
+  VLM API, or solver execution.
 
 ## Out of Scope
 
@@ -148,6 +154,10 @@ request should stop, park, or defer.
   result import, implemented run commands, SolverAdapter or runner integration,
   subprocess use, live `ccx` validation, release mutation, or permission to
   execute solvers.
+- Treating the FEASpec human review record model as a GUI implementation, CLI
+  approval command, result importer, run gate, SolverAdapter or runner
+  integration, ProjectSchema mutation, VLM provider, credential surface, live
+  `ccx` validation, or permission to execute solvers.
 
 ## Scope Drift Definition
 
@@ -206,6 +216,12 @@ Scope drift is any change that:
   runner behavior, subprocess or external command invocation, live `ccx`
   validation, dependency install, ProjectSchema mutation, release mutation, or
   issue closure without a separate gate;
+- turns the FEASpec human review record model into GUI approval workflow, CLI
+  approval command behavior, run gate behavior, result import behavior,
+  SolverAdapter/runner integration, subprocess or external command invocation,
+  live `ccx` validation, ProjectSchema mutation, VLM API integration,
+  credential handling, dependency install, or solver execution without a
+  separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

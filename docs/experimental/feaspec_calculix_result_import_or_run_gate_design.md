@@ -53,6 +53,19 @@ evidence, generated `.inp` text, diagnostics, manifest metadata, and
 The sequence is intentionally staged so that a blocked or suspicious result at
 any gate stops the workflow before mutation, execution, or import.
 
+## Human Review Record Evidence
+
+The [FEASpec human review record model](feaspec_human_review_record_model.md)
+now captures reviewer identity, action, state, validator summary/hash,
+accepted-warning reasons, diagnostic decisions, bridge/case/export summaries,
+and solver-execution flags as experimental JSON-serializable evidence.
+
+That record model does not implement a GUI, CLI approval command, run gate,
+result importer, SolverAdapter handoff, runner handoff, subprocess path, or
+solver execution. It can support future provenance for this sequence, but the
+run gate remains separate and issue `#8` remains open until installed-only
+validation passes.
+
 ## Installed-Only Run Gate Preconditions
 
 A future installed-only run gate may proceed only when all preconditions are

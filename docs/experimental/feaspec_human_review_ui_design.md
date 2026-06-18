@@ -144,9 +144,14 @@ The following block approval:
 
 ## 17. Future persistence model
 
-- Review record is stored with project draft and/or export manifest in a future
-  implementation.
-- This gate only defines schema intent and persistence surface.
+- The [FEASpec human review record model](feaspec_human_review_record_model.md)
+  now provides the experimental data boundary for reviewer, action, accepted
+  warning, diagnostic decision, validator summary, bridge/case/export summary,
+  and solver-execution flag evidence.
+- The record model is not a GUI implementation, CLI approval command, run gate,
+  result importer, or solver execution path.
+- Future GUI persistence may store a review record with a project draft and/or
+  export manifest only in a separately scoped gate.
 
 ## 18. Future GUI commands/actions
 
@@ -170,7 +175,8 @@ The following block approval:
 
 ## 20. Future implementation slices
 
-- `OSW-EXP-019_FEASPEC_HUMAN_REVIEW_RECORD_MODEL`
+- `OSW-EXP-019_FEASPEC_HUMAN_REVIEW_RECORD_MODEL` provides the experimental
+  record model only.
 - `OSW-EXP-020_FEASPEC_HUMAN_REVIEW_CLI_APPROVAL`
 - `OSW-EXP-021_FEASPEC_HUMAN_REVIEW_GUI_DIALOG`
 - `OSW-EXP-022_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`

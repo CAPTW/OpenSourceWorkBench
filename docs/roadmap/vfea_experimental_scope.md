@@ -103,6 +103,14 @@ nodes, connectivity, dimensions, loads, boundary conditions, materials, units,
 confidence, assumptions, and diagnostics. Users must approve a reviewed FEASpec
 before export or run handoff.
 
+Post-release experimental work now includes a
+[FEASpec human review record model](../experimental/feaspec_human_review_record_model.md)
+for JSON-serializable reviewer state, accepted warnings, diagnostic decisions,
+validator summaries, and no-run/run-request acknowledgements. It is a data
+boundary only: no GUI implementation, CLI approval command, run gate, result
+importer, ProjectSchema mutation, or solver execution is implemented by that
+model.
+
 ### Approved FEASpec
 
 An approved FEASpec is a reviewed input object for normal OSW workflows. It is
