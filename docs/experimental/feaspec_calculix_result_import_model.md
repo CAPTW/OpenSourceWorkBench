@@ -47,7 +47,7 @@ The model inspects already-existing files only:
 - `.inp`
 
 The `.dat`, `.frd`, `.sta`, and `.cvg` files are classified by path, suffix,
-size, and SHA-256 only. Numerical result content is not parsed.
+size, SHA-256, and parser metadata scans. Numerical result content is not parsed.
 
 ## Artifact Classification
 

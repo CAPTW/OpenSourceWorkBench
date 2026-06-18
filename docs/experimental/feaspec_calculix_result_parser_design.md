@@ -26,7 +26,7 @@ and does not execute CalculiX.
 
 - Explicit input files and output directories only.
 - No solver execution and no external command invocation.
-- No VLM API, provider credentials, or solver installation behavior.
+- No external API integrations, provider secret configuration, or solver installation behavior.
 - No silent unit inference from parse text.
 - Deterministic diagnostics with explicit codes.
 - Parse only known, bounded, safe subsets of `.dat`, `.frd`, `.sta`, and `.cvg`.
@@ -126,11 +126,15 @@ and does not execute CalculiX.
 The parser layer exposes deterministic parser diagnostics with these codes:
 
 - `FP_FILE_MISSING`
+- `FP_PATH_NOT_FILE`
 - `FP_UNSUPPORTED_FORMAT`
 - `FP_SIZE_LIMIT_EXCEEDED`
 - `FP_LINE_LIMIT_EXCEEDED`
+- `FP_SNIPPET_TRUNCATED`
+- `FP_HASH_FAILED`
 - `FP_ENCODING_UNSUPPORTED`
 - `FP_PARSE_NOT_IMPLEMENTED`
+- `FP_METADATA_ONLY`
 - `FP_PARTIAL_PARSE`
 - `FP_UNSUPPORTED_SECTION`
 - `FP_UNSUPPORTED_RESULT_BLOCK`
@@ -214,4 +218,4 @@ Result import can map parser output into future ResultDataset contracts as:
 - No bundled solver.
 - No industrial certification or production-CAE claim.
 - No ProjectSchema mutation.
-- No VLM API or credentials.
+- No external API integrations or secret configuration.

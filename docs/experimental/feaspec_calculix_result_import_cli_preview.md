@@ -101,8 +101,9 @@ The preview can classify:
 - `.inp`;
 - other files as unsupported artifact references.
 
-The `.dat` and `.frd` files are classified by path, suffix, size, and hash
-only. There is no numerical parser and no result-parsing capability.
+The `.dat`, `.frd`, `.sta`, and `.cvg` files are classified by path, suffix,
+size, and hash only. There is no numerical parser and no result-parsing
+capability.
 
 ## Safety Boundary
 

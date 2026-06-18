@@ -20,6 +20,7 @@ from .calculix_result_diagnostics import (
     CalculiXResultImportSeverity,
     FEASpecCalculiXResultImportDiagnostic,
 )
+from .calculix_result_metadata_scanner import scan_calculix_result_file_metadata
 
 RUN_METADATA_FILENAME = "run_metadata.json"
 EXPORT_DIAGNOSTICS_SUFFIX = ".diagnostics.json"
@@ -95,16 +96,31 @@ class CalculiXResultArtifact:
         source: str = "directory",
         metadata: Mapping[str, Any] | None = None,
     ) -> CalculiXResultArtifact:
+        metadata_payload = dict(metadata or {})
+        parser_payload = metadata_payload.get("result_parser")
+        if isinstance(parser_payload, Mapping):
+            size_bytes = parser_payload.get("byte_size")
+            sha256 = parser_payload.get("sha256")
+        else:
+            size_bytes = metadata_payload.get("byte_size")
+            sha256 = metadata_payload.get("sha256")
+
+        if isinstance(size_bytes, int) and isinstance(sha256, str):
+            resolved_size = size_bytes
+            resolved_sha256 = sha256
+        else:
+            resolved_size = path.stat().st_size
+            resolved_sha256 = _sha256(path)
         return cls(
             kind=kind,
             path=path,
             filename=path.name,
             suffix=path.suffix.lower(),
-            size_bytes=path.stat().st_size,
-            sha256=_sha256(path),
+            size_bytes=resolved_size,
+            sha256=resolved_sha256,
             role=role or kind.value,
             source=source,
-            metadata=dict(metadata or {}),
+            metadata=metadata_payload,
         )
 
     def to_dict(self) -> dict[str, object]:
@@ -146,6 +162,8 @@ class FEASpecCalculiXResultDirectoryInspection:
             in {
                 CalculiXResultArtifactKind.DAT,
                 CalculiXResultArtifactKind.FRD,
+                CalculiXResultArtifactKind.STA,
+                CalculiXResultArtifactKind.CVG,
             }
         )
 
@@ -246,6 +264,10 @@ class FEASpecCalculiXResultImportPlan:
             "parser_available": self.parser_available,
             "result_dataset_write_allowed": self.result_dataset_write_allowed,
         }
+
+    @property
+    def primary_artifacts(self) -> tuple[CalculiXResultArtifact, ...]:
+        return self.inspection.primary_artifacts
 
 
 @dataclass(frozen=True, slots=True)
@@ -479,7 +501,12 @@ def _classify_artifacts(
     artifacts: list[CalculiXResultArtifact] = []
     for path in sorted(item for item in root.iterdir() if item.is_file()):
         kind = _artifact_kind(path)
-        artifact = CalculiXResultArtifact.from_path(path, kind=kind)
+        parser_scan = scan_calculix_result_file_metadata(path)
+        artifact = CalculiXResultArtifact.from_path(
+            path,
+            kind=kind,
+            metadata={"result_parser": parser_scan.to_dict()},
+        )
         artifacts.append(artifact)
         if kind is CalculiXResultArtifactKind.OTHER:
             diagnostics.append(
@@ -495,6 +522,8 @@ def _classify_artifacts(
         if kind in {
             CalculiXResultArtifactKind.DAT,
             CalculiXResultArtifactKind.FRD,
+            CalculiXResultArtifactKind.STA,
+            CalculiXResultArtifactKind.CVG,
         }:
             diagnostics.append(
                 _diag(
@@ -600,7 +629,12 @@ def _append_primary_result_diagnostics(
 ) -> None:
     if any(
         artifact.kind
-        in {CalculiXResultArtifactKind.DAT, CalculiXResultArtifactKind.FRD}
+        in {
+            CalculiXResultArtifactKind.DAT,
+            CalculiXResultArtifactKind.FRD,
+            CalculiXResultArtifactKind.STA,
+            CalculiXResultArtifactKind.CVG,
+        }
         for artifact in artifacts
     ):
         return
@@ -608,7 +642,7 @@ def _append_primary_result_diagnostics(
         _diag(
             CalculiXResultImportDiagnosticCode.FI_NO_PRIMARY_RESULT,
             CalculiXResultImportSeverity.WARNING,
-            "No .dat or .frd primary result artifact was found.",
+            "No .dat, .frd, .sta, or .cvg primary result artifact was found.",
             path=str(root),
             suggested_fix="Keep CalculiX result artifacts with run metadata.",
             blocks_import=False,
@@ -818,7 +852,7 @@ def _dedupe_diagnostics(
 
 def _limitations() -> tuple[str, ...]:
     return (
-        "Result import model only; numerical .dat/.frd parsing is not implemented.",
+        "Result import model only; numerical .dat/.frd/.sta/.cvg parsing is not implemented.",
         "No ResultDataset file is written by this model.",
         "No solver execution, solver adapter call, runner call, or external command is performed.",
         "Issue #8 live CalculiX validation remains separate and open.",

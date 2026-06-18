@@ -183,6 +183,25 @@ def test_dat_frd_sta_and_cvg_are_classified_without_parsing(tmp_path: Path) -> N
     )
 
 
+def test_sta_and_cvg_are_treated_as_primary_result_families(tmp_path: Path) -> None:
+    root = _write_metadata_bundle(tmp_path / "bundle", primary_suffix=None)
+    (root / "beam_case.sta").write_text(
+        "sta placeholder\n",
+        encoding="utf-8",
+    )
+    (root / "beam_case.cvg").write_text(
+        "cvg placeholder\n",
+        encoding="utf-8",
+    )
+
+    plan = plan_calculix_result_import(root)
+
+    assert plan.status is not FEASpecCalculiXResultImportStatus.UNSUPPORTED
+    assert CalculiXResultArtifactKind.STA in {artifact.kind for artifact in plan.artifacts}
+    assert CalculiXResultArtifactKind.CVG in {artifact.kind for artifact in plan.artifacts}
+    assert plan.primary_artifacts
+
+
 def test_unsupported_files_produce_warning(tmp_path: Path) -> None:
     root = _write_metadata_bundle(tmp_path / "bundle")
     (root / "notes.tmp").write_text("unsupported\n", encoding="utf-8")
@@ -255,6 +274,28 @@ def test_build_result_dataset_draft_contains_artifacts_provenance_limitations_an
     payload = draft.to_dict()
     assert payload["writes_files"] is False
     assert payload["artifacts"]
+
+
+def test_inspect_includes_metadata_scanner_snapshot(tmp_path: Path) -> None:
+    root = _write_metadata_bundle(tmp_path / "bundle", primary_suffix=".frd")
+    before = sorted(path.name for path in root.iterdir())
+
+    inspection = inspect_calculix_result_directory(root)
+    artifact = next(
+        item for item in inspection.artifacts if item.kind is CalculiXResultArtifactKind.FRD
+    )
+    parser_metadata = artifact.metadata["result_parser"]
+
+    assert parser_metadata["artifact_kind"] == "frd"
+    assert parser_metadata["byte_size"] == artifact.size_bytes
+    assert parser_metadata["sha256"] == artifact.sha256
+    assert parser_metadata["parse_not_implemented"] is True
+    assert parser_metadata["parser_phase"] == "metadata-only"
+    assert "first_line_snippets" in parser_metadata
+    assert "last_line_snippets" in parser_metadata
+
+    after = sorted(path.name for path in root.iterdir())
+    assert before == after
 
 
 def test_explain_result_import_plan_is_reviewer_readable(tmp_path: Path) -> None:
