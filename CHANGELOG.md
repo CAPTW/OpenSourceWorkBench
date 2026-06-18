@@ -206,6 +206,15 @@ by a dedicated release/tag gate.
   SolverAdapter or runner code, mutate ProjectSchema, validate or close issue
   `#8`, edit releases/assets/tags, add VLM APIs, bundle external solvers, or
   claim industrial certification.
+- Added an experimental FEASpec CalculiX result import model under
+  `src/osw/experimental/feaspec/`. It inspects explicit result directories,
+  classifies run metadata, export manifests, diagnostics, stdout/stderr, and
+  `.dat`/`.frd`/`.sta`/`.cvg` artifacts, preserves provenance, reports `FI_*`
+  diagnostics, and builds an in-memory ResultDataset draft with artifact and
+  field references. It does not parse numerical result content, write
+  ResultDataset files, add a CLI command, execute CalculiX, call SolverAdapter
+  or runner code, mutate ProjectSchema, validate or close issue `#8`, add VLM
+  APIs, bundle external solvers, or claim industrial certification.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

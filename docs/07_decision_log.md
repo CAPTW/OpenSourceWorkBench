@@ -1086,3 +1086,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   installation, result import, SolverAdapter or broad runner integration,
   ProjectSchema mutation, GUI direct execution, VLM API, release edit, asset
   upload/delete, tag mutation, issue creation, or issue closure.
+
+## ADR-0057: FEASpec CalculiX Result Import Starts As Metadata-Only Planning
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-18
+- Context: ADR-0047 separated FEASpec no-run export, installed-only run, result
+  import, ResultDataset/report summary, and live issue `#8` validation. ADR-0056
+  added an installed-only run gate that can write run metadata and logs, but the
+  next result step must not become a `.frd`/`.dat` parser, ResultDataset
+  persistence layer, solver retry path, SolverAdapter integration, runner
+  refactor, ProjectSchema mutation, or live validation claim.
+- Decision: Add an experimental FEASpec CalculiX result import model under
+  `src/osw/experimental/feaspec/`. The model accepts an explicit result
+  directory, reads JSON run/export metadata, classifies known CalculiX artifacts
+  by suffix, records file size and SHA-256, emits `FI_*` diagnostics, preserves
+  provenance, and builds a pure in-memory ResultDataset draft with artifact and
+  field references.
+- Consequences: The model does not parse numerical `.frd`, `.dat`, `.sta`, or
+  `.cvg` contents, write ResultDataset files, add a CLI command, execute
+  CalculiX, call SolverAdapter or runner code, mutate ProjectSchema, install
+  dependencies, add VLM APIs, validate issue `#8`, mutate releases/assets/tags,
+  or close issues. Parser design, CLI preview, ResultDataset persistence, and
+  live prepared-machine validation remain separate gates.

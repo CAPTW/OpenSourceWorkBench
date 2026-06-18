@@ -125,10 +125,12 @@ in logs and metadata.
 
 ## Relationship To Result Import
 
-Result import is a separate future gate. This implementation does not add a
-`.frd`, `.dat`, `.sta`, or `.cvg` parser, does not create a `ResultDataset`,
-and does not summarize solver results. It records process metadata and logs
-only.
+Result import is a separate gate. A post-release experimental result import
+model now inspects existing run directories, classifies `.frd`, `.dat`, `.sta`,
+and `.cvg` artifacts, preserves run/export provenance, and builds an
+in-memory ResultDataset draft. It does not add a numerical parser, does not
+write a ResultDataset file, and does not run or retry CalculiX. The installed-
+only run gate itself records process metadata and logs only.
 
 ## Relationship To Issue #8
 
@@ -168,6 +170,6 @@ The installed-only run gate preserves these boundaries:
 
 ## Next Implementation Slices
 
-- `OSW-EXP-028_FEASPEC_RESULT_IMPORT_MODEL`
+- `OSW-EXP-029_FEASPEC_RESULT_IMPORT_CLI_PREVIEW`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
 - `OSW-MAINT-018_ISSUE_8_CALCULIX_VALIDATION_TRIAGE`

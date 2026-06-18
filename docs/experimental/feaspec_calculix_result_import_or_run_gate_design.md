@@ -4,8 +4,11 @@ Status: design-only. This design gate had no result import implementation, no
 run gate implementation, and no solver execution. The installed-only run half
 has since landed as a separate experimental implementation documented in
 [FEASpec CalculiX installed-only run gate](feaspec_calculix_run_gate_installed_only.md);
-result import remains unimplemented and issue `#8` live validation remains
-separate.
+the result import model has since landed as a separate experimental
+directory-inspection and ResultDataset-draft planning layer documented in
+[FEASpec CalculiX result import model](feaspec_calculix_result_import_model.md).
+Numerical parsing, ResultDataset persistence, result-import CLI behavior, and
+issue `#8` live validation remain separate.
 
 ## Release Context
 
@@ -195,19 +198,30 @@ more important than full field visualization.
 
 ## Result Import Diagnostics
 
-Future result import diagnostics reserve these codes:
+Result import model diagnostics use these `FI_*` codes:
 
 - `FI_RESULT_DIR_MISSING`
+- `FI_RESULT_DIR_NOT_DIRECTORY`
 - `FI_MANIFEST_MISSING`
 - `FI_RUN_METADATA_MISSING`
+- `FI_EXPORT_MANIFEST_MISSING`
 - `FI_UNSUPPORTED_FILE`
-- `FI_PARSE_FAILED`
+- `FI_PARSE_NOT_IMPLEMENTED`
 - `FI_PARTIAL_IMPORT`
 - `FI_NO_PRIMARY_RESULT`
+- `FI_RUN_FAILED`
+- `FI_RUN_TIMED_OUT`
+- `FI_SOLVER_NOT_EXECUTED`
 - `FI_PROVENANCE_INCOMPLETE`
+- `FI_FORBIDDEN_PATH`
+- `FI_RESULT_DATASET_WRITE_FORBIDDEN`
 
 Parser diagnostics must distinguish missing artifacts, unsupported files,
 partial import, and provenance gaps.
+
+The original design reserved `FI_PARSE_FAILED` for a future numerical parser.
+The metadata-only model added later uses `FI_PARSE_NOT_IMPLEMENTED` instead
+because `.dat` and `.frd` content is intentionally classified but not parsed.
 
 ## ResultDataset Mapping
 
@@ -243,9 +257,9 @@ Future CLI command names may be:
 - `feaspec-calculix-result-import`
 
 The human-review commands are record-only and do not run solvers. The run
-command has since landed as the installed-only gate documented separately; the
-result import command remains future only. This design gate did not implement
-either command.
+command has since landed as the installed-only gate documented separately. The
+result import model has landed without a CLI command; the result import command
+remains future only. This design gate did not implement either command.
 
 The future run command must require explicit authorization, an export bundle,
 reviewed README status, isolated output directory, timeout, and installed
