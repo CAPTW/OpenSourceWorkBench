@@ -148,8 +148,11 @@ The following block approval:
   now provides the experimental data boundary for reviewer, action, accepted
   warning, diagnostic decision, validator summary, bridge/case/export summary,
   and solver-execution flag evidence.
-- The record model is not a GUI implementation, CLI approval command, run gate,
-  result importer, or solver execution path.
+- The record model is not a GUI implementation.
+- The [FEASpec human review CLI approval](feaspec_human_review_cli_approval.md)
+  workflow can create, validate, and summarize JSON review records, but it is
+  not a GUI implementation, run gate, result importer, or solver execution
+  path.
 - Future GUI persistence may store a review record with a project draft and/or
   export manifest only in a separately scoped gate.
 
@@ -177,6 +180,8 @@ The following block approval:
 
 - `OSW-EXP-019_FEASPEC_HUMAN_REVIEW_RECORD_MODEL` provides the experimental
   record model only.
-- `OSW-EXP-020_FEASPEC_HUMAN_REVIEW_CLI_APPROVAL`
-- `OSW-EXP-021_FEASPEC_HUMAN_REVIEW_GUI_DIALOG`
-- `OSW-EXP-022_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-020_FEASPEC_HUMAN_REVIEW_CLI_APPROVAL` provides the record-only CLI
+  workflow.
+- `OSW-EXP-021_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_DESIGN`
+- `OSW-EXP-022_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION`
+- `OSW-EXP-023_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`

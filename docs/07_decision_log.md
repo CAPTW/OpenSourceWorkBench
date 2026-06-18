@@ -909,3 +909,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   runner integration, subprocess or external command invocation, ProjectSchema
   mutation, VLM API, dependency install, live `ccx` validation, release
   mutation, asset upload, tag mutation, or issue closure is added by this gate.
+
+## ADR-0049: FEASpec Human Review CLI Is Record-Only
+
+- Status: Accepted for experimental CLI implementation
+- Date: 2026-06-18
+- Context: ADR-0048 added JSON-serializable human-review records, and the
+  no-run FEASpec CalculiX export preview/write commands need a CLI way to
+  capture reviewer decisions without crossing into GUI approval, result import,
+  installed-only run behavior, SolverAdapter handoff, runner handoff, or live
+  issue `#8` validation.
+- Decision: Add `feaspec-human-review-create`,
+  `feaspec-human-review-validate`, and `feaspec-human-review-summary` as
+  experimental record-only CLI commands. The create command validates before
+  writing one explicit review JSON file, refuses overwrite unless requested,
+  supports text and JSON output, requires accepted-warning reasons, blocks
+  approval when validator blockers/errors are present, and keeps
+  `solver_execution_performed=false`.
+- Consequences: The CLI workflow does not implement a GUI, result importer,
+  run gate, SolverAdapter or runner integration, subprocess or external command
+  invocation, ProjectSchema mutation, VLM API, dependency install, live `ccx`
+  validation, release mutation, asset upload, tag mutation, issue mutation, or
+  solver execution. No-run export and installed-only run gates remain separate.

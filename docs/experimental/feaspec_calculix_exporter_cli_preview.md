@@ -125,6 +125,11 @@ The follow-up explicit write command is documented in
 Use the write command only when a local no-run bundle is intentionally needed
 and an explicit output directory has been reviewed.
 
+The separate
+[FEASpec human review CLI approval](feaspec_human_review_cli_approval.md)
+workflow can create, validate, and summarize review JSON records. It remains a
+record-only workflow and does not write export bundles or run solvers.
+
 The next result/run planning boundary is documented in
 [FEASpec CalculiX result import and run gate design](feaspec_calculix_result_import_or_run_gate_design.md).
 That design keeps export, review, installed-only run, and result import as

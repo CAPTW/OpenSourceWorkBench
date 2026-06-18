@@ -447,14 +447,13 @@ def validate_human_review_record(
         errors.append("action is required")
     if state is None:
         errors.append("state is required")
-    if not review_record.validator_report_summary:
-        errors.append("validator_report_summary is required")
-    if not review_record.validator_report_hash.strip():
-        errors.append("validator_report_hash is required")
     if review_record.solver_execution_performed:
         errors.append("human review records must not record solver execution as performed")
 
-    if _validator_summary_has_blockers(review_record.validator_report_summary):
+    if (
+        _state_requires_validator_evidence(state)
+        and _validator_summary_has_blockers(review_record.validator_report_summary)
+    ):
         errors.append("validator blocker/error diagnostics prevent approval")
     if _has_blocking_accepted_warning(review_record.accepted_warnings):
         errors.append("blocker diagnostics cannot be accepted away")
@@ -533,6 +532,10 @@ def _validate_no_run_export_approval(
     record: FEASpecHumanReviewRecord,
     errors: list[str],
 ) -> None:
+    if not record.validator_report_summary:
+        errors.append("validator_report_summary is required for approval")
+    if not record.validator_report_hash.strip():
+        errors.append("validator_report_hash is required for approval")
     if _validator_summary_has_blockers(record.validator_report_summary):
         errors.append("no-run export approval requires no blocker/error diagnostics")
 
@@ -570,6 +573,13 @@ def _state_for_action(action: HumanReviewAction) -> HumanReviewState:
     if action is HumanReviewAction.REQUEST_INSTALLED_ONLY_RUN:
         return HumanReviewState.APPROVED_FOR_INSTALLED_ONLY_RUN_REQUEST
     return HumanReviewState.UNREVIEWED
+
+
+def _state_requires_validator_evidence(state: HumanReviewState | None) -> bool:
+    return state in {
+        HumanReviewState.APPROVED_FOR_NO_RUN_EXPORT,
+        HumanReviewState.APPROVED_FOR_INSTALLED_ONLY_RUN_REQUEST,
+    }
 
 
 def _validator_summary_has_blockers(summary: Mapping[str, Any]) -> bool:

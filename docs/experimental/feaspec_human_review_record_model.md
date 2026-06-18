@@ -4,7 +4,7 @@
 
 - Experimental record model implemented.
 - No GUI implementation.
-- No CLI approval command implementation.
+- CLI record commands are implemented separately as a no-run JSON workflow.
 - No result import implementation.
 - No run gate implementation.
 - No solver execution.
@@ -57,9 +57,9 @@ The record model exposes:
 - `load_human_review_record`
 - `dump_human_review_record`
 
-These APIs are experimental and intended to preserve review evidence for later
-CLI, GUI, export, run-gate, and result-import surfaces. They are not a solver
-execution API.
+These APIs are experimental and preserve review evidence for the CLI record
+workflow plus later GUI, export, run-gate, and result-import surfaces. They are
+not a solver execution API.
 
 ## Review States
 
@@ -125,16 +125,18 @@ machine.
 
 ## Approval Rules
 
-Validation requires:
+Validation always requires:
 
 - reviewer identity;
 - reviewed timestamp;
 - source FEASpec id;
 - review action;
 - review state;
-- validator report summary;
-- validator report hash;
 - `solver_execution_performed == false`.
+
+Approval records additionally require a validator report summary and validator
+report hash. Needs-changes and rejected records may be saved without validator
+evidence so reviewers can record incomplete or blocked review outcomes.
 
 Approval for no-run export is blocked when validator summaries report blockers
 or errors. Accepted warnings require a reason. Blocker diagnostics cannot be
@@ -165,12 +167,27 @@ The JSON helpers serialize model data only. They do not write export bundles,
 solver decks, ProjectSchema files, release assets, credentials, logs, or result
 artifacts.
 
+## Relationship To Human Review CLI
+
+The [FEASpec human review CLI approval](feaspec_human_review_cli_approval.md)
+commands use this record model to create, validate, and summarize JSON review
+records:
+
+- `feaspec-human-review-create`
+- `feaspec-human-review-validate`
+- `feaspec-human-review-summary`
+
+Those commands are a record-only workflow. They may write one explicit review
+JSON file for `create`, but they do not implement a GUI, result importer, run
+gate, SolverAdapter handoff, runner handoff, subprocess path, ProjectSchema
+mutation, VLM API, dependency install, or solver execution.
+
 ## Safety Boundary
 
 The record model is a review evidence boundary:
 
 - no GUI implementation;
-- no CLI approval command implementation;
+- no solver-executing CLI approval;
 - no result import implementation;
 - no run gate implementation;
 - no solver execution;
@@ -188,12 +205,10 @@ preconditions.
 
 ## Relationship To CLI Preview And Write
 
-Existing FEASpec CalculiX preview/write commands remain no-run boundaries.
-They do not require or persist the human review record model yet.
-
-A future CLI approval command may read FEASpec, validator, bridge, case-plan,
-preview, and write summaries and persist a JSON review record. That command
-must remain separate from export writing and solver running.
+Existing FEASpec CalculiX preview/write commands remain no-run boundaries. The
+human-review CLI can persist a separate review JSON record from validator,
+bridge, case-plan, preview, and write summaries, but export preview/write do
+not run solvers and do not convert a review record into execution permission.
 
 ## Relationship To Run Gate
 
@@ -218,7 +233,7 @@ create ResultDataset records.
 ## Non-Goals
 
 - No GUI implementation.
-- No CLI approval command implementation.
+- No solver-executing CLI approval implementation.
 - No result import implementation.
 - No run gate implementation.
 - No CalculiX execution.
@@ -239,8 +254,9 @@ create ResultDataset records.
 Possible later gates:
 
 - `OSW-EXP-020_FEASPEC_HUMAN_REVIEW_CLI_APPROVAL`
-- `OSW-EXP-021_FEASPEC_HUMAN_REVIEW_GUI_DIALOG`
-- `OSW-EXP-022_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-021_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_DESIGN`
+- `OSW-EXP-022_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION`
+- `OSW-EXP-023_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
 
 Those gates must preserve the current boundary: review record creation does not
 run solvers, and solver execution must remain installed-only, explicit, and

@@ -140,6 +140,14 @@ by a dedicated release/tag gate.
   CLI approval command, result import, run gate, SolverAdapter/runner path,
   ProjectSchema mutation, VLM API, credential handling, issue `#8`
   validation, or solver execution.
+- Added `feaspec-human-review-create`, `feaspec-human-review-validate`, and
+  `feaspec-human-review-summary` as experimental record-only CLI commands for
+  FEASpec human-review JSON. They validate before writing, refuse implicit
+  parent-directory creation, guard overwrite behavior, support text and JSON
+  output, keep `solver_execution_performed=false`, and do not implement GUI,
+  result import, run gate, SolverAdapter/runner/subprocess paths,
+  ProjectSchema mutation, live issue `#8` validation, VLM APIs, dependency
+  install, or solver execution.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

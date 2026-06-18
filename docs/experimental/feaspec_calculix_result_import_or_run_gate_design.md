@@ -60,11 +60,12 @@ now captures reviewer identity, action, state, validator summary/hash,
 accepted-warning reasons, diagnostic decisions, bridge/case/export summaries,
 and solver-execution flags as experimental JSON-serializable evidence.
 
-That record model does not implement a GUI, CLI approval command, run gate,
-result importer, SolverAdapter handoff, runner handoff, subprocess path, or
-solver execution. It can support future provenance for this sequence, but the
-run gate remains separate and issue `#8` remains open until installed-only
-validation passes.
+The [FEASpec human review CLI approval](feaspec_human_review_cli_approval.md)
+workflow can now create, validate, and summarize those JSON review records. It
+does not implement a GUI, run gate, result importer, SolverAdapter handoff,
+runner handoff, subprocess path, or solver execution. It can support future
+provenance for this sequence, but the run gate remains separate and issue `#8`
+remains open until installed-only validation passes.
 
 ## Installed-Only Run Gate Preconditions
 
@@ -200,10 +201,14 @@ validate a local `ccx` executable, and does not close issue `#8`.
 
 Future CLI command names may be:
 
+- `feaspec-human-review-create`
+- `feaspec-human-review-validate`
+- `feaspec-human-review-summary`
 - `feaspec-calculix-run-installed-only`
 - `feaspec-calculix-result-import`
 
-These commands are future only. This gate does not implement either command.
+The human-review commands are record-only and do not run solvers. The run and
+import commands are future only. This gate does not implement either command.
 
 The future run command must require explicit authorization, an export bundle,
 reviewed README status, isolated output directory, timeout, and installed

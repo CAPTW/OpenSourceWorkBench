@@ -166,8 +166,11 @@ user explicitly supplies `--output-dir` and the exporter reports success.
 
 The [FEASpec human review record model](feaspec_human_review_record_model.md)
 exists as a separate experimental data boundary for reviewer decisions and
-summary hashes. This CLI write command does not create, require, or persist
-human review records yet.
+summary hashes. The separate
+[FEASpec human review CLI approval](feaspec_human_review_cli_approval.md)
+workflow can create, validate, and summarize review JSON records, but this CLI
+write command does not run solvers, require a run gate, import results, or
+convert review approval into execution permission.
 
 ## Relationship To Issue #8
 

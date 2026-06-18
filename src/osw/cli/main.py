@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import platform
 import sys
 import tempfile
@@ -391,6 +392,166 @@ def build_parser() -> argparse.ArgumentParser:
         "--create-dir",
         action="store_true",
         help="Create the final output directory if its parent already exists.",
+    )
+    human_review_create_parser = subparsers.add_parser(
+        "feaspec-human-review-create",
+        help="Create a FEASpec human review record JSON file.",
+        description=(
+            "Create an experimental FEASpec human review record. The command writes "
+            "only the requested review JSON file, performs no solver execution, and "
+            "keeps export, run, and result import gates separate."
+        ),
+    )
+    human_review_create_parser.add_argument(
+        "--output",
+        required=True,
+        help="Output human review JSON path.",
+    )
+    human_review_create_parser.add_argument(
+        "--source-feaspec-id",
+        required=True,
+        help="Source FEASpec identifier reviewed by the user.",
+    )
+    human_review_create_parser.add_argument(
+        "--reviewer",
+        required=True,
+        help="Reviewer name or identifier.",
+    )
+    human_review_create_parser.add_argument(
+        "--reviewed-at",
+        required=True,
+        help="Deterministic ISO-style review timestamp supplied by the caller.",
+    )
+    human_review_create_parser.add_argument(
+        "--action",
+        required=True,
+        choices=(
+            "needs-changes",
+            "reject",
+            "approve-no-run-export",
+            "request-installed-only-run",
+        ),
+        help="Human review action to record.",
+    )
+    human_review_create_parser.add_argument(
+        "--notes",
+        action="append",
+        default=[],
+        help="Reviewer note. May be repeated.",
+    )
+    human_review_create_parser.add_argument(
+        "--validator-report-hash",
+        default="",
+        help="Validator report hash required for approval records.",
+    )
+    human_review_create_parser.add_argument(
+        "--validator-summary",
+        default="",
+        help="Validator summary as inline JSON object or path to a JSON object.",
+    )
+    human_review_create_parser.add_argument(
+        "--bridge-summary",
+        default="",
+        help="Bridge summary as inline JSON object or path to a JSON object.",
+    )
+    human_review_create_parser.add_argument(
+        "--case-plan-summary",
+        default="",
+        help="Case-plan summary as inline JSON object or path to a JSON object.",
+    )
+    human_review_create_parser.add_argument(
+        "--export-preview-summary",
+        default="",
+        help="Export preview summary as inline JSON object or path to a JSON object.",
+    )
+    human_review_create_parser.add_argument(
+        "--export-write-summary",
+        default="",
+        help="Export write summary as inline JSON object or path to a JSON object.",
+    )
+    human_review_create_parser.add_argument(
+        "--accept-warning",
+        action="append",
+        default=[],
+        metavar="CODE:REASON",
+        help="Accept a non-blocking warning with a reason. May be repeated.",
+    )
+    human_review_create_parser.add_argument(
+        "--reject-diagnostic",
+        action="append",
+        default=[],
+        metavar="CODE:REASON",
+        help="Record a rejected diagnostic decision with a reason. May be repeated.",
+    )
+    human_review_create_parser.add_argument(
+        "--acknowledge-limitations",
+        action="store_true",
+        help="Acknowledge README/export limitations for installed-only run requests.",
+    )
+    human_review_create_parser.add_argument(
+        "--acknowledge-readme",
+        action="store_true",
+        help="Acknowledge reviewed no-run export README or equivalent review evidence.",
+    )
+    human_review_create_parser.add_argument(
+        "--acknowledge-run-gate-separate",
+        action="store_true",
+        help="Acknowledge that the actual installed-only run gate remains separate.",
+    )
+    human_review_create_parser.add_argument(
+        "--format",
+        default="text",
+        choices=("text", "json"),
+        help="Command output format.",
+    )
+    human_review_create_parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite the output review JSON file if it already exists.",
+    )
+    human_review_validate_parser = subparsers.add_parser(
+        "feaspec-human-review-validate",
+        help="Validate a FEASpec human review record JSON file.",
+        description=(
+            "Validate an experimental FEASpec human review record. The command "
+            "writes no files, performs no solver execution, and keeps the run gate "
+            "separate."
+        ),
+    )
+    human_review_validate_parser.add_argument(
+        "--record",
+        required=True,
+        help="Human review JSON record path.",
+    )
+    human_review_validate_parser.add_argument(
+        "--format",
+        default="text",
+        choices=("text", "json"),
+        help="Validation output format.",
+    )
+    human_review_validate_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Accepted for CLI consistency; invalid records return exit code 2.",
+    )
+    human_review_summary_parser = subparsers.add_parser(
+        "feaspec-human-review-summary",
+        help="Summarize a FEASpec human review record JSON file.",
+        description=(
+            "Summarize an experimental FEASpec human review record. The command "
+            "writes no files and performs no solver execution."
+        ),
+    )
+    human_review_summary_parser.add_argument(
+        "--record",
+        required=True,
+        help="Human review JSON record path.",
+    )
+    human_review_summary_parser.add_argument(
+        "--format",
+        default="text",
+        choices=("text", "json"),
+        help="Summary output format.",
     )
     calculix_run_parser = subparsers.add_parser(
         "calculix-run-inp",
@@ -786,6 +947,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    global json
+
     parser = build_parser()
     args = parser.parse_args(argv)
 
@@ -1192,8 +1355,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     if args.command == "feaspec-calculix-export-write":
-        import json
-
         try:
             export_record = _run_feaspec_calculix_export_write(
                 feaspec_path=Path(args.feaspec) if args.feaspec else None,
@@ -1213,6 +1374,42 @@ def main(argv: Sequence[str] | None = None) -> int:
             _print_feaspec_calculix_export_write(export_record)
         if export_record["export_status"] == "blocked":
             return 2
+        return 0
+
+    if args.command == "feaspec-human-review-create":
+        try:
+            payload, exit_code = _run_feaspec_human_review_create(args)
+        except (OSError, TypeError, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        if args.format == "json":
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            _print_feaspec_human_review_payload(payload)
+        return exit_code
+
+    if args.command == "feaspec-human-review-validate":
+        try:
+            payload, exit_code = _run_feaspec_human_review_validate(Path(args.record))
+        except (OSError, TypeError, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        if args.format == "json":
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            _print_feaspec_human_review_payload(payload)
+        return exit_code
+
+    if args.command == "feaspec-human-review-summary":
+        try:
+            payload = _run_feaspec_human_review_summary(Path(args.record))
+        except (OSError, TypeError, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        if args.format == "json":
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            _print_feaspec_human_review_payload(payload)
         return 0
 
     if args.command == "calculix-run-inp":
@@ -2568,6 +2765,291 @@ def _print_feaspec_calculix_export_write(export_record: dict[str, object]) -> No
         print("  - none")
     print("Limitations:")
     for item in export_record["limitations"]:
+        print(f"  - {item}")
+
+
+def _run_feaspec_human_review_create(
+    args: argparse.Namespace,
+) -> tuple[dict[str, object], int]:
+    from osw.experimental.feaspec.human_review import (
+        create_human_review_record,
+        validate_human_review_record,
+    )
+    from osw.experimental.feaspec.human_review_io import dump_human_review_record
+
+    output_path = Path(args.output).expanduser()
+    record = create_human_review_record(
+        source_feaspec_id=args.source_feaspec_id,
+        reviewer=args.reviewer,
+        reviewed_at=args.reviewed_at,
+        action=_feaspec_human_review_action(args.action),
+        notes=tuple(args.notes or ()),
+        accepted_warnings=tuple(
+            _human_review_warning_from_cli(item) for item in args.accept_warning
+        ),
+        diagnostic_decisions=tuple(
+            _human_review_rejected_diagnostic_from_cli(item)
+            for item in args.reject_diagnostic
+        ),
+        validator_report_summary=_load_human_review_mapping_arg(
+            args.validator_summary,
+            "validator-summary",
+        ),
+        validator_report_hash=args.validator_report_hash,
+        bridge_summary=_load_human_review_mapping_arg(args.bridge_summary, "bridge-summary"),
+        case_plan_summary=_load_human_review_mapping_arg(
+            args.case_plan_summary,
+            "case-plan-summary",
+        ),
+        export_preview_summary=_load_human_review_mapping_arg(
+            args.export_preview_summary,
+            "export-preview-summary",
+        ),
+        export_write_summary=_load_human_review_mapping_arg(
+            args.export_write_summary,
+            "export-write-summary",
+        ),
+        limitations_acknowledged=args.acknowledge_limitations,
+        no_run_export_review_acknowledged=args.acknowledge_readme,
+        run_gate_separation_acknowledged=args.acknowledge_run_gate_separate,
+        provenance={
+            "created_by": "feaspec-human-review-create",
+            "solver_execution_performed": False,
+        },
+    )
+    validation = validate_human_review_record(record)
+    payload = _human_review_record_payload(
+        command="feaspec-human-review-create",
+        status="validation-blocked" if not validation.is_valid else "ready-to-write",
+        record_path=output_path,
+        record=record,
+        validation=validation,
+        files_written=False,
+    )
+    if not validation.is_valid:
+        return payload, 2
+
+    dump_human_review_record(record, output_path, overwrite=args.overwrite)
+    return (
+        _human_review_record_payload(
+            command="feaspec-human-review-create",
+            status="written",
+            record_path=output_path,
+            record=record,
+            validation=validation,
+            files_written=True,
+        ),
+        0,
+    )
+
+
+def _run_feaspec_human_review_validate(
+    record_path: Path,
+) -> tuple[dict[str, object], int]:
+    from osw.experimental.feaspec.human_review import validate_human_review_record
+    from osw.experimental.feaspec.human_review_io import load_human_review_record
+
+    source = record_path.expanduser()
+    record = load_human_review_record(source)
+    validation = validate_human_review_record(record)
+    status = "valid" if validation.is_valid else "invalid"
+    return (
+        _human_review_record_payload(
+            command="feaspec-human-review-validate",
+            status=status,
+            record_path=source,
+            record=record,
+            validation=validation,
+            files_written=False,
+        ),
+        0 if validation.is_valid else 2,
+    )
+
+
+def _run_feaspec_human_review_summary(record_path: Path) -> dict[str, object]:
+    from osw.experimental.feaspec.human_review import validate_human_review_record
+    from osw.experimental.feaspec.human_review_io import load_human_review_record
+
+    source = record_path.expanduser()
+    record = load_human_review_record(source)
+    validation = validate_human_review_record(record)
+    return _human_review_record_payload(
+        command="feaspec-human-review-summary",
+        status="summary",
+        record_path=source,
+        record=record,
+        validation=validation,
+        files_written=False,
+    )
+
+
+def _feaspec_human_review_action(action: str) -> str:
+    mapping = {
+        "needs-changes": "mark_needs_changes",
+        "reject": "reject",
+        "approve-no-run-export": "approve_no_run_export",
+        "request-installed-only-run": "request_installed_only_run",
+    }
+    return mapping[action]
+
+
+def _human_review_warning_from_cli(value: str) -> object:
+    from osw.experimental.feaspec.human_review import (
+        AcceptedWarning,
+        ReviewDiagnosticReference,
+    )
+
+    code, reason = _split_human_review_code_reason(value)
+    return AcceptedWarning(
+        diagnostic=ReviewDiagnosticReference(code=code, severity="warning"),
+        reason=reason,
+    )
+
+
+def _human_review_rejected_diagnostic_from_cli(value: str) -> object:
+    from osw.experimental.feaspec.human_review import (
+        DiagnosticDecision,
+        HumanReviewAction,
+        ReviewDiagnosticReference,
+    )
+
+    code, reason = _split_human_review_code_reason(value)
+    return DiagnosticDecision(
+        diagnostic=ReviewDiagnosticReference(
+            code=code,
+            severity="error",
+            blocks_approval=True,
+            blocks_solver_handoff=True,
+        ),
+        action=HumanReviewAction.REJECT_DIAGNOSTIC,
+        reason=reason,
+    )
+
+
+def _split_human_review_code_reason(value: str) -> tuple[str, str]:
+    code, separator, reason = value.partition(":")
+    if not code.strip():
+        msg = "Diagnostic code is required."
+        raise ValueError(msg)
+    return code.strip(), reason.strip() if separator else ""
+
+
+def _load_human_review_mapping_arg(value: str, label: str) -> dict[str, Any]:
+    if not value:
+        return {}
+    source = Path(value).expanduser()
+    if source.is_file():
+        try:
+            payload = json.loads(source.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            msg = f"{label} JSON path is invalid: {source}"
+            raise ValueError(msg) from exc
+    else:
+        try:
+            payload = json.loads(value)
+        except json.JSONDecodeError as exc:
+            msg = f"{label} must be an existing JSON file path or inline JSON object."
+            raise ValueError(msg) from exc
+    if not isinstance(payload, Mapping):
+        msg = f"{label} must resolve to a JSON object."
+        raise ValueError(msg)
+    return dict(payload)
+
+
+def _human_review_record_payload(
+    *,
+    command: str,
+    status: str,
+    record_path: Path,
+    record: object,
+    validation: object,
+    files_written: bool,
+) -> dict[str, object]:
+    summary = _human_review_summary_dict(record)
+    return {
+        "command": command,
+        "status": status,
+        "valid": bool(getattr(validation, "is_valid", False)),
+        "record_path": str(record_path),
+        "source_feaspec_id": summary["source_feaspec_id"],
+        "reviewer": summary["reviewer"],
+        "reviewed_at": summary["reviewed_at"],
+        "state": summary["state"],
+        "action": summary["action"],
+        "solver_execution_performed": False,
+        "solver_execution_authorized": summary["solver_execution_authorized"],
+        "files_written": files_written,
+        "diagnostics": _human_review_validation_diagnostics(validation),
+        "limitations": _feaspec_human_review_limitations(record),
+    }
+
+
+def _human_review_summary_dict(record: object) -> dict[str, object]:
+    from osw.experimental.feaspec.human_review import summarize_human_review_record
+
+    return summarize_human_review_record(record).to_dict()
+
+
+def _human_review_validation_diagnostics(validation: object) -> list[dict[str, str]]:
+    errors = getattr(validation, "errors", ()) or ()
+    warnings = getattr(validation, "warnings", ()) or ()
+    return [
+        {"severity": "error", "message": str(item)}
+        for item in errors
+    ] + [
+        {"severity": "warning", "message": str(item)}
+        for item in warnings
+    ]
+
+
+def _feaspec_human_review_limitations(record: object) -> list[str]:
+    raw_state = getattr(record, "state", "")
+    state = str(getattr(raw_state, "value", raw_state))
+    return [
+        "No solver execution was performed.",
+        "Run gate remains separate.",
+        "No-run export remains separate.",
+        "Result import remains separate.",
+        "External solvers are optional and not bundled.",
+        "Issue #8 live CalculiX validation remains separate.",
+        f"Review state: {state}.",
+    ]
+
+
+def _print_feaspec_human_review_payload(payload: dict[str, object]) -> None:
+    print("FEASpec human review")
+    print(f"Command: {payload['command']}")
+    print(f"Status: {payload['status']}")
+    print(f"Record: {payload['record_path']}")
+    print(f"Valid: {str(payload['valid']).lower()}")
+    print(f"Source FEASpec: {payload['source_feaspec_id']}")
+    print(f"Reviewer: {payload['reviewer']}")
+    print(f"Reviewed at: {payload['reviewed_at']}")
+    print(f"State: {payload['state']}")
+    print(f"Action: {payload['action']}")
+    print(
+        "Solver execution authorized: "
+        f"{str(payload['solver_execution_authorized']).lower()}"
+    )
+    print("Solver execution performed: false")
+    print(f"Files written: {str(payload['files_written']).lower()}")
+    print("No solver execution was performed.")
+    print("Run gate remains separate.")
+    print("No-run export remains separate.")
+    print("Result import remains separate.")
+    print("External solvers are optional and not bundled.")
+    print("Issue #8 live CalculiX validation remains separate.")
+    print("Diagnostics:")
+    diagnostics = payload["diagnostics"]
+    if diagnostics:
+        for item in diagnostics:
+            if isinstance(item, Mapping):
+                severity = str(item.get("severity", "info")).upper()
+                print(f"  - {severity}: {item.get('message', '')}")
+    else:
+        print("  - none")
+    print("Limitations:")
+    for item in payload["limitations"]:
         print(f"  - {item}")
 
 

@@ -92,9 +92,15 @@ request should stop, park, or defer.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
-  solver-execution flags without implementing a GUI, CLI approval command,
-  result importer, run gate, SolverAdapter/runner path, ProjectSchema mutation,
-  VLM API, or solver execution.
+  solver-execution flags without implementing a GUI, result importer, run
+  gate, SolverAdapter/runner path, ProjectSchema mutation, VLM API, or solver
+  execution.
+- Experimental FEASpec human review CLI record workflow that creates,
+  validates, and summarizes review JSON records while writing only explicit
+  review JSON files, preserving `solver_execution_performed=false`, and still
+  without implementing GUI, result import, installed-only run gate,
+  SolverAdapter or runner paths, ProjectSchema mutation, VLM API, live `ccx`
+  validation, or solver execution.
 
 ## Out of Scope
 
@@ -154,10 +160,15 @@ request should stop, park, or defer.
   result import, implemented run commands, SolverAdapter or runner integration,
   subprocess use, live `ccx` validation, release mutation, or permission to
   execute solvers.
-- Treating the FEASpec human review record model as a GUI implementation, CLI
-  approval command, result importer, run gate, SolverAdapter or runner
-  integration, ProjectSchema mutation, VLM provider, credential surface, live
-  `ccx` validation, or permission to execute solvers.
+- Treating the FEASpec human review record model as a GUI implementation,
+  result importer, run gate, SolverAdapter or runner integration,
+  ProjectSchema mutation, VLM provider, credential surface, live `ccx`
+  validation, or permission to execute solvers.
+- Treating the FEASpec human review CLI workflow as a GUI implementation,
+  result importer, installed-only run gate, SolverAdapter or runner
+  integration, subprocess path, ProjectSchema mutation, VLM provider,
+  credential surface, live `ccx` validation, export-bundle writer, or
+  permission to execute solvers.
 
 ## Scope Drift Definition
 
@@ -216,12 +227,17 @@ Scope drift is any change that:
   runner behavior, subprocess or external command invocation, live `ccx`
   validation, dependency install, ProjectSchema mutation, release mutation, or
   issue closure without a separate gate;
-- turns the FEASpec human review record model into GUI approval workflow, CLI
-  approval command behavior, run gate behavior, result import behavior,
+- turns the FEASpec human review record model into GUI approval workflow, run
+  gate behavior, result import behavior, SolverAdapter/runner integration,
+  subprocess or external command invocation, live `ccx` validation,
+  ProjectSchema mutation, VLM API integration, credential handling, dependency
+  install, or solver execution without a separate gate;
+- turns the FEASpec human review CLI workflow into GUI approval behavior,
+  no-run export writing, result import behavior, run gate behavior,
   SolverAdapter/runner integration, subprocess or external command invocation,
   live `ccx` validation, ProjectSchema mutation, VLM API integration,
-  credential handling, dependency install, or solver execution without a
-  separate gate;
+  credential handling, dependency install, issue closure, or solver execution
+  without a separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

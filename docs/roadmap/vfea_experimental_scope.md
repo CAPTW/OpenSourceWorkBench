@@ -106,10 +106,11 @@ before export or run handoff.
 Post-release experimental work now includes a
 [FEASpec human review record model](../experimental/feaspec_human_review_record_model.md)
 for JSON-serializable reviewer state, accepted warnings, diagnostic decisions,
-validator summaries, and no-run/run-request acknowledgements. It is a data
-boundary only: no GUI implementation, CLI approval command, run gate, result
-importer, ProjectSchema mutation, or solver execution is implemented by that
-model.
+validator summaries, and no-run/run-request acknowledgements. The
+[FEASpec human review CLI approval](../experimental/feaspec_human_review_cli_approval.md)
+workflow can create, validate, and summarize those records as a no-run CLI
+workflow. It is not a GUI implementation, run gate, result importer,
+ProjectSchema mutation, or solver execution path.
 
 ### Approved FEASpec
 
