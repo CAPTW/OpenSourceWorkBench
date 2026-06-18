@@ -254,17 +254,21 @@ Future CLI command names may be:
 - `feaspec-human-review-validate`
 - `feaspec-human-review-summary`
 - `feaspec-calculix-run-installed-only`
-- `feaspec-calculix-result-import`
+- `feaspec-calculix-result-import-preview`
+- `feaspec-calculix-result-import` as a future write-capable import gate
 
 The human-review commands are record-only and do not run solvers. The run
 command has since landed as the installed-only gate documented separately. The
-result import model has landed without a CLI command; the result import command
-remains future only. This design gate did not implement either command.
+result import model and a preview-only CLI have landed as separate experimental
+gates. A write-capable result import command remains future only. This design
+gate did not implement those follow-up commands.
 
 The future run command must require explicit authorization, an export bundle,
 reviewed README status, isolated output directory, timeout, and installed
-`ccx`. The future import command must require an explicit result directory and
-must not execute any solver.
+`ccx`. The preview import command requires an explicit result directory,
+inspects existing artifacts, writes no files, parses no numerical content, and
+does not execute any solver. Any future write-capable import command must keep
+that no-solver boundary and add a separate ResultDataset persistence review.
 
 ## Security And Path Safety
 

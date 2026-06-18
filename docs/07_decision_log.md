@@ -1104,8 +1104,33 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   provenance, and builds a pure in-memory ResultDataset draft with artifact and
   field references.
 - Consequences: The model does not parse numerical `.frd`, `.dat`, `.sta`, or
-  `.cvg` contents, write ResultDataset files, add a CLI command, execute
-  CalculiX, call SolverAdapter or runner code, mutate ProjectSchema, install
-  dependencies, add VLM APIs, validate issue `#8`, mutate releases/assets/tags,
-  or close issues. Parser design, CLI preview, ResultDataset persistence, and
-  live prepared-machine validation remain separate gates.
+  `.cvg` contents, write ResultDataset files, add a write-capable import CLI,
+  execute CalculiX, call SolverAdapter or runner code, mutate ProjectSchema,
+  install dependencies, add VLM APIs, validate issue `#8`, mutate
+  releases/assets/tags, or close issues. Parser design, CLI preview,
+  ResultDataset persistence, and live prepared-machine validation remain
+  separate gates.
+
+## ADR-0058: FEASpec CalculiX Result Import CLI Is Preview-Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-18
+- Context: ADR-0057 added a metadata-only result import model that can inspect
+  explicit CalculiX result directories and build an in-memory ResultDataset
+  draft. The next useful surface is a CLI preview for reviewers, but it must not
+  become a numerical parser, ResultDataset persistence path, solver retry/run
+  path, SolverAdapter handoff, ProjectSchema mutation, or live issue `#8`
+  validation claim.
+- Decision: Add `feaspec-calculix-result-import-preview` as an experimental
+  preview-only CLI command. It requires `--result-dir`, supports text or JSON
+  output, can hide top-level artifacts/diagnostics, and returns strict exit code
+  `2` when blocked, unsupported, or future-parser cases should fail automation.
+  The command reports top-level `solver_execution_performed=false` for the
+  preview itself while preserving source run metadata under provenance.
+- Consequences: The preview writes no files, persists no ResultDataset, parses
+  no numerical `.dat` or `.frd` content, executes no CalculiX process, calls no
+  SolverAdapter or runner code, mutates no ProjectSchema, installs no
+  dependencies, adds no VLM APIs or credentials, validates no issue `#8`,
+  mutates no release/tag/asset state, and closes no issues. Numerical parser
+  design, ResultDataset persistence, and live prepared-machine validation
+  remain separate gates.

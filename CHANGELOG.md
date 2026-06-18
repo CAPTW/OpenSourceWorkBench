@@ -212,9 +212,19 @@ by a dedicated release/tag gate.
   `.dat`/`.frd`/`.sta`/`.cvg` artifacts, preserves provenance, reports `FI_*`
   diagnostics, and builds an in-memory ResultDataset draft with artifact and
   field references. It does not parse numerical result content, write
-  ResultDataset files, add a CLI command, execute CalculiX, call SolverAdapter
-  or runner code, mutate ProjectSchema, validate or close issue `#8`, add VLM
-  APIs, bundle external solvers, or claim industrial certification.
+  ResultDataset files, add a write-capable import CLI, execute CalculiX, call
+  SolverAdapter or runner code, mutate ProjectSchema, validate or close issue
+  `#8`, add VLM APIs, bundle external solvers, or claim industrial
+  certification.
+- Added `feaspec-calculix-result-import-preview`, an experimental preview-only
+  CLI command for the FEASpec CalculiX result import model. It requires an
+  explicit result directory, classifies existing artifacts, reports text or JSON
+  diagnostics, exposes an in-memory ResultDataset draft with `writes_files=false`,
+  and supports strict exit code `2` for blocked, unsupported, or future-parser
+  cases. It does not parse numerical `.dat`/`.frd` content, write ResultDataset
+  files, execute CalculiX, call SolverAdapter or runner code, mutate
+  ProjectSchema, validate or close issue `#8`, add VLM APIs, bundle external
+  solvers, or claim industrial certification.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

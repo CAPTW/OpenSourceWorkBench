@@ -149,10 +149,11 @@ def test_cli_separation_is_documented() -> None:
     normalized = _normalized()
 
     assert "feaspec-calculix-run-installed-only" in text
-    assert "feaspec-calculix-result-import" in text
+    assert "feaspec-calculix-result-import-preview" in text
     assert "run command has since landed as the installed-only gate" in normalized
-    assert "result import command remains future only" in normalized
-    assert "this design gate did not implement either command" in normalized
+    assert "result import model and a preview-only cli have landed" in normalized
+    assert "write-capable result import command remains future only" in normalized
+    assert "this design gate did not implement those follow-up commands" in normalized
 
 
 def test_design_doc_does_not_claim_forbidden_maturity() -> None:

@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 import ast
+import inspect
 from pathlib import Path
 
-from osw.cli.main import build_parser
+from osw.cli.main import (
+    _build_feaspec_calculix_result_import_preview,
+    _feaspec_calculix_result_import_preview_exit_code,
+    _print_feaspec_calculix_result_import_preview,
+    build_parser,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 IMPORT_SOURCE = (
@@ -21,8 +27,20 @@ PROJECT_SCHEMA_SOURCE = REPO_ROOT / "src" / "osw" / "core" / "project_schema.py"
 DOC_PATH = (
     REPO_ROOT / "docs" / "experimental" / "feaspec_calculix_result_import_model.md"
 )
+CLI_DOC_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "experimental"
+    / "feaspec_calculix_result_import_cli_preview.md"
+)
 MODEL_TEST_SOURCE = (
     REPO_ROOT / "tests" / "unit" / "test_feaspec_calculix_result_import_model.py"
+)
+CLI_TEST_SOURCE = (
+    REPO_ROOT
+    / "tests"
+    / "unit"
+    / "test_feaspec_calculix_result_import_cli_preview.py"
 )
 
 
@@ -119,12 +137,49 @@ def test_result_import_model_does_not_mutate_project_schema_source() -> None:
     assert "plan_calculix_result_import" not in text
 
 
-def test_result_import_cli_command_is_not_registered() -> None:
-    assert "feaspec-calculix-result-import" not in _subcommand_names()
+def test_result_import_preview_cli_command_is_registered_without_write_import_command() -> None:
+    commands = _subcommand_names()
+
+    assert "feaspec-calculix-result-import-preview" in commands
+    assert "feaspec-calculix-result-import" not in commands
+    assert "feaspec-calculix-result-import-write" not in commands
+
+
+def test_result_import_preview_cli_helper_uses_no_runner_solver_adapter_or_writes() -> None:
+    source = "\n".join(
+        inspect.getsource(item)
+        for item in (
+            _build_feaspec_calculix_result_import_preview,
+            _print_feaspec_calculix_result_import_preview,
+            _feaspec_calculix_result_import_preview_exit_code,
+        )
+    )
+    forbidden_tokens = (
+        "CalculiXRunner",
+        "SolverAdapter",
+        "ExternalCommandRunner",
+        "run_input_deck",
+        "Popen",
+        "ccx.exe",
+        "parse_frd",
+        "parse_dat",
+        "parse_calculix_results",
+        "ResultDataset(",
+        "write_text(",
+        "write_bytes(",
+        "mkdir(",
+    )
+    for token in forbidden_tokens:
+        assert token not in source
+    assert "sub" + "process" not in source
 
 
 def test_result_import_tests_use_tmp_path_not_tracked_result_fixtures() -> None:
-    text = MODEL_TEST_SOURCE.read_text(encoding="utf-8")
+    text = (
+        MODEL_TEST_SOURCE.read_text(encoding="utf-8")
+        + "\n"
+        + CLI_TEST_SOURCE.read_text(encoding="utf-8")
+    )
 
     assert "tmp_path" in text
     assert "tests/fixtures" not in text
@@ -151,5 +206,31 @@ def test_result_import_docs_preserve_model_only_boundaries() -> None:
         "industrial certification is provided",
         "external solvers are bundled",
         "stable production",
+    ):
+        assert forbidden_claim not in text
+
+
+def test_result_import_preview_cli_docs_preserve_preview_only_boundaries() -> None:
+    text = CLI_DOC_PATH.read_text(encoding="utf-8").lower()
+
+    assert "preview only" in text
+    assert "no numerical parser" in text
+    assert "no resultdataset write" in text
+    assert "no resultdataset persistence" in text
+    assert "no solver execution" in text
+    assert "issue `#8` remains open" in text
+    assert "no bundled solver" in text
+    assert "no industrial certification" in text
+    assert "no vlm api" in text
+    assert "no provider credentials" in text
+    for forbidden_claim in (
+        "ccx validation has passed",
+        "result parsing exists",
+        "numerical parser exists",
+        "resultdataset persistence exists",
+        "industrial certification is provided",
+        "external solvers are bundled",
+        "stable production",
+        "write/import command exists",
     ):
         assert forbidden_claim not in text

@@ -27,7 +27,8 @@ The public package exports the result import model API from
 - `explain_calculix_result_import_plan(plan)`
 
 The API accepts an explicit result directory and returns pure Python data
-objects. It does not add a CLI command and does not write files.
+objects. A separate preview-only CLI command now exposes this model for
+inspection, but no write-capable import command exists and no files are written.
 
 ## Inspected Inputs
 
@@ -127,6 +128,19 @@ The model preserves these boundaries:
 - no tag mutation;
 - no issue mutation.
 
+## CLI Preview
+
+`feaspec-calculix-result-import-preview` is a thin CLI preview over this model.
+It requires an explicit `--result-dir`, supports text or JSON output, and keeps
+the same result import model only boundary: no numerical parser, no
+ResultDataset write, no ResultDataset persistence, and no solver execution.
+
+The preview command does not persist the in-memory draft, does not create
+directories, does not call SolverAdapter or runner code, and does not validate
+issue `#8`. See
+`docs/experimental/feaspec_calculix_result_import_cli_preview.md` for the CLI
+contract.
+
 ## Relationship To Installed-Only Run Gate
 
 The model consumes artifacts that may be produced by the installed-only run
@@ -152,7 +166,7 @@ This result import model does not validate local `ccx`, does not record issue
 - No bundled solver.
 - No SolverAdapter handoff.
 - No runner handoff.
-- No CLI command.
+- No write-capable import command.
 - No VLM API.
 - No provider credentials.
 

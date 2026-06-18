@@ -445,6 +445,47 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("text", "json"),
         help="Run gate output format.",
     )
+    feaspec_calculix_result_import_parser = subparsers.add_parser(
+        "feaspec-calculix-result-import-preview",
+        help="Preview FEASpec CalculiX result import planning without writing files.",
+        description=(
+            "Inspect an explicit CalculiX result directory and preview the experimental "
+            "FEASpec result-import plan. The command writes no files, performs no solver "
+            "execution, does not parse numerical .dat/.frd content, and keeps issue #8 "
+            "live validation separate."
+        ),
+    )
+    feaspec_calculix_result_import_parser.add_argument(
+        "--result-dir",
+        required=True,
+        help="Existing CalculiX result directory to inspect.",
+    )
+    feaspec_calculix_result_import_parser.add_argument(
+        "--format",
+        default="text",
+        choices=("text", "json"),
+        help="Preview output format.",
+    )
+    feaspec_calculix_result_import_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help=(
+            "Exit 2 when the result import plan is blocked, unsupported, or still "
+            "requires a future numerical parser."
+        ),
+    )
+    feaspec_calculix_result_import_parser.add_argument(
+        "--include-artifacts",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Include artifact records in output; default true.",
+    )
+    feaspec_calculix_result_import_parser.add_argument(
+        "--include-diagnostics",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Include diagnostic records in output; default true.",
+    )
     human_review_create_parser = subparsers.add_parser(
         "feaspec-human-review-create",
         help="Create a FEASpec human review record JSON file.",
@@ -1443,6 +1484,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             _print_feaspec_calculix_installed_run(run_result)
         return _feaspec_calculix_installed_run_exit_code(run_result)
+
+    if args.command == "feaspec-calculix-result-import-preview":
+        try:
+            preview = _build_feaspec_calculix_result_import_preview(args)
+        except (OSError, TypeError, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        if args.format == "json":
+            print(json.dumps(preview, indent=2, sort_keys=True))
+        else:
+            _print_feaspec_calculix_result_import_preview(preview)
+        return _feaspec_calculix_result_import_preview_exit_code(
+            preview,
+            strict=args.strict,
+        )
 
     if args.command == "feaspec-human-review-create":
         try:
@@ -2615,6 +2671,142 @@ def _feaspec_calculix_installed_run_exit_code(result: object) -> int:
     if not execute_requested:
         return 1 if status == "blocked" else 0
     return 0 if status in {"ran", "ran-with-warnings"} else 2
+
+
+def _build_feaspec_calculix_result_import_preview(
+    args: argparse.Namespace,
+) -> dict[str, object]:
+    from osw.experimental.feaspec.calculix_result_diagnostics import (
+        CalculiXResultImportDiagnosticCode,
+    )
+    from osw.experimental.feaspec.calculix_result_import import (
+        FEASpecCalculiXResultImportStatus,
+        build_calculix_result_dataset_draft,
+        explain_calculix_result_import_plan,
+        inspect_calculix_result_directory,
+        plan_calculix_result_import,
+    )
+
+    result_dir = Path(args.result_dir).expanduser()
+    inspection = inspect_calculix_result_directory(result_dir)
+    plan = plan_calculix_result_import(result_dir)
+    dataset_draft = build_calculix_result_dataset_draft(plan)
+    diagnostic_records = [item.to_dict() for item in plan.diagnostics]
+    parse_not_implemented = any(
+        item.code is CalculiXResultImportDiagnosticCode.FI_PARSE_NOT_IMPLEMENTED
+        for item in plan.diagnostics
+    )
+    status_value = plan.status.value
+    strict_blocked = (
+        plan.status
+        in {
+            FEASpecCalculiXResultImportStatus.BLOCKED,
+            FEASpecCalculiXResultImportStatus.UNSUPPORTED,
+            FEASpecCalculiXResultImportStatus.PARSE_NOT_IMPLEMENTED,
+        }
+        or parse_not_implemented
+    )
+
+    return {
+        "command": "feaspec-calculix-result-import-preview",
+        "version": __version__,
+        "status": status_value,
+        "result_dir": str(result_dir.resolve()),
+        "result_dir_readable": bool(inspection.exists and inspection.is_directory),
+        "artifact_count": len(plan.artifacts),
+        "artifacts": (
+            [artifact.to_dict() for artifact in plan.artifacts]
+            if args.include_artifacts
+            else []
+        ),
+        "diagnostics": diagnostic_records if args.include_diagnostics else [],
+        "diagnostic_count": len(diagnostic_records),
+        "provenance": plan.provenance.to_dict(),
+        "dataset_draft": dataset_draft.to_dict(),
+        "parse_not_implemented": parse_not_implemented,
+        "solver_execution_performed": False,
+        "source_run_solver_execution_performed": (
+            plan.provenance.solver_execution_performed
+        ),
+        "files_written": False,
+        "strict_blocked": strict_blocked,
+        "explanation": explain_calculix_result_import_plan(plan),
+        "limitations": [
+            "Preview only; no files are written.",
+            "No solver execution is performed by this command.",
+            "No numerical .dat or .frd parser is implemented.",
+            "No ResultDataset persistence or ProjectSchema mutation is performed.",
+            "Issue #8 live CalculiX validation remains separate.",
+            "External solvers are optional and not bundled.",
+            "FEASpec CalculiX result import remains experimental.",
+        ],
+    }
+
+
+def _print_feaspec_calculix_result_import_preview(
+    preview: Mapping[str, object],
+) -> None:
+    print("FEASpec CalculiX result import preview")
+    print(f"Result directory: {preview['result_dir']}")
+    print(f"Status: {preview['status']}")
+    print(f"Artifacts inspected: {preview['artifact_count']}")
+    print("Preview only: true")
+    print("Files written: false")
+    print("Solver execution performed by this command: false")
+    print("Numerical parser implemented: false")
+    print("ResultDataset persistence: false")
+    print("ProjectSchema mutation: false")
+    print("Issue #8 remains separate.")
+    print("External solvers are optional and not bundled.")
+    print(f"Parse not implemented: {str(preview['parse_not_implemented']).lower()}")
+    print(
+        "Source run solver execution performed: "
+        f"{str(preview['source_run_solver_execution_performed']).lower()}"
+    )
+    print("Explanation:")
+    for line in preview["explanation"]:
+        print(f"  - {line}")
+    print("Artifacts:")
+    artifacts = preview["artifacts"]
+    if artifacts:
+        for item in artifacts:
+            if not isinstance(item, Mapping):
+                continue
+            print(
+                f"  - {item.get('kind', 'artifact')}: "
+                f"{item.get('filename', '')} ({item.get('size_bytes', 0)} bytes)"
+            )
+    else:
+        print("  - none")
+    print("Diagnostics:")
+    diagnostics = preview["diagnostics"]
+    if diagnostics:
+        for item in diagnostics:
+            if not isinstance(item, Mapping):
+                continue
+            severity = str(item.get("severity", "")).upper() or "INFO"
+            path = f" [{item.get('path')}]" if item.get("path") else ""
+            print(
+                f"  - {severity} {item.get('code', 'diagnostic')}{path}: "
+                f"{item.get('message', '')}"
+            )
+    else:
+        print("  - none")
+    print("Limitations:")
+    for item in preview["limitations"]:
+        print(f"  - {item}")
+
+
+def _feaspec_calculix_result_import_preview_exit_code(
+    preview: Mapping[str, object],
+    *,
+    strict: bool,
+) -> int:
+    if not bool(preview.get("result_dir_readable", False)):
+        return 1
+    if strict and bool(preview.get("strict_blocked", False)):
+        return 2
+    return 0
 
 
 def _load_feaspec_calculix_case_plan_json(path: Path) -> object:

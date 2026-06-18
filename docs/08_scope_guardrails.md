@@ -97,6 +97,13 @@ request should stop, park, or defer.
   call SolverAdapter or broad runner code, mutate ProjectSchema, validate or
   close issue `#8`, edit releases/assets/tags, bundle external solvers, or
   claim certification.
+- Experimental FEASpec CalculiX result import model and preview CLI behavior
+  that inspects explicit result directories, classifies existing artifacts,
+  reports `FI_*` diagnostics, and builds an in-memory ResultDataset draft with
+  `writes_files=false`, while still avoiding numerical result parsing,
+  ResultDataset persistence, solver execution, SolverAdapter/runner paths,
+  ProjectSchema mutation, VLM APIs, issue `#8` closure, bundled solvers, and
+  certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
