@@ -1,4 +1,4 @@
-"""Read-only FEASpec human review dialog bound to view-model state."""
+"""FEASpec human review dialog bound to view-model state."""
 
 from __future__ import annotations
 
@@ -6,6 +6,12 @@ import json
 from collections.abc import Mapping
 from typing import Any
 
+from osw.experimental.feaspec.human_review import (
+    FEASpecHumanReviewRecord,
+    validate_human_review_record,
+)
+from osw.experimental.feaspec.human_review_errors import FEASpecHumanReviewError
+from osw.experimental.feaspec.human_review_io import dump_human_review_record
 from osw.experimental.feaspec.human_review_viewmodel import (
     HumanReviewDialogAction,
     HumanReviewDialogState,
@@ -31,6 +37,8 @@ class FEASpecHumanReviewDialog(_BaseDialog):
         parent: object | None = None,
         *,
         state: HumanReviewDialogState | Mapping[str, Any] | None = None,
+        save_path: object | None = None,
+        overwrite: bool = False,
         theme_tokens: ThemeTokens | None = None,
     ) -> None:
         if QtCore is None or QtWidgets is None:
@@ -40,7 +48,16 @@ class FEASpecHumanReviewDialog(_BaseDialog):
         self.setWindowTitle("FEASpec Human Review")
         self.resize(980, 720)
         self._tokens = theme_tokens or DARK_TOKENS
-        self._state = _normalize_state(state)
+        self._save_path = save_path
+        self._overwrite_enabled = bool(overwrite)
+        self._last_save_status = "idle"
+        self._last_save_error = ""
+        self._saved_record_path = ""
+        self._state = _normalize_state(
+            state,
+            save_path=self._save_path,
+            overwrite=self._overwrite_enabled,
+        )
         self._buttons: dict[HumanReviewDialogAction, Any] = {}
 
         root = QtWidgets.QVBoxLayout(self)
@@ -116,7 +133,11 @@ class FEASpecHumanReviewDialog(_BaseDialog):
         self.set_theme_tokens(self._tokens)
 
     def set_state(self, state: HumanReviewDialogState | Mapping[str, Any]) -> None:
-        self._state = _normalize_state(state)
+        self._state = _normalize_state(
+            state,
+            save_path=self._save_path,
+            overwrite=self._overwrite_enabled,
+        )
         self.source_panel.setPlainText(_source_text(self._state))
         self._populate_diagnostics()
         self.engineering_panel.setPlainText(_engineering_text(self._state))
@@ -124,6 +145,56 @@ class FEASpecHumanReviewDialog(_BaseDialog):
         self.safety_panel.setPlainText(_safety_text())
         self.record_preview_panel.setPlainText(_record_preview_text(self._state))
         self._populate_action_state()
+
+    def set_save_path(self, path: object | None) -> None:
+        self._save_path = path
+        self._saved_record_path = ""
+        self._set_save_status("idle", "")
+        self.set_state(self._state)
+
+    def set_overwrite_enabled(self, enabled: bool) -> None:
+        self._overwrite_enabled = bool(enabled)
+        self._set_save_status("idle", "")
+        self.set_state(self._state)
+
+    def trigger_save_record(self) -> bool:
+        availability = self._state.availability_for(HumanReviewDialogAction.SAVE_RECORD)
+        if not availability.enabled:
+            reason = availability.disabled_reason or "save record action is disabled"
+            self._set_save_status("blocked", reason)
+            return False
+        preview = self._state.record_preview
+        if preview is None:
+            self._set_save_status("error", "record preview is required")
+            return False
+        try:
+            record = FEASpecHumanReviewRecord.from_dict(preview.json_payload)
+            validation = validate_human_review_record(record)
+            if not validation.is_valid:
+                self._set_save_status("error", "; ".join(validation.errors))
+                return False
+            dump_human_review_record(
+                record,
+                self._state.save_plan.path,
+                overwrite=self._overwrite_enabled,
+            )
+        except FEASpecHumanReviewError as exc:
+            self._set_save_status("error", str(exc))
+            return False
+        self._saved_record_path = self._state.save_plan.path
+        saved_path = self._saved_record_path
+        self.set_state(self._state)
+        self._set_save_status("saved", f"Saved human review record: {saved_path}")
+        return True
+
+    def last_save_status(self) -> str:
+        return self._last_save_status
+
+    def last_save_error(self) -> str:
+        return self._last_save_error
+
+    def saved_record_path(self) -> str:
+        return self._saved_record_path
 
     def panel_names(self) -> tuple[str, ...]:
         return tuple(panel.value for panel in self._state.panels)
@@ -206,6 +277,12 @@ class FEASpecHumanReviewDialog(_BaseDialog):
             button_grid.addWidget(button, index // 2, index % 2)
         layout.addLayout(button_grid)
 
+        save_button = self._buttons[HumanReviewDialogAction.SAVE_RECORD]
+        save_button.clicked.connect(lambda: self.trigger_save_record())
+        self.save_status_label = QtWidgets.QLabel("", self.review_actions_panel)
+        self.save_status_label.setObjectName("oswFeaspecHumanReviewSaveStatus")
+        layout.addWidget(self.save_status_label)
+
     def _populate_diagnostics(self) -> None:
         rows = list(self._state.diagnostics)
         self.diagnostics_table.setRowCount(len(rows))
@@ -245,12 +322,11 @@ class FEASpecHumanReviewDialog(_BaseDialog):
             button.setEnabled(availability.enabled)
             button.setToolTip("" if availability.enabled else reason)
 
-        save_button = self._buttons.get(HumanReviewDialogAction.SAVE_RECORD)
-        if save_button is not None:
-            save_button.setEnabled(False)
-            save_button.setToolTip(
-                "Record save integration is not implemented in this gate."
-            )
+    def _set_save_status(self, status: str, message: str) -> None:
+        self._last_save_status = status
+        self._last_save_error = "" if status == "saved" else message
+        if hasattr(self, "save_status_label"):
+            self.save_status_label.setText(message)
 
     def _button_for(self, action: HumanReviewDialogAction | str) -> object | None:
         try:
@@ -266,12 +342,47 @@ class FEASpecHumanReviewDialog(_BaseDialog):
 
 def _normalize_state(
     state: HumanReviewDialogState | Mapping[str, Any] | None,
+    *,
+    save_path: object | None = None,
+    overwrite: bool = False,
 ) -> HumanReviewDialogState:
-    if isinstance(state, HumanReviewDialogState):
+    if isinstance(state, HumanReviewDialogState) and save_path is None and not overwrite:
         return state
     if state is None:
-        return build_human_review_dialog_state()
-    return build_human_review_dialog_state(**dict(state))
+        return build_human_review_dialog_state(save_path=save_path, overwrite=overwrite)
+    if isinstance(state, HumanReviewDialogState):
+        kwargs = _state_kwargs(state)
+    else:
+        kwargs = dict(state)
+    if save_path is not None:
+        kwargs["save_path"] = save_path
+    elif "save_path" not in kwargs and isinstance(state, HumanReviewDialogState):
+        kwargs["save_path"] = state.save_plan.path
+    kwargs["overwrite"] = overwrite
+    return build_human_review_dialog_state(**kwargs)
+
+
+def _state_kwargs(state: HumanReviewDialogState) -> dict[str, Any]:
+    record_payload = (
+        state.record_preview.json_payload if state.record_preview is not None else None
+    )
+    return {
+        "record": record_payload,
+        "source_feaspec_id": state.source_feaspec_id,
+        "reviewer": state.reviewer,
+        "reviewed_at": state.reviewed_at,
+        "desired_action": state.desired_action,
+        "notes": state.notes,
+        "validator_summary": state.validator_summary,
+        "validator_report_hash": state.validator_report_hash,
+        "bridge_summary": state.bridge_summary,
+        "case_plan_summary": state.case_plan_summary,
+        "export_preview_summary": state.export_preview_summary,
+        "export_write_summary": state.export_write_summary,
+        "limitations_acknowledged": state.limitations_acknowledged,
+        "no_run_export_review_acknowledged": state.no_run_export_review_acknowledged,
+        "run_gate_separation_acknowledged": state.run_gate_separation_acknowledged,
+    }
 
 
 def _readonly_plain_text(object_name: str, parent: object) -> object:
@@ -348,7 +459,8 @@ def _safety_text() -> str:
             "External solvers are optional and not bundled.",
             "Issue #8 live validation remains separate.",
             "No industrial certification or production accuracy claim.",
-            "Record save integration is not implemented in this gate.",
+            "Record save uses an explicit JSON path only; no file dialog.",
+            "Record save does not write export bundles, .inp files, or solver outputs.",
         ]
     )
 

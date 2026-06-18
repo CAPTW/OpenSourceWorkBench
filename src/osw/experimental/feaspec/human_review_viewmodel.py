@@ -390,7 +390,9 @@ def evaluate_human_review_actions(
         () if state.diagnostics else ("diagnostic rows are required",)
     )
     preview_reasons = ()
-    save_reasons = state.save_plan.disabled_reasons
+    save_reasons = state.save_plan.disabled_reasons + _record_preview_invalid_reasons(
+        state
+    )
 
     return (
         _availability(HumanReviewDialogAction.MARK_NEEDS_CHANGES, needs_changes_reasons),
@@ -679,6 +681,20 @@ def _run_request_ack_reasons(state: HumanReviewDialogState) -> tuple[str, ...]:
     if not state.run_gate_separation_acknowledged:
         reasons.append("missing run-gate-separate acknowledgement")
     return tuple(reasons)
+
+
+def _record_preview_invalid_reasons(
+    state: HumanReviewDialogState,
+) -> tuple[str, ...]:
+    if state.record_preview is None:
+        return ("record preview is required",)
+    if state.record_preview.valid:
+        return ()
+    if state.record_preview.errors:
+        return tuple(
+            f"record preview invalid: {error}" for error in state.record_preview.errors
+        )
+    return ("record preview invalid",)
 
 
 def _accept_warning_reasons(state: HumanReviewDialogState) -> tuple[str, ...]:

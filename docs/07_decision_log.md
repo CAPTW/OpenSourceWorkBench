@@ -996,3 +996,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   issue mutation, release mutation, asset upload, tag mutation, or solver
   execution is added by this gate. Save integration, result import, and
   installed-only run behavior remain separate future gates.
+
+## ADR-0053: FEASpec Human Review GUI Save Is Explicit JSON Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-18
+- Context: ADR-0052 added a read-only PySide6 dialog around the human-review
+  view-model. The next safe mutation is review-record persistence, but it must
+  not become a file browser, export writer, result importer, run gate, or
+  solver execution surface.
+- Decision: Add GUI save behavior only for explicit caller-provided JSON paths.
+  The dialog uses the existing view-model save plan and `dump_human_review_record`,
+  validates the record preview before writing, refuses unacknowledged
+  overwrites, and never creates parent directories implicitly.
+- Consequences: The GUI can write one FEASpec human-review JSON record under a
+  caller-provided path. It still adds no file dialog, export bundle write,
+  `.inp` write, result import implementation, installed-only run gate,
+  SolverAdapter or runner integration, subprocess or external command
+  invocation, ProjectSchema mutation, VLM API, dependency install or upgrade,
+  live `ccx` validation, issue mutation, release mutation, asset upload, tag
+  mutation, or solver execution.

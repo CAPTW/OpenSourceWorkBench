@@ -394,12 +394,22 @@ ProjectSchema mutation, VLM APIs, release mutation, or issue closure.
 
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
-adds a read-only PySide6 dialog that renders existing human-review view-model
-state, diagnostics, warning rows, disabled action reasons, safety copy, and
-record preview. It does not add record save integration, file dialogs, result
-import, installed-only run gates, SolverAdapter/runner/subprocess paths,
-ProjectSchema mutation, VLM APIs, release mutation, issue mutation, issue `#8`
-live validation, or solver execution.
+records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing
+human-review view-model state, diagnostics, warning rows, disabled action
+reasons, safety copy, and record preview. That gate did not add record save
+integration, file dialogs, result import, installed-only run gates,
+SolverAdapter/runner/subprocess paths, ProjectSchema mutation, VLM APIs,
+release mutation, issue mutation, issue `#8` live validation, or solver
+execution.
+
+[FEASpec human review GUI save integration](../experimental/feaspec_human_review_gui_save_integration.md)
+adds explicit caller-path JSON review-record persistence to that GUI. It writes
+one validated review record only when the caller provides a safe `.json` path,
+refuses unacknowledged overwrites, and never creates parent directories
+implicitly. It still adds no file dialog, export bundle write, `.inp` write,
+result import, installed-only run gate, SolverAdapter/runner/subprocess path,
+ProjectSchema mutation, VLM API, issue `#8` live validation, issue mutation, or
+solver execution.
 
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

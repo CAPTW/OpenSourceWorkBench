@@ -281,7 +281,16 @@ runner, exporter, renderer, VLM, credential, or ProjectSchema mutation paths.
 
 The
 [FEASpec human review GUI dialog implementation](feaspec_human_review_gui_dialog_implementation.md)
-adds the first read-only PySide6 dialog that displays this evidence. The dialog
-does not save review records, open file dialogs, import results, request or run
-CalculiX, call SolverAdapter or runner code, mutate ProjectSchema, add VLM
+added the first read-only PySide6 dialog that displays this evidence. That
+gate did not save review records, open file dialogs, import results, request or
+run CalculiX, call SolverAdapter or runner code, mutate ProjectSchema, add VLM
 APIs, install dependencies, close issue `#8`, or execute solvers.
+
+The
+[FEASpec human review GUI save integration](feaspec_human_review_gui_save_integration.md)
+adds explicit caller-path JSON persistence for this record model. It uses the
+existing JSON IO helper, validates the record before writing, refuses
+unacknowledged overwrites, and does not create parent directories implicitly.
+It still does not add file dialogs, export bundles, `.inp` writes, result
+import, installed-only run gates, SolverAdapter or runner calls, VLM APIs,
+ProjectSchema mutation, issue `#8` validation, or solver execution.

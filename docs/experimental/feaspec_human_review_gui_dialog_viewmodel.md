@@ -152,5 +152,14 @@ that live optional validation passed.
   result import implementation, no installed-only run gate implementation, no
   SolverAdapter/runner/subprocess path, no ProjectSchema mutation, no VLM API,
   and no solver execution.
-- `OSW-EXP-024_FEASPEC_HUMAN_REVIEW_GUI_SAVE_INTEGRATION`
+- `OSW-EXP-024_FEASPEC_HUMAN_REVIEW_GUI_SAVE_INTEGRATION` adds explicit
+  caller-path JSON save behavior for the GUI dialog by using the existing save
+  plan and record preview. The view-model remains pure: it analyzes path safety
+  and invalid record previews, but it still performs no file writes.
 - `OSW-EXP-025_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+
+See [FEASpec human review GUI save integration](feaspec_human_review_gui_save_integration.md)
+for the GUI-side persistence boundary. That gate still adds no file dialog,
+export bundle write, result import implementation, run gate implementation,
+SolverAdapter/runner/subprocess path, ProjectSchema mutation, VLM API, or
+solver execution.

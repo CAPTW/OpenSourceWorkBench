@@ -171,6 +171,14 @@ by a dedicated release/tag gate.
   or subprocess path, ProjectSchema mutation, live issue `#8` validation, VLM
   API, dependency installation or upgrade, release mutation, or solver
   execution.
+- Added explicit FEASpec human review GUI save integration for caller-provided
+  JSON paths. The dialog validates the in-memory review record before writing,
+  refuses unacknowledged overwrites, creates no parent directories, and writes
+  exactly one human-review JSON record. It adds no file dialog, export bundle
+  write, `.inp` write, result import implementation, installed-only run gate,
+  SolverAdapter/runner/subprocess path, ProjectSchema mutation, live issue `#8`
+  validation, VLM API, dependency installation or upgrade, release mutation, or
+  solver execution.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

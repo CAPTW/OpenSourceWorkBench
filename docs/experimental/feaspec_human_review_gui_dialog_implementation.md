@@ -8,16 +8,18 @@ FEASpec human review GUI dialog implementation
 
 - Read-only GUI dialog implemented.
 - Bound to the existing pure Python human-review dialog view-model.
-- No record save integration.
+- Explicit JSON review-record save implemented when a caller provides a safe
+  path.
 - No file dialog.
 - No result import implementation.
 - No installed-only run gate implementation.
 - No solver execution.
 
 The implementation is an experimental PySide6 dialog surface for inspecting
-existing human-review evidence. It does not write review records, export
-bundles, result artifacts, run metadata, ProjectSchema files, release assets,
-credentials, or solver outputs.
+existing human-review evidence. The follow-up save integration writes only one
+human-review JSON record to an explicit caller-provided path. It does not write
+export bundles, result artifacts, run metadata, ProjectSchema files, release
+assets, credentials, or solver outputs.
 
 ## 3. Release context
 
@@ -107,7 +109,9 @@ The review action panel displays:
 
 Enablement comes from the view-model action availability. Disabled reasons are
 shown as button tooltips and in the action summary list. The save button is
-forced disabled because no record save integration exists in this gate.
+enabled only when a safe explicit JSON path is available, the parent directory
+exists, overwrite is either unnecessary or acknowledged, and the record preview
+is valid.
 
 ## 11. Safety copy
 
@@ -120,7 +124,7 @@ The safety panel states:
 - external solvers are optional and not bundled;
 - issue `#8` live validation remains separate;
 - no industrial certification or production accuracy claim;
-- record save integration is not implemented in this gate.
+- record save uses an explicit JSON path only and no file dialog.
 
 VFEA remains experimental. This dialog is not evidence of live CalculiX
 validation and is not an authorization to run a solver.
@@ -129,7 +133,8 @@ validation and is not an authorization to run a solver.
 
 The record preview displays the in-memory view-model record preview as JSON.
 It preserves `solver_execution_performed=false` from the record model. The
-preview is not persisted by this dialog.
+dialog can persist this preview only as one validated FEASpec human-review JSON
+record at an explicit caller-provided path.
 
 ## 13. Test accessors
 
@@ -142,6 +147,12 @@ The dialog exposes narrow test accessors:
 - `record_preview_text()`;
 - `action_enabled(action)`;
 - `action_disabled_reason(action)`.
+- `set_save_path(path)`;
+- `set_overwrite_enabled(bool)`;
+- `trigger_save_record()`;
+- `last_save_status()`;
+- `last_save_error()`;
+- `saved_record_path()`.
 
 These accessors exist to keep GUI tests stable without adding workflow side
 effects.
@@ -150,7 +161,6 @@ effects.
 
 This gate adds no:
 
-- record save integration;
 - file dialog;
 - result import implementation;
 - installed-only run gate implementation;
@@ -168,6 +178,7 @@ claimed.
 
 ## 15. Future implementation slices
 
-- `OSW-EXP-024_FEASPEC_HUMAN_REVIEW_GUI_SAVE_INTEGRATION`
-- `OSW-EXP-025_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
-- `OSW-EXP-026_FEASPEC_RESULT_IMPORT_DESIGN`
+- [FEASpec human review GUI save integration](feaspec_human_review_gui_save_integration.md)
+- `OSW-EXP-025_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG`
+- `OSW-EXP-026_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-027_FEASPEC_RESULT_IMPORT_MODEL`

@@ -25,6 +25,12 @@ VIEWMODEL_DOC = (
     / "experimental"
     / "feaspec_human_review_gui_dialog_viewmodel.md"
 )
+SAVE_DOC = (
+    REPO_ROOT
+    / "docs"
+    / "experimental"
+    / "feaspec_human_review_gui_save_integration.md"
+)
 
 
 def _module_source() -> str:
@@ -50,6 +56,8 @@ def _docs_text() -> str:
             + DESIGN_DOC.read_text(encoding="utf-8")
             + "\n"
             + VIEWMODEL_DOC.read_text(encoding="utf-8")
+            + "\n"
+            + SAVE_DOC.read_text(encoding="utf-8")
         )
         .lower()
         .split()
@@ -60,6 +68,7 @@ def test_dialog_imports_only_gui_and_viewmodel_safe_layers() -> None:
     imports = _imported_modules()
 
     assert "PySide6" in imports
+    assert "osw.experimental.feaspec.human_review_io" in imports
     assert "osw.experimental.feaspec.human_review_viewmodel" in imports
     assert "osw.gui.qt_compat" in imports
     assert "osw.gui.theme_tokens" in imports
@@ -96,7 +105,7 @@ def test_dialog_does_not_write_files_or_open_file_dialogs() -> None:
     source = _module_source()
 
     assert "QFileDialog" not in source
-    assert "dump_human_review_record" not in source
+    assert "dump_human_review_record" in source
     assert ".write_text(" not in source
     assert ".write_bytes(" not in source
     assert "open(" not in source
@@ -121,8 +130,9 @@ def test_docs_describe_read_only_no_side_effect_gui() -> None:
     text = _docs_text()
 
     assert "read-only gui dialog implemented" in text
-    assert "no record save integration" in text
+    assert "explicit json review-record save implemented" in text
     assert "no file dialog" in text
+    assert "no export bundle" in text
     assert "no result import implementation" in text
     assert "no installed-only run gate implementation" in text
     assert "no solver execution" in text

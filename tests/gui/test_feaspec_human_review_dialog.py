@@ -221,7 +221,7 @@ def test_action_buttons_and_disabled_reasons_are_visible(app: object) -> None:
         HumanReviewDialogAction.REQUEST_INSTALLED_ONLY_RUN
     )
     assert dialog.action_enabled(HumanReviewDialogAction.SAVE_RECORD) is False
-    assert "Record save integration is not implemented" in dialog.action_disabled_reason(
+    assert "save path is required" in dialog.action_disabled_reason(
         HumanReviewDialogAction.SAVE_RECORD
     )
     summary_items = [
@@ -266,7 +266,8 @@ def test_safety_copy_states_no_side_effect_boundaries(app: object) -> None:
     assert "External solvers are optional and not bundled." in text
     assert "Issue #8 live validation remains separate." in text
     assert "No industrial certification or production accuracy claim." in text
-    assert "Record save integration is not implemented in this gate." in text
+    assert "Record save uses an explicit JSON path only; no file dialog." in text
+    assert "Record save does not write export bundles, .inp files, or solver outputs." in text
 
 
 def test_close_and_disabled_buttons_do_not_write_files(
@@ -279,7 +280,7 @@ def test_close_and_disabled_buttons_do_not_write_files(
     )
 
     sentinel = tmp_path / "review.json"
-    dialog = FEASpecHumanReviewDialog(state=_ready_state(save_path=sentinel))
+    dialog = FEASpecHumanReviewDialog(state=_ready_state())
 
     assert dialog.action_enabled(HumanReviewDialogAction.SAVE_RECORD) is False
     dialog.close_button.click()

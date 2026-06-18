@@ -224,3 +224,16 @@ def test_save_action_enabled_for_safe_new_path(tmp_path: Path) -> None:
     availability = _availability(state, HumanReviewDialogAction.SAVE_RECORD)
 
     assert availability.enabled is True
+
+
+def test_save_action_disabled_when_record_preview_invalid(tmp_path: Path) -> None:
+    state = _ready_state(reviewer="", save_path=tmp_path / "review.json")
+
+    availability = _availability(state, HumanReviewDialogAction.SAVE_RECORD)
+
+    assert availability.enabled is False
+    assert any(
+        reason.startswith("record preview invalid")
+        for reason in availability.disabled_reasons
+    )
+    assert any("reviewer is required" in reason for reason in availability.disabled_reasons)

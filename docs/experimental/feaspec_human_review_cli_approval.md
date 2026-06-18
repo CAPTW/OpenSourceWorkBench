@@ -284,3 +284,11 @@ preview only. It adds no record save integration, no file dialog, no result
 import implementation, no installed-only run gate implementation, no
 SolverAdapter or runner behavior, no subprocess calls, no ProjectSchema
 mutation, no VLM APIs, and no solver execution.
+
+[FEASpec human review GUI save integration](feaspec_human_review_gui_save_integration.md)
+adds explicit caller-path JSON save behavior to the GUI. The GUI save path uses
+the same record model and JSON IO helper as the CLI and writes only one
+validated review record. It does not add a file dialog, export bundle write,
+result import implementation, installed-only run gate, SolverAdapter or runner
+behavior, subprocess calls, ProjectSchema mutation, VLM APIs, or solver
+execution.

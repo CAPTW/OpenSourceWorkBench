@@ -271,6 +271,17 @@ Runtime GUI tests should use the repository's optional PySide6 skip/offscreen
 patterns and stable object-name assertions. They should not require external
 solver executables, network access, or heavy optional stacks.
 
+`OSW-EXP-024_FEASPEC_HUMAN_REVIEW_GUI_SAVE_INTEGRATION` adds the first
+explicit save behavior:
+
+- [FEASpec human review GUI save integration](feaspec_human_review_gui_save_integration.md)
+
+It writes one validated FEASpec human-review JSON record only when the caller
+provides an explicit safe path. It still adds no file dialog, no export bundle,
+no `.inp`, no result import implementation, no installed-only run gate, no
+SolverAdapter/runner/subprocess path, no ProjectSchema mutation, no VLM API,
+and no solver execution.
+
 ## 20. Non-goals
 
 - No GUI implementation.
@@ -291,4 +302,5 @@ solver executables, network access, or heavy optional stacks.
 ## 21. Next implementation slices
 
 - `OSW-EXP-024_FEASPEC_HUMAN_REVIEW_GUI_SAVE_INTEGRATION`
-- `OSW-EXP-025_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-025_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG`
+- `OSW-EXP-026_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
