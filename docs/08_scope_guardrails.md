@@ -101,6 +101,13 @@ request should stop, park, or defer.
   without implementing GUI, result import, installed-only run gate,
   SolverAdapter or runner paths, ProjectSchema mutation, VLM API, live `ccx`
   validation, or solver execution.
+- Design-only FEASpec human review GUI dialog planning that maps the review
+  record model and CLI workflow into future entry points, panels, diagnostic
+  presentation, warning acceptance, approval gating, record preview, save
+  behavior, CLI/GUI consistency, and view-model planning without implementing
+  GUI source, result import, installed-only run gate behavior, SolverAdapter or
+  runner paths, ProjectSchema mutation, VLM API, dependency installation, live
+  `ccx` validation, or solver execution.
 
 ## Out of Scope
 
@@ -168,6 +175,11 @@ request should stop, park, or defer.
   result importer, installed-only run gate, SolverAdapter or runner
   integration, subprocess path, ProjectSchema mutation, VLM provider,
   credential surface, live `ccx` validation, export-bundle writer, or
+  permission to execute solvers.
+- Treating the FEASpec human review GUI dialog design as GUI source, result
+  import implementation, installed-only run gate behavior, SolverAdapter or
+  runner integration, subprocess path, ProjectSchema mutation, VLM provider,
+  credential surface, live `ccx` validation, dependency installation, or
   permission to execute solvers.
 
 ## Scope Drift Definition
@@ -238,6 +250,11 @@ Scope drift is any change that:
   live `ccx` validation, ProjectSchema mutation, VLM API integration,
   credential handling, dependency install, issue closure, or solver execution
   without a separate gate;
+- turns the FEASpec human review GUI dialog design into GUI source,
+  result import behavior, run gate behavior, SolverAdapter/runner integration,
+  subprocess or external command invocation, live `ccx` validation,
+  ProjectSchema mutation, VLM API integration, credential handling, dependency
+  install, issue closure, or solver execution without a separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

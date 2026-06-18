@@ -931,3 +931,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   invocation, ProjectSchema mutation, VLM API, dependency install, live `ccx`
   validation, release mutation, asset upload, tag mutation, issue mutation, or
   solver execution. No-run export and installed-only run gates remain separate.
+
+## ADR-0050: FEASpec Human Review GUI Dialog Starts As Design-Only
+
+- Status: Accepted for experimental design
+- Date: 2026-06-18
+- Context: ADR-0048 added the human-review record model and ADR-0049 added
+  record-only CLI commands. A future GUI surface needs to present the same
+  review states, diagnostics, warning acceptance, approval gating, record
+  preview, and save behavior while preserving OSW's GUI safety rule against
+  direct solver execution.
+- Decision: Define the FEASpec human review GUI dialog as a design-only
+  contract before adding any PySide6 source. The future dialog may map FEASpec
+  files, no-run export preview summaries, no-run export write summaries, and
+  future project context into read-only evidence panels plus explicit review
+  actions. It must show disabled action reasons, keep blocker diagnostics
+  unacceptably blocking, and keep CLI/GUI review semantics aligned.
+- Consequences: No GUI implementation, result import implementation, run gate
+  implementation, SolverAdapter or runner integration, subprocess or external
+  command invocation, ProjectSchema mutation, VLM API, dependency install, live
+  `ccx` validation, release mutation, asset upload, tag mutation, issue
+  mutation, or solver execution is added by this design gate. View-model,
+  widget implementation, save integration, and installed-only run behavior
+  require separate future gates.

@@ -67,6 +67,15 @@ runner handoff, subprocess path, or solver execution. It can support future
 provenance for this sequence, but the run gate remains separate and issue `#8`
 remains open until installed-only validation passes.
 
+The
+[FEASpec human review GUI dialog design](feaspec_human_review_gui_dialog_design.md)
+maps the same record states and CLI evidence into a future OSW dialog contract.
+It covers future entry points, diagnostic panels, warning acceptance, approval
+gating, record preview, and save behavior only. It does not implement GUI
+source, result import, a run gate, SolverAdapter or runner behavior,
+subprocess calls, ProjectSchema mutation, VLM APIs, dependency installation, or
+solver execution.
+
 ## Installed-Only Run Gate Preconditions
 
 A future installed-only run gate may proceed only when all preconditions are

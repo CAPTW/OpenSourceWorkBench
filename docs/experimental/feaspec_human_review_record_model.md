@@ -255,9 +255,19 @@ Possible later gates:
 
 - `OSW-EXP-020_FEASPEC_HUMAN_REVIEW_CLI_APPROVAL`
 - `OSW-EXP-021_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_DESIGN`
-- `OSW-EXP-022_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION`
-- `OSW-EXP-023_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-022_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_VIEWMODEL`
+- `OSW-EXP-023_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION`
+- `OSW-EXP-024_FEASPEC_HUMAN_REVIEW_GUI_SAVE_INTEGRATION`
+- `OSW-EXP-025_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
 
 Those gates must preserve the current boundary: review record creation does not
 run solvers, and solver execution must remain installed-only, explicit, and
 separate.
+
+The
+[FEASpec human review GUI dialog design](feaspec_human_review_gui_dialog_design.md)
+is the first GUI-facing follow-up. It is a design-only contract for future
+dialog entry points, panels, warning acceptance, approval gating, and record
+preview; it does not add GUI source, result import, run-gate behavior,
+ProjectSchema mutation, SolverAdapter or runner calls, VLM APIs, dependency
+installation, or solver execution.

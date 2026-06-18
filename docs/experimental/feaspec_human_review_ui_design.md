@@ -166,6 +166,15 @@ The following block approval:
 - request run gate.
 - import results.
 
+The follow-up
+[FEASpec human review GUI dialog design](feaspec_human_review_gui_dialog_design.md)
+refines the future dialog contract with entry points, panels, disabled action
+reasons, warning acceptance, approval gating, record preview, save behavior,
+CLI/GUI consistency, and a future view-model proposal. It is design-only and
+does not add GUI implementation, result import, run gate behavior, SolverAdapter
+or runner integration, subprocess calls, ProjectSchema mutation, VLM APIs,
+dependency installation, or solver execution.
+
 ## 19. Non-goals
 
 - No GUI implementation.
@@ -183,5 +192,7 @@ The following block approval:
 - `OSW-EXP-020_FEASPEC_HUMAN_REVIEW_CLI_APPROVAL` provides the record-only CLI
   workflow.
 - `OSW-EXP-021_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_DESIGN`
-- `OSW-EXP-022_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION`
-- `OSW-EXP-023_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-022_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_VIEWMODEL`
+- `OSW-EXP-023_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION`
+- `OSW-EXP-024_FEASPEC_HUMAN_REVIEW_GUI_SAVE_INTEGRATION`
+- `OSW-EXP-025_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`

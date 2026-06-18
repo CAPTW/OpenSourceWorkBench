@@ -148,6 +148,13 @@ by a dedicated release/tag gate.
   result import, run gate, SolverAdapter/runner/subprocess paths,
   ProjectSchema mutation, live issue `#8` validation, VLM APIs, dependency
   install, or solver execution.
+- Added a design-only FEASpec human review GUI dialog contract that maps the
+  human-review record model and CLI approval workflow into future dialog entry
+  points, panels, warning acceptance, approval gating, record preview, save
+  behavior, CLI/GUI consistency, and view-model planning. It does not implement
+  GUI source, result import, run-gate behavior, SolverAdapter/runner/subprocess
+  paths, ProjectSchema mutation, live issue `#8` validation, VLM APIs,
+  dependency installation, or solver execution.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

@@ -256,5 +256,15 @@ Summary:
 ## Next Implementation Slices
 
 - `OSW-EXP-021_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_DESIGN`
-- `OSW-EXP-022_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION`
-- `OSW-EXP-023_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-022_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_VIEWMODEL`
+- `OSW-EXP-023_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION`
+- `OSW-EXP-024_FEASPEC_HUMAN_REVIEW_GUI_SAVE_INTEGRATION`
+- `OSW-EXP-025_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+
+The follow-up
+[FEASpec human review GUI dialog design](feaspec_human_review_gui_dialog_design.md)
+maps this CLI record workflow into future OSW dialog states, panels, disabled
+actions, warning acceptance, record preview, and save behavior. It remains
+design-only and does not implement GUI classes, result import, a run gate,
+SolverAdapter or runner paths, subprocess calls, ProjectSchema mutation, VLM
+APIs, dependency installation, or solver execution.

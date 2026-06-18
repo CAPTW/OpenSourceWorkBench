@@ -112,6 +112,15 @@ workflow can create, validate, and summarize those records as a no-run CLI
 workflow. It is not a GUI implementation, run gate, result importer,
 ProjectSchema mutation, or solver execution path.
 
+The
+[FEASpec human review GUI dialog design](../experimental/feaspec_human_review_gui_dialog_design.md)
+extends the human-review planning line with a design-only future dialog
+contract. It maps the record model and CLI workflow into entry points, panels,
+diagnostics, warning acceptance, approval gating, record preview, save
+behavior, and CLI/GUI consistency without adding GUI implementation, result
+import, run-gate behavior, ProjectSchema mutation, VLM APIs, dependency
+installation, or solver execution.
+
 ### Approved FEASpec
 
 An approved FEASpec is a reviewed input object for normal OSW workflows. It is
