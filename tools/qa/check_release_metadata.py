@@ -9,6 +9,7 @@ import re
 import subprocess
 import tomllib
 from dataclasses import dataclass
+from importlib import metadata as importlib_metadata
 from pathlib import Path
 
 from _common import repo_root
@@ -140,6 +141,22 @@ def _local_release_tags(root: Path) -> tuple[list[str] | None, str | None]:
     if not stdout:
         return [], None
     return [line.strip() for line in stdout.splitlines() if line.strip()], None
+
+
+def _validate_installed_distribution_version(expected_version: str) -> list[str]:
+    try:
+        installed_version = importlib_metadata.version("open-solver-workbench")
+    except importlib_metadata.PackageNotFoundError:
+        return []
+    except Exception as exc:  # pragma: no cover - defensive for unusual metadata failures.
+        return [f"Could not read installed package metadata: {exc}"]
+
+    if installed_version != expected_version:
+        return [
+            f"Installed package metadata version is {installed_version}, "
+            f"expected {expected_version}."
+        ]
+    return []
 
 
 def _resolve_expected_target(root: Path, target: str | None) -> tuple[str | None, str | None]:
@@ -289,6 +306,7 @@ def check_release_metadata(
     expected_version: str = TARGET_VERSION,
     expected_source_license: str = TARGET_LICENSE,
     check_tags: bool = True,
+    check_installed_distribution: bool = False,
     tag_policy: ReleaseTagPolicy | None = None,
 ) -> list[str]:
     failures: list[str] = []
@@ -366,6 +384,9 @@ def check_release_metadata(
     ]:
         if not (root / relative).exists():
             failures.append(f"{relative} is missing.")
+
+    if check_installed_distribution:
+        failures.extend(_validate_installed_distribution_version(expected_version))
 
     if check_tags:
         failures.extend(_validate_release_tags(root, tag_policy or ReleaseTagPolicy()))
@@ -544,6 +565,7 @@ def main() -> int:
         root,
         expected_version=args.expected_version,
         expected_source_license=args.expected_source_license,
+        check_installed_distribution=args.expected_version == TARGET_VERSION,
         tag_policy=_tag_policy_from_args(args),
     )
     if failures:

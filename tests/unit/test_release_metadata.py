@@ -319,6 +319,72 @@ def test_default_release_metadata_accepts_current_v014rc1_history(
     assert check_release_metadata(tmp_path) == []
 
 
+def test_default_release_metadata_reports_installed_distribution_version_mismatch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.4rc1")
+    monkeypatch.setattr(
+        release_metadata.importlib_metadata,
+        "version",
+        lambda _: "0.1.3rc1",
+    )
+
+    failures = check_release_metadata(
+        tmp_path,
+        expected_version="0.1.4rc1",
+        check_tags=False,
+        check_installed_distribution=True,
+    )
+
+    assert any(
+        "Installed package metadata version is 0.1.3rc1, expected 0.1.4rc1."
+        in failure
+        for failure in failures
+    )
+
+
+def test_default_release_metadata_accepts_when_installed_distribution_version_matches(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.4rc1")
+    monkeypatch.setattr(
+        release_metadata.importlib_metadata,
+        "version",
+        lambda _: "0.1.4rc1",
+    )
+
+    assert (
+        check_release_metadata(
+            tmp_path,
+            expected_version="0.1.4rc1",
+            check_tags=False,
+            check_installed_distribution=True,
+        )
+        == []
+    )
+
+
+def test_default_release_metadata_accepts_without_installed_distribution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.4rc1")
+
+    def _missing(_: str) -> str:
+        raise release_metadata.importlib_metadata.PackageNotFoundError("open-solver-workbench")
+
+    monkeypatch.setattr(release_metadata.importlib_metadata, "version", _missing)
+
+    assert (
+        check_release_metadata(
+            tmp_path,
+            expected_version="0.1.4rc1",
+            check_tags=False,
+            check_installed_distribution=True,
+        )
+        == []
+    )
+
+
 def test_release_metadata_rejects_placeholder_license(tmp_path: Path) -> None:
     _minimal_release_tree(tmp_path)
     _write(tmp_path / "LICENSE", "License placeholder.\n")
