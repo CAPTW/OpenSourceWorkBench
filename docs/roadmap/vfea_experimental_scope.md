@@ -392,6 +392,12 @@ separate gates; issue `#8` remains the live CalculiX validation track; and the
 design does not add solver execution, SolverAdapter/runner/subprocess calls,
 ProjectSchema mutation, VLM APIs, release mutation, or issue closure.
 
+[FEASpec CalculiX result status scanner](../experimental/feaspec_calculix_result_status_scanner.md)
+adds post-release text-only `.sta` / `.cvg` status-summary evidence for
+existing result directories. It does not parse numeric convergence values,
+write ResultDataset files, execute CalculiX, validate issue `#8`, or complete
+VFEA.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

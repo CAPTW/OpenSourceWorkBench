@@ -25,6 +25,7 @@ def _write_result_dir(
     root: Path,
     *,
     include_primary: bool = True,
+    include_status: bool = False,
     solver_execution_performed: bool = True,
 ) -> Path:
     root.mkdir()
@@ -61,6 +62,15 @@ def _write_result_dir(
     if include_primary:
         (root / "cli_preview_case.dat").write_text("not parsed\n", encoding="utf-8")
         (root / "cli_preview_case.frd").write_text("not parsed\n", encoding="utf-8")
+    if include_status:
+        (root / "cli_preview_case.sta").write_text(
+            "step 1 increment 2\nanalysis completed\n",
+            encoding="utf-8",
+        )
+        (root / "cli_preview_case.cvg").write_text(
+            "convergence residual 1.0E-03\n",
+            encoding="utf-8",
+        )
     return root
 
 
@@ -154,6 +164,62 @@ def test_json_preview_has_required_fields_and_no_write_flags(
     assert payload["source_run_solver_execution_performed"] is True
     assert payload["files_written"] is False
     assert any("No numerical" in item for item in payload["limitations"])
+
+
+def test_json_preview_includes_text_only_status_summary_when_status_files_exist(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    result_dir = _write_result_dir(tmp_path / "result", include_status=True)
+
+    code, out, err = _run_cli(
+        [
+            "feaspec-calculix-result-import-preview",
+            "--result-dir",
+            str(result_dir),
+            "--format",
+            "json",
+        ],
+        capsys,
+    )
+
+    assert code == 0
+    assert err == ""
+    payload = json.loads(out)
+    status_summary = payload["status_summary"]
+    assert status_summary["available"] is True
+    assert status_summary["file_count"] == 2
+    assert status_summary["numerical_values_parsed"] is False
+    assert status_summary["writes_files"] is False
+    assert status_summary["category_counts"]["progress"] == 1
+    assert status_summary["category_counts"]["convergence"] == 1
+    assert status_summary["completion_indicated"] is True
+    assert status_summary["numeric_tokens_not_parsed"] is True
+
+
+def test_text_preview_prints_status_summary_when_status_files_exist(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    result_dir = _write_result_dir(tmp_path / "result", include_status=True)
+    before = sorted(path.name for path in result_dir.iterdir())
+
+    code, out, err = _run_cli(
+        [
+            "feaspec-calculix-result-import-preview",
+            "--result-dir",
+            str(result_dir),
+        ],
+        capsys,
+    )
+    after = sorted(path.name for path in result_dir.iterdir())
+
+    assert code == 0
+    assert err == ""
+    assert before == after
+    assert "Status summary: available" in out
+    assert "Status numeric values parsed: false" in out
+    assert "Status category counts:" in out
 
 
 def test_json_preview_can_hide_top_level_artifacts_and_diagnostics(

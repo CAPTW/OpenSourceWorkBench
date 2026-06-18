@@ -1134,3 +1134,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   mutates no release/tag/asset state, and closes no issues. Numerical parser
   design, ResultDataset persistence, and live prepared-machine validation
   remain separate gates.
+
+## ADR-0059: FEASpec CalculiX STA/CVG Status Scanner Is Text-Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-19
+- Context: The result import model and CLI preview can classify existing
+  CalculiX artifacts but still need safe status/progress evidence from `.sta`
+  and `.cvg` files. This must not become numerical result parsing, convergence
+  value interpretation, ResultDataset persistence, SolverAdapter handoff, runner
+  integration, or live issue `#8` validation.
+- Decision: Add an experimental text-only status scanner under
+  `src/osw/experimental/feaspec/`. The scanner accepts explicit `.sta` and
+  `.cvg` files, preserves metadata scanner size/hash/line evidence, classifies
+  progress, convergence-message, warning, error, completion, failure,
+  informational, and unknown lines, records bounded snippets and category
+  counts, and integrates status summaries into result-import previews.
+- Consequences: Numeric-looking convergence tokens remain text snippets and are
+  not parsed as values. The scanner writes no files, parses no `.dat`/`.frd`
+  numerical content, executes no solver, calls no SolverAdapter or runner code,
+  mutates no ProjectSchema, installs no dependencies, adds no VLM APIs or
+  credentials, validates no issue `#8`, mutates no release/tag/asset state, and
+  closes no issues. Numerical parsers and live prepared-machine validation
+  remain separate future gates.

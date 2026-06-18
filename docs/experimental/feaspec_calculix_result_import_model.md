@@ -15,6 +15,7 @@ The implementation lives under the experimental FEASpec package:
 
 - `src/osw/experimental/feaspec/calculix_result_import.py`
 - `src/osw/experimental/feaspec/calculix_result_diagnostics.py`
+- `src/osw/experimental/feaspec/calculix_result_status_scanner.py`
 
 The public package exports the result import model API from
 `osw.experimental.feaspec`.
@@ -47,7 +48,9 @@ The model inspects already-existing files only:
 - `.inp`
 
 The `.dat`, `.frd`, `.sta`, and `.cvg` files are classified by path, suffix,
-size, SHA-256, and parser metadata scans. Numerical result content is not parsed.
+size, SHA-256, and parser metadata scans. `.sta` and `.cvg` files may also
+carry text-only status summaries. Numerical result content and numeric
+convergence values are not parsed.
 
 ## Artifact Classification
 
@@ -110,6 +113,18 @@ diagnostics.
 The draft is a pure data object. It is not a persisted `ResultDataset`, creates
 no parent directories, overwrites nothing, and performs no ResultDataset write.
 
+## Status Summary Enrichment
+
+For `.sta` and `.cvg` artifacts, artifact metadata can include:
+
+- `status_scan`
+- `status_summary`
+
+These payloads classify progress, convergence-message, warning, error,
+completion, failure, informational, and unknown text lines. They preserve
+bounded snippets and counts only. They do not parse numeric convergence values,
+do not infer units, and do not certify solver correctness.
+
 ## Safety Boundary
 
 The model preserves these boundaries:
@@ -119,6 +134,7 @@ The model preserves these boundaries:
 - no SolverAdapter integration;
 - no runner integration;
 - no numerical parser;
+- no numeric convergence parser;
 - no file writes;
 - no ProjectSchema mutation;
 - no VLM API;

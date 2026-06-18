@@ -21,6 +21,7 @@ from .calculix_result_diagnostics import (
     FEASpecCalculiXResultImportDiagnostic,
 )
 from .calculix_result_metadata_scanner import scan_calculix_result_file_metadata
+from .calculix_result_status_scanner import scan_calculix_status_file
 
 RUN_METADATA_FILENAME = "run_metadata.json"
 EXPORT_DIAGNOSTICS_SUFFIX = ".diagnostics.json"
@@ -485,6 +486,11 @@ def explain_calculix_result_import_plan(
         lines.append(f"Case ID: {plan.provenance.case_id}")
     if plan.provenance.source_feaspec_id:
         lines.append(f"Source FEASpec: {plan.provenance.source_feaspec_id}")
+    status_artifacts = [
+        artifact for artifact in plan.artifacts if "status_summary" in artifact.metadata
+    ]
+    if status_artifacts:
+        lines.append(f"Status summaries scanned: {len(status_artifacts)}.")
     for diagnostic in plan.diagnostics:
         path = f" [{diagnostic.path}]" if diagnostic.path else ""
         lines.append(
@@ -502,10 +508,15 @@ def _classify_artifacts(
     for path in sorted(item for item in root.iterdir() if item.is_file()):
         kind = _artifact_kind(path)
         parser_scan = scan_calculix_result_file_metadata(path)
+        metadata_payload: dict[str, Any] = {"result_parser": parser_scan.to_dict()}
+        if kind in {CalculiXResultArtifactKind.STA, CalculiXResultArtifactKind.CVG}:
+            status_scan = scan_calculix_status_file(path, metadata=parser_scan)
+            metadata_payload["status_scan"] = status_scan.to_dict()
+            metadata_payload["status_summary"] = status_scan.summary.to_dict()
         artifact = CalculiXResultArtifact.from_path(
             path,
             kind=kind,
-            metadata={"result_parser": parser_scan.to_dict()},
+            metadata=metadata_payload,
         )
         artifacts.append(artifact)
         if kind is CalculiXResultArtifactKind.OTHER:

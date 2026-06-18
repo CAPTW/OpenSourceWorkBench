@@ -298,6 +298,38 @@ def test_inspect_includes_metadata_scanner_snapshot(tmp_path: Path) -> None:
     assert before == after
 
 
+def test_inspect_includes_status_summary_for_sta_cvg_artifacts(
+    tmp_path: Path,
+) -> None:
+    root = _write_metadata_bundle(tmp_path / "bundle", primary_suffix=None)
+    (root / "beam_case.sta").write_text(
+        "step 1 increment 2\nanalysis completed\n",
+        encoding="utf-8",
+    )
+    (root / "beam_case.cvg").write_text(
+        "convergence residual 1.0E-03\n",
+        encoding="utf-8",
+    )
+    before = sorted(path.name for path in root.iterdir())
+
+    inspection = inspect_calculix_result_directory(root)
+    status_artifacts = [
+        artifact
+        for artifact in inspection.artifacts
+        if artifact.kind in {CalculiXResultArtifactKind.STA, CalculiXResultArtifactKind.CVG}
+    ]
+    after = sorted(path.name for path in root.iterdir())
+
+    assert before == after
+    assert len(status_artifacts) == 2
+    assert all("status_summary" in artifact.metadata for artifact in status_artifacts)
+    assert all("status_scan" in artifact.metadata for artifact in status_artifacts)
+    assert any(
+        artifact.metadata["status_summary"]["numeric_tokens_not_parsed"]
+        for artifact in status_artifacts
+    )
+
+
 def test_explain_result_import_plan_is_reviewer_readable(tmp_path: Path) -> None:
     root = _write_metadata_bundle(tmp_path / "bundle", primary_suffix=".dat")
 

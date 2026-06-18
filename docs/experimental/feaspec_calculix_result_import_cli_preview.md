@@ -71,11 +71,16 @@ JSON output includes:
 - `parse_not_implemented`;
 - `solver_execution_performed`;
 - `files_written`;
+- `status_summary`;
 - `limitations`.
 
 Top-level `solver_execution_performed` describes this preview command and is
 always `false`. Source run metadata remains visible under `provenance` and the
 `source_run_solver_execution_performed` convenience field.
+
+When `.sta` or `.cvg` files are present, `status_summary` contains text-only
+category counts, completion/failure text indicators, and bounded per-file
+summaries. It does not parse numeric convergence values and does not write files.
 
 ## Exit Codes
 
@@ -101,9 +106,9 @@ The preview can classify:
 - `.inp`;
 - other files as unsupported artifact references.
 
-The `.dat`, `.frd`, `.sta`, and `.cvg` files are classified by path, suffix,
-size, and hash only. There is no numerical parser and no result-parsing
-capability.
+The `.dat` and `.frd` files are classified by path, suffix, size, and hash only.
+The `.sta` and `.cvg` files may include text-only status summaries. There is no
+numerical parser and no numeric convergence-value parsing capability.
 
 ## Safety Boundary
 
@@ -114,6 +119,7 @@ The CLI preview preserves these boundaries:
 - no runner integration;
 - no external command invocation;
 - no numerical parser;
+- no numeric convergence parser;
 - no ResultDataset write;
 - no ResultDataset persistence;
 - no ProjectSchema mutation;

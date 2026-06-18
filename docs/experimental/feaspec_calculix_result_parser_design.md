@@ -2,9 +2,10 @@
 
 Status: design-only.
 
-This document defines a staged parsing strategy only. It does not implement
-`.dat`, `.frd`, `.sta`, or `.cvg` parsing. It does not write ResultDataset files
-and does not execute CalculiX.
+This document defines a staged parsing strategy. The `.sta` / `.cvg` status
+scanner is now implemented as a text-only scanner; `.dat` and `.frd` numerical
+parsers remain unimplemented. This design does not implement numerical result
+parsing, does not write ResultDataset files, and does not execute CalculiX.
 
 ## Release context
 
@@ -62,12 +63,15 @@ and does not execute CalculiX.
 
 ### Phase 1 `.sta` / `.cvg` status summary scanner
 
-- Parse only known `.sta`/`.cvg` marker lines used for run status evidence.
-- Collect execution state, step increments, convergence pass/fail markers, and warning
-  lines as summary diagnostics.
+- Implemented as a text-only status/progress scanner for direct `.sta` and
+  `.cvg` files.
+- Classify progress, convergence-message, warning, error, completion, failure,
+  informational, and unknown lines.
+- Preserve bounded line numbers and snippets.
+- Numeric convergence tokens remain text snippets only and are not parsed.
 - Do not derive physics conclusions or report numeric validation.
 - Unsupported format variants or unknown sections are recorded as
-  `FP_UNSUPPORTED_SECTION`.
+  `FP_STATUS_PATTERN_UNSUPPORTED` or retained as unknown lines.
 
 ### Phase 2 `.dat` text summary/table scanner
 
@@ -146,6 +150,11 @@ The parser layer exposes deterministic parser diagnostics with these codes:
 - `FP_FORBIDDEN_PATH`
 - `FP_EXTERNAL_COMMAND_FORBIDDEN`
 - `FP_RESULT_DATASET_WRITE_FORBIDDEN`
+- `FP_STATUS_SCAN_ONLY`
+- `FP_STATUS_PATTERN_UNSUPPORTED`
+- `FP_STATUS_NO_RECOGNIZED_LINES`
+- `FP_STATUS_PARTIAL_SUMMARY`
+- `FP_STATUS_NUMERIC_VALUES_NOT_PARSED`
 
 ## Parser output model
 
@@ -204,7 +213,8 @@ Result import can map parser output into future ResultDataset contracts as:
 ## Future implementation slices
 
 - `OSW-EXP-031_FEASPEC_RESULT_PARSER_METADATA_SCANNER_IMPLEMENTATION`
-- `OSW-EXP-032_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
+- `OSW-EXP-032_FEASPEC_RESULT_PARSER_STA_CVG_STATUS_SCANNER`
+- `OSW-EXP-033_FEASPEC_RESULT_PARSER_DAT_MINIMAL_DESIGN`
 - `OSW-EXP-033_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN_OR_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
 

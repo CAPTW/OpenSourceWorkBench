@@ -30,6 +30,11 @@ def test_all_parser_diagnostic_codes_are_defined() -> None:
         "FP_SNIPPET_TRUNCATED",
         "FP_HASH_FAILED",
         "FP_METADATA_ONLY",
+        "FP_STATUS_SCAN_ONLY",
+        "FP_STATUS_PATTERN_UNSUPPORTED",
+        "FP_STATUS_NO_RECOGNIZED_LINES",
+        "FP_STATUS_PARTIAL_SUMMARY",
+        "FP_STATUS_NUMERIC_VALUES_NOT_PARSED",
     }
 
 

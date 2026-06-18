@@ -2696,6 +2696,7 @@ def _build_feaspec_calculix_result_import_preview(
         item.code is CalculiXResultImportDiagnosticCode.FI_PARSE_NOT_IMPLEMENTED
         for item in plan.diagnostics
     )
+    status_summary = _feaspec_calculix_result_import_status_summary(plan.artifacts)
     status_value = plan.status.value
     strict_blocked = (
         plan.status
@@ -2723,6 +2724,7 @@ def _build_feaspec_calculix_result_import_preview(
         "diagnostic_count": len(diagnostic_records),
         "provenance": plan.provenance.to_dict(),
         "dataset_draft": dataset_draft.to_dict(),
+        "status_summary": status_summary,
         "parse_not_implemented": parse_not_implemented,
         "solver_execution_performed": False,
         "source_run_solver_execution_performed": (
@@ -2734,12 +2736,66 @@ def _build_feaspec_calculix_result_import_preview(
         "limitations": [
             "Preview only; no files are written.",
             "No solver execution is performed by this command.",
-            "No numerical .dat or .frd parser is implemented.",
+            "No numerical .dat, .frd, .sta, or .cvg parser is implemented.",
+            "Status summaries from .sta/.cvg are text-only when present.",
             "No ResultDataset persistence or ProjectSchema mutation is performed.",
             "Issue #8 live CalculiX validation remains separate.",
             "External solvers are optional and not bundled.",
             "FEASpec CalculiX result import remains experimental.",
         ],
+    }
+
+
+def _feaspec_calculix_result_import_status_summary(
+    artifacts: Sequence[object],
+) -> dict[str, object]:
+    status_artifacts: list[dict[str, object]] = []
+    aggregate_counts: dict[str, int] = {}
+    completion_indicated = False
+    failure_indicated = False
+    numeric_tokens_not_parsed = False
+
+    for artifact in artifacts:
+        metadata = getattr(artifact, "metadata", {})
+        if not isinstance(metadata, Mapping):
+            continue
+        summary = metadata.get("status_summary")
+        if not isinstance(summary, Mapping):
+            continue
+        counts = summary.get("category_counts")
+        if isinstance(counts, Mapping):
+            for key, value in counts.items():
+                if isinstance(key, str) and isinstance(value, int):
+                    aggregate_counts[key] = aggregate_counts.get(key, 0) + value
+        completion_indicated = completion_indicated or bool(
+            summary.get("completion_indicated", False)
+        )
+        failure_indicated = failure_indicated or bool(
+            summary.get("failure_indicated", False)
+        )
+        numeric_tokens_not_parsed = numeric_tokens_not_parsed or bool(
+            summary.get("numeric_tokens_not_parsed", False)
+        )
+        kind = getattr(artifact, "kind", "")
+        kind_value = getattr(kind, "value", str(kind))
+        status_artifacts.append(
+            {
+                "filename": getattr(artifact, "filename", ""),
+                "kind": kind_value,
+                "summary": dict(summary),
+            }
+        )
+
+    return {
+        "available": bool(status_artifacts),
+        "file_count": len(status_artifacts),
+        "category_counts": aggregate_counts,
+        "completion_indicated": completion_indicated,
+        "failure_indicated": failure_indicated,
+        "numeric_tokens_not_parsed": numeric_tokens_not_parsed,
+        "files": status_artifacts,
+        "numerical_values_parsed": False,
+        "writes_files": False,
     }
 
 
@@ -2759,6 +2815,20 @@ def _print_feaspec_calculix_result_import_preview(
     print("Issue #8 remains separate.")
     print("External solvers are optional and not bundled.")
     print(f"Parse not implemented: {str(preview['parse_not_implemented']).lower()}")
+    status_summary = preview.get("status_summary", {})
+    if isinstance(status_summary, Mapping) and status_summary.get("available"):
+        print("Status summary: available")
+        print(f"Status files scanned: {status_summary.get('file_count', 0)}")
+        print(
+            "Status numeric values parsed: "
+            f"{str(status_summary.get('numerical_values_parsed', False)).lower()}"
+        )
+        counts = status_summary.get("category_counts", {})
+        if isinstance(counts, Mapping) and counts:
+            rendered = ", ".join(
+                f"{key}={value}" for key, value in sorted(counts.items())
+            )
+            print(f"Status category counts: {rendered}")
     print(
         "Source run solver execution performed: "
         f"{str(preview['source_run_solver_execution_performed']).lower()}"

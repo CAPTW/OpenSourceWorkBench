@@ -104,6 +104,13 @@ request should stop, park, or defer.
   ResultDataset persistence, solver execution, SolverAdapter/runner paths,
   ProjectSchema mutation, VLM APIs, issue `#8` closure, bundled solvers, and
   certification claims.
+- Experimental FEASpec CalculiX `.sta` / `.cvg` status scanning that classifies
+  text-only progress, convergence-message, warning, error, completion, failure,
+  informational, and unknown lines with bounded snippets and counts, while
+  still avoiding numeric convergence parsing, `.dat`/`.frd` numerical parsing,
+  ResultDataset persistence, solver execution, SolverAdapter/runner paths,
+  ProjectSchema mutation, live issue `#8` validation, bundled solvers, and
+  certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
@@ -194,6 +201,11 @@ request should stop, park, or defer.
 - Treating FEASpec CalculiX result import / run gate design as implemented
   result import, implemented run commands, SolverAdapter or runner integration,
   subprocess use, live `ccx` validation, release mutation, or permission to
+  execute solvers.
+- Treating FEASpec CalculiX `.sta` / `.cvg` status scanning as numerical
+  convergence parsing, `.dat`/`.frd` parser implementation, ResultDataset
+  persistence, live `ccx` validation, SolverAdapter/runner integration,
+  ProjectSchema mutation, engineering-correctness evidence, or permission to
   execute solvers.
 - Treating the FEASpec CalculiX installed-only run gate as result import,
   SolverAdapter integration, broad runner integration, GUI direct execution,

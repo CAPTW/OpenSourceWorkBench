@@ -13,6 +13,8 @@ No numerical parser. No ResultDataset write. No solver execution.
 
 - `src/osw/experimental/feaspec/calculix_result_metadata_scanner.py`
 - `src/osw/experimental/feaspec/calculix_result_parser_diagnostics.py`
+- `src/osw/experimental/feaspec/calculix_result_status_scanner.py` consumes this
+  metadata for `.sta` / `.cvg` text-only status summaries.
 
 ## Public API
 
@@ -76,12 +78,19 @@ The scanner uses `FP_*` diagnostics from
 - `FP_FORBIDDEN_PATH`
 - `FP_EXTERNAL_COMMAND_FORBIDDEN`
 - `FP_RESULT_DATASET_WRITE_FORBIDDEN`
+- `FP_STATUS_SCAN_ONLY`
+- `FP_STATUS_PATTERN_UNSUPPORTED`
+- `FP_STATUS_NO_RECOGNIZED_LINES`
+- `FP_STATUS_PARTIAL_SUMMARY`
+- `FP_STATUS_NUMERIC_VALUES_NOT_PARSED`
 
 ## Relationship to result import model
 
 - `inspect_calculix_result_directory` calls the file scanner for every discovered file.
 - Artifact metadata includes `result_parser` payload with byte size, hashes, snippets,
   parser phase, and parse-not-implemented flag.
+- `.sta` and `.cvg` artifacts may also include text-only `status_scan` and
+  `status_summary` payloads from the status scanner.
 - FI parse-not-implemented warnings remain warnings; no numerical parse is added.
 
 ## Safety boundary

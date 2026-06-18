@@ -225,6 +225,16 @@ by a dedicated release/tag gate.
   files, execute CalculiX, call SolverAdapter or runner code, mutate
   ProjectSchema, validate or close issue `#8`, add VLM APIs, bundle external
   solvers, or claim industrial certification.
+- Added an experimental FEASpec CalculiX `.sta` / `.cvg` status scanner under
+  `src/osw/experimental/feaspec/`. It classifies text-only progress,
+  convergence-message, warning, error, completion, failure, informational, and
+  unknown lines with bounded snippets and counts, enriches result-import
+  previews with status summaries, and preserves metadata scanner hashes and
+  limits. It does not parse numeric convergence values, parse `.dat`/`.frd`
+  numerical content, write ResultDataset files, execute CalculiX, call
+  SolverAdapter or runner code, mutate ProjectSchema, validate or close issue
+  `#8`, add VLM APIs, bundle external solvers, or claim industrial
+  certification.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA
