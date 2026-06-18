@@ -6,6 +6,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FEASPEC_SRC = REPO_ROOT / "src" / "osw" / "experimental" / "feaspec"
 MODEL_DOC = REPO_ROOT / "docs" / "experimental" / "feaspec_python_models.md"
+RUN_GATE_SOURCE = FEASPEC_SRC / "calculix_run_gate.py"
 
 
 def _source_texts() -> dict[Path, str]:
@@ -34,6 +35,9 @@ def test_feaspec_model_modules_do_not_import_gui_solver_or_network_api_modules()
         "google.generativeai",
     }
     for path, text in _source_texts().items():
+        forbidden_for_path = set(forbidden_import_roots)
+        if path == RUN_GATE_SOURCE:
+            forbidden_for_path.remove("subprocess")
         tree = ast.parse(text)
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -42,12 +46,15 @@ def test_feaspec_model_modules_do_not_import_gui_solver_or_network_api_modules()
                 imported = {node.module or ""}
             else:
                 continue
-            assert forbidden_import_roots.isdisjoint(imported), path
+            assert forbidden_for_path.isdisjoint(imported), path
 
 
 def test_feaspec_model_modules_do_not_execute_commands() -> None:
     forbidden_calls = {"run", "Popen", "system", "spawn", "execve"}
     for path, text in _source_texts().items():
+        forbidden_for_path = set(forbidden_calls)
+        if path == RUN_GATE_SOURCE:
+            forbidden_for_path.remove("run")
         tree = ast.parse(text)
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
@@ -57,7 +64,7 @@ def test_feaspec_model_modules_do_not_execute_commands() -> None:
                     name = func.attr
                 elif isinstance(func, ast.Name):
                     name = func.id
-                assert name not in forbidden_calls, path
+                assert name not in forbidden_for_path, path
 
 
 def test_feaspec_model_guardrail_text_does_not_claim_certification_or_stable_production() -> None:

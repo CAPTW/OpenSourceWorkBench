@@ -1060,3 +1060,29 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   mutation, VLM API, dependency install or upgrade, live `ccx` validation,
   issue mutation, release mutation, asset upload, tag mutation, or solver
   execution.
+
+## ADR-0056: FEASpec CalculiX Run Gate Is Installed-Only And Explicit
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-18
+- Context: The FEASpec no-run export bundle, human-review evidence, and
+  result-import/run-gate design define a path toward local CalculiX execution,
+  but the first implementation must not become a solver installer, broad
+  runner framework, ResultDataset importer, SolverAdapter handoff, GUI run
+  button, ProjectSchema mutation, live issue `#8` closure, or release
+  mutation.
+- Decision: Add an experimental installed-only run gate under
+  `src/osw/experimental/feaspec/`. The gate inspects an existing no-run export
+  bundle, defaults to dry-run, discovers only an already installed `ccx`,
+  requires explicit execute, run confirmation, README acknowledgement, timeout,
+  and isolated run directory before subprocess execution, then records stdout,
+  stderr, and `run_metadata.json` under the run directory. The CLI surface is
+  `feaspec-calculix-run-installed-only`; tests use fake `ccx` shims for
+  success, nonzero exit, timeout, missing executable, diagnostics, and JSON/text
+  CLI behavior.
+- Consequences: Real `ccx` smoke remains installed-only and
+  environment-dependent; issue `#8` stays open until a prepared validation gate
+  records live evidence. This gate adds no solver installation, dependency
+  installation, result import, SolverAdapter or broad runner integration,
+  ProjectSchema mutation, GUI direct execution, VLM API, release edit, asset
+  upload/delete, tag mutation, issue creation, or issue closure.

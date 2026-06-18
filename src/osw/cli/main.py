@@ -393,6 +393,58 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Create the final output directory if its parent already exists.",
     )
+    feaspec_calculix_run_parser = subparsers.add_parser(
+        "feaspec-calculix-run-installed-only",
+        help="Run or dry-run an installed-only CalculiX gate for a FEASpec export bundle.",
+        description=(
+            "Inspect a FEASpec CalculiX no-run export bundle and optionally run "
+            "installed ccx in an isolated runtime directory. The default mode is "
+            "dry-run: no files are written, no solver process is started, no solver "
+            "is installed, and issue #8 live validation remains separate."
+        ),
+    )
+    feaspec_calculix_run_parser.add_argument(
+        "--export-dir",
+        required=True,
+        help="FEASpec CalculiX no-run export bundle directory.",
+    )
+    feaspec_calculix_run_parser.add_argument(
+        "--execute",
+        action="store_true",
+        help="Start installed ccx after all run-gate confirmations pass.",
+    )
+    feaspec_calculix_run_parser.add_argument(
+        "--confirm-run",
+        action="store_true",
+        help="Confirm the user intentionally requests installed-only solver execution.",
+    )
+    feaspec_calculix_run_parser.add_argument(
+        "--acknowledge-readme",
+        action="store_true",
+        help="Acknowledge README_RUN_FIRST.txt has been reviewed.",
+    )
+    feaspec_calculix_run_parser.add_argument(
+        "--timeout-seconds",
+        type=float,
+        default=10.0,
+        help="Short bounded timeout for ccx execution; default 10 seconds.",
+    )
+    feaspec_calculix_run_parser.add_argument(
+        "--run-dir",
+        default="",
+        help="Empty isolated runtime directory. Defaults to a child of --export-dir.",
+    )
+    feaspec_calculix_run_parser.add_argument(
+        "--ccx",
+        default="",
+        help="Explicit installed ccx path. If omitted, PATH discovery is used.",
+    )
+    feaspec_calculix_run_parser.add_argument(
+        "--format",
+        default="text",
+        choices=("text", "json"),
+        help="Run gate output format.",
+    )
     human_review_create_parser = subparsers.add_parser(
         "feaspec-human-review-create",
         help="Create a FEASpec human review record JSON file.",
@@ -1375,6 +1427,22 @@ def main(argv: Sequence[str] | None = None) -> int:
         if export_record["export_status"] == "blocked":
             return 2
         return 0
+
+    if args.command == "feaspec-calculix-run-installed-only":
+        export_dir = Path(args.export_dir).expanduser()
+        if not export_dir.is_dir():
+            print(f"Error: export bundle directory is not readable: {export_dir}", file=sys.stderr)
+            return 1
+        try:
+            run_result = _run_feaspec_calculix_installed_only(args)
+        except (OSError, TypeError, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        if args.format == "json":
+            print(json.dumps(run_result.to_dict(), indent=2, sort_keys=True))
+        else:
+            _print_feaspec_calculix_installed_run(run_result)
+        return _feaspec_calculix_installed_run_exit_code(run_result)
 
     if args.command == "feaspec-human-review-create":
         try:
@@ -2509,6 +2577,44 @@ def _run_feaspec_calculix_export_write(
         "diagnostics": _feaspec_calculix_export_diagnostic_records(result),
         "limitations": _feaspec_calculix_export_write_limitations(),
     }
+
+
+def _run_feaspec_calculix_installed_only(args: argparse.Namespace) -> object:
+    from osw.experimental.feaspec.calculix_run_gate import (
+        run_calculix_installed_only,
+    )
+
+    return run_calculix_installed_only(
+        Path(args.export_dir),
+        ccx_path=Path(args.ccx) if args.ccx else None,
+        run_dir=Path(args.run_dir) if args.run_dir else None,
+        timeout_seconds=args.timeout_seconds,
+        execute=args.execute,
+        confirm_run=args.confirm_run,
+        acknowledge_readme=args.acknowledge_readme,
+    )
+
+
+def _print_feaspec_calculix_installed_run(result: object) -> None:
+    from osw.experimental.feaspec.calculix_run_gate import (
+        explain_calculix_run_result,
+    )
+
+    for line in explain_calculix_run_result(result):
+        print(line)
+    print("Limitations:")
+    metadata = getattr(result, "metadata", None)
+    for limitation in tuple(getattr(metadata, "limitations", ()) or ()):
+        print(f"  - {limitation}")
+
+
+def _feaspec_calculix_installed_run_exit_code(result: object) -> int:
+    status = str(getattr(getattr(result, "status", ""), "value", getattr(result, "status", "")))
+    metadata = getattr(result, "metadata", None)
+    execute_requested = bool(getattr(metadata, "execute_requested", False))
+    if not execute_requested:
+        return 1 if status == "blocked" else 0
+    return 0 if status in {"ran", "ran-with-warnings"} else 2
 
 
 def _load_feaspec_calculix_case_plan_json(path: Path) -> object:

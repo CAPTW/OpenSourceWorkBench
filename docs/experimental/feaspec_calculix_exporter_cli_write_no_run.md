@@ -180,12 +180,21 @@ close issue `#8`.
 
 Live CalculiX validation remains separate from the CLI write command.
 
-The next boundary is design-only:
+The next post-export sequencing boundary started as design-only:
 [FEASpec CalculiX result import and run gate design](feaspec_calculix_result_import_or_run_gate_design.md)
 defines separate future gates for human review, installed-only run, result
 import, and ResultDataset/report summary. It does not add a result importer,
 run command, SolverAdapter/runner/subprocess call, solver execution, or live
 issue `#8` validation.
+
+The installed-only run half is now implemented separately in
+[FEASpec CalculiX installed-only run gate](feaspec_calculix_run_gate_installed_only.md).
+That command validates an existing no-run export bundle, defaults to dry-run,
+requires explicit run authorization and README acknowledgement, uses only an
+already installed `ccx`, and writes runtime logs/metadata under an isolated
+run directory. It still does not import results, call SolverAdapter or broad
+runner code, mutate ProjectSchema, validate or close issue `#8`, install
+solvers, edit releases/assets/tags, or bundle external solver binaries.
 
 ## Non-Goals
 
@@ -201,5 +210,5 @@ issue `#8` validation.
 
 - `OSW-EXP-018_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
 - `OSW-EXP-019_FEASPEC_CALCULIX_RESULT_IMPORT_MODEL`
-- `OSW-EXP-020_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
-- `OSW-EXP-021_FEASPEC_CALCULIX_RESULT_IMPORT_CLI`
+- `OSW-EXP-027_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-028_FEASPEC_CALCULIX_RESULT_IMPORT_MODEL`

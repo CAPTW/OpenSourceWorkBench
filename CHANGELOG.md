@@ -196,6 +196,16 @@ by a dedicated release/tag gate.
   SolverAdapter/runner/subprocess path, ProjectSchema mutation, live issue
   `#8` validation, VLM API, dependency installation or upgrade, release
   mutation, or solver execution.
+- Added `feaspec-calculix-run-installed-only`, an experimental installed-only
+  FEASpec CalculiX run gate for existing no-run export bundles. It defaults to
+  dry-run, requires explicit `--execute`, `--confirm-run`, and
+  `--acknowledge-readme` before invoking an already installed `ccx`, writes
+  isolated runtime logs and `run_metadata.json`, and has fake-`ccx` tests for
+  success, nonzero exit, timeout, missing executable, invalid bundle, and CLI
+  behavior. It does not install solvers or dependencies, import results, call
+  SolverAdapter or runner code, mutate ProjectSchema, validate or close issue
+  `#8`, edit releases/assets/tags, add VLM APIs, bundle external solvers, or
+  claim industrial certification.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

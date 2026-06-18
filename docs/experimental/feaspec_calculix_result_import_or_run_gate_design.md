@@ -1,7 +1,11 @@
 # FEASpec CalculiX result import and run gate design
 
-Status: design-only. There is no result import implementation, no run gate
-implementation, and no solver execution in this gate.
+Status: design-only. This design gate had no result import implementation, no
+run gate implementation, and no solver execution. The installed-only run half
+has since landed as a separate experimental implementation documented in
+[FEASpec CalculiX installed-only run gate](feaspec_calculix_run_gate_installed_only.md);
+result import remains unimplemented and issue `#8` live validation remains
+separate.
 
 ## Release Context
 
@@ -26,6 +30,10 @@ layers:
   diagnostics JSON, and `README_RUN_FIRST.txt` while preserving
   `solver_execution_performed=false`.
 - CLI preview/write: expose no-run preview and explicit local bundle writing.
+- Installed-only run gate: validates an existing no-run bundle, defaults to
+  dry-run, requires explicit execute, confirmation, README acknowledgement,
+  installed `ccx`, timeout, and isolated run directory before execution, and
+  writes runtime metadata/logs without result import.
 - ResultDataset / report summary concepts: provide summary-first result
   inspection, artifact references, diagnostics, and report handoff after
   result artifacts already exist.
@@ -87,8 +95,7 @@ separate.
 
 ## Installed-Only Run Gate Preconditions
 
-A future installed-only run gate may proceed only when all preconditions are
-true:
+The installed-only run gate may proceed only when all preconditions are true:
 
 - the user explicitly requests the run gate;
 - `ccx` is installed and discovered on the prepared machine;
@@ -107,14 +114,13 @@ silently configure external solvers.
 
 ## Installed-Only Run Gate Outputs
 
-A future run gate should write only ignored runtime artifacts under an explicit
-run directory:
+The installed-only run gate writes only ignored runtime artifacts under an
+explicit run directory:
 
 - run metadata JSON;
 - stdout and stderr logs;
 - exit code;
 - generated CalculiX files if any;
-- updated run manifest;
 - no tracked solver outputs.
 
 The run metadata should preserve the export manifest hash, `.inp` file hash,
@@ -123,17 +129,26 @@ status, and artifact list.
 
 ## Run Gate Diagnostics
 
-Future run gate diagnostics reserve these codes:
+Run gate diagnostics use these `FR_*` codes:
 
 - `FR_RUN_NOT_AUTHORIZED`
+- `FR_EXECUTE_FLAG_REQUIRED`
+- `FR_CONFIRMATION_REQUIRED`
+- `FR_README_NOT_ACKNOWLEDGED`
 - `FR_CCX_MISSING`
+- `FR_CCX_NOT_EXECUTABLE`
 - `FR_EXPORT_BUNDLE_INVALID`
 - `FR_MANIFEST_MISSING`
-- `FR_README_NOT_REVIEWED`
+- `FR_INP_MISSING`
+- `FR_README_MISSING`
+- `FR_RUN_DIR_UNSAFE`
+- `FR_RUN_DIR_NOT_EMPTY`
 - `FR_TIMEOUT`
 - `FR_NONZERO_EXIT`
 - `FR_OUTPUT_MISSING`
 - `FR_FORBIDDEN_PATH`
+- `FR_METADATA_WRITE_FAILED`
+- `FR_PROCESS_START_FAILED`
 
 These diagnostics must be user-facing and serializable. Blocking diagnostics
 must prevent execution.
@@ -212,8 +227,10 @@ and visualization gate explicitly supports them.
 ## Relationship To Issue #8
 
 Issue `#8` remains open until installed-only `ccx` validation passes on a
-prepared machine. This design does not run live optional validation, does not
-validate a local `ccx` executable, and does not close issue `#8`.
+prepared machine. The installed-only run gate can exercise an already installed
+`ccx` for an explicit local bundle, but that local run gate is not issue
+closure by itself. This design does not run live optional validation, does not
+record issue `#8` pass evidence, and does not close issue `#8`.
 
 ## CLI Future
 
@@ -225,8 +242,10 @@ Future CLI command names may be:
 - `feaspec-calculix-run-installed-only`
 - `feaspec-calculix-result-import`
 
-The human-review commands are record-only and do not run solvers. The run and
-import commands are future only. This gate does not implement either command.
+The human-review commands are record-only and do not run solvers. The run
+command has since landed as the installed-only gate documented separately; the
+result import command remains future only. This design gate did not implement
+either command.
 
 The future run command must require explicit authorization, an export bundle,
 reviewed README status, isolated output directory, timeout, and installed
@@ -268,7 +287,7 @@ small fixture under an approved tests path.
 
 ## Future Implementation Slices
 
-- `OSW-EXP-018_FEASPEC_HUMAN_REVIEW_UI_DESIGN`
-- `OSW-EXP-019_FEASPEC_CALCULIX_RESULT_IMPORT_MODEL`
-- `OSW-EXP-020_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
-- `OSW-EXP-021_FEASPEC_CALCULIX_RESULT_IMPORT_CLI`
+- `OSW-EXP-027_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-028_FEASPEC_CALCULIX_RESULT_IMPORT_MODEL`
+- `OSW-EXP-029_FEASPEC_CALCULIX_RESULT_IMPORT_CLI`
+- `OSW-VALID-003_CALCULIX_LIVE_VALIDATION_PREPARED_MACHINE`

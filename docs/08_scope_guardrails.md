@@ -89,6 +89,14 @@ request should stop, park, or defer.
   does not implement result import, run commands, solver execution,
   SolverAdapter/runner/subprocess paths, ProjectSchema mutation, or issue `#8`
   closure.
+- Experimental FEASpec CalculiX installed-only run gate behavior that validates
+  existing no-run export bundles, defaults to dry-run, requires explicit
+  execute, run confirmation, and README acknowledgement before a discovered
+  `ccx` can be invoked, writes isolated runtime logs and metadata only under an
+  explicit run directory, and still does not install solvers, import results,
+  call SolverAdapter or broad runner code, mutate ProjectSchema, validate or
+  close issue `#8`, edit releases/assets/tags, bundle external solvers, or
+  claim certification.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
@@ -180,6 +188,12 @@ request should stop, park, or defer.
   result import, implemented run commands, SolverAdapter or runner integration,
   subprocess use, live `ccx` validation, release mutation, or permission to
   execute solvers.
+- Treating the FEASpec CalculiX installed-only run gate as result import,
+  SolverAdapter integration, broad runner integration, GUI direct execution,
+  dependency or solver installation, bundled solver evidence, live issue `#8`
+  closure, engineering-correctness evidence, certification, or permission to
+  bypass explicit export-bundle, confirmation, README, timeout, and isolated
+  run-directory checks.
 - Treating the FEASpec human review record model as a GUI implementation,
   result importer, run gate, SolverAdapter or runner integration,
   ProjectSchema mutation, VLM provider, credential surface, live `ccx`
@@ -264,6 +278,11 @@ Scope drift is any change that:
   runner behavior, subprocess or external command invocation, live `ccx`
   validation, dependency install, ProjectSchema mutation, release mutation, or
   issue closure without a separate gate;
+- turns the FEASpec CalculiX installed-only run gate into result import,
+  SolverAdapter integration, broad runner behavior, GUI direct execution,
+  dependency install, bundled-solver evidence, live issue `#8` closure,
+  ProjectSchema mutation, release mutation, hidden execution, or execution
+  without explicit run authorization and isolated runtime artifacts;
 - turns the FEASpec human review record model into GUI approval workflow, run
   gate behavior, result import behavior, SolverAdapter/runner integration,
   subprocess or external command invocation, live `ccx` validation,

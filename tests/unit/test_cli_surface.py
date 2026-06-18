@@ -27,6 +27,7 @@ EXPECTED_COMMANDS = {
     "calculix-check",
     "feaspec-calculix-export-preview",
     "feaspec-calculix-export-write",
+    "feaspec-calculix-run-installed-only",
     "feaspec-human-review-create",
     "feaspec-human-review-summary",
     "feaspec-human-review-validate",

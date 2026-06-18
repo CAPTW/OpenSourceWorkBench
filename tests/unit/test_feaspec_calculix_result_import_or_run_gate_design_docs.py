@@ -12,14 +12,23 @@ DESIGN_DOC = (
 
 REQUIRED_FR_CODES = {
     "FR_RUN_NOT_AUTHORIZED",
+    "FR_EXECUTE_FLAG_REQUIRED",
+    "FR_CONFIRMATION_REQUIRED",
+    "FR_README_NOT_ACKNOWLEDGED",
     "FR_CCX_MISSING",
+    "FR_CCX_NOT_EXECUTABLE",
     "FR_EXPORT_BUNDLE_INVALID",
     "FR_MANIFEST_MISSING",
-    "FR_README_NOT_REVIEWED",
+    "FR_INP_MISSING",
+    "FR_README_MISSING",
+    "FR_RUN_DIR_UNSAFE",
+    "FR_RUN_DIR_NOT_EMPTY",
     "FR_TIMEOUT",
     "FR_NONZERO_EXIT",
     "FR_OUTPUT_MISSING",
     "FR_FORBIDDEN_PATH",
+    "FR_METADATA_WRITE_FAILED",
+    "FR_PROCESS_START_FAILED",
 }
 
 REQUIRED_FI_CODES = {
@@ -81,7 +90,7 @@ def test_run_gate_outputs_and_diagnostics() -> None:
     assert "stdout and stderr logs" in text
     assert "exit code" in normalized
     assert "generated CalculiX files if any" in text
-    assert "updated run manifest" in normalized
+    assert "no tracked solver outputs" in normalized
     for code in REQUIRED_FR_CODES:
         assert code in text
 
@@ -131,18 +140,19 @@ def test_issue_8_remains_open_until_installed_only_validation() -> None:
 
     assert "issue `#8` remains open until installed-only `ccx` validation passes" in text
     assert "does not run live optional validation" in text
-    assert "does not validate a local `ccx` executable" in text
+    assert "does not record issue `#8` pass evidence" in text
     assert "does not close issue `#8`" in text
 
 
-def test_future_cli_is_design_only() -> None:
+def test_cli_separation_is_documented() -> None:
     text = _read()
     normalized = _normalized()
 
     assert "feaspec-calculix-run-installed-only" in text
     assert "feaspec-calculix-result-import" in text
-    assert "future only" in normalized
-    assert "this gate does not implement either command" in normalized
+    assert "run command has since landed as the installed-only gate" in normalized
+    assert "result import command remains future only" in normalized
+    assert "this design gate did not implement either command" in normalized
 
 
 def test_design_doc_does_not_claim_forbidden_maturity() -> None:
