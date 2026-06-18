@@ -218,14 +218,30 @@ completion.
 
 ## 18. Future GUI view-model proposal
 
-Future view-model only names:
+`OSW-EXP-022_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_VIEWMODEL` implements a pure
+Python, UI-agnostic view-model/action-state layer for the future dialog:
+
+- [FEASpec human review GUI dialog view-model](feaspec_human_review_gui_dialog_viewmodel.md)
+
+The view-model provides state objects, panel/action identifiers, diagnostic
+rows, warning rows, disabled reasons, record preview, and save-plan analysis.
+It still does not implement GUI source, PySide/Qt widgets, result import, a run
+gate, SolverAdapter or runner behavior, subprocess calls, ProjectSchema
+mutation, VLM APIs, dependency installation, issue mutation, or solver
+execution.
+
+Future widget-facing names remain:
 
 - `FEASpecHumanReviewDialogState`
 - `FEASpecHumanReviewDialogViewModel`
 - `FEASpecHumanReviewActionState`
 
-There is no implementation in this gate. A later view-model gate should define
-plain state objects before PySide6 widget behavior is added.
+Future view-model only evidence from `OSW-EXP-021` remains: there is no
+implementation in this gate for GUI widgets. `OSW-EXP-022` later adds only the
+UI-agnostic state/action layer and still does not add GUI source.
+
+There is no GUI implementation in this design gate. The later view-model gate
+defines plain state objects before PySide6 widget behavior is added.
 
 ## 19. Future implementation test plan
 

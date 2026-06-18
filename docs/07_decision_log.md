@@ -954,3 +954,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   mutation, or solver execution is added by this design gate. View-model,
   widget implementation, save integration, and installed-only run behavior
   require separate future gates.
+
+## ADR-0051: FEASpec Human Review Dialog View-Model Is UI-Agnostic
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-18
+- Context: ADR-0050 defined the future GUI dialog contract without PySide6
+  source. The next implementation step needs deterministic state and action
+  availability evidence that a later GUI can bind to while preserving CLI/GUI
+  semantics and the no-solver-execution boundary.
+- Decision: Add a pure Python FEASpec human review dialog view-model under
+  `src/osw/experimental/feaspec/`. The view-model computes panel identifiers,
+  diagnostic rows, warning rows, action availability with disabled reasons,
+  record preview, and save-plan path analysis from human-review evidence. It
+  exports only UI-agnostic state objects and helper functions.
+- Consequences: No PySide/Qt or GUI source, result import implementation, run
+  gate implementation, SolverAdapter or runner integration, subprocess or
+  external command invocation, ProjectSchema mutation, VLM API, dependency
+  install, live `ccx` validation, issue mutation, release mutation, asset
+  upload, tag mutation, or solver execution is added by this gate. Runtime GUI
+  widgets, save integration, result import, and installed-only run behavior
+  remain separate future gates.

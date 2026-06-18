@@ -268,3 +268,11 @@ actions, warning acceptance, record preview, and save behavior. It remains
 design-only and does not implement GUI classes, result import, a run gate,
 SolverAdapter or runner paths, subprocess calls, ProjectSchema mutation, VLM
 APIs, dependency installation, or solver execution.
+
+[FEASpec human review GUI dialog view-model](feaspec_human_review_gui_dialog_viewmodel.md)
+implements the pure Python state/action layer for that future GUI. It preserves
+the same record actions, diagnostic decisions, accepted-warning reasons, save
+path review, and no-run/run-gate separation while still avoiding PySide/Qt
+imports, GUI classes, result import, a run gate, SolverAdapter or runner
+behavior, subprocess calls, ProjectSchema mutation, VLM APIs, dependency
+installation, and solver execution.

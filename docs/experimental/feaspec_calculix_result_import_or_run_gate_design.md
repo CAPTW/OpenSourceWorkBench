@@ -76,6 +76,15 @@ source, result import, a run gate, SolverAdapter or runner behavior,
 subprocess calls, ProjectSchema mutation, VLM APIs, dependency installation, or
 solver execution.
 
+The
+[FEASpec human review GUI dialog view-model](feaspec_human_review_gui_dialog_viewmodel.md)
+adds the pure Python state/action layer for that dialog contract. It can
+evaluate disabled reasons and build record previews/save plans, but it still
+does not import PySide/Qt, implement result import, implement an installed-only
+run gate, call SolverAdapter or runner paths, invoke subprocess APIs, mutate
+ProjectSchema, or execute CalculiX. Issue `#8` live validation remains
+separate.
+
 ## Installed-Only Run Gate Preconditions
 
 A future installed-only run gate may proceed only when all preconditions are

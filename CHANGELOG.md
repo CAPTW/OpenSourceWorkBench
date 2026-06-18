@@ -155,6 +155,14 @@ by a dedicated release/tag gate.
   GUI source, result import, run-gate behavior, SolverAdapter/runner/subprocess
   paths, ProjectSchema mutation, live issue `#8` validation, VLM APIs,
   dependency installation, or solver execution.
+- Added an experimental pure Python FEASpec human review dialog view-model
+  layer under `src/osw/experimental/feaspec/`. It computes dialog panels,
+  diagnostic rows, warning acceptance rows, action availability and disabled
+  reasons, record previews, and save-path plans for a future GUI while avoiding
+  PySide/Qt imports, GUI source mutation, result import, run-gate behavior,
+  SolverAdapter/runner/subprocess paths, exporter/renderer side effects,
+  ProjectSchema mutation, live issue `#8` validation, VLM APIs, dependency
+  installation, and solver execution.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

@@ -271,3 +271,10 @@ dialog entry points, panels, warning acceptance, approval gating, and record
 preview; it does not add GUI source, result import, run-gate behavior,
 ProjectSchema mutation, SolverAdapter or runner calls, VLM APIs, dependency
 installation, or solver execution.
+
+The
+[FEASpec human review GUI dialog view-model](feaspec_human_review_gui_dialog_viewmodel.md)
+adds a pure Python binding layer around this record model. It constructs
+deterministic dialog state, action availability, diagnostic rows, warning rows,
+record previews, and save plans without writing files or importing GUI, solver,
+runner, exporter, renderer, VLM, credential, or ProjectSchema mutation paths.

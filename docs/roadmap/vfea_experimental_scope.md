@@ -121,6 +121,15 @@ behavior, and CLI/GUI consistency without adding GUI implementation, result
 import, run-gate behavior, ProjectSchema mutation, VLM APIs, dependency
 installation, or solver execution.
 
+The
+[FEASpec human review GUI dialog view-model](../experimental/feaspec_human_review_gui_dialog_viewmodel.md)
+adds a pure Python, UI-agnostic state/action layer for that future dialog. It
+computes panels, diagnostic rows, warning rows, action availability, record
+preview, and save-plan analysis without importing PySide/Qt, adding GUI source,
+implementing result import or run-gate behavior, mutating ProjectSchema,
+calling SolverAdapter/runner/subprocess paths, adding VLM APIs, or executing
+solvers.
+
 ### Approved FEASpec
 
 An approved FEASpec is a reviewed input object for normal OSW workflows. It is

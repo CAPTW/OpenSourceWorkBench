@@ -175,6 +175,12 @@ does not add GUI implementation, result import, run gate behavior, SolverAdapter
 or runner integration, subprocess calls, ProjectSchema mutation, VLM APIs,
 dependency installation, or solver execution.
 
+[FEASpec human review GUI dialog view-model](feaspec_human_review_gui_dialog_viewmodel.md)
+now implements the UI-agnostic state/action layer under the experimental
+FEASpec package. It is not a PySide/Qt widget implementation and does not add
+result import, a run gate, solver execution, ProjectSchema mutation, VLM APIs,
+dependency installation, or live issue `#8` validation.
+
 ## 19. Non-goals
 
 - No GUI implementation.
