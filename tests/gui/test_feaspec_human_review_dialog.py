@@ -266,7 +266,7 @@ def test_safety_copy_states_no_side_effect_boundaries(app: object) -> None:
     assert "External solvers are optional and not bundled." in text
     assert "Issue #8 live validation remains separate." in text
     assert "No industrial certification or production accuracy claim." in text
-    assert "Record save uses an explicit JSON path only; no file dialog." in text
+    assert "Record save uses a review-record JSON file dialog or explicit JSON path." in text
     assert "Record save does not write export bundles, .inp files, or solver outputs." in text
 
 

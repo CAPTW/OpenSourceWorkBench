@@ -294,6 +294,15 @@ save-plan integration, error handling, and implementation tests without adding
 execution, SolverAdapter/runner/subprocess paths, ProjectSchema mutation, VLM
 APIs, dependency changes, issue mutation, or release mutation.
 
+`OSW-EXP-026_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG_IMPLEMENTATION` then adds:
+
+- [FEASpec human review GUI file dialog implementation](feaspec_human_review_gui_file_dialog_implementation.md)
+
+That implementation is limited to review-record JSON path selection. It writes
+nothing until the existing save integration runs, and it adds no export bundle,
+`.inp`, result import, run gate, SolverAdapter/runner/subprocess path,
+ProjectSchema mutation, VLM API, issue `#8` validation, or solver execution.
+
 ## 20. Non-goals
 
 - No GUI implementation.

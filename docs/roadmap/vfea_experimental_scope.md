@@ -419,5 +419,12 @@ result import, run gate implementation, SolverAdapter/runner/subprocess path,
 ProjectSchema mutation, VLM API, issue `#8` validation, issue mutation, or
 solver execution.
 
+[FEASpec human review GUI file dialog implementation](../experimental/feaspec_human_review_gui_file_dialog_implementation.md)
+implements that chooser as review-record JSON path selection only. Choosing a
+path updates the existing save plan and writes nothing until the existing save
+integration runs. It adds no export bundle write, `.inp` write, result import,
+run gate, SolverAdapter/runner/subprocess path, ProjectSchema mutation, VLM
+API, issue `#8` validation, issue mutation, or solver execution.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

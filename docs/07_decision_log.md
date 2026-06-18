@@ -1038,3 +1038,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   live `ccx` validation, issue mutation, release mutation, asset upload, tag
   mutation, or solver execution is added by this gate. Future file-dialog
   implementation requires a separate prompt and focused GUI tests.
+
+## ADR-0055: FEASpec Human Review File Dialog Is Review-Record JSON Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-18
+- Context: ADR-0054 defined the path chooser contract for the human-review
+  GUI. The next safe implementation step is a file dialog for selecting one
+  review-record JSON save path while preserving the existing save integration
+  and avoiding export/run/result behavior.
+- Decision: Add a mockable `QFileDialog.getSaveFileName` path chooser to
+  `FEASpecHumanReviewDialog`. The chooser uses a deterministic sanitized
+  default filename, a narrow JSON filter, cancel no-op behavior, missing-parent
+  guards, non-JSON and `.inp` rejection, explicit overwrite confirmation, and
+  the existing view-model save plan.
+- Consequences: Choosing a path writes nothing. The GUI can still write only
+  one validated FEASpec human-review JSON record through the existing save
+  integration. This gate adds no export bundle write, `.inp` write, result
+  import implementation, installed-only run gate, SolverAdapter or runner
+  integration, subprocess or external command invocation, ProjectSchema
+  mutation, VLM API, dependency install or upgrade, live `ccx` validation,
+  issue mutation, release mutation, asset upload, tag mutation, or solver
+  execution.

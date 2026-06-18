@@ -168,3 +168,10 @@ solver execution.
 defines the future path-chooser contract for selecting the explicit JSON review
 record save path. It remains design-only, adds no PySide/Qt source behavior,
 and keeps the view-model save plan as the single source of disabled reasons.
+
+[FEASpec human review GUI file dialog implementation](feaspec_human_review_gui_file_dialog_implementation.md)
+implements that chooser as review-record JSON path selection only. Choosing a
+path updates the existing save plan and writes nothing until the save
+integration is triggered. It adds no export bundle write, `.inp` write, result
+import, run gate, SolverAdapter/runner/subprocess path, ProjectSchema mutation,
+VLM API, or solver execution.

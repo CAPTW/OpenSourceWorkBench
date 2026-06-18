@@ -300,3 +300,9 @@ defines a future path chooser for that explicit JSON save path. It is
 design-only and adds no `QFileDialog` usage, GUI source mutation, export bundle
 write, result import, run gate, SolverAdapter or runner behavior, subprocess
 calls, ProjectSchema mutation, VLM APIs, or solver execution.
+
+[FEASpec human review GUI file dialog implementation](feaspec_human_review_gui_file_dialog_implementation.md)
+implements that chooser as review-record JSON path selection only. The chooser
+writes nothing, updates the existing save plan, and leaves export bundles,
+`.inp` files, result import, run gates, SolverAdapter/runner/subprocess paths,
+ProjectSchema mutation, VLM APIs, and solver execution out of scope.

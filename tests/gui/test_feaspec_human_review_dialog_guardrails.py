@@ -31,6 +31,12 @@ SAVE_DOC = (
     / "experimental"
     / "feaspec_human_review_gui_save_integration.md"
 )
+FILE_DIALOG_IMPLEMENTATION_DOC = (
+    REPO_ROOT
+    / "docs"
+    / "experimental"
+    / "feaspec_human_review_gui_file_dialog_implementation.md"
+)
 
 
 def _module_source() -> str:
@@ -58,6 +64,8 @@ def _docs_text() -> str:
             + VIEWMODEL_DOC.read_text(encoding="utf-8")
             + "\n"
             + SAVE_DOC.read_text(encoding="utf-8")
+            + "\n"
+            + FILE_DIALOG_IMPLEMENTATION_DOC.read_text(encoding="utf-8")
         )
         .lower()
         .split()
@@ -104,12 +112,13 @@ def test_dialog_does_not_import_exporter_renderer_or_result_import_paths() -> No
 def test_dialog_does_not_write_files_or_open_file_dialogs() -> None:
     source = _module_source()
 
-    assert "QFileDialog" not in source
+    assert "QFileDialog.getSaveFileName" in source
+    assert "QFileDialog.getOpenFileName" not in source
+    assert "QFileDialog.getExistingDirectory" not in source
     assert "dump_human_review_record" in source
     assert ".write_text(" not in source
     assert ".write_bytes(" not in source
     assert "open(" not in source
-    assert "Path(" not in source
 
 
 def test_dialog_does_not_mutate_projectschema_or_provider_credentials() -> None:
@@ -131,7 +140,7 @@ def test_docs_describe_read_only_no_side_effect_gui() -> None:
 
     assert "read-only gui dialog implemented" in text
     assert "explicit json review-record save implemented" in text
-    assert "no file dialog" in text
+    assert "review-record json file dialog" in text
     assert "no export bundle" in text
     assert "no result import implementation" in text
     assert "no installed-only run gate implementation" in text
@@ -148,3 +157,18 @@ def test_docs_keep_release_and_validation_claims_bounded() -> None:
     assert "stable production release" not in text
     assert "stable production ready" not in text
     assert "live calculix validation passed" not in text
+
+
+def test_file_dialog_docs_keep_review_record_json_boundary() -> None:
+    text = _docs_text()
+
+    assert "review-record json file dialog" in text
+    assert "review-record json path selection only" in text
+    assert "choosing a path does not write" in text
+    assert "no export bundle" in text
+    assert "no `.inp`" in text
+    assert "no solver execution" in text
+    assert "issue `#8` live validation remains separate" in text
+    assert "no bundled external solver" in text
+    assert "industrial certification" in text
+    assert "industrial certification claim" not in text

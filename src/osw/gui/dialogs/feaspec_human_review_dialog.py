@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+import re
+from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
 from typing import Any
 
 from osw.experimental.feaspec.human_review import (
@@ -27,6 +29,21 @@ except ModuleNotFoundError:
     QtWidgets = None
 
 _BaseDialog: Any = QtWidgets.QDialog if QtWidgets is not None else object
+_REVIEW_RECORD_SUFFIX = ".human_review.json"
+_REVIEW_RECORD_FILTER = (
+    "FEASpec human review records (*.human_review.json *.json);;JSON files (*.json)"
+)
+_FALLBACK_REVIEW_RECORD_NAME = "feaspec-human-review"
+_UNSAFE_FILENAME_CHARS = re.compile(r"[\s\\/:*?\"<>|\x00-\x1f]+")
+_FILENAME_SAFE_CHARS = re.compile(r"[^A-Za-z0-9._-]+")
+_WINDOWS_RESERVED_NAMES = {
+    "con",
+    "prn",
+    "aux",
+    "nul",
+    *(f"com{index}" for index in range(1, 10)),
+    *(f"lpt{index}" for index in range(1, 10)),
+}
 
 
 class FEASpecHumanReviewDialog(_BaseDialog):
@@ -40,6 +57,8 @@ class FEASpecHumanReviewDialog(_BaseDialog):
         save_path: object | None = None,
         overwrite: bool = False,
         theme_tokens: ThemeTokens | None = None,
+        save_path_dialog_provider: Callable[[str, str, str], object] | None = None,
+        overwrite_confirmation_provider: Callable[[str], bool] | None = None,
     ) -> None:
         if QtCore is None or QtWidgets is None:
             raise PySide6UnavailableError(pyside6_missing_message())
@@ -53,6 +72,8 @@ class FEASpecHumanReviewDialog(_BaseDialog):
         self._last_save_status = "idle"
         self._last_save_error = ""
         self._saved_record_path = ""
+        self._save_path_dialog_provider = save_path_dialog_provider
+        self._overwrite_confirmation_provider = overwrite_confirmation_provider
         self._state = _normalize_state(
             state,
             save_path=self._save_path,
@@ -156,6 +177,62 @@ class FEASpecHumanReviewDialog(_BaseDialog):
         self._overwrite_enabled = bool(enabled)
         self._set_save_status("idle", "")
         self.set_state(self._state)
+
+    def review_record_file_filter(self) -> str:
+        return _REVIEW_RECORD_FILTER
+
+    def suggested_review_record_filename(self) -> str:
+        return _safe_review_record_filename(self._state.source_feaspec_id)
+
+    def default_review_record_save_path(self) -> str:
+        current_path = self._state.save_plan.path or str(self._save_path or "")
+        if current_path:
+            return current_path
+        return str(Path.cwd() / self.suggested_review_record_filename())
+
+    def current_save_path(self) -> str:
+        return self._state.save_plan.path
+
+    def choose_review_record_save_path(self) -> bool:
+        selected = self._select_review_record_save_path()
+        selected_text = _selected_path_text(selected)
+        if not selected_text:
+            self._set_save_status("canceled", "Save path selection canceled.")
+            return False
+
+        normalized_path, error = _normalize_selected_review_record_path(selected_text)
+        if normalized_path is None:
+            self._set_save_status("error", error)
+            return False
+
+        if normalized_path.exists() and normalized_path.is_dir():
+            self._set_save_status("error", "selected path is a directory")
+            return False
+
+        if not normalized_path.parent.exists():
+            self._save_path = normalized_path
+            self._overwrite_enabled = False
+            self._saved_record_path = ""
+            self.set_state(self._state)
+            self._set_save_status("error", "parent directory does not exist")
+            return False
+
+        overwrite = False
+        if normalized_path.exists():
+            if not self._confirm_review_record_overwrite(str(normalized_path)):
+                self._set_save_status("canceled", "Overwrite canceled.")
+                return False
+            overwrite = True
+
+        self._save_path = normalized_path
+        self._overwrite_enabled = overwrite
+        self._saved_record_path = ""
+        self.set_state(self._state)
+        self._set_save_status(
+            "selected",
+            f"Selected human review record path: {normalized_path}",
+        )
+        return True
 
     def trigger_save_record(self) -> bool:
         availability = self._state.availability_for(HumanReviewDialogAction.SAVE_RECORD)
@@ -277,6 +354,19 @@ class FEASpecHumanReviewDialog(_BaseDialog):
             button_grid.addWidget(button, index // 2, index % 2)
         layout.addLayout(button_grid)
 
+        save_path_row = QtWidgets.QHBoxLayout()
+        self.choose_save_path_button = QtWidgets.QPushButton(
+            "Choose Save Path...",
+            self.review_actions_panel,
+        )
+        self.choose_save_path_button.setObjectName(
+            "oswFeaspecHumanReviewChooseSavePathButton"
+        )
+        self.choose_save_path_button.clicked.connect(self.choose_review_record_save_path)
+        save_path_row.addWidget(self.choose_save_path_button)
+        save_path_row.addStretch(1)
+        layout.addLayout(save_path_row)
+
         save_button = self._buttons[HumanReviewDialogAction.SAVE_RECORD]
         save_button.clicked.connect(lambda: self.trigger_save_record())
         self.save_status_label = QtWidgets.QLabel("", self.review_actions_panel)
@@ -324,7 +414,9 @@ class FEASpecHumanReviewDialog(_BaseDialog):
 
     def _set_save_status(self, status: str, message: str) -> None:
         self._last_save_status = status
-        self._last_save_error = "" if status == "saved" else message
+        self._last_save_error = (
+            "" if status in {"saved", "idle", "selected", "canceled"} else message
+        )
         if hasattr(self, "save_status_label"):
             self.save_status_label.setText(message)
 
@@ -338,6 +430,32 @@ class FEASpecHumanReviewDialog(_BaseDialog):
         except ValueError:
             return None
         return self._buttons.get(dialog_action)
+
+    def _select_review_record_save_path(self) -> object:
+        title = "Save FEASpec Human Review Record"
+        default_path = self.default_review_record_save_path()
+        file_filter = self.review_record_file_filter()
+        if self._save_path_dialog_provider is not None:
+            return self._save_path_dialog_provider(title, default_path, file_filter)
+        selected, _selected_filter = QtWidgets.QFileDialog.getSaveFileName(
+            self,
+            title,
+            default_path,
+            file_filter,
+        )
+        return selected
+
+    def _confirm_review_record_overwrite(self, path: str) -> bool:
+        if self._overwrite_confirmation_provider is not None:
+            return bool(self._overwrite_confirmation_provider(path))
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Overwrite Human Review Record",
+            f"Overwrite existing FEASpec human review record?\n{path}",
+            QtWidgets.QMessageBox.StandardButton.Yes
+            | QtWidgets.QMessageBox.StandardButton.No,
+        )
+        return reply == QtWidgets.QMessageBox.StandardButton.Yes
 
 
 def _normalize_state(
@@ -459,7 +577,7 @@ def _safety_text() -> str:
             "External solvers are optional and not bundled.",
             "Issue #8 live validation remains separate.",
             "No industrial certification or production accuracy claim.",
-            "Record save uses an explicit JSON path only; no file dialog.",
+            "Record save uses a review-record JSON file dialog or explicit JSON path.",
             "Record save does not write export bundles, .inp files, or solver outputs.",
         ]
     )
@@ -489,6 +607,61 @@ def _button_object_name(action: HumanReviewDialogAction) -> str:
         HumanReviewDialogAction.SAVE_RECORD: "oswFeaspecHumanReviewSaveRecordButton",
     }
     return names[action]
+
+
+def _selected_path_text(selected: object) -> str:
+    if isinstance(selected, str):
+        return selected.strip()
+    if isinstance(selected, Path):
+        return str(selected)
+    if isinstance(selected, Sequence) and not isinstance(selected, str | bytes):
+        if not selected:
+            return ""
+        return _selected_path_text(selected[0])
+    if selected is None:
+        return ""
+    return str(selected).strip()
+
+
+def _normalize_selected_review_record_path(path_text: str) -> tuple[Path | None, str]:
+    if _contains_control_char(path_text):
+        return None, "review record path contains control characters"
+    candidate = Path(path_text)
+    if not candidate.name:
+        return None, "review record path must include a filename"
+    if _contains_control_char(candidate.name):
+        return None, "review record filename contains control characters"
+    if _has_unsafe_filename_chars(candidate.name):
+        return None, "review record filename contains unsafe characters"
+    if any(suffix.casefold() == ".inp" for suffix in candidate.suffixes):
+        return None, "review record path must not target .inp files"
+    if not candidate.suffix:
+        candidate = candidate.with_name(candidate.name + _REVIEW_RECORD_SUFFIX)
+    elif candidate.suffix.casefold() != ".json":
+        return None, "human review records must use a .json path"
+    return candidate, ""
+
+
+def _safe_review_record_filename(source_feaspec_id: str) -> str:
+    stem = _UNSAFE_FILENAME_CHARS.sub("-", str(source_feaspec_id).strip())
+    stem = _FILENAME_SAFE_CHARS.sub("-", stem)
+    stem = re.sub("-+", "-", stem).strip(" .-_")
+    if (
+        not stem
+        or stem in {".", ".."}
+        or stem.casefold() in _WINDOWS_RESERVED_NAMES
+    ):
+        stem = _FALLBACK_REVIEW_RECORD_NAME
+    return f"{stem}{_REVIEW_RECORD_SUFFIX}"
+
+
+def _contains_control_char(value: str) -> bool:
+    return any(ord(character) < 32 for character in value)
+
+
+def _has_unsafe_filename_chars(filename: str) -> bool:
+    unsafe_characters = set('\\/:*?"<>|')
+    return any(character in unsafe_characters for character in filename)
 
 
 __all__ = ["FEASpecHumanReviewDialog"]

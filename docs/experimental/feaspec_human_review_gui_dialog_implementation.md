@@ -10,7 +10,7 @@ FEASpec human review GUI dialog implementation
 - Bound to the existing pure Python human-review dialog view-model.
 - Explicit JSON review-record save implemented when a caller provides a safe
   path.
-- No file dialog.
+- Review-record JSON file dialog path selection implemented.
 - No result import implementation.
 - No installed-only run gate implementation.
 - No solver execution.
@@ -124,7 +124,7 @@ The safety panel states:
 - external solvers are optional and not bundled;
 - issue `#8` live validation remains separate;
 - no industrial certification or production accuracy claim;
-- record save uses an explicit JSON path only and no file dialog.
+- record save uses a review-record JSON file dialog or explicit JSON path.
 
 VFEA remains experimental. This dialog is not evidence of live CalculiX
 validation and is not an authorization to run a solver.
@@ -138,8 +138,9 @@ record at an explicit caller-provided path.
 
 The follow-up
 [FEASpec human review GUI file dialog design](feaspec_human_review_gui_file_dialog_design.md)
-defines a future path chooser for that explicit JSON save path. It is
-design-only and adds no `QFileDialog` usage, GUI source mutation, export bundle
+defined the path chooser for that explicit JSON save path. The follow-up
+[FEASpec human review GUI file dialog implementation](feaspec_human_review_gui_file_dialog_implementation.md)
+adds review-record JSON file dialog selection only. It adds no export bundle
 write, result import, run gate, SolverAdapter/runner/subprocess path,
 ProjectSchema mutation, VLM API, or solver execution.
 
@@ -168,7 +169,7 @@ effects.
 
 This gate adds no:
 
-- file dialog;
+- export bundle chooser;
 - result import implementation;
 - installed-only run gate implementation;
 - CalculiX execution;
@@ -187,6 +188,6 @@ claimed.
 
 - [FEASpec human review GUI save integration](feaspec_human_review_gui_save_integration.md)
 - [FEASpec human review GUI file dialog design](feaspec_human_review_gui_file_dialog_design.md)
-- `OSW-EXP-026_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG_IMPLEMENTATION`
+- [FEASpec human review GUI file dialog implementation](feaspec_human_review_gui_file_dialog_implementation.md)
 - `OSW-EXP-027_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
 - `OSW-EXP-028_FEASPEC_RESULT_IMPORT_MODEL`

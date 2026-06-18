@@ -7,13 +7,14 @@ FEASpec human review GUI save integration
 ## 2. Status
 
 - Experimental JSON review-record save implemented.
-- No file dialog.
+- Review-record JSON file dialog path selection is implemented in a follow-up gate.
 - No solver execution.
 
 The GUI save path writes one FEASpec human-review JSON record to an explicit
-caller-provided path. It does not select files for the user, create parent
-directories, write export bundles, write `.inp` files, import results, request
-runs, or execute solvers.
+caller-provided or review-record JSON file-dialog-selected path. The chooser
+only updates the existing save plan and does not write by itself. The save path
+does not create parent directories, write export bundles, write `.inp` files,
+import results, request runs, or execute solvers.
 
 ## 3. Release context
 
@@ -31,7 +32,7 @@ runs, or execute solvers.
 
 ## 5. Save behavior
 
-- Explicit path only.
+- Explicit caller path or review-record JSON file-dialog-selected path only.
 - Overwrite is blocked unless the dialog is constructed or configured with
   overwrite enabled.
 - Parent directories are not created implicitly.
@@ -53,7 +54,7 @@ Disabled reasons are shown in the action summary and save button tooltip.
 
 ## 7. Safety boundary
 
-- No file dialog.
+- File dialog is limited to review-record JSON path selection.
 - No export bundle.
 - No `.inp`.
 - No solver execution.
@@ -88,7 +89,7 @@ drift.
 
 ## 9. Non-goals
 
-- No file dialog in this gate.
+- No export bundle chooser.
 - No run gate.
 - No result import.
 - No export write from the GUI.
@@ -100,6 +101,6 @@ drift.
 ## 10. Next implementation slices
 
 - [FEASpec human review GUI file dialog design](feaspec_human_review_gui_file_dialog_design.md)
-- `OSW-EXP-026_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG_IMPLEMENTATION`
+- [FEASpec human review GUI file dialog implementation](feaspec_human_review_gui_file_dialog_implementation.md)
 - `OSW-EXP-027_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
 - `OSW-EXP-028_FEASPEC_RESULT_IMPORT_MODEL`

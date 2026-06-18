@@ -303,3 +303,11 @@ defines the future file-dialog behavior for choosing that explicit JSON review
 record path. It is design-only and does not add `QFileDialog` usage, GUI source
 mutation, result import, run gate behavior, SolverAdapter or runner calls, VLM
 APIs, ProjectSchema mutation, issue `#8` validation, or solver execution.
+
+[FEASpec human review GUI file dialog implementation](feaspec_human_review_gui_file_dialog_implementation.md)
+implements that path chooser as review-record JSON selection only. It updates
+the existing save plan, writes nothing on path choice, and keeps the actual
+write limited to one validated review JSON record through the existing save
+integration. It adds no export bundle, `.inp`, result import, run gate,
+SolverAdapter/runner/subprocess path, ProjectSchema mutation, VLM API, issue
+`#8` validation, or solver execution.

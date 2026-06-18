@@ -187,6 +187,15 @@ by a dedicated release/tag gate.
   export bundle writes, result import, run gates, SolverAdapter/runner paths,
   ProjectSchema mutation, live issue `#8` validation, VLM APIs, dependency
   changes, release mutation, or solver execution.
+- Added FEASpec human review GUI file-dialog implementation for review-record
+  JSON save-path selection only. The chooser is mockable in tests, uses a
+  deterministic sanitized default filename and narrow JSON filter, treats
+  cancel as no-op, requires overwrite confirmation, creates no parent
+  directories, writes nothing until the existing save integration is triggered,
+  and adds no export bundle write, `.inp` write, result import, run gate,
+  SolverAdapter/runner/subprocess path, ProjectSchema mutation, live issue
+  `#8` validation, VLM API, dependency installation or upgrade, release
+  mutation, or solver execution.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA
