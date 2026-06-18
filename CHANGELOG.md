@@ -163,6 +163,14 @@ by a dedicated release/tag gate.
   SolverAdapter/runner/subprocess paths, exporter/renderer side effects,
   ProjectSchema mutation, live issue `#8` validation, VLM APIs, dependency
   installation, and solver execution.
+- Added a read-only FEASpec human review GUI dialog under `src/osw/gui/dialogs/`
+  that binds to the existing view-model. It renders source evidence,
+  diagnostics, warning rows, disabled action reasons, safety copy, and record
+  preview only. It adds no record save integration, file dialog, result import
+  implementation, installed-only run gate implementation, SolverAdapter/runner
+  or subprocess path, ProjectSchema mutation, live issue `#8` validation, VLM
+  API, dependency installation or upgrade, release mutation, or solver
+  execution.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

@@ -146,6 +146,11 @@ that live optional validation passed.
 
 ## 12. Future implementation slices
 
-- `OSW-EXP-023_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION`
+- `OSW-EXP-023_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION` added a
+  read-only GUI dialog implemented in `src/osw/gui/dialogs/` and bound to this
+  view-model. The dialog adds no record save integration, no file dialog, no
+  result import implementation, no installed-only run gate implementation, no
+  SolverAdapter/runner/subprocess path, no ProjectSchema mutation, no VLM API,
+  and no solver execution.
 - `OSW-EXP-024_FEASPEC_HUMAN_REVIEW_GUI_SAVE_INTEGRATION`
 - `OSW-EXP-025_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`

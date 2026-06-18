@@ -278,3 +278,10 @@ adds a pure Python binding layer around this record model. It constructs
 deterministic dialog state, action availability, diagnostic rows, warning rows,
 record previews, and save plans without writing files or importing GUI, solver,
 runner, exporter, renderer, VLM, credential, or ProjectSchema mutation paths.
+
+The
+[FEASpec human review GUI dialog implementation](feaspec_human_review_gui_dialog_implementation.md)
+adds the first read-only PySide6 dialog that displays this evidence. The dialog
+does not save review records, open file dialogs, import results, request or run
+CalculiX, call SolverAdapter or runner code, mutate ProjectSchema, add VLM
+APIs, install dependencies, close issue `#8`, or execute solvers.

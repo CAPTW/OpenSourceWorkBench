@@ -276,3 +276,11 @@ path review, and no-run/run-gate separation while still avoiding PySide/Qt
 imports, GUI classes, result import, a run gate, SolverAdapter or runner
 behavior, subprocess calls, ProjectSchema mutation, VLM APIs, dependency
 installation, and solver execution.
+
+[FEASpec human review GUI dialog implementation](feaspec_human_review_gui_dialog_implementation.md)
+adds a read-only PySide6 dialog bound to the view-model. It renders panels,
+diagnostics, warning rows, disabled action reasons, safety copy, and record
+preview only. It adds no record save integration, no file dialog, no result
+import implementation, no installed-only run gate implementation, no
+SolverAdapter or runner behavior, no subprocess calls, no ProjectSchema
+mutation, no VLM APIs, and no solver execution.

@@ -392,5 +392,14 @@ separate gates; issue `#8` remains the live CalculiX validation track; and the
 design does not add solver execution, SolverAdapter/runner/subprocess calls,
 ProjectSchema mutation, VLM APIs, release mutation, or issue closure.
 
+Human review GUI evidence:
+[FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
+adds a read-only PySide6 dialog that renders existing human-review view-model
+state, diagnostics, warning rows, disabled action reasons, safety copy, and
+record preview. It does not add record save integration, file dialogs, result
+import, installed-only run gates, SolverAdapter/runner/subprocess paths,
+ProjectSchema mutation, VLM APIs, release mutation, issue mutation, issue `#8`
+live validation, or solver execution.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

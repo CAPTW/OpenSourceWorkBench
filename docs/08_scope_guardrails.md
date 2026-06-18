@@ -274,6 +274,12 @@ Scope drift is any change that:
   file-writing behavior, live `ccx` validation, ProjectSchema mutation, VLM API
   integration, credential handling, dependency install, issue closure, or
   solver execution without a separate gate;
+- turns the FEASpec human review GUI dialog implementation into record save
+  integration, file dialogs, result import behavior, installed-only run gate
+  behavior, SolverAdapter/runner integration, subprocess or external command
+  invocation, file-writing behavior, live `ccx` validation, ProjectSchema
+  mutation, VLM API integration, credential handling, dependency install, issue
+  closure, or solver execution without a separate gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

@@ -8,6 +8,7 @@ __all__ = [
     "ChmReactorDialog",
     "CalculixDeckDialog",
     "ExecutablePathDialog",
+    "FEASpecHumanReviewDialog",
     "GmshMeshDialog",
     "MatPreviewDialog",
     "OpenFOAMTemplateDialog",
@@ -60,6 +61,10 @@ def __getattr__(name: str) -> object:
         from osw.gui.dialogs.openfoam_template_dialog import OpenFOAMTemplateDialog
 
         return OpenFOAMTemplateDialog
+    if name == "FEASpecHumanReviewDialog":
+        from osw.gui.dialogs.feaspec_human_review_dialog import FEASpecHumanReviewDialog
+
+        return FEASpecHumanReviewDialog
     if name == "ReportExportDialog":
         from osw.gui.dialogs.report_export_dialog import ReportExportDialog
 

@@ -975,3 +975,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   upload, tag mutation, or solver execution is added by this gate. Runtime GUI
   widgets, save integration, result import, and installed-only run behavior
   remain separate future gates.
+
+## ADR-0052: FEASpec Human Review GUI Dialog Is Read-Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-18
+- Context: ADR-0051 added the pure Python human-review dialog view-model. The
+  next GUI slice needs a small PySide6 surface that displays the same review
+  evidence without crossing into save integration, result import, run gates, or
+  solver execution.
+- Decision: Add `FEASpecHumanReviewDialog` under `src/osw/gui/dialogs/` as a
+  read-only binding to the view-model. The dialog renders source evidence,
+  diagnostics, warning rows, engineering/export summaries, action disabled
+  reasons, safety copy, and record preview. Save remains disabled in this
+  gate.
+- Consequences: No record save integration, file dialog, result import
+  implementation, installed-only run gate implementation, SolverAdapter or
+  runner integration, subprocess or external command invocation, ProjectSchema
+  mutation, VLM API, dependency install or upgrade, live `ccx` validation,
+  issue mutation, release mutation, asset upload, tag mutation, or solver
+  execution is added by this gate. Save integration, result import, and
+  installed-only run behavior remain separate future gates.

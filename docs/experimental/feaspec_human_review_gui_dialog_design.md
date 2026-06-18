@@ -245,6 +245,19 @@ defines plain state objects before PySide6 widget behavior is added.
 
 ## 19. Future implementation test plan
 
+`OSW-EXP-023_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION` implements the
+first read-only GUI dialog binding for this design:
+
+- [FEASpec human review GUI dialog implementation](feaspec_human_review_gui_dialog_implementation.md)
+
+The implementation is intentionally non-mutating. It adds PySide6 widgets,
+stable object names, panels, action disabled-reason display, safety copy, and
+record preview rendering only. It adds no record save integration, no file
+dialog, no result import implementation, no installed-only run gate
+implementation, no SolverAdapter or runner integration, no subprocess or
+external command invocation, no ProjectSchema mutation, no VLM API, and no
+solver execution.
+
 Future implementation tests should cover:
 
 - dialog construction;
@@ -277,7 +290,5 @@ solver executables, network access, or heavy optional stacks.
 
 ## 21. Next implementation slices
 
-- `OSW-EXP-022_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_VIEWMODEL`
-- `OSW-EXP-023_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION`
 - `OSW-EXP-024_FEASPEC_HUMAN_REVIEW_GUI_SAVE_INTEGRATION`
 - `OSW-EXP-025_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
