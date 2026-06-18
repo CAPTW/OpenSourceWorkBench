@@ -163,3 +163,8 @@ for the GUI-side persistence boundary. That gate still adds no file dialog,
 export bundle write, result import implementation, run gate implementation,
 SolverAdapter/runner/subprocess path, ProjectSchema mutation, VLM API, or
 solver execution.
+
+[FEASpec human review GUI file dialog design](feaspec_human_review_gui_file_dialog_design.md)
+defines the future path-chooser contract for selecting the explicit JSON review
+record save path. It remains design-only, adds no PySide/Qt source behavior,
+and keeps the view-model save plan as the single source of disabled reasons.

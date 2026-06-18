@@ -259,7 +259,9 @@ Summary:
 - `OSW-EXP-022_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_VIEWMODEL`
 - `OSW-EXP-023_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION`
 - `OSW-EXP-024_FEASPEC_HUMAN_REVIEW_GUI_SAVE_INTEGRATION`
-- `OSW-EXP-025_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-025_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG_DESIGN`
+- `OSW-EXP-026_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG_IMPLEMENTATION`
+- `OSW-EXP-027_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
 
 The follow-up
 [FEASpec human review GUI dialog design](feaspec_human_review_gui_dialog_design.md)
@@ -292,3 +294,9 @@ validated review record. It does not add a file dialog, export bundle write,
 result import implementation, installed-only run gate, SolverAdapter or runner
 behavior, subprocess calls, ProjectSchema mutation, VLM APIs, or solver
 execution.
+
+[FEASpec human review GUI file dialog design](feaspec_human_review_gui_file_dialog_design.md)
+defines a future path chooser for that explicit JSON save path. It is
+design-only and adds no `QFileDialog` usage, GUI source mutation, export bundle
+write, result import, run gate, SolverAdapter or runner behavior, subprocess
+calls, ProjectSchema mutation, VLM APIs, or solver execution.

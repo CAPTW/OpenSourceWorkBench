@@ -115,6 +115,12 @@ request should stop, park, or defer.
   or run gates, call SolverAdapter/runner/subprocess paths, mutate
   ProjectSchema, install dependencies, validate issue `#8`, or execute
   solvers.
+- Design-only FEASpec human review GUI file-dialog planning that defines
+  future path selection for one explicit review-record JSON save path while
+  preserving the existing save integration, overwrite guard, parent-directory
+  behavior, path safety, no export bundle write, no result import, no run gate,
+  no SolverAdapter/runner/subprocess path, no ProjectSchema mutation, no VLM
+  API, and no solver execution.
 
 ## Out of Scope
 
@@ -194,6 +200,12 @@ request should stop, park, or defer.
   ProjectSchema mutation, VLM provider, credential surface, live `ccx`
   validation, dependency installation, file-writing behavior, or permission to
   execute solvers.
+- Treating the FEASpec human review GUI file-dialog design as implemented
+  `QFileDialog` behavior, GUI source mutation, result import implementation,
+  run gate behavior, SolverAdapter or runner integration, subprocess path,
+  ProjectSchema mutation, VLM provider, credential surface, live `ccx`
+  validation, dependency installation, file-writing behavior beyond the
+  existing explicit JSON save integration, or permission to execute solvers.
 
 ## Scope Drift Definition
 
@@ -282,6 +294,13 @@ Scope drift is any change that:
   closure, or solver execution without a separate gate;
 - turns the FEASpec human review GUI save integration into file dialogs, export
   bundle writes, `.inp` writes, result import behavior, installed-only run gate
+  behavior, SolverAdapter/runner integration, subprocess or external command
+  invocation, live `ccx` validation, ProjectSchema mutation, VLM API
+  integration, credential handling, dependency install, issue closure, or
+  solver execution without a separate gate;
+- turns the FEASpec human review GUI file-dialog design into `QFileDialog`
+  implementation, GUI source mutation, hidden parent-directory creation,
+  export bundle writes, result import behavior, installed-only run gate
   behavior, SolverAdapter/runner integration, subprocess or external command
   invocation, live `ccx` validation, ProjectSchema mutation, VLM API
   integration, credential handling, dependency install, issue closure, or

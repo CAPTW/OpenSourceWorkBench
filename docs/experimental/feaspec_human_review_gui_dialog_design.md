@@ -282,6 +282,18 @@ no `.inp`, no result import implementation, no installed-only run gate, no
 SolverAdapter/runner/subprocess path, no ProjectSchema mutation, no VLM API,
 and no solver execution.
 
+`OSW-EXP-025_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG_DESIGN` defines the future
+path chooser for selecting that explicit review-record JSON save path:
+
+- [FEASpec human review GUI file dialog design](feaspec_human_review_gui_file_dialog_design.md)
+
+It remains design-only. It documents entry points, default filename strategy,
+JSON filters, directory policy, overwrite confirmation, path safety,
+save-plan integration, error handling, and implementation tests without adding
+`QFileDialog` usage, GUI source mutation, result import, run gates, solver
+execution, SolverAdapter/runner/subprocess paths, ProjectSchema mutation, VLM
+APIs, dependency changes, issue mutation, or release mutation.
+
 ## 20. Non-goals
 
 - No GUI implementation.
@@ -302,5 +314,6 @@ and no solver execution.
 ## 21. Next implementation slices
 
 - `OSW-EXP-024_FEASPEC_HUMAN_REVIEW_GUI_SAVE_INTEGRATION`
-- `OSW-EXP-025_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG`
-- `OSW-EXP-026_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-025_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG_DESIGN`
+- `OSW-EXP-026_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG_IMPLEMENTATION`
+- `OSW-EXP-027_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`

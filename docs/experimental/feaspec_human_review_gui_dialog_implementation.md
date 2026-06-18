@@ -136,6 +136,13 @@ It preserves `solver_execution_performed=false` from the record model. The
 dialog can persist this preview only as one validated FEASpec human-review JSON
 record at an explicit caller-provided path.
 
+The follow-up
+[FEASpec human review GUI file dialog design](feaspec_human_review_gui_file_dialog_design.md)
+defines a future path chooser for that explicit JSON save path. It is
+design-only and adds no `QFileDialog` usage, GUI source mutation, export bundle
+write, result import, run gate, SolverAdapter/runner/subprocess path,
+ProjectSchema mutation, VLM API, or solver execution.
+
 ## 13. Test accessors
 
 The dialog exposes narrow test accessors:
@@ -179,6 +186,7 @@ claimed.
 ## 15. Future implementation slices
 
 - [FEASpec human review GUI save integration](feaspec_human_review_gui_save_integration.md)
-- `OSW-EXP-025_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG`
-- `OSW-EXP-026_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
-- `OSW-EXP-027_FEASPEC_RESULT_IMPORT_MODEL`
+- [FEASpec human review GUI file dialog design](feaspec_human_review_gui_file_dialog_design.md)
+- `OSW-EXP-026_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG_IMPLEMENTATION`
+- `OSW-EXP-027_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-028_FEASPEC_RESULT_IMPORT_MODEL`

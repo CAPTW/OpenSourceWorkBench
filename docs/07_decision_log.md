@@ -1016,3 +1016,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   invocation, ProjectSchema mutation, VLM API, dependency install or upgrade,
   live `ccx` validation, issue mutation, release mutation, asset upload, tag
   mutation, or solver execution.
+
+## ADR-0054: FEASpec Human Review File Dialog Starts As Design-Only
+
+- Status: Accepted for experimental design
+- Date: 2026-06-18
+- Context: ADR-0053 added explicit caller-path JSON save behavior to the
+  FEASpec human-review dialog. A future GUI may need a path chooser for that
+  JSON record, but the chooser must not become export-bundle writing, result
+  import, run-gate behavior, or solver execution.
+- Decision: Define the future file-dialog behavior as design-only before any
+  `QFileDialog` source is added. The design covers entry points, default
+  filename sanitization, JSON filters, directory policy, overwrite
+  confirmation, path safety, save-plan integration, error handling, and future
+  implementation tests. The actual write path must continue to use the
+  existing explicit JSON save integration.
+- Consequences: No file dialog implementation, GUI source mutation, export
+  bundle write, `.inp` write, result import implementation, installed-only run
+  gate, SolverAdapter or runner integration, subprocess or external command
+  invocation, ProjectSchema mutation, VLM API, dependency install or upgrade,
+  live `ccx` validation, issue mutation, release mutation, asset upload, tag
+  mutation, or solver execution is added by this gate. Future file-dialog
+  implementation requires a separate prompt and focused GUI tests.

@@ -258,7 +258,9 @@ Possible later gates:
 - `OSW-EXP-022_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_VIEWMODEL`
 - `OSW-EXP-023_FEASPEC_HUMAN_REVIEW_GUI_DIALOG_IMPLEMENTATION`
 - `OSW-EXP-024_FEASPEC_HUMAN_REVIEW_GUI_SAVE_INTEGRATION`
-- `OSW-EXP-025_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
+- `OSW-EXP-025_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG_DESIGN`
+- `OSW-EXP-026_FEASPEC_HUMAN_REVIEW_GUI_FILE_DIALOG_IMPLEMENTATION`
+- `OSW-EXP-027_FEASPEC_CALCULIX_RUN_GATE_INSTALLED_ONLY`
 
 Those gates must preserve the current boundary: review record creation does not
 run solvers, and solver execution must remain installed-only, explicit, and
@@ -294,3 +296,10 @@ unacknowledged overwrites, and does not create parent directories implicitly.
 It still does not add file dialogs, export bundles, `.inp` writes, result
 import, installed-only run gates, SolverAdapter or runner calls, VLM APIs,
 ProjectSchema mutation, issue `#8` validation, or solver execution.
+
+The
+[FEASpec human review GUI file dialog design](feaspec_human_review_gui_file_dialog_design.md)
+defines the future file-dialog behavior for choosing that explicit JSON review
+record path. It is design-only and does not add `QFileDialog` usage, GUI source
+mutation, result import, run gate behavior, SolverAdapter or runner calls, VLM
+APIs, ProjectSchema mutation, issue `#8` validation, or solver execution.

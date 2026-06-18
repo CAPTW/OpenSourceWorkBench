@@ -179,6 +179,14 @@ by a dedicated release/tag gate.
   SolverAdapter/runner/subprocess path, ProjectSchema mutation, live issue `#8`
   validation, VLM API, dependency installation or upgrade, release mutation, or
   solver execution.
+- Added a design-only FEASpec human review GUI file-dialog contract for future
+  review-record JSON path selection. The design covers entry points, default
+  filename sanitization, JSON filters, directory policy, overwrite
+  confirmation, path safety, save-plan integration, error handling, and future
+  implementation tests without adding `QFileDialog` usage, GUI source mutation,
+  export bundle writes, result import, run gates, SolverAdapter/runner paths,
+  ProjectSchema mutation, live issue `#8` validation, VLM APIs, dependency
+  changes, release mutation, or solver execution.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

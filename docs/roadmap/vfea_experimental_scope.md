@@ -411,5 +411,13 @@ result import, installed-only run gate, SolverAdapter/runner/subprocess path,
 ProjectSchema mutation, VLM API, issue `#8` live validation, issue mutation, or
 solver execution.
 
+[FEASpec human review GUI file dialog design](../experimental/feaspec_human_review_gui_file_dialog_design.md)
+defines the future path chooser for selecting a review-record JSON save path.
+It is design-only and keeps the existing save integration as the only write
+path. It adds no `QFileDialog` usage, GUI source mutation, export bundle write,
+result import, run gate implementation, SolverAdapter/runner/subprocess path,
+ProjectSchema mutation, VLM API, issue `#8` validation, issue mutation, or
+solver execution.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.
