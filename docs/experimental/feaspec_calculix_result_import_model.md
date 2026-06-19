@@ -66,6 +66,9 @@ The implemented
 [FEASpec CalculiX `.dat` minimal parser](feaspec_calculix_result_dat_parser.md)
 parses only explicit scalar candidates and small delimited table candidates with
 explicit unit context.
+[FEASpec CalculiX `.frd` block scanner design](feaspec_calculix_result_frd_block_scanner_design.md)
+defines a future block-boundary metadata scanner, but `.frd` values, fields,
+and mesh topology remain unparsed in the current model.
 
 ## Artifact Classification
 
@@ -166,6 +169,16 @@ not infer units, do not parse free-form `.dat` output, do not parse `.frd`
 fields, do not certify solver correctness, and do not write ResultDataset
 files.
 
+## FRD Block Scanner Boundary
+
+`.frd` artifacts currently remain artifact references plus deferred field
+references in the ResultDataset draft. The design-only `.frd` block scanner
+contract would add block candidates, field-reference candidates, mesh-reference
+candidates, unsupported-block diagnostics, and limitations in memory only. It
+does not add numerical field parsing, mesh reconstruction, ResultDataset writes,
+solver execution, SolverAdapter or runner calls, ProjectSchema mutation, or
+issue `#8` validation.
+
 ## Safety Boundary
 
 The model preserves these boundaries:
@@ -237,4 +250,6 @@ This result import model does not validate local `ccx`, does not record issue
 - `OSW-EXP-030_FEASPEC_RESULT_IMPORT_PARSER_DESIGN`
 - `OSW-EXP-033_FEASPEC_RESULT_PARSER_DAT_MINIMAL_DESIGN`
 - `OSW-EXP-035_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
+- `OSW-EXP-036_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN`
+- `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

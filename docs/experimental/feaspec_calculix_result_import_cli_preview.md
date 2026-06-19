@@ -132,6 +132,10 @@ the implemented
 does not extract numeric values itself, and the implemented
 [FEASpec CalculiX `.dat` minimal parser](feaspec_calculix_result_dat_parser.md)
 parses only explicit scalar/table candidates with explicit unit context.
+The design-only
+[FEASpec CalculiX `.frd` block scanner design](feaspec_calculix_result_frd_block_scanner_design.md)
+defines future `.frd` block-reference metadata only; the current preview still
+does not parse `.frd` field values or reconstruct meshes.
 
 ## Safety Boundary
 
@@ -181,5 +185,7 @@ issue `#8` pass evidence, and does not close issue `#8`.
 - `OSW-EXP-030_FEASPEC_RESULT_IMPORT_PARSER_DESIGN`
 - `OSW-EXP-033_FEASPEC_RESULT_PARSER_DAT_MINIMAL_DESIGN`
 - `OSW-EXP-035_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
-- `OSW-EXP-031_FEASPEC_RESULTDATASET_DRAFT_REVIEW`
+- `OSW-EXP-036_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN`
+- `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
+- `OSW-EXP-038_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

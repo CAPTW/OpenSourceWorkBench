@@ -22,6 +22,10 @@ No numerical parser. No ResultDataset write. No solver execution.
   candidates. The implemented
   [FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md)
   remains section metadata only and does not add numerical parsing.
+- [FEASpec CalculiX `.frd` block scanner design](feaspec_calculix_result_frd_block_scanner_design.md)
+  defines a future metadata-first `.frd` block-boundary scanner that would
+  consume this file identity evidence without parsing field values or
+  reconstructing meshes.
 
 ## Public API
 
@@ -125,6 +129,8 @@ The scanner uses `FP_*` diagnostics from
   `dat_section_summary` payloads from the `.dat` section scanner.
 - `.dat` numerical parsing remains unimplemented until a separate implementation
   gate adds the reviewed minimal parser subset.
+- `.frd` block scanning remains a separate future gate; `.frd` field values
+  and mesh reconstruction remain out of scope.
 - FI parse-not-implemented warnings remain warnings; no numerical parse is added.
 
 ## Safety boundary
@@ -163,4 +169,6 @@ Issue `#8` remains open until a dedicated installed-only validation gate.
 - `OSW-EXP-032_FEASPEC_RESULT_PARSER_STA_CVG_STATUS_SCANNER`
 - `OSW-EXP-033_FEASPEC_RESULT_PARSER_DAT_MINIMAL_DESIGN`
 - `OSW-EXP-034_FEASPEC_RESULT_PARSER_DAT_METADATA_SECTION_SCANNER`
+- `OSW-EXP-036_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN`
+- `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

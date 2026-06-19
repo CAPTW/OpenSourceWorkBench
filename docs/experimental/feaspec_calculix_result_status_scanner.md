@@ -35,6 +35,9 @@ defines a future `.dat` subset separately and does not change this scanner.
 The implemented
 [FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md)
 classifies `.dat` headings/spans/snippets only and does not parse numeric values.
+The design-only
+[FEASpec CalculiX `.frd` block scanner design](feaspec_calculix_result_frd_block_scanner_design.md)
+keeps future `.frd` handling limited to block metadata and deferred references.
 
 ## Captured status summary
 
@@ -142,4 +145,6 @@ passes.
 - `OSW-EXP-033_FEASPEC_RESULT_PARSER_DAT_MINIMAL_DESIGN`
 - `OSW-EXP-034_FEASPEC_RESULT_PARSER_DAT_METADATA_SECTION_SCANNER`
 - `OSW-EXP-035_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
+- `OSW-EXP-036_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN`
+- `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

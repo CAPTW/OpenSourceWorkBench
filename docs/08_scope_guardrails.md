@@ -132,6 +132,14 @@ request should stop, park, or defer.
   ResultDataset writes, solver execution, SolverAdapter/runner paths,
   ProjectSchema mutation, live issue `#8` validation, bundled solvers, and
   certification claims.
+- FEASpec CalculiX `.frd` block scanner design that defines only a future
+  block-boundary metadata contract, field-reference candidates, mesh-reference
+  candidates, unsupported diagnostics, `FP_FRD_*` codes, ResultDataset
+  candidate-only mapping, and fixture strategy while still avoiding `.frd`
+  parser implementation, numerical field parsing, mesh reconstruction,
+  ResultDataset writes, solver execution, SolverAdapter/runner paths,
+  ProjectSchema mutation, live issue `#8` validation, bundled solvers, and
+  certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
@@ -334,6 +342,12 @@ Scope drift is any change that:
   ProjectSchema mutation, dependency install, live
   issue `#8` validation, release mutation, issue closure, certification, or
   solver execution without a separate gate;
+- turns the FEASpec CalculiX `.frd` block scanner design into `.frd` parser
+  implementation, numerical field parsing, mesh reconstruction, unit inference,
+  ResultDataset persistence, SolverAdapter/runner integration, subprocess or
+  external command invocation, ProjectSchema mutation, dependency install,
+  live issue `#8` validation, release mutation, issue closure, certification,
+  or solver execution without a separate gate;
 - turns the FEASpec human review record model into GUI approval workflow, run
   gate behavior, result import behavior, SolverAdapter/runner integration,
   subprocess or external command invocation, live `ccx` validation,

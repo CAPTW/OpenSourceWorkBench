@@ -6,7 +6,9 @@ This document defines a staged parsing strategy. The `.sta` / `.cvg` status
 scanner is implemented as a text-only scanner, the `.dat` metadata section
 scanner is implemented as a heading/span/snippet scanner, and a bounded `.dat`
 minimal parser is implemented for explicit scalar/table candidates with explicit
-units. Broad `.dat` numerical parsing and `.frd` parsing remain unimplemented.
+units. The `.frd` block scanner now has a design-only contract for future
+block-boundary metadata. Broad `.dat` numerical parsing and `.frd` parsing
+remain unimplemented.
 This design does not implement a broad numerical result parser, does not write
 ResultDataset files, and does not execute CalculiX.
 
@@ -102,8 +104,12 @@ ResultDataset files, and does not execute CalculiX.
 
 ### Phase 3 `.frd` field/block scanner
 
-- Block-level metadata scan only (counts, block headers, available fields).
-- Record discoverable node/element references and candidate block names.
+- The detailed design lives in
+  [FEASpec CalculiX `.frd` block scanner design](feaspec_calculix_result_frd_block_scanner_design.md).
+- Future block-level metadata scan only: block boundaries, block kinds, labels,
+  short snippets, and field/mesh reference candidates.
+- Record discoverable node/element references and candidate block names without
+  reconstructing topology.
 - No full mesh rebuild or interpolation in this phase.
 - Full FRD field arrays remain deferred and represented as references.
 - Artifacts that appear parseable by future parser phases are flagged as
@@ -131,12 +137,13 @@ ResultDataset files, and does not execute CalculiX.
 
 ## `.frd` parser plan
 
-- Phase-3 scanner identifies:
-  block headers, field references, and element/node-related declarations.
+- Phase-3 remains design-only until a separate implementation gate.
+- Future scanner identifies block headers, field references, and
+  element/node-related declarations.
 - No numeric value matrix parse in this phase.
 - Field payloads are mapped as `field_references` with source path and artifact
   role.
-- Future phases can upgrade this to full `.frd` field parsing.
+- Mesh references remain deferred metadata; no mesh reconstruction is performed.
 
 ## Unit handling
 
@@ -211,6 +218,18 @@ The parser layer exposes deterministic parser diagnostics with these codes:
 - `FP_DAT_PARTIAL_PARSE`
 - `FP_DAT_PROVENANCE_MISSING`
 - `FP_DAT_RESULT_DATASET_WRITE_FORBIDDEN`
+- `FP_FRD_PARSE_NOT_IMPLEMENTED`
+- `FP_FRD_BLOCK_SCAN_ONLY`
+- `FP_FRD_BLOCK_UNSUPPORTED`
+- `FP_FRD_BLOCK_TOO_LARGE`
+- `FP_FRD_BLOCK_LIMIT_EXCEEDED`
+- `FP_FRD_UNKNOWN_RECORD`
+- `FP_FRD_BINARY_UNSUPPORTED`
+- `FP_FRD_FIELD_VALUES_NOT_PARSED`
+- `FP_FRD_MESH_RECONSTRUCTION_FORBIDDEN`
+- `FP_FRD_UNITS_MISSING`
+- `FP_FRD_PROVENANCE_MISSING`
+- `FP_FRD_RESULT_DATASET_WRITE_FORBIDDEN`
 
 ## Parser output model
 
@@ -274,6 +293,8 @@ Result import can map parser output into future ResultDataset contracts as:
 - `OSW-EXP-034_FEASPEC_RESULT_PARSER_DAT_METADATA_SECTION_SCANNER`
 - `OSW-EXP-035_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
 - `OSW-EXP-036_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN`
+- `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
+- `OSW-EXP-038_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
 
 ## Non-goals

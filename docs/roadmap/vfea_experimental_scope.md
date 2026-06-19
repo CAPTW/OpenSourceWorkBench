@@ -421,6 +421,13 @@ does not implement free-form `.dat` parsing, `.frd` parsing, unit inference,
 ResultDataset persistence, solver execution, issue `#8` validation,
 ProjectSchema mutation, or VFEA completion.
 
+[FEASpec CalculiX `.frd` block scanner design](../experimental/feaspec_calculix_result_frd_block_scanner_design.md)
+records the future `.frd` block metadata boundary. It defines block candidates,
+field-reference candidates, mesh-reference candidates, unsupported diagnostics,
+and ResultDataset candidate-only mapping while adding no `.frd` parser
+implementation, numerical field parsing, mesh reconstruction, solver execution,
+issue `#8` validation, ProjectSchema mutation, or VFEA completion.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

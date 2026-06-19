@@ -94,6 +94,14 @@ candidate parsing for section kinds already classified as scalar, table,
 displacement, stress, node output, or element output candidates. Unsupported and
 unknown sections are preserved as skipped content with diagnostics.
 
+## Relationship to future `.frd` block scanning
+
+[FEASpec CalculiX `.frd` block scanner design](feaspec_calculix_result_frd_block_scanner_design.md)
+records the future `.frd` metadata boundary. This `.dat` parser does not parse
+`.frd` files, field values, node or element arrays, or mesh topology. Any future
+`.frd` handling remains separate and must preserve the same preview-only,
+no-write, no-solver-execution boundary.
+
 ## Relationship to result import model
 
 `inspect_calculix_result_directory` attaches `dat_minimal_parse` and
@@ -154,5 +162,6 @@ passes.
 ## Next implementation slices
 
 - `OSW-EXP-036_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN`
-- `OSW-EXP-037_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
+- `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
+- `OSW-EXP-038_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

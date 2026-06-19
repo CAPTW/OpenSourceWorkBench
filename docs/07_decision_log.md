@@ -1224,3 +1224,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   dependencies, adds no VLM APIs or credentials, mutates no release/tag/asset
   state, and closes no issues. ResultDataset persistence, `.frd` parsing, and
   prepared-machine issue `#8` validation remain separate future gates.
+
+## ADR-0063: FEASpec CalculiX FRD Block Scanner Starts As Design-Only
+
+- Status: Accepted for experimental design
+- Date: 2026-06-19
+- Context: The result import path can now classify artifacts, scan `.sta` /
+  `.cvg` status text, scan `.dat` sections, and parse a bounded `.dat` subset.
+  `.frd` files can contain field arrays and mesh-related records that are too
+  broad for an unreviewed parser implementation.
+- Decision: Define a design-only `.frd` block scanner contract before adding
+  code. The future scanner may identify block boundaries, block kinds, labels,
+  field-reference candidates, mesh-reference candidates, unsupported blocks,
+  diagnostics, provenance, and limitations. It must not parse numerical field
+  values, reconstruct mesh topology, infer units, write ResultDataset files, or
+  claim solver correctness.
+- Consequences: This gate adds no `.frd` parser implementation, numerical field
+  parsing, mesh reconstruction, ResultDataset persistence, SolverAdapter or
+  runner integration, subprocess invocation, ProjectSchema mutation, dependency
+  install, VLM API, release mutation, asset upload, tag mutation, issue
+  mutation, live issue `#8` validation, bundled-solver claim, or certification
+  claim. Implementation and live validation require separate future gates.
