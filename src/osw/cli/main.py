@@ -2676,6 +2676,10 @@ def _feaspec_calculix_installed_run_exit_code(result: object) -> int:
 def _build_feaspec_calculix_result_import_preview(
     args: argparse.Namespace,
 ) -> dict[str, object]:
+    from osw.experimental.feaspec.calculix_result_dataset_draft_mapping import (
+        build_calculix_result_dataset_draft_mapping,
+        summarize_calculix_result_dataset_draft_mapping,
+    )
     from osw.experimental.feaspec.calculix_result_diagnostics import (
         CalculiXResultImportDiagnosticCode,
     )
@@ -2691,6 +2695,10 @@ def _build_feaspec_calculix_result_import_preview(
     inspection = inspect_calculix_result_directory(result_dir)
     plan = plan_calculix_result_import(result_dir)
     dataset_draft = build_calculix_result_dataset_draft(plan)
+    dataset_draft_mapping = build_calculix_result_dataset_draft_mapping(plan)
+    dataset_draft_mapping_summary = (
+        summarize_calculix_result_dataset_draft_mapping(dataset_draft_mapping)
+    )
     diagnostic_records = [item.to_dict() for item in plan.diagnostics]
     parse_not_implemented = any(
         item.code is CalculiXResultImportDiagnosticCode.FI_PARSE_NOT_IMPLEMENTED
@@ -2733,6 +2741,8 @@ def _build_feaspec_calculix_result_import_preview(
         "diagnostic_count": len(diagnostic_records),
         "provenance": plan.provenance.to_dict(),
         "dataset_draft": dataset_draft.to_dict(),
+        "dataset_draft_mapping": dataset_draft_mapping.to_dict(),
+        "dataset_draft_mapping_summary": dataset_draft_mapping_summary.to_dict(),
         "status_summary": status_summary,
         "dat_section_summary": dat_section_summary,
         "dat_minimal_parse_summary": dat_minimal_parse_summary,
@@ -3094,6 +3104,32 @@ def _print_feaspec_calculix_result_import_preview(
                 f"{key}={value}" for key, value in sorted(counts.items())
             )
             print(f"FRD block kind counts: {rendered}")
+    draft_mapping_summary = preview.get("dataset_draft_mapping_summary", {})
+    if (
+        isinstance(draft_mapping_summary, Mapping)
+        and draft_mapping_summary.get("artifact_count", 0)
+    ):
+        print("ResultDataset draft mapping: available")
+        print(
+            "Draft mapping artifacts: "
+            f"{draft_mapping_summary.get('artifact_count', 0)}"
+        )
+        print(
+            "Draft mapping scalar candidates: "
+            f"{draft_mapping_summary.get('scalar_candidate_count', 0)}"
+        )
+        print(
+            "Draft mapping table candidates: "
+            f"{draft_mapping_summary.get('table_candidate_count', 0)}"
+        )
+        print(
+            "Draft mapping field references: "
+            f"{draft_mapping_summary.get('field_reference_count', 0)}"
+        )
+        print(
+            "Draft mapping writes files: "
+            f"{str(draft_mapping_summary.get('writes_files', False)).lower()}"
+        )
     print(
         "Source run solver execution performed: "
         f"{str(preview['source_run_solver_execution_performed']).lower()}"

@@ -109,6 +109,9 @@ no-solver-execution boundary.
 `dat_minimal_parse_summary` payloads to `.dat` artifact metadata. The
 ResultDataset draft can include in-memory scalar and table candidates from this
 minimal parse.
+[FEASpec CalculiX ResultDataset draft mapping](feaspec_calculix_result_dataset_draft_mapping.md)
+preserves those scalar and table candidates as draft mapping records with raw
+text, parsed preview values, explicit unit context, and line provenance.
 
 This is ResultDataset draft enrichment only. There is no persistence, no
 ResultDataset file write, and no ProjectSchema mutation.
@@ -163,4 +166,5 @@ passes.
 ## Next implementation slices
 
 - `OSW-EXP-038_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
+- `OSW-EXP-039_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

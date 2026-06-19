@@ -140,6 +140,14 @@ request should stop, park, or defer.
   ResultDataset writes, solver execution, SolverAdapter/runner paths,
   ProjectSchema mutation, live issue `#8` validation, bundled solvers, and
   certification claims.
+- Experimental FEASpec CalculiX ResultDataset draft mapping that converts
+  result-import artifacts, status summaries, bounded `.dat` scalar/table
+  candidates, deferred `.frd` references, provenance, diagnostics, and
+  limitations into an in-memory draft only while still avoiding ResultDataset
+  persistence or writes, additional numerical parsing, mesh reconstruction,
+  unit inference, solver execution, SolverAdapter/runner paths, ProjectSchema
+  mutation, live issue `#8` validation, bundled solvers, and certification
+  claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
@@ -241,6 +249,12 @@ request should stop, park, or defer.
   persistence, live `ccx` validation, SolverAdapter/runner integration,
   ProjectSchema mutation, engineering-correctness evidence, bundled-solver
   evidence, certification, or permission to execute solvers.
+- Treating FEASpec CalculiX ResultDataset draft mapping as ResultDataset
+  persistence, a write-capable import command, additional `.frd` numerical
+  parsing, mesh reconstruction, unit inference, live `ccx` validation,
+  SolverAdapter/runner integration, ProjectSchema mutation,
+  engineering-correctness evidence, bundled-solver evidence, certification, or
+  permission to execute solvers.
 - Treating the FEASpec CalculiX installed-only run gate as result import,
   SolverAdapter integration, broad runner integration, GUI direct execution,
   dependency or solver installation, bundled solver evidence, live issue `#8`
@@ -348,6 +362,12 @@ Scope drift is any change that:
   external command invocation, ProjectSchema mutation, dependency install,
   live issue `#8` validation, release mutation, issue closure, certification,
   or solver execution without a separate gate;
+- turns the FEASpec CalculiX ResultDataset draft mapping into ResultDataset
+  persistence or writes, additional numerical parsing, `.frd` field-value
+  parsing, mesh reconstruction, unit inference, SolverAdapter/runner
+  integration, subprocess or external command invocation, ProjectSchema
+  mutation, dependency install, live issue `#8` validation, release mutation,
+  issue closure, certification, or solver execution without a separate gate;
 - turns the FEASpec human review record model into GUI approval workflow, run
   gate behavior, result import behavior, SolverAdapter/runner integration,
   subprocess or external command invocation, live `ccx` validation,

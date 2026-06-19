@@ -39,6 +39,8 @@ The CLI is a thin adapter over the FEASpec CalculiX result import model:
 - `inspect_calculix_result_directory(result_dir)`
 - `plan_calculix_result_import(result_dir)`
 - `build_calculix_result_dataset_draft(plan)`
+- `build_calculix_result_dataset_draft_mapping(plan)`
+- `summarize_calculix_result_dataset_draft_mapping(mapping)`
 - `explain_calculix_result_import_plan(plan)`
 
 The CLI does not add a write/import command and does not add a numerical result
@@ -69,6 +71,8 @@ JSON output includes:
 - `diagnostics`;
 - `provenance`;
 - `dataset_draft`;
+- `dataset_draft_mapping`;
+- `dataset_draft_mapping_summary`;
 - `parse_not_implemented`;
 - `solver_execution_performed`;
 - `files_written`;
@@ -103,6 +107,14 @@ unsupported/unknown counts, and bounded per-file summaries. This summary is
 still preview-only: no numerical field parser, no node or element value arrays,
 no mesh reconstruction, no visualization arrays, no unit inference, no
 ResultDataset persistence, and no solver execution.
+
+When parser and scanner summaries are present, `dataset_draft_mapping` and
+`dataset_draft_mapping_summary` expose the in-memory mapping from artifacts,
+status summaries, bounded `.dat` scalar/table candidates, deferred `.frd`
+references, provenance, diagnostics, and limitations into a future
+ResultDataset-shaped draft. These payloads remain preview-only: no
+ResultDataset persistence, no file writes, no additional numerical parsing, no
+mesh reconstruction, no unit inference, and no solver execution.
 
 ## Exit Codes
 
@@ -146,6 +158,9 @@ The implemented
 [FEASpec CalculiX `.frd` block metadata scanner](feaspec_calculix_result_frd_block_scanner.md)
 defines `.frd` block-reference metadata only; the current preview still does
 not parse `.frd` field values or reconstruct meshes.
+[FEASpec CalculiX ResultDataset draft mapping](feaspec_calculix_result_dataset_draft_mapping.md)
+documents the in-memory mapping from these summaries into a future
+ResultDataset draft boundary without persistence.
 
 ## Safety Boundary
 
@@ -197,5 +212,6 @@ issue `#8` pass evidence, and does not close issue `#8`.
 - `OSW-EXP-035_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
 - `OSW-EXP-036_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN`
 - `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
-- `OSW-EXP-038_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
+- `OSW-EXP-038_FEASPEC_RESULT_IMPORT_RESULTDATASET_DRAFT_MAPPING`
+- `OSW-EXP-039_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

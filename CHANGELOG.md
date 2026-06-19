@@ -270,6 +270,15 @@ by a dedicated release/tag gate.
   ResultDataset files, execute solvers, call SolverAdapter/runner code, mutate
   ProjectSchema, validate issue `#8`, add VLM APIs, bundle solvers, or claim
   certification.
+- Added an experimental FEASpec CalculiX ResultDataset draft mapping layer
+  under `src/osw/experimental/feaspec/`. It maps result import artifacts,
+  `.sta`/`.cvg` status summaries, bounded `.dat` scalar/table candidates,
+  deferred `.frd` references, provenance, diagnostics, and limitations into a
+  stable in-memory draft and exposes CLI preview counts. It does not persist or
+  write ResultDataset files, parse additional `.frd` numerical field values,
+  reconstruct meshes, infer units, execute solvers, call SolverAdapter/runner
+  code, mutate ProjectSchema, validate issue `#8`, add VLM APIs, bundle
+  solvers, or claim certification.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

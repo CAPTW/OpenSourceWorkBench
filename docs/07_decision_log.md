@@ -1265,3 +1265,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   subprocess invocation, ProjectSchema mutation, dependency install, VLM API,
   release mutation, asset upload, tag mutation, issue mutation, live issue `#8`
   validation, bundled-solver claim, or certification claim.
+
+## ADR-0065: FEASpec CalculiX ResultDataset Draft Mapping Is In-Memory
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-19
+- Context: The result import path can now classify artifacts, summarize
+  `.sta` / `.cvg` text status, parse a bounded `.dat` subset, and preserve
+  `.frd` block-reference metadata. A stable handoff shape is needed before any
+  reviewed ResultDataset persistence gate.
+- Decision: Add an in-memory ResultDataset draft mapping layer under
+  `src/osw/experimental/feaspec/`. It maps result-import artifacts, status
+  summaries, bounded `.dat` scalar/table candidates, deferred `.frd`
+  references, provenance, diagnostics, and limitations into a serializable
+  draft payload and compact summary for the CLI preview.
+- Consequences: This gate adds no ResultDataset persistence or file writes, no
+  write-capable import command, no additional `.frd` numerical field parsing,
+  no mesh reconstruction, no unit inference, no solver execution, no
+  SolverAdapter or runner integration, no subprocess invocation, no
+  ProjectSchema mutation, no dependency install, no VLM API, no release/tag or
+  asset mutation, no issue mutation, no live issue `#8` validation, and no
+  bundled-solver or certification claim.

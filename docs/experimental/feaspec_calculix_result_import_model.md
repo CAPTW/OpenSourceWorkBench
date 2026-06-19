@@ -20,6 +20,7 @@ The implementation lives under the experimental FEASpec package:
 - `src/osw/experimental/feaspec/calculix_result_dat_section_scanner.py`
 - `src/osw/experimental/feaspec/calculix_result_dat_parser.py`
 - `src/osw/experimental/feaspec/calculix_result_frd_block_scanner.py`
+- `src/osw/experimental/feaspec/calculix_result_dataset_draft_mapping.py`
 
 The public package exports the result import model API from
 `osw.experimental.feaspec`.
@@ -29,6 +30,8 @@ The public package exports the result import model API from
 - `inspect_calculix_result_directory(result_dir)`
 - `plan_calculix_result_import(result_dir)`
 - `build_calculix_result_dataset_draft(plan)`
+- `build_calculix_result_dataset_draft_mapping(plan)`
+- `summarize_calculix_result_dataset_draft_mapping(mapping)`
 - `explain_calculix_result_import_plan(plan)`
 
 The API accepts an explicit result directory and returns pure Python data
@@ -128,12 +131,24 @@ diagnostics.
   minimal parser candidates when available;
 - table placeholders, populated from bounded `.dat` minimal parser candidates
   when available;
+- a structured `draft_mapping` payload for future reviewed ResultDataset
+  persistence gates;
 - provenance from run metadata and export manifest;
 - limitations;
 - diagnostics.
 
 The draft is a pure data object. It is not a persisted `ResultDataset`, creates
 no parent directories, overwrites nothing, and performs no ResultDataset write.
+
+## ResultDataset Draft Mapping
+
+[FEASpec CalculiX ResultDataset draft mapping](feaspec_calculix_result_dataset_draft_mapping.md)
+adds a stable in-memory mapping layer over the existing import plan. It maps
+artifact metadata, status summaries, bounded `.dat` scalar/table candidates,
+deferred `.frd` references, provenance, diagnostics, and limitations into a
+reviewable draft structure. The mapping writes no files, performs no
+ResultDataset persistence, parses no additional `.frd` numerical field values,
+reconstructs no mesh, infers no units, and makes no solver correctness claim.
 
 ## Status Summary Enrichment
 
@@ -255,4 +270,6 @@ This result import model does not validate local `ccx`, does not record issue
 - `OSW-EXP-035_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
 - `OSW-EXP-036_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN`
 - `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
+- `OSW-EXP-038_FEASPEC_RESULT_IMPORT_RESULTDATASET_DRAFT_MAPPING`
+- `OSW-EXP-039_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

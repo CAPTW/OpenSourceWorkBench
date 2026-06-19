@@ -271,9 +271,12 @@ def test_build_result_dataset_draft_contains_artifacts_provenance_limitations_an
     assert draft.diagnostics
     assert draft.scalar_summaries == {"source": "metadata-only"}
     assert draft.field_references
+    assert draft.draft_mapping["writes_files"] is False
+    assert draft.draft_mapping["result_dataset_persistence"] is False
     payload = draft.to_dict()
     assert payload["writes_files"] is False
     assert payload["artifacts"]
+    assert payload["draft_mapping"]["artifacts"]
 
 
 def test_build_result_dataset_draft_includes_deferred_frd_references(
@@ -290,6 +293,7 @@ def test_build_result_dataset_draft_includes_deferred_frd_references(
 
     assert draft.writes_files is False
     assert draft.field_references
+    assert draft.draft_mapping["field_references"]
     assert {item["reference_kind"] for item in draft.field_references} >= {
         "node",
         "field",
@@ -317,6 +321,8 @@ def test_build_result_dataset_draft_includes_dat_minimal_candidates(
         "max displacement"
     )
     assert draft.tables
+    assert draft.draft_mapping["scalar_candidates"]
+    assert draft.draft_mapping["table_candidates"]
     assert payload["tables"][0]["section_heading"] == "DISPLACEMENTS"
 
 

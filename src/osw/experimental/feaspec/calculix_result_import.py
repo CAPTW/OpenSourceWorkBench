@@ -17,6 +17,9 @@ from typing import Any
 
 from .calculix_result_dat_parser import parse_calculix_dat_minimal
 from .calculix_result_dat_section_scanner import scan_calculix_dat_sections
+from .calculix_result_dataset_draft_mapping import (
+    build_calculix_result_dataset_draft_mapping,
+)
 from .calculix_result_diagnostics import (
     CalculiXResultImportDiagnosticCode,
     CalculiXResultImportSeverity,
@@ -287,6 +290,7 @@ class FEASpecCalculiXResultDatasetDraft:
     tables: tuple[Mapping[str, Any], ...] = ()
     artifacts: tuple[CalculiXResultArtifact, ...] = ()
     field_references: tuple[Mapping[str, Any], ...] = ()
+    draft_mapping: Mapping[str, Any] = field(default_factory=dict)
     provenance: FEASpecCalculiXResultProvenance | None = None
     limitations: tuple[str, ...] = ()
     diagnostics: tuple[FEASpecCalculiXResultImportDiagnostic, ...] = ()
@@ -303,6 +307,7 @@ class FEASpecCalculiXResultDatasetDraft:
             "tables": [dict(table) for table in self.tables],
             "artifacts": [artifact.to_dict() for artifact in self.artifacts],
             "field_references": [dict(item) for item in self.field_references],
+            "draft_mapping": dict(self.draft_mapping),
             "provenance": (
                 self.provenance.to_dict() if self.provenance is not None else {}
             ),
@@ -455,6 +460,7 @@ def build_calculix_result_dataset_draft(
     dataset_id = plan.provenance.case_id or plan.provenance.source_feaspec_id
     if not dataset_id:
         dataset_id = "feaspec-calculix-result-draft"
+    draft_mapping = build_calculix_result_dataset_draft_mapping(plan)
     return FEASpecCalculiXResultDatasetDraft(
         dataset_id=dataset_id,
         source=str(plan.result_dir),
@@ -465,6 +471,7 @@ def build_calculix_result_dataset_draft(
         tables=_result_tables(plan.artifacts),
         artifacts=plan.artifacts,
         field_references=_field_references(plan.artifacts),
+        draft_mapping=draft_mapping.to_dict(),
         provenance=plan.provenance,
         limitations=plan.limitations,
         diagnostics=plan.diagnostics,

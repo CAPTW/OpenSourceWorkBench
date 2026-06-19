@@ -105,6 +105,10 @@ When `.frd` artifacts are present, the result import model attaches
 `frd_block_scan` and `frd_block_summary` to the artifact metadata. The in-memory
 ResultDataset draft may carry deferred field or mesh references with
 `candidate-not-parsed` status.
+[FEASpec CalculiX ResultDataset draft mapping](feaspec_calculix_result_dataset_draft_mapping.md)
+maps those deferred reference candidates into draft field-reference records
+while preserving `values_parsed=false`, `mesh_reconstructed=false`, and
+`units_inferred=false`.
 
 No ResultDataset file is written. No ProjectSchema mutation is performed.
 
@@ -161,5 +165,6 @@ Issue #8 remains open.
 
 ## Next implementation slices
 
-- `OSW-EXP-038_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
+- `OSW-EXP-038_FEASPEC_RESULT_IMPORT_RESULTDATASET_DRAFT_MAPPING`
+- `OSW-EXP-039_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
