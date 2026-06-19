@@ -164,6 +164,9 @@ ResultDataset draft boundary without persistence.
 [FEASpec CalculiX ResultDataset write design](feaspec_calculix_result_dataset_write_design.md)
 documents the future reviewed persistence boundary. The current CLI still has
 no write/import command, no `--output` persistence mode, and no file writes.
+[FEASpec CalculiX ResultDataset write plan](feaspec_calculix_result_dataset_write_plan.md)
+documents the implemented in-memory planning model for future persistence; it
+is not wired as a CLI write mode and still performs no actual file writes.
 
 ## Safety Boundary
 
@@ -179,6 +182,7 @@ The CLI preview preserves these boundaries:
 - no free-form table extraction;
 - no ResultDataset write;
 - no ResultDataset persistence;
+- no write-capable import CLI;
 - no ProjectSchema mutation;
 - no VLM API;
 - no provider credentials or API key fields;
@@ -217,5 +221,6 @@ issue `#8` pass evidence, and does not close issue `#8`.
 - `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
 - `OSW-EXP-038_FEASPEC_RESULT_IMPORT_RESULTDATASET_DRAFT_MAPPING`
 - `OSW-EXP-039_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
-- `OSW-EXP-040_FEASPEC_RESULT_IMPORT_DATASET_WRITE_PLAN_MODEL`
+- `OSW-EXP-041_FEASPEC_RESULT_IMPORT_DATASET_WRITE_SCHEMA_MODEL`
+- `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

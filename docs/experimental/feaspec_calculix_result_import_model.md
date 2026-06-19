@@ -21,6 +21,7 @@ The implementation lives under the experimental FEASpec package:
 - `src/osw/experimental/feaspec/calculix_result_dat_parser.py`
 - `src/osw/experimental/feaspec/calculix_result_frd_block_scanner.py`
 - `src/osw/experimental/feaspec/calculix_result_dataset_draft_mapping.py`
+- `src/osw/experimental/feaspec/calculix_result_dataset_write_plan.py`
 
 The public package exports the result import model API from
 `osw.experimental.feaspec`.
@@ -157,6 +158,13 @@ artifact reference policy, validation rules, CLI/GUI future entry points, and
 `FDW_*` diagnostics without implementing persistence, writing files, or adding
 solver execution.
 
+[FEASpec CalculiX ResultDataset write plan](feaspec_calculix_result_dataset_write_plan.md)
+implements the in-memory planning slice for that contract. It can inspect a
+reviewed draft mapping, explicit output-directory intent, path safety,
+artifact references, and limitations acknowledgement while keeping
+`writes_files=false`, `result_dataset_persistence=false`, and
+`solver_execution_performed=false`.
+
 ## Status Summary Enrichment
 
 For `.sta` and `.cvg` artifacts, artifact metadata can include:
@@ -217,6 +225,7 @@ The model preserves these boundaries:
 - no free-form numeric value extraction;
 - no free-form table extraction;
 - no file writes;
+- no ResultDataset write plan persistence;
 - no ProjectSchema mutation;
 - no VLM API;
 - no provider credentials or API key fields;
@@ -279,5 +288,6 @@ This result import model does not validate local `ccx`, does not record issue
 - `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
 - `OSW-EXP-038_FEASPEC_RESULT_IMPORT_RESULTDATASET_DRAFT_MAPPING`
 - `OSW-EXP-039_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
-- `OSW-EXP-040_FEASPEC_RESULT_IMPORT_DATASET_WRITE_PLAN_MODEL`
+- `OSW-EXP-041_FEASPEC_RESULT_IMPORT_DATASET_WRITE_SCHEMA_MODEL`
+- `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

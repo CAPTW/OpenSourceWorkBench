@@ -445,6 +445,14 @@ implementation, file writes, `.frd` numerical parsing, mesh reconstruction,
 solver execution, issue `#8` validation, ProjectSchema mutation, or VFEA
 completion.
 
+[FEASpec CalculiX ResultDataset write plan](../experimental/feaspec_calculix_result_dataset_write_plan.md)
+adds an in-memory planning model for the reviewed persistence boundary. It
+records explicit output-directory readiness, path safety, planned standard
+files, future atomic write paths, artifact references, diagnostics, and
+limitations acknowledgement while still adding no ResultDataset persistence,
+actual file writes, artifact copying, solver execution, issue `#8` validation,
+ProjectSchema mutation, or VFEA completion.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

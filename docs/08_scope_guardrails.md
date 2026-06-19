@@ -156,6 +156,14 @@ request should stop, park, or defer.
   parsing, mesh reconstruction, solver execution, SolverAdapter/runner paths,
   ProjectSchema mutation, live issue `#8` validation, bundled solvers, and
   certification claims.
+- Experimental FEASpec CalculiX ResultDataset write planning model that
+  validates explicit output-directory intent, path safety, planned standard
+  files, future atomic write paths, artifact references, draft diagnostics,
+  provenance, and limitations acknowledgement in memory only while still
+  avoiding actual file writes, directory creation, artifact copying,
+  ResultDataset persistence, write-capable CLI/GUI behavior, solver execution,
+  SolverAdapter/runner paths, ProjectSchema mutation, live issue `#8`
+  validation, bundled solvers, and certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
@@ -267,6 +275,12 @@ request should stop, park, or defer.
   persistence, an import-write CLI/GUI, actual file writes, atomic-write code,
   schema implementation, `.frd` numerical parsing, mesh reconstruction, live
   `ccx` validation, SolverAdapter/runner integration, ProjectSchema mutation,
+  bundled-solver evidence, certification, or permission to execute solvers.
+- Treating FEASpec CalculiX ResultDataset write plans as persisted
+  ResultDataset files, a write-capable import command, a GUI write/import
+  command, actual file writes, directory creation, artifact copying,
+  implemented atomic persistence, schema migration implementation, live `ccx`
+  validation, SolverAdapter/runner integration, ProjectSchema mutation,
   bundled-solver evidence, certification, or permission to execute solvers.
 - Treating the FEASpec CalculiX installed-only run gate as result import,
   SolverAdapter integration, broad runner integration, GUI direct execution,
@@ -388,6 +402,13 @@ Scope drift is any change that:
   command invocation, ProjectSchema mutation, dependency install, live issue
   `#8` validation, release mutation, issue closure, certification, or solver
   execution without a separate gate;
+- turns the FEASpec CalculiX ResultDataset write plan into actual
+  ResultDataset persistence, file writes, directory creation, artifact copying,
+  write-capable CLI or GUI behavior, schema migration implementation,
+  `.frd` numerical field parsing, mesh reconstruction, SolverAdapter/runner
+  integration, subprocess or external command invocation, ProjectSchema
+  mutation, dependency install, live issue `#8` validation, release mutation,
+  issue closure, certification, or solver execution without a separate gate;
 - turns the FEASpec human review record model into GUI approval workflow, run
   gate behavior, result import behavior, SolverAdapter/runner integration,
   subprocess or external command invocation, live `ccx` validation,

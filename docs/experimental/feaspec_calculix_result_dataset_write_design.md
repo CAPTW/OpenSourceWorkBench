@@ -23,6 +23,14 @@ The existing ResultDataset draft mapping remains the reviewable in-memory
 source. This design defines the future write boundary for that reviewed draft
 only; it does not add persistence.
 
+The implemented
+[FEASpec CalculiX ResultDataset write plan](feaspec_calculix_result_dataset_write_plan.md)
+now provides the first in-memory planning slice for this design. It validates
+explicit output-directory intent, path safety, draft status, schema/provenance
+readiness, artifact references, limitations acknowledgement, and planned atomic
+write paths while still performing no ResultDataset persistence or actual file
+writes.
+
 ## Write goals
 
 A future write gate should:
@@ -155,15 +163,23 @@ Validation failure should prevent file writes.
 
 - `FDW_WRITE_NOT_IMPLEMENTED`
 - `FDW_OUTPUT_PATH_REQUIRED`
+- `FDW_OUTPUT_DIRECTORY_REQUIRED`
 - `FDW_PARENT_MISSING`
+- `FDW_CREATE_DIR_REQUIRED`
 - `FDW_OUTPUT_EXISTS`
+- `FDW_OUTPUT_NOT_EMPTY`
 - `FDW_UNSAFE_PATH`
+- `FDW_PATH_TRAVERSAL_REJECTED`
 - `FDW_DRAFT_BLOCKED`
 - `FDW_SCHEMA_VERSION_MISSING`
 - `FDW_PROVENANCE_INCOMPLETE`
 - `FDW_ARTIFACT_REFERENCE_MISSING`
 - `FDW_ARTIFACT_HASH_MISMATCH`
 - `FDW_DIAGNOSTICS_UNREVIEWED`
+- `FDW_LIMITATIONS_NOT_ACKNOWLEDGED`
+- `FDW_ATOMIC_WRITE_PLANNED_ONLY`
+- `FDW_ATOMIC_WRITE_NOT_IMPLEMENTED`
+- `FDW_ARTIFACT_COPY_NOT_IMPLEMENTED`
 - `FDW_ATOMIC_WRITE_FAILED`
 - `FDW_PARTIAL_WRITE_CLEANUP_FAILED`
 - `FDW_RESULTDATASET_PERSISTENCE_FORBIDDEN`
@@ -251,6 +267,6 @@ passes.
 
 ## Future implementation slices
 
-- `OSW-EXP-040_FEASPEC_RESULT_IMPORT_DATASET_WRITE_PLAN_MODEL`
-- `OSW-EXP-041_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
+- `OSW-EXP-041_FEASPEC_RESULT_IMPORT_DATASET_WRITE_SCHEMA_MODEL`
+- `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

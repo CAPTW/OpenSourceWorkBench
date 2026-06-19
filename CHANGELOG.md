@@ -287,6 +287,15 @@ by a dedicated release/tag gate.
   numerical parsing, mesh reconstruction, solver execution, SolverAdapter or
   runner integration, ProjectSchema mutation, issue `#8` validation, bundled
   solvers, or certification claims.
+- Added an experimental FEASpec CalculiX ResultDataset write plan model under
+  `src/osw/experimental/feaspec/`. It validates reviewed output-directory
+  intent, path safety, planned standard files, future atomic write paths,
+  artifact references, draft diagnostics, provenance, and limitations
+  acknowledgement in memory only. It writes no files, creates no directories,
+  copies no artifacts, performs no ResultDataset persistence, adds no
+  write-capable import CLI/GUI, executes no solver, calls no SolverAdapter or
+  runner code, mutates no ProjectSchema, validates no issue `#8`, adds no VLM
+  APIs, bundles no solvers, and claims no certification.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

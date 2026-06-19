@@ -1307,3 +1307,27 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   no subprocess invocation, no ProjectSchema mutation, no dependency install,
   no VLM API, no release/tag or asset mutation, no issue mutation, no live issue
   `#8` validation, and no bundled-solver or certification claim.
+
+## ADR-0067: FEASpec CalculiX ResultDataset Write Planning Is In-Memory
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-20
+- Context: ADR-0066 defined the reviewed persistence contract for
+  ResultDataset drafts, but actual persistence remains too risky without a
+  smaller planning model. The result import path can build a reviewed
+  in-memory draft mapping, and the next safe slice is to validate output intent,
+  path policy, artifact references, diagnostics, provenance, and limitations
+  acknowledgement before any write-capable command exists.
+- Decision: Add an experimental in-memory ResultDataset write plan model under
+  `src/osw/experimental/feaspec/`. The planner consumes draft mappings,
+  records explicit output-directory readiness, planned standard files, future
+  atomic write paths, artifact references, and `FDW_*` diagnostics, and exposes
+  validation/explanation helpers. All write flags remain false.
+- Consequences: This gate adds no actual ResultDataset persistence, no file
+  writes, no directory creation, no artifact copying, no write-capable import
+  CLI or GUI behavior, no schema migration implementation, no `.frd` numerical
+  field parsing, no mesh reconstruction, no solver execution, no SolverAdapter
+  or runner integration, no subprocess invocation, no ProjectSchema mutation,
+  no dependency install, no VLM API, no release/tag or asset mutation, no issue
+  mutation, no live issue `#8` validation, and no bundled-solver or
+  certification claim.

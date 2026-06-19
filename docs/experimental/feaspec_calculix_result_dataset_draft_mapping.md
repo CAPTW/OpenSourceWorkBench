@@ -96,6 +96,13 @@ policy, atomic-write strategy, artifact reference policy, validation rules, and
 persistence implementation, file write, write-capable CLI, GUI write flow, or
 solver execution exists in this gate.
 
+[FEASpec CalculiX ResultDataset write plan](feaspec_calculix_result_dataset_write_plan.md)
+adds the first in-memory implementation slice after the design. It can plan a
+reviewed output directory, standard file targets, artifact references, and
+future atomic write paths from this draft mapping, but it still writes no
+files, creates no directories, copies no artifacts, persists no ResultDataset,
+and executes no solver.
+
 ## Relationship to #8
 
 The draft mapping does not validate live `ccx`.
@@ -116,6 +123,6 @@ passes.
 
 ## Next implementation slices
 
-- `OSW-EXP-040_FEASPEC_RESULT_IMPORT_DATASET_WRITE_PLAN_MODEL`
-- `OSW-EXP-041_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
+- `OSW-EXP-041_FEASPEC_RESULT_IMPORT_DATASET_WRITE_SCHEMA_MODEL`
+- `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
