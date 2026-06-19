@@ -1286,3 +1286,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   ProjectSchema mutation, no dependency install, no VLM API, no release/tag or
   asset mutation, no issue mutation, no live issue `#8` validation, and no
   bundled-solver or certification claim.
+
+## ADR-0066: FEASpec CalculiX ResultDataset Write Flow Is Design-Only
+
+- Status: Accepted for experimental design
+- Date: 2026-06-19
+- Context: The result import path can now build an in-memory ResultDataset draft
+  mapping from artifact metadata, status summaries, bounded `.dat` candidates,
+  deferred `.frd` references, provenance, diagnostics, and limitations. A
+  reviewed persistence contract is needed before any file-writing implementation
+  can be considered.
+- Decision: Add a design-only ResultDataset write contract that defines future
+  output layout, schema/versioning, explicit path and overwrite policy,
+  atomic-write strategy, artifact reference policy, validation-before-write
+  rules, CLI/GUI future entry points, and `FDW_*` diagnostics.
+- Consequences: This gate adds no ResultDataset persistence implementation, no
+  file writes, no write-capable import CLI or GUI behavior, no atomic-write
+  code, no schema implementation, no `.frd` numerical field parsing, no mesh
+  reconstruction, no solver execution, no SolverAdapter or runner integration,
+  no subprocess invocation, no ProjectSchema mutation, no dependency install,
+  no VLM API, no release/tag or asset mutation, no issue mutation, no live issue
+  `#8` validation, and no bundled-solver or certification claim.

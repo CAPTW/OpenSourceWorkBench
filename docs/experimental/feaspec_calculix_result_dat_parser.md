@@ -112,6 +112,9 @@ minimal parse.
 [FEASpec CalculiX ResultDataset draft mapping](feaspec_calculix_result_dataset_draft_mapping.md)
 preserves those scalar and table candidates as draft mapping records with raw
 text, parsed preview values, explicit unit context, and line provenance.
+[FEASpec CalculiX ResultDataset write design](feaspec_calculix_result_dataset_write_design.md)
+defines the future persistence boundary for reviewed drafts and does not expand
+the `.dat` parser subset or add file writes.
 
 This is ResultDataset draft enrichment only. There is no persistence, no
 ResultDataset file write, and no ProjectSchema mutation.
@@ -165,6 +168,7 @@ passes.
 
 ## Next implementation slices
 
-- `OSW-EXP-038_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
 - `OSW-EXP-039_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
+- `OSW-EXP-040_FEASPEC_RESULT_IMPORT_DATASET_WRITE_PLAN_MODEL`
+- `OSW-EXP-041_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

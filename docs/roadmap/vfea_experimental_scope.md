@@ -436,6 +436,15 @@ diagnostics, and limitations while adding no ResultDataset persistence, file
 writes, additional numerical parsing, mesh reconstruction, solver execution,
 issue `#8` validation, ProjectSchema mutation, or VFEA completion.
 
+[FEASpec CalculiX ResultDataset write design](../experimental/feaspec_calculix_result_dataset_write_design.md)
+defines the future reviewed persistence contract for that draft. It records the
+output layout, schema/versioning, path and overwrite policy, atomic-write
+strategy, artifact reference policy, validation-before-write rules, CLI/GUI
+future entry points, and `FDW_*` diagnostics while adding no persistence
+implementation, file writes, `.frd` numerical parsing, mesh reconstruction,
+solver execution, issue `#8` validation, ProjectSchema mutation, or VFEA
+completion.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

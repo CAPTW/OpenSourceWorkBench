@@ -279,6 +279,14 @@ by a dedicated release/tag gate.
   reconstruct meshes, infer units, execute solvers, call SolverAdapter/runner
   code, mutate ProjectSchema, validate issue `#8`, add VLM APIs, bundle
   solvers, or claim certification.
+- Added a design-only FEASpec CalculiX ResultDataset write-flow contract. It
+  defines the future output layout, schema/versioning, explicit path and
+  overwrite policy, atomic-write strategy, artifact references,
+  validation-before-write rules, CLI/GUI future design, and `FDW_*`
+  diagnostics while adding no persistence implementation, file writes, `.frd`
+  numerical parsing, mesh reconstruction, solver execution, SolverAdapter or
+  runner integration, ProjectSchema mutation, issue `#8` validation, bundled
+  solvers, or certification claims.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

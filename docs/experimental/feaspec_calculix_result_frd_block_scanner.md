@@ -109,6 +109,9 @@ ResultDataset draft may carry deferred field or mesh references with
 maps those deferred reference candidates into draft field-reference records
 while preserving `values_parsed=false`, `mesh_reconstructed=false`, and
 `units_inferred=false`.
+[FEASpec CalculiX ResultDataset write design](feaspec_calculix_result_dataset_write_design.md)
+records the future reviewed write contract while keeping `.frd` handling to
+block metadata and deferred references only.
 
 No ResultDataset file is written. No ProjectSchema mutation is performed.
 
@@ -167,4 +170,5 @@ Issue #8 remains open.
 
 - `OSW-EXP-038_FEASPEC_RESULT_IMPORT_RESULTDATASET_DRAFT_MAPPING`
 - `OSW-EXP-039_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
+- `OSW-EXP-040_FEASPEC_RESULT_IMPORT_DATASET_WRITE_PLAN_MODEL`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

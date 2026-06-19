@@ -86,6 +86,16 @@ The CLI preview may display compact draft mapping counts and may include the
 full `dataset_draft_mapping` JSON payload. It remains preview-only and writes
 no files.
 
+## Relationship to write design
+
+[FEASpec CalculiX ResultDataset write design](feaspec_calculix_result_dataset_write_design.md)
+defines the future reviewed persistence boundary for this in-memory draft. It
+records the proposed output layout, schema/versioning, path and overwrite
+policy, atomic-write strategy, artifact reference policy, validation rules, and
+`FDW_*` diagnostics. That design is documentation-only: no ResultDataset
+persistence implementation, file write, write-capable CLI, GUI write flow, or
+solver execution exists in this gate.
+
 ## Relationship to #8
 
 The draft mapping does not validate live `ccx`.
@@ -106,6 +116,6 @@ passes.
 
 ## Next implementation slices
 
-- `OSW-EXP-039_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
-- `OSW-EXP-040_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
+- `OSW-EXP-040_FEASPEC_RESULT_IMPORT_DATASET_WRITE_PLAN_MODEL`
+- `OSW-EXP-041_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

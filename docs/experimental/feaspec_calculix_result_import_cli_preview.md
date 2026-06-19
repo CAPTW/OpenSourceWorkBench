@@ -161,6 +161,9 @@ not parse `.frd` field values or reconstruct meshes.
 [FEASpec CalculiX ResultDataset draft mapping](feaspec_calculix_result_dataset_draft_mapping.md)
 documents the in-memory mapping from these summaries into a future
 ResultDataset draft boundary without persistence.
+[FEASpec CalculiX ResultDataset write design](feaspec_calculix_result_dataset_write_design.md)
+documents the future reviewed persistence boundary. The current CLI still has
+no write/import command, no `--output` persistence mode, and no file writes.
 
 ## Safety Boundary
 
@@ -214,4 +217,5 @@ issue `#8` pass evidence, and does not close issue `#8`.
 - `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
 - `OSW-EXP-038_FEASPEC_RESULT_IMPORT_RESULTDATASET_DRAFT_MAPPING`
 - `OSW-EXP-039_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
+- `OSW-EXP-040_FEASPEC_RESULT_IMPORT_DATASET_WRITE_PLAN_MODEL`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
