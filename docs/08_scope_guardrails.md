@@ -128,15 +128,15 @@ request should stop, park, or defer.
 - Experimental FEASpec CalculiX `.dat` minimal parsing that consumes section
   scanner output and parses only explicit scalar candidates plus small delimited
   table candidates with explicit units or caller `unit_context`, while still
-  avoiding free-form `.dat` parsing, `.frd` parsing, unit inference,
+  avoiding free-form `.dat` parsing, `.frd` numerical field parsing, unit inference,
   ResultDataset writes, solver execution, SolverAdapter/runner paths,
   ProjectSchema mutation, live issue `#8` validation, bundled solvers, and
   certification claims.
-- FEASpec CalculiX `.frd` block scanner design that defines only a future
-  block-boundary metadata contract, field-reference candidates, mesh-reference
+- FEASpec CalculiX `.frd` block metadata scanner that defines and implements
+  only block-boundary metadata, field-reference candidates, mesh-reference
   candidates, unsupported diagnostics, `FP_FRD_*` codes, ResultDataset
-  candidate-only mapping, and fixture strategy while still avoiding `.frd`
-  parser implementation, numerical field parsing, mesh reconstruction,
+  candidate-only mapping, and fixture strategy while still avoiding numerical
+  field parsing, mesh reconstruction, visualization arrays, unit inference,
   ResultDataset writes, solver execution, SolverAdapter/runner paths,
   ProjectSchema mutation, live issue `#8` validation, bundled solvers, and
   certification claims.

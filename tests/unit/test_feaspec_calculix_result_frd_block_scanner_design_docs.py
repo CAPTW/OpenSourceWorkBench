@@ -23,6 +23,8 @@ REQUIRED_FP_FRD_CODES = {
     "FP_FRD_UNITS_MISSING",
     "FP_FRD_PROVENANCE_MISSING",
     "FP_FRD_RESULT_DATASET_WRITE_FORBIDDEN",
+    "FP_FRD_NO_RECOGNIZED_BLOCKS",
+    "FP_FRD_REFERENCE_CANDIDATE_ONLY",
 }
 
 
@@ -41,9 +43,10 @@ def test_frd_block_scanner_design_doc_exists() -> None:
 def test_status_and_forbidden_capabilities_are_explicit() -> None:
     text = _normalized()
 
-    assert "design-only" in text
-    assert "no `.frd` parser implementation" in text
-    assert "no numerical field parsing" in text
+    assert "design baseline retained" in text
+    assert "experimental `.frd` block metadata scanner is now implemented" in text
+    assert "no numerical field parser" in text
+    assert "no node or element value arrays" in text
     assert "no mesh reconstruction" in text
     assert "no resultdataset write" in text
     assert "no solver execution" in text
@@ -60,10 +63,10 @@ def test_scanner_principles_are_defined() -> None:
     assert "no external tools" in text
 
 
-def test_minimum_supported_future_subset_is_defined() -> None:
+def test_implemented_scanner_subset_is_defined() -> None:
     text = _normalized()
 
-    assert "minimum supported future subset" in text
+    assert "implemented scanner subset" in text
     assert "file metadata" in text
     assert "block boundary candidates" in text
     assert "block kinds" in text

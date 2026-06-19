@@ -1,7 +1,8 @@
 # FEASpec CalculiX `.dat` minimal parser
 
 Status: experimental minimal parser implemented.
-Bounded known sections only. No free-form parser. No `.frd` parser.
+Bounded known sections only. No free-form parser. No `.frd` numerical field
+parser.
 No ResultDataset write. No solver execution.
 
 ## Release context
@@ -94,13 +95,13 @@ candidate parsing for section kinds already classified as scalar, table,
 displacement, stress, node output, or element output candidates. Unsupported and
 unknown sections are preserved as skipped content with diagnostics.
 
-## Relationship to future `.frd` block scanning
+## Relationship to `.frd` block scanning
 
-[FEASpec CalculiX `.frd` block scanner design](feaspec_calculix_result_frd_block_scanner_design.md)
-records the future `.frd` metadata boundary. This `.dat` parser does not parse
-`.frd` files, field values, node or element arrays, or mesh topology. Any future
-`.frd` handling remains separate and must preserve the same preview-only,
-no-write, no-solver-execution boundary.
+[FEASpec CalculiX `.frd` block metadata scanner](feaspec_calculix_result_frd_block_scanner.md)
+records the `.frd` block metadata boundary. This `.dat` parser does not parse
+`.frd` files, field values, node or element arrays, or mesh topology. `.frd`
+handling remains separate and preserves the same preview-only, no-write,
+no-solver-execution boundary.
 
 ## Relationship to result import model
 
@@ -114,7 +115,7 @@ ResultDataset file write, and no ProjectSchema mutation.
 
 ## Safety boundary
 
-- no `.frd` parser;
+- no `.frd` numerical field parser;
 - no free-form table parser;
 - no mesh reconstruction;
 - no field reconstruction;
@@ -150,7 +151,7 @@ passes.
 - no broad numerical parser
 - no broad `.dat` parser
 - no free-form `.dat` parser
-- no `.frd` parser
+- no `.frd` numerical field parser
 - no unit inference
 - no ResultDataset persistence
 - no ResultDataset write
@@ -161,7 +162,5 @@ passes.
 
 ## Next implementation slices
 
-- `OSW-EXP-036_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN`
-- `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
 - `OSW-EXP-038_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

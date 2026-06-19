@@ -117,7 +117,7 @@ def test_parser_output_model_and_resultdataset_mapping_are_defined() -> None:
     assert "table_candidates" in text
     assert "unsupported_sections" in text
     assert "resultdataset mapping" in text
-    assert "field references remain future `.frd` work" in text
+    assert "field references remain `.frd` block-scanner work" in text
 
 
 def test_fixture_and_future_test_strategy_are_defined() -> None:

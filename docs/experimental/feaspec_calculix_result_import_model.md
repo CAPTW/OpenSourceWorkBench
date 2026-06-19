@@ -19,6 +19,7 @@ The implementation lives under the experimental FEASpec package:
 - `src/osw/experimental/feaspec/calculix_result_status_scanner.py`
 - `src/osw/experimental/feaspec/calculix_result_dat_section_scanner.py`
 - `src/osw/experimental/feaspec/calculix_result_dat_parser.py`
+- `src/osw/experimental/feaspec/calculix_result_frd_block_scanner.py`
 
 The public package exports the result import model API from
 `osw.experimental.feaspec`.
@@ -54,9 +55,10 @@ The `.dat`, `.frd`, `.sta`, and `.cvg` files are classified by path, suffix,
 size, SHA-256, and parser metadata scans. `.sta` and `.cvg` files may also
 carry text-only status summaries. `.dat` files may carry section-only heading,
 span, kind, and snippet summaries, plus bounded minimal scalar/table candidate
-summaries when explicit units are available. Broad numerical result content,
-free-form tables, `.frd` field data, and numeric convergence values are not
-parsed.
+summaries when explicit units are available. `.frd` files may carry block
+metadata summaries and deferred reference candidates. Broad numerical result
+content, free-form tables, `.frd` field data, and numeric convergence values are
+not parsed.
 [FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md)
 records the bounded `.dat` subset.
 The implemented
@@ -66,9 +68,10 @@ The implemented
 [FEASpec CalculiX `.dat` minimal parser](feaspec_calculix_result_dat_parser.md)
 parses only explicit scalar candidates and small delimited table candidates with
 explicit unit context.
-[FEASpec CalculiX `.frd` block scanner design](feaspec_calculix_result_frd_block_scanner_design.md)
-defines a future block-boundary metadata scanner, but `.frd` values, fields,
-and mesh topology remain unparsed in the current model.
+The implemented
+[FEASpec CalculiX `.frd` block metadata scanner](feaspec_calculix_result_frd_block_scanner.md)
+adds block-boundary summaries and deferred references, but `.frd` values,
+fields, and mesh topology remain unparsed in the current model.
 
 ## Artifact Classification
 
@@ -171,13 +174,13 @@ files.
 
 ## FRD Block Scanner Boundary
 
-`.frd` artifacts currently remain artifact references plus deferred field
-references in the ResultDataset draft. The design-only `.frd` block scanner
-contract would add block candidates, field-reference candidates, mesh-reference
-candidates, unsupported-block diagnostics, and limitations in memory only. It
-does not add numerical field parsing, mesh reconstruction, ResultDataset writes,
-solver execution, SolverAdapter or runner calls, ProjectSchema mutation, or
-issue `#8` validation.
+`.frd` artifacts remain artifact references plus deferred field and mesh
+references in the ResultDataset draft. The `.frd` block scanner adds block
+candidates, field-reference candidates, mesh-reference candidates,
+unsupported-block diagnostics, and limitations in memory only. It does not add
+numerical field parsing, mesh reconstruction, ResultDataset writes, solver
+execution, SolverAdapter or runner calls, ProjectSchema mutation, or issue `#8`
+validation.
 
 ## Safety Boundary
 

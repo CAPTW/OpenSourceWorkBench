@@ -1245,3 +1245,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   install, VLM API, release mutation, asset upload, tag mutation, issue
   mutation, live issue `#8` validation, bundled-solver claim, or certification
   claim. Implementation and live validation require separate future gates.
+
+## ADR-0064: FEASpec CalculiX FRD Block Scanner Is Metadata-Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-19
+- Context: The result import path can already enrich `.dat` artifacts with
+  bounded explicit preview candidates and `.sta` / `.cvg` artifacts with
+  text-only status summaries. `.frd` artifacts still need safer visibility for
+  block boundaries and deferred references without parsing field values or
+  rebuilding mesh topology.
+- Decision: Implement a `.frd` block metadata scanner that records block labels,
+  spans, block kinds, unsupported and unknown records, bounded snippets, and
+  deferred reference candidates only. The scanner is integrated into result
+  import artifact metadata and CLI preview summaries.
+- Consequences: This gate adds no numerical `.frd` field parser, node or
+  element value arrays, mesh reconstruction, visualization arrays, unit
+  inference, ResultDataset persistence, SolverAdapter or runner integration,
+  subprocess invocation, ProjectSchema mutation, dependency install, VLM API,
+  release mutation, asset upload, tag mutation, issue mutation, live issue `#8`
+  validation, bundled-solver claim, or certification claim.

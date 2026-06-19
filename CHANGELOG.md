@@ -261,14 +261,15 @@ by a dedicated release/tag gate.
   parsing, unit inference, mesh/field reconstruction, ResultDataset writes,
   solver execution, SolverAdapter/runner calls, ProjectSchema mutation, issue
   `#8` validation, VLM APIs, bundled solvers, or certification claims.
-- Added a design-only FEASpec CalculiX `.frd` block scanner contract. It
-  defines the future block-boundary metadata subset, field-reference and
-  mesh-reference candidates, unsupported-block diagnostics, `FP_FRD_*` codes,
-  ResultDataset candidate-only mapping, fixture policy, and issue `#8`
-  separation without adding `.frd` parser implementation, numerical field
-  parsing, mesh reconstruction, ResultDataset writes, solver execution,
-  SolverAdapter/runner calls, ProjectSchema mutation, release mutation,
-  bundled solvers, or certification claims.
+- Added an experimental FEASpec CalculiX `.frd` block metadata scanner under
+  `src/osw/experimental/feaspec/`. It classifies block labels, spans, block
+  kinds, unsupported/unknown records, snippets, and deferred reference
+  candidates; enriches result-import model and CLI preview summaries in memory;
+  and preserves the design baseline. It does not parse numerical field values,
+  reconstruct mesh, build visualization arrays, infer units, write
+  ResultDataset files, execute solvers, call SolverAdapter/runner code, mutate
+  ProjectSchema, validate issue `#8`, add VLM APIs, bundle solvers, or claim
+  certification.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

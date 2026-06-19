@@ -141,7 +141,7 @@ The future parser report should remain a pure in-memory object with:
   gate accepts them.
 - Tables map only as preview table candidates.
 - Artifacts remain retained as artifact references.
-- Field references remain future `.frd` work, not `.dat` work.
+- Field references remain `.frd` block-scanner work, not `.dat` work.
 - Limitations and diagnostics must be preserved beside any preview draft.
 - This design gate does not add ResultDataset persistence.
 
@@ -181,7 +181,7 @@ passes.
 - No broad `.dat` parser implementation.
 - No unsupported numerical extraction.
 - No broad numerical result parsing.
-- No `.frd` parser.
+- No `.frd` numerical field parser.
 - No ResultDataset persistence.
 - No ResultDataset write.
 - No solver execution.
@@ -193,6 +193,5 @@ passes.
 - `OSW-EXP-034_FEASPEC_RESULT_PARSER_DAT_METADATA_SECTION_SCANNER`
 - `OSW-EXP-035_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
 - `OSW-EXP-036_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN`
-- `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
 - `OSW-EXP-038_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

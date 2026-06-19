@@ -22,6 +22,7 @@ from .calculix_result_diagnostics import (
     CalculiXResultImportSeverity,
     FEASpecCalculiXResultImportDiagnostic,
 )
+from .calculix_result_frd_block_scanner import scan_calculix_frd_blocks
 from .calculix_result_metadata_scanner import scan_calculix_result_file_metadata
 from .calculix_result_status_scanner import scan_calculix_status_file
 
@@ -528,6 +529,10 @@ def _classify_artifacts(
             status_scan = scan_calculix_status_file(path, metadata=parser_scan)
             metadata_payload["status_scan"] = status_scan.to_dict()
             metadata_payload["status_summary"] = status_scan.summary.to_dict()
+        if kind is CalculiXResultArtifactKind.FRD:
+            frd_block_scan = scan_calculix_frd_blocks(path, metadata=parser_scan)
+            metadata_payload["frd_block_scan"] = frd_block_scan.to_dict()
+            metadata_payload["frd_block_summary"] = frd_block_scan.summary.to_dict()
         artifact = CalculiXResultArtifact.from_path(
             path,
             kind=kind,
@@ -799,6 +804,26 @@ def _field_references(
     references: list[Mapping[str, Any]] = []
     for artifact in artifacts:
         if artifact.kind is CalculiXResultArtifactKind.FRD:
+            payload = artifact.metadata.get("frd_block_scan")
+            if isinstance(payload, Mapping):
+                candidates = payload.get("reference_candidates", ())
+                if isinstance(candidates, Sequence) and not isinstance(
+                    candidates,
+                    (str, bytes),
+                ):
+                    candidate_references = [
+                        {
+                            **dict(item),
+                            "artifact": artifact.filename,
+                            "format": "frd",
+                            "status": "candidate-not-parsed",
+                        }
+                        for item in candidates
+                        if isinstance(item, Mapping)
+                    ]
+                    if candidate_references:
+                        references.extend(candidate_references)
+                        continue
             references.append(
                 {
                     "artifact": artifact.filename,
@@ -925,8 +950,9 @@ def _dedupe_diagnostics(
 def _limitations() -> tuple[str, ...]:
     return (
         "Result import model only; .dat parsing is bounded to explicit scalar/table candidates.",
-        "No free-form .dat parser, .frd parser, .sta numerical parser, "
-        "or .cvg numerical parser is implemented.",
+        ".frd scanning is block metadata only; field values and mesh are not parsed.",
+        "No free-form .dat parser, .frd numerical field parser, "
+        ".sta numerical parser, or .cvg numerical parser is implemented.",
         "No ResultDataset file is written by this model.",
         "No solver execution, solver adapter call, runner call, or external command is performed.",
         "Issue #8 live CalculiX validation remains separate and open.",

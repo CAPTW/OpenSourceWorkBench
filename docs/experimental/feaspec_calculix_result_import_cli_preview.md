@@ -75,6 +75,7 @@ JSON output includes:
 - `status_summary`;
 - `dat_section_summary`;
 - `dat_minimal_parse_summary`;
+- `frd_block_summary`;
 - `limitations`.
 
 Top-level `solver_execution_performed` describes this preview command and is
@@ -95,6 +96,13 @@ candidates with explicit units, `dat_minimal_parse_summary` contains bounded
 candidate counts and parsed-preview value counts. This summary is still
 preview-only: no free-form `.dat` parsing, no `.frd` parsing, no unit
 inference, no ResultDataset persistence, and no solver execution.
+
+When `.frd` files contain recognizable block metadata, `frd_block_summary`
+contains block counts, block kind counts, deferred reference candidate counts,
+unsupported/unknown counts, and bounded per-file summaries. This summary is
+still preview-only: no numerical field parser, no node or element value arrays,
+no mesh reconstruction, no visualization arrays, no unit inference, no
+ResultDataset persistence, and no solver execution.
 
 ## Exit Codes
 
@@ -124,7 +132,9 @@ The `.dat` and `.frd` files are classified by path, suffix, size, and hash. The
 `.sta` and `.cvg` files may include text-only status summaries. The `.dat` files
 may include section-only heading/span/snippet summaries and bounded minimal
 scalar/table candidate summaries. There is no broad numerical parser and no
-numeric convergence-value parsing capability.
+numeric convergence-value parsing capability. The `.frd` files may include
+block metadata summaries and deferred reference candidates, but no field values,
+node or element value arrays, or mesh topology are reconstructed.
 [FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md)
 records the bounded `.dat` subset;
 the implemented
@@ -132,10 +142,10 @@ the implemented
 does not extract numeric values itself, and the implemented
 [FEASpec CalculiX `.dat` minimal parser](feaspec_calculix_result_dat_parser.md)
 parses only explicit scalar/table candidates with explicit unit context.
-The design-only
-[FEASpec CalculiX `.frd` block scanner design](feaspec_calculix_result_frd_block_scanner_design.md)
-defines future `.frd` block-reference metadata only; the current preview still
-does not parse `.frd` field values or reconstruct meshes.
+The implemented
+[FEASpec CalculiX `.frd` block metadata scanner](feaspec_calculix_result_frd_block_scanner.md)
+defines `.frd` block-reference metadata only; the current preview still does
+not parse `.frd` field values or reconstruct meshes.
 
 ## Safety Boundary
 
@@ -167,7 +177,7 @@ issue `#8` pass evidence, and does not close issue `#8`.
 ## Non-Goals
 
 - No broad numerical parsing.
-- No `.frd` parser.
+- No `.frd` numerical field parser.
 - No free-form `.dat` parser.
 - No write-capable import command.
 - No ResultDataset persistence.

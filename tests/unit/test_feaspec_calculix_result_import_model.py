@@ -276,6 +276,27 @@ def test_build_result_dataset_draft_contains_artifacts_provenance_limitations_an
     assert payload["artifacts"]
 
 
+def test_build_result_dataset_draft_includes_deferred_frd_references(
+    tmp_path: Path,
+) -> None:
+    root = _write_metadata_bundle(tmp_path / "bundle", primary_suffix=None)
+    (root / "beam_case.frd").write_text(
+        "2C NODE COORDINATES\n1 0 0 0\n100C DISPLACEMENT FIELD\n1 1.0\n",
+        encoding="utf-8",
+    )
+
+    plan = plan_calculix_result_import(root)
+    draft = build_calculix_result_dataset_draft(plan)
+
+    assert draft.writes_files is False
+    assert draft.field_references
+    assert {item["reference_kind"] for item in draft.field_references} >= {
+        "node",
+        "field",
+    }
+    assert all(item["status"] == "candidate-not-parsed" for item in draft.field_references)
+
+
 def test_build_result_dataset_draft_includes_dat_minimal_candidates(
     tmp_path: Path,
 ) -> None:
@@ -319,6 +340,37 @@ def test_inspect_includes_metadata_scanner_snapshot(tmp_path: Path) -> None:
 
     after = sorted(path.name for path in root.iterdir())
     assert before == after
+
+
+def test_inspect_includes_frd_block_summary_for_frd_artifacts(
+    tmp_path: Path,
+) -> None:
+    root = _write_metadata_bundle(tmp_path / "bundle", primary_suffix=None)
+    (root / "beam_case.frd").write_text(
+        "1C FRD HEADER\n"
+        "2C NODE COORDINATES\n"
+        "1 0 0 0\n"
+        "100C DISPLACEMENT FIELD\n"
+        "1 1.0\n",
+        encoding="utf-8",
+    )
+    before = sorted(path.name for path in root.iterdir())
+
+    inspection = inspect_calculix_result_directory(root)
+    frd_artifact = next(
+        artifact
+        for artifact in inspection.artifacts
+        if artifact.kind is CalculiXResultArtifactKind.FRD
+    )
+    after = sorted(path.name for path in root.iterdir())
+
+    assert before == after
+    assert "frd_block_summary" in frd_artifact.metadata
+    assert "frd_block_scan" in frd_artifact.metadata
+    assert frd_artifact.metadata["frd_block_summary"]["block_count"] == 3
+    assert frd_artifact.metadata["frd_block_summary"]["field_reference_candidate_count"] == 1
+    assert frd_artifact.metadata["frd_block_summary"]["mesh_reference_candidate_count"] == 1
+    assert frd_artifact.metadata["frd_block_summary"]["numeric_tokens_not_parsed"]
 
 
 def test_inspect_includes_status_summary_for_sta_cvg_artifacts(

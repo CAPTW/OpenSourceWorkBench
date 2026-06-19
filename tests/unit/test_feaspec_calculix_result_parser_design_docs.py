@@ -86,7 +86,7 @@ def test_parser_phases_are_documented() -> None:
     assert "phase 0 metadata scanner" in text
     assert "phase 1 `.sta` / `.cvg` status summary scanner" in _read().lower()
     assert "phase 2 `.dat` text summary/table scanner" in _read().lower()
-    assert "phase 3 `.frd` field/block scanner" in _read().lower()
+    assert "phase 3 `.frd` block metadata scanner" in _read().lower()
 
 
 def test_sta_cvg_scanner_plan_is_defined() -> None:
@@ -108,7 +108,7 @@ def test_frd_parser_plan_is_defined() -> None:
     text = _normalized()
 
     assert "phase 3 `.frd`" in text
-    assert "field/block" in text
+    assert "block metadata" in text
     assert "no full mesh rebuild" in text
 
 

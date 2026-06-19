@@ -35,9 +35,9 @@ defines a future `.dat` subset separately and does not change this scanner.
 The implemented
 [FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md)
 classifies `.dat` headings/spans/snippets only and does not parse numeric values.
-The design-only
-[FEASpec CalculiX `.frd` block scanner design](feaspec_calculix_result_frd_block_scanner_design.md)
-keeps future `.frd` handling limited to block metadata and deferred references.
+The implemented
+[FEASpec CalculiX `.frd` block metadata scanner](feaspec_calculix_result_frd_block_scanner.md)
+keeps `.frd` handling limited to block metadata and deferred references.
 
 ## Captured status summary
 
@@ -94,13 +94,14 @@ size, SHA-256, line count, snippet, metadata-only, and diagnostic information.
 
 `inspect_calculix_result_directory` attaches `status_scan` and `status_summary`
 payloads to `.sta` and `.cvg` artifact metadata. The import model still has no
-numerical parser and no ResultDataset write. `.dat` and `.frd` numerical parsing
-remain unimplemented.
+numeric convergence parser and no ResultDataset write. `.dat` minimal parsing is
+bounded to explicit candidates, and `.frd` numerical field parsing remains
+unimplemented.
 
 ## Safety boundary
 
 - no `.dat` parser
-- no `.frd` parser
+- no `.frd` numerical field parser
 - no numeric convergence parsing
 - no unit inference
 - no solver execution
@@ -146,5 +147,4 @@ passes.
 - `OSW-EXP-034_FEASPEC_RESULT_PARSER_DAT_METADATA_SECTION_SCANNER`
 - `OSW-EXP-035_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
 - `OSW-EXP-036_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN`
-- `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

@@ -28,11 +28,10 @@ external command invocation.
 
 - `.dat`
 
-Other suffixes are rejected by this scanner. `.frd` parsing remains future work,
+Other suffixes are rejected by this scanner. `.frd` block metadata scanning is
+handled by the implemented
+[FEASpec CalculiX `.frd` block metadata scanner](feaspec_calculix_result_frd_block_scanner.md),
 and `.sta` / `.cvg` status text remains handled by the existing status scanner.
-The design-only
-[FEASpec CalculiX `.frd` block scanner design](feaspec_calculix_result_frd_block_scanner_design.md)
-defines the next `.frd` metadata boundary without field-value parsing.
 
 ## Captured section metadata
 
@@ -117,7 +116,7 @@ write files.
 - no numeric value extraction;
 - no table extraction;
 - no unit inference;
-- no `.frd` parser;
+- no `.frd` numerical field parser;
 - no solver execution;
 - no subprocess;
 - no SolverAdapter;
@@ -162,5 +161,4 @@ passes.
 
 - `OSW-EXP-035_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
 - `OSW-EXP-036_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_DESIGN`
-- `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

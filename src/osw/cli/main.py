@@ -452,7 +452,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Inspect an explicit CalculiX result directory and preview the experimental "
             "FEASpec result-import plan. The command writes no files, performs no solver "
             "execution, parses only bounded explicit .dat candidates, does not parse "
-            ".frd content, and keeps issue #8 live validation separate."
+            ".frd field values, and keeps issue #8 live validation separate."
         ),
     )
     feaspec_calculix_result_import_parser.add_argument(
@@ -2703,6 +2703,9 @@ def _build_feaspec_calculix_result_import_preview(
     dat_minimal_parse_summary = (
         _feaspec_calculix_result_import_dat_minimal_parse_summary(plan.artifacts)
     )
+    frd_block_summary = _feaspec_calculix_result_import_frd_block_summary(
+        plan.artifacts
+    )
     status_value = plan.status.value
     strict_blocked = (
         plan.status
@@ -2733,6 +2736,7 @@ def _build_feaspec_calculix_result_import_preview(
         "status_summary": status_summary,
         "dat_section_summary": dat_section_summary,
         "dat_minimal_parse_summary": dat_minimal_parse_summary,
+        "frd_block_summary": frd_block_summary,
         "parse_not_implemented": parse_not_implemented,
         "solver_execution_performed": False,
         "source_run_solver_execution_performed": (
@@ -2744,9 +2748,10 @@ def _build_feaspec_calculix_result_import_preview(
         "limitations": [
             "Preview only; no files are written.",
             "No solver execution is performed by this command.",
-            "No free-form .dat parser or .frd parser is implemented.",
+            "No free-form .dat parser or .frd numerical field parser is implemented.",
             "Minimal .dat parsing is bounded to explicit scalar/table candidates.",
             ".dat section summaries are metadata-only when present.",
+            ".frd block summaries are metadata-only when present.",
             "Status summaries from .sta/.cvg are text-only when present.",
             "No ResultDataset persistence or ProjectSchema mutation is performed.",
             "Issue #8 live CalculiX validation remains separate.",
@@ -2854,6 +2859,85 @@ def _feaspec_calculix_result_import_dat_minimal_parse_summary(
         "minimal_parser": bool(dat_artifacts),
         "freeform_parser": False,
         "frd_parser": False,
+        "units_inferred": False,
+        "writes_files": False,
+    }
+
+
+def _feaspec_calculix_result_import_frd_block_summary(
+    artifacts: Sequence[object],
+) -> dict[str, object]:
+    frd_artifacts: list[dict[str, object]] = []
+    aggregate_counts: dict[str, int] = {}
+    reference_counts: dict[str, int] = {}
+    block_count = 0
+    reference_candidate_count = 0
+    field_reference_candidate_count = 0
+    mesh_reference_candidate_count = 0
+    unsupported_block_count = 0
+    unknown_block_count = 0
+    numeric_tokens_not_parsed = False
+
+    for artifact in artifacts:
+        metadata = getattr(artifact, "metadata", {})
+        if not isinstance(metadata, Mapping):
+            continue
+        summary = metadata.get("frd_block_summary")
+        if not isinstance(summary, Mapping):
+            continue
+        counts = summary.get("kind_counts")
+        if isinstance(counts, Mapping):
+            for key, value in counts.items():
+                if isinstance(key, str) and isinstance(value, int):
+                    aggregate_counts[key] = aggregate_counts.get(key, 0) + value
+        refs = summary.get("reference_kind_counts")
+        if isinstance(refs, Mapping):
+            for key, value in refs.items():
+                if isinstance(key, str) and isinstance(value, int):
+                    reference_counts[key] = reference_counts.get(key, 0) + value
+        block_count += _int_value(summary.get("block_count"))
+        reference_candidate_count += _int_value(
+            summary.get("reference_candidate_count")
+        )
+        field_reference_candidate_count += _int_value(
+            summary.get("field_reference_candidate_count")
+        )
+        mesh_reference_candidate_count += _int_value(
+            summary.get("mesh_reference_candidate_count")
+        )
+        unsupported_block_count += _int_value(summary.get("unsupported_block_count"))
+        unknown_block_count += _int_value(summary.get("unknown_block_count"))
+        numeric_tokens_not_parsed = numeric_tokens_not_parsed or bool(
+            summary.get("numeric_tokens_not_parsed", False)
+        )
+        kind = getattr(artifact, "kind", "")
+        kind_value = getattr(kind, "value", str(kind))
+        frd_artifacts.append(
+            {
+                "filename": getattr(artifact, "filename", ""),
+                "kind": kind_value,
+                "summary": dict(summary),
+            }
+        )
+
+    return {
+        "available": bool(frd_artifacts),
+        "file_count": len(frd_artifacts),
+        "block_count": block_count,
+        "kind_counts": aggregate_counts,
+        "reference_kind_counts": reference_counts,
+        "reference_candidate_count": reference_candidate_count,
+        "field_reference_candidate_count": field_reference_candidate_count,
+        "mesh_reference_candidate_count": mesh_reference_candidate_count,
+        "unsupported_block_count": unsupported_block_count,
+        "unknown_block_count": unknown_block_count,
+        "numeric_tokens_not_parsed": numeric_tokens_not_parsed,
+        "files": frd_artifacts,
+        "numerical_values_parsed": False,
+        "field_values_parsed": False,
+        "numeric_values_extracted": False,
+        "mesh_reconstructed": False,
+        "visualization_arrays_built": False,
         "units_inferred": False,
         "writes_files": False,
     }
@@ -2991,6 +3075,25 @@ def _print_feaspec_calculix_result_import_preview(
             "DAT units inferred: "
             f"{str(dat_minimal_parse_summary.get('units_inferred', False)).lower()}"
         )
+    frd_block_summary = preview.get("frd_block_summary", {})
+    if isinstance(frd_block_summary, Mapping) and frd_block_summary.get("available"):
+        print("FRD block summary: available")
+        print(f"FRD files scanned: {frd_block_summary.get('file_count', 0)}")
+        print(f"FRD blocks scanned: {frd_block_summary.get('block_count', 0)}")
+        print(
+            "FRD field values parsed: "
+            f"{str(frd_block_summary.get('field_values_parsed', False)).lower()}"
+        )
+        print(
+            "FRD mesh reconstructed: "
+            f"{str(frd_block_summary.get('mesh_reconstructed', False)).lower()}"
+        )
+        counts = frd_block_summary.get("kind_counts", {})
+        if isinstance(counts, Mapping) and counts:
+            rendered = ", ".join(
+                f"{key}={value}" for key, value in sorted(counts.items())
+            )
+            print(f"FRD block kind counts: {rendered}")
     print(
         "Source run solver execution performed: "
         f"{str(preview['source_run_solver_execution_performed']).lower()}"

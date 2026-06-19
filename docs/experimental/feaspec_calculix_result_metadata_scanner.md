@@ -23,9 +23,9 @@ No numerical parser. No ResultDataset write. No solver execution.
   [FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md)
   remains section metadata only and does not add numerical parsing.
 - [FEASpec CalculiX `.frd` block scanner design](feaspec_calculix_result_frd_block_scanner_design.md)
-  defines a future metadata-first `.frd` block-boundary scanner that would
-  consume this file identity evidence without parsing field values or
-  reconstructing meshes.
+- [FEASpec CalculiX `.frd` block metadata scanner](feaspec_calculix_result_frd_block_scanner.md)
+  consumes this file identity evidence and adds block/reference summaries
+  without parsing field values or reconstructing meshes.
 
 ## Public API
 
@@ -117,6 +117,20 @@ The scanner uses `FP_*` diagnostics from
 - `FP_DAT_AMBIGUOUS_VALUE_SKIPPED`
 - `FP_DAT_RAW_TEXT_PRESERVED`
 - `FP_DAT_RESULT_DATASET_WRITE_FORBIDDEN`
+- `FP_FRD_PARSE_NOT_IMPLEMENTED`
+- `FP_FRD_BLOCK_SCAN_ONLY`
+- `FP_FRD_BLOCK_UNSUPPORTED`
+- `FP_FRD_BLOCK_TOO_LARGE`
+- `FP_FRD_BLOCK_LIMIT_EXCEEDED`
+- `FP_FRD_UNKNOWN_RECORD`
+- `FP_FRD_BINARY_UNSUPPORTED`
+- `FP_FRD_FIELD_VALUES_NOT_PARSED`
+- `FP_FRD_MESH_RECONSTRUCTION_FORBIDDEN`
+- `FP_FRD_UNITS_MISSING`
+- `FP_FRD_PROVENANCE_MISSING`
+- `FP_FRD_RESULT_DATASET_WRITE_FORBIDDEN`
+- `FP_FRD_NO_RECOGNIZED_BLOCKS`
+- `FP_FRD_REFERENCE_CANDIDATE_ONLY`
 
 ## Relationship to result import model
 
@@ -127,10 +141,11 @@ The scanner uses `FP_*` diagnostics from
   `status_summary` payloads from the status scanner.
 - `.dat` artifacts may also include section-only `dat_section_scan` and
   `dat_section_summary` payloads from the `.dat` section scanner.
-- `.dat` numerical parsing remains unimplemented until a separate implementation
-  gate adds the reviewed minimal parser subset.
-- `.frd` block scanning remains a separate future gate; `.frd` field values
-  and mesh reconstruction remain out of scope.
+- `.dat` artifacts may also include bounded `dat_minimal_parse` and
+  `dat_minimal_parse_summary` payloads from the minimal parser subset.
+- `.frd` artifacts may also include `frd_block_scan` and `frd_block_summary`
+  payloads from the `.frd` block scanner.
+- `.frd` field values and mesh reconstruction remain out of scope.
 - FI parse-not-implemented warnings remain warnings; no numerical parse is added.
 
 ## Safety boundary

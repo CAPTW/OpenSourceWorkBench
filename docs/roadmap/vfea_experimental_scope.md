@@ -417,16 +417,16 @@ ProjectSchema, or complete VFEA.
 adds the next bounded parser slice. It accepts only explicit scalar candidates
 and small delimited table candidates with explicit units, preserves raw text
 and line provenance, and enriches result-import previews in memory only. It
-does not implement free-form `.dat` parsing, `.frd` parsing, unit inference,
+does not implement free-form `.dat` parsing, `.frd` numerical field parsing, unit inference,
 ResultDataset persistence, solver execution, issue `#8` validation,
 ProjectSchema mutation, or VFEA completion.
 
-[FEASpec CalculiX `.frd` block scanner design](../experimental/feaspec_calculix_result_frd_block_scanner_design.md)
-records the future `.frd` block metadata boundary. It defines block candidates,
+[FEASpec CalculiX `.frd` block metadata scanner](../experimental/feaspec_calculix_result_frd_block_scanner.md)
+adds `.frd` block metadata visibility. It records block candidates,
 field-reference candidates, mesh-reference candidates, unsupported diagnostics,
-and ResultDataset candidate-only mapping while adding no `.frd` parser
-implementation, numerical field parsing, mesh reconstruction, solver execution,
-issue `#8` validation, ProjectSchema mutation, or VFEA completion.
+and ResultDataset candidate-only mapping while adding no numerical field
+parsing, mesh reconstruction, solver execution, issue `#8` validation,
+ProjectSchema mutation, or VFEA completion.
 
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)

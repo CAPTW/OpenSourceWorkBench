@@ -6,9 +6,9 @@ This document defines a staged parsing strategy. The `.sta` / `.cvg` status
 scanner is implemented as a text-only scanner, the `.dat` metadata section
 scanner is implemented as a heading/span/snippet scanner, and a bounded `.dat`
 minimal parser is implemented for explicit scalar/table candidates with explicit
-units. The `.frd` block scanner now has a design-only contract for future
-block-boundary metadata. Broad `.dat` numerical parsing and `.frd` parsing
-remain unimplemented.
+units. The `.frd` block metadata scanner is implemented for block boundaries,
+reference candidates, and snippets only. Broad `.dat` numerical parsing and
+`.frd` numerical field parsing remain unimplemented.
 This design does not implement a broad numerical result parser, does not write
 ResultDataset files, and does not execute CalculiX.
 
@@ -102,12 +102,14 @@ ResultDataset files, and does not execute CalculiX.
   small delimited table candidates with explicit units only. It remains bounded,
   preview-only, and does not implement a free-form `.dat` parser.
 
-### Phase 3 `.frd` field/block scanner
+### Phase 3 `.frd` block metadata scanner
 
 - The detailed design lives in
   [FEASpec CalculiX `.frd` block scanner design](feaspec_calculix_result_frd_block_scanner_design.md).
-- Future block-level metadata scan only: block boundaries, block kinds, labels,
-  short snippets, and field/mesh reference candidates.
+- The implemented scanner lives in
+  [FEASpec CalculiX `.frd` block metadata scanner](feaspec_calculix_result_frd_block_scanner.md).
+- Block-level metadata scan only: block boundaries, block kinds, labels, short
+  snippets, and field/mesh reference candidates.
 - Record discoverable node/element references and candidate block names without
   reconstructing topology.
 - No full mesh rebuild or interpolation in this phase.
@@ -137,8 +139,8 @@ ResultDataset files, and does not execute CalculiX.
 
 ## `.frd` parser plan
 
-- Phase-3 remains design-only until a separate implementation gate.
-- Future scanner identifies block headers, field references, and
+- Phase 3 implements block metadata scanning only.
+- The scanner identifies block headers, field references, and
   element/node-related declarations.
 - No numeric value matrix parse in this phase.
 - Field payloads are mapped as `field_references` with source path and artifact
@@ -230,6 +232,8 @@ The parser layer exposes deterministic parser diagnostics with these codes:
 - `FP_FRD_UNITS_MISSING`
 - `FP_FRD_PROVENANCE_MISSING`
 - `FP_FRD_RESULT_DATASET_WRITE_FORBIDDEN`
+- `FP_FRD_NO_RECOGNIZED_BLOCKS`
+- `FP_FRD_REFERENCE_CANDIDATE_ONLY`
 
 ## Parser output model
 

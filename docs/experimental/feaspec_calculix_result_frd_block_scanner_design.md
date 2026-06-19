@@ -1,7 +1,9 @@
 # FEASpec CalculiX `.frd` block scanner design
 
-Status: design-only.
-No `.frd` parser implementation. No numerical field parsing. No mesh
+Status: design baseline retained.
+An experimental `.frd` block metadata scanner is now implemented under
+`src/osw/experimental/feaspec/calculix_result_frd_block_scanner.py`.
+No numerical field parser. No node or element value arrays. No mesh
 reconstruction. No ResultDataset write. No solver execution.
 
 ## Release context
@@ -13,7 +15,7 @@ reconstruction. No ResultDataset write. No solver execution.
 
 ## Relationship to existing layers
 
-The future `.frd` block scanner sits after the existing safe inspection layers:
+The `.frd` block scanner sits after the existing safe inspection layers:
 
 - the metadata scanner records suffix, artifact kind, byte size, SHA-256, line
   and snippet evidence;
@@ -25,7 +27,7 @@ The future `.frd` block scanner sits after the existing safe inspection layers:
   with explicit unit context;
 - the result import model and CLI preview keep all parser output in memory and
   do not persist a ResultDataset;
-- the ResultDataset draft can carry future `.frd` references as candidates and
+- the ResultDataset draft can carry `.frd` references as candidates and
   limitations only.
 
 ## Scanner principles
@@ -43,9 +45,9 @@ The future `.frd` block scanner sits after the existing safe inspection layers:
 - Preserve unsupported or unknown records as diagnostics and limitations.
 - Use no external tools, no subprocess calls, no SolverAdapter, and no runner.
 
-## Minimum supported future subset
+## Implemented scanner subset
 
-A future implementation may produce only these bounded metadata records:
+The implementation produces only these bounded metadata records:
 
 - file metadata from the existing metadata scanner;
 - block boundary candidates with start and end line or record positions;
@@ -100,10 +102,10 @@ success.
 - Do not use CalculiX, mesh viewers, visualization libraries, or shell commands
   to inspect `.frd` content.
 
-## Planned diagnostics
+## Diagnostics
 
-The future `.frd` block scanner should use shared parser diagnostics plus these
-`FP_FRD_*` codes:
+The `.frd` block scanner uses shared parser diagnostics plus these `FP_FRD_*`
+codes:
 
 - `FP_FRD_PARSE_NOT_IMPLEMENTED`
 - `FP_FRD_BLOCK_SCAN_ONLY`
@@ -117,10 +119,12 @@ The future `.frd` block scanner should use shared parser diagnostics plus these
 - `FP_FRD_UNITS_MISSING`
 - `FP_FRD_PROVENANCE_MISSING`
 - `FP_FRD_RESULT_DATASET_WRITE_FORBIDDEN`
+- `FP_FRD_NO_RECOGNIZED_BLOCKS`
+- `FP_FRD_REFERENCE_CANDIDATE_ONLY`
 
 ## Scanner output model
 
-The proposed scanner output is a pure in-memory report with:
+The scanner output is a pure in-memory report with:
 
 - `block_candidates`: ordered block boundary records with kind, label, span,
   and provenance;
@@ -142,9 +146,9 @@ No file writes and no external commands are part of this output model.
 ResultDataset integration remains candidate-only:
 
 - `.frd` artifacts remain artifact references with metadata and hashes;
-- block candidates can become preview references;
-- field-reference candidates can become deferred field references;
-- mesh-reference candidates can become deferred mesh references;
+- block candidates become preview references;
+- field-reference candidates become deferred field references;
+- mesh-reference candidates become deferred mesh references;
 - numerical arrays remain future work and are not placed into ResultDataset
   tables or fields by this scanner;
 - limitations and diagnostics are preserved before any future write gate.
@@ -156,16 +160,16 @@ No ResultDataset persistence or ProjectSchema mutation is added by this design.
 - No tracked solver output fixtures are added in this design gate.
 - No tracked `.frd`, `.dat`, `.sta`, `.cvg`, `.out`, `.err`, or solver log
   fixtures are added.
-- Future implementation tests should use tiny synthetic `.frd` text generated
-  under `tmp_path` or another allowlisted test path.
-- Future fixture cases should include recognizable block boundaries,
+- Implementation tests use tiny synthetic `.frd` text generated under
+  `tmp_path` or another allowlisted test path.
+- Fixture cases include recognizable block boundaries,
   unsupported records, malformed records, oversized blocks, and binary-ish
   byte sequences.
 - Synthetic fixtures must not claim real engineering validation.
 
 ## Future test strategy
 
-Future implementation tests should verify:
+Implementation tests verify:
 
 - block boundary detection for tiny synthetic text;
 - supported block-kind classification;
@@ -188,7 +192,7 @@ passes.
 
 ## Non-goals
 
-- no `.frd` parser implementation
+- no numerical `.frd` field parser
 - no numerical field parsing
 - no mesh reconstruction
 - no visualization field reconstruction

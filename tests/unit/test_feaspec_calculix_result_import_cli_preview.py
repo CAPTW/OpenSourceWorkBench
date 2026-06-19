@@ -27,6 +27,7 @@ def _write_result_dir(
     include_primary: bool = True,
     include_status: bool = False,
     dat_text: str = "not parsed\n",
+    frd_text: str = "not parsed\n",
     solver_execution_performed: bool = True,
 ) -> Path:
     root.mkdir()
@@ -62,7 +63,7 @@ def _write_result_dir(
     (root / "cli_preview_case.inp").write_text("*NODE\n", encoding="utf-8")
     if include_primary:
         (root / "cli_preview_case.dat").write_text(dat_text, encoding="utf-8")
-        (root / "cli_preview_case.frd").write_text("not parsed\n", encoding="utf-8")
+        (root / "cli_preview_case.frd").write_text(frd_text, encoding="utf-8")
     if include_status:
         (root / "cli_preview_case.sta").write_text(
             "step 1 increment 2\nanalysis completed\n",
@@ -161,6 +162,8 @@ def test_json_preview_has_required_fields_and_no_write_flags(
     assert payload["dataset_draft"]["writes_files"] is False
     assert payload["dataset_draft"]["artifacts"]
     assert payload["dat_minimal_parse_summary"]["available"] is True
+    assert payload["frd_block_summary"]["available"] is True
+    assert payload["frd_block_summary"]["field_values_parsed"] is False
     assert payload["parse_not_implemented"] is True
     assert payload["solver_execution_performed"] is False
     assert payload["source_run_solver_execution_performed"] is True
@@ -277,6 +280,50 @@ def test_json_preview_includes_dat_minimal_parse_summary_when_dat_file_is_presen
     assert payload["dataset_draft"]["tables"]
 
 
+def test_json_preview_includes_frd_block_summary_when_frd_file_is_present(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    result_dir = _write_result_dir(
+        tmp_path / "result",
+        frd_text=(
+            "1C FRD HEADER\n"
+            "2C NODE COORDINATES\n"
+            "100C DISPLACEMENT FIELD\n"
+            "1 1.0\n"
+        ),
+    )
+
+    code, out, err = _run_cli(
+        [
+            "feaspec-calculix-result-import-preview",
+            "--result-dir",
+            str(result_dir),
+            "--format",
+            "json",
+        ],
+        capsys,
+    )
+
+    assert code == 0
+    assert err == ""
+    payload = json.loads(out)
+    frd_summary = payload["frd_block_summary"]
+    assert frd_summary["available"] is True
+    assert frd_summary["file_count"] == 1
+    assert frd_summary["block_count"] == 3
+    assert frd_summary["field_reference_candidate_count"] == 1
+    assert frd_summary["mesh_reference_candidate_count"] == 1
+    assert frd_summary["numerical_values_parsed"] is False
+    assert frd_summary["field_values_parsed"] is False
+    assert frd_summary["numeric_values_extracted"] is False
+    assert frd_summary["mesh_reconstructed"] is False
+    assert frd_summary["visualization_arrays_built"] is False
+    assert frd_summary["units_inferred"] is False
+    assert frd_summary["writes_files"] is False
+    assert payload["dataset_draft"]["field_references"]
+
+
 def test_text_preview_prints_status_summary_when_status_files_exist(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -358,6 +405,35 @@ def test_text_preview_prints_dat_minimal_parse_summary_when_dat_file_is_present(
     assert "DAT scalar candidates: 1" in out
     assert "DAT free-form parser: false" in out
     assert "DAT units inferred: false" in out
+
+
+def test_text_preview_prints_frd_block_summary_when_frd_file_is_present(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    result_dir = _write_result_dir(
+        tmp_path / "result",
+        frd_text="1C FRD HEADER\n100C DISPLACEMENT FIELD\n1 1.0\n",
+    )
+    before = sorted(path.name for path in result_dir.iterdir())
+
+    code, out, err = _run_cli(
+        [
+            "feaspec-calculix-result-import-preview",
+            "--result-dir",
+            str(result_dir),
+        ],
+        capsys,
+    )
+    after = sorted(path.name for path in result_dir.iterdir())
+
+    assert code == 0
+    assert err == ""
+    assert before == after
+    assert "FRD block summary: available" in out
+    assert "FRD field values parsed: false" in out
+    assert "FRD mesh reconstructed: false" in out
+    assert "FRD block kind counts:" in out
 
 
 def test_json_preview_can_hide_top_level_artifacts_and_diagnostics(
