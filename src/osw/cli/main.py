@@ -2697,6 +2697,9 @@ def _build_feaspec_calculix_result_import_preview(
         for item in plan.diagnostics
     )
     status_summary = _feaspec_calculix_result_import_status_summary(plan.artifacts)
+    dat_section_summary = _feaspec_calculix_result_import_dat_section_summary(
+        plan.artifacts
+    )
     status_value = plan.status.value
     strict_blocked = (
         plan.status
@@ -2725,6 +2728,7 @@ def _build_feaspec_calculix_result_import_preview(
         "provenance": plan.provenance.to_dict(),
         "dataset_draft": dataset_draft.to_dict(),
         "status_summary": status_summary,
+        "dat_section_summary": dat_section_summary,
         "parse_not_implemented": parse_not_implemented,
         "solver_execution_performed": False,
         "source_run_solver_execution_performed": (
@@ -2737,6 +2741,7 @@ def _build_feaspec_calculix_result_import_preview(
             "Preview only; no files are written.",
             "No solver execution is performed by this command.",
             "No numerical .dat, .frd, .sta, or .cvg parser is implemented.",
+            ".dat section summaries are metadata-only when present.",
             "Status summaries from .sta/.cvg are text-only when present.",
             "No ResultDataset persistence or ProjectSchema mutation is performed.",
             "Issue #8 live CalculiX validation remains separate.",
@@ -2744,6 +2749,65 @@ def _build_feaspec_calculix_result_import_preview(
             "FEASpec CalculiX result import remains experimental.",
         ],
     }
+
+
+def _feaspec_calculix_result_import_dat_section_summary(
+    artifacts: Sequence[object],
+) -> dict[str, object]:
+    dat_artifacts: list[dict[str, object]] = []
+    aggregate_counts: dict[str, int] = {}
+    numeric_tokens_not_parsed = False
+    unsupported_section_count = 0
+    unknown_section_count = 0
+    section_count = 0
+
+    for artifact in artifacts:
+        metadata = getattr(artifact, "metadata", {})
+        if not isinstance(metadata, Mapping):
+            continue
+        summary = metadata.get("dat_section_summary")
+        if not isinstance(summary, Mapping):
+            continue
+        counts = summary.get("kind_counts")
+        if isinstance(counts, Mapping):
+            for key, value in counts.items():
+                if isinstance(key, str) and isinstance(value, int):
+                    aggregate_counts[key] = aggregate_counts.get(key, 0) + value
+        section_count += _int_value(summary.get("section_count"))
+        unsupported_section_count += _int_value(summary.get("unsupported_section_count"))
+        unknown_section_count += _int_value(summary.get("unknown_section_count"))
+        numeric_tokens_not_parsed = numeric_tokens_not_parsed or bool(
+            summary.get("numeric_tokens_not_parsed", False)
+        )
+        kind = getattr(artifact, "kind", "")
+        kind_value = getattr(kind, "value", str(kind))
+        dat_artifacts.append(
+            {
+                "filename": getattr(artifact, "filename", ""),
+                "kind": kind_value,
+                "summary": dict(summary),
+            }
+        )
+
+    return {
+        "available": bool(dat_artifacts),
+        "file_count": len(dat_artifacts),
+        "section_count": section_count,
+        "kind_counts": aggregate_counts,
+        "unsupported_section_count": unsupported_section_count,
+        "unknown_section_count": unknown_section_count,
+        "numeric_tokens_not_parsed": numeric_tokens_not_parsed,
+        "files": dat_artifacts,
+        "numerical_values_parsed": False,
+        "numeric_values_extracted": False,
+        "tables_extracted": False,
+        "units_inferred": False,
+        "writes_files": False,
+    }
+
+
+def _int_value(value: object) -> int:
+    return value if isinstance(value, int) else 0
 
 
 def _feaspec_calculix_result_import_status_summary(
@@ -2829,6 +2893,25 @@ def _print_feaspec_calculix_result_import_preview(
                 f"{key}={value}" for key, value in sorted(counts.items())
             )
             print(f"Status category counts: {rendered}")
+    dat_section_summary = preview.get("dat_section_summary", {})
+    if isinstance(dat_section_summary, Mapping) and dat_section_summary.get("available"):
+        print("DAT section summary: available")
+        print(f"DAT files scanned: {dat_section_summary.get('file_count', 0)}")
+        print(f"DAT sections scanned: {dat_section_summary.get('section_count', 0)}")
+        print(
+            "DAT numeric values parsed: "
+            f"{str(dat_section_summary.get('numerical_values_parsed', False)).lower()}"
+        )
+        print(
+            "DAT tables extracted: "
+            f"{str(dat_section_summary.get('tables_extracted', False)).lower()}"
+        )
+        counts = dat_section_summary.get("kind_counts", {})
+        if isinstance(counts, Mapping) and counts:
+            rendered = ", ".join(
+                f"{key}={value}" for key, value in sorted(counts.items())
+            )
+            print(f"DAT section kind counts: {rendered}")
     print(
         "Source run solver execution performed: "
         f"{str(preview['source_run_solver_execution_performed']).lower()}"

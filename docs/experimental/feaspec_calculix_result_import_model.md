@@ -16,6 +16,7 @@ The implementation lives under the experimental FEASpec package:
 - `src/osw/experimental/feaspec/calculix_result_import.py`
 - `src/osw/experimental/feaspec/calculix_result_diagnostics.py`
 - `src/osw/experimental/feaspec/calculix_result_status_scanner.py`
+- `src/osw/experimental/feaspec/calculix_result_dat_section_scanner.py`
 
 The public package exports the result import model API from
 `osw.experimental.feaspec`.
@@ -49,11 +50,15 @@ The model inspects already-existing files only:
 
 The `.dat`, `.frd`, `.sta`, and `.cvg` files are classified by path, suffix,
 size, SHA-256, and parser metadata scans. `.sta` and `.cvg` files may also
-carry text-only status summaries. Numerical result content and numeric
+carry text-only status summaries. `.dat` files may carry section-only heading,
+span, kind, and snippet summaries. Numerical result content, tables, and numeric
 convergence values are not parsed.
 [FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md)
 records the future `.dat` subset; this model still includes no `.dat` parser
 implementation.
+The implemented
+[FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md)
+does not extract numeric values or table rows.
 
 ## Artifact Classification
 
@@ -128,6 +133,18 @@ completion, failure, informational, and unknown text lines. They preserve
 bounded snippets and counts only. They do not parse numeric convergence values,
 do not infer units, and do not certify solver correctness.
 
+## DAT Section Summary Enrichment
+
+For `.dat` artifacts, artifact metadata can include:
+
+- `dat_section_scan`
+- `dat_section_summary`
+
+These payloads classify section headings, section spans, section kinds, unknown
+sections, unsupported sections, and bounded snippets only. They do not extract
+numeric values, do not extract table rows or columns, do not infer units, and do
+not certify solver correctness.
+
 ## Safety Boundary
 
 The model preserves these boundaries:
@@ -138,6 +155,8 @@ The model preserves these boundaries:
 - no runner integration;
 - no numerical parser;
 - no numeric convergence parser;
+- no numeric value extraction;
+- no table extraction;
 - no file writes;
 - no ProjectSchema mutation;
 - no VLM API;

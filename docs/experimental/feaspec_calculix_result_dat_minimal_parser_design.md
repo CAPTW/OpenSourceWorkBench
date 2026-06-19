@@ -4,6 +4,11 @@ Status: design-only.
 No `.dat` parser implementation. No numerical result parsing. No numeric value
 extraction. No ResultDataset write. No solver execution.
 
+The first implementation slice after this design is the
+[FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md).
+It recognizes headings, spans, section kinds, and bounded snippets only; it does
+not parse numeric values or extract tables.
+
 ## Release context
 
 - `v0.1.4-rc1` is a public prerelease.
@@ -50,6 +55,9 @@ linear-static subset:
 Any candidate values remain preview candidates until unit context and review
 evidence are available. This design does not implement parsing or extract
 numeric values.
+
+The implemented section scanner covers only metadata for this subset: headings,
+spans, snippets, known/unknown/unsupported section categories, and counts.
 
 ## Explicitly unsupported
 

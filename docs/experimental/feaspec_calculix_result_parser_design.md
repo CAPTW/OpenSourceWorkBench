@@ -3,11 +3,12 @@
 Status: design-only.
 
 This document defines a staged parsing strategy. The `.sta` / `.cvg` status
-scanner is now implemented as a text-only scanner; `.dat` and `.frd` numerical
-parsers remain unimplemented. This design does not implement numerical result
-parsing, does not write ResultDataset files, and does not execute CalculiX.
-The dedicated `.dat` minimal parser design refines the future `.dat` subset
-without adding parser implementation.
+scanner is implemented as a text-only scanner, and the `.dat` metadata section
+scanner is implemented as a heading/span/snippet scanner. `.dat` numerical
+parsing and `.frd` parsing remain unimplemented. This design does not implement
+numerical result parsing, does not write ResultDataset files, and does not
+execute CalculiX. The dedicated `.dat` minimal parser design refines the future
+`.dat` subset.
 
 ## Release context
 
@@ -77,17 +78,22 @@ without adding parser implementation.
 
 ### Phase 2 `.dat` text summary/table scanner
 
-- Controlled educational linear-static subset:
-  best-effort extraction of known scalar summaries and small text tables only.
+- Implemented first as a text-only metadata section scanner for direct `.dat`
+  files; the current gate does not extract tables or numeric values.
 - The detailed design lives in
   [FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md).
-- Recognize known heading prefixes and table-like blocks only.
-- Unknown `.dat` headings are reported as `FP_UNSUPPORTED_SECTION`.
-- Table rows are stored as candidate row/column pairs with a strict numeric parsing
-  policy and conversion diagnostics.
-- No mesh reconstruction or element-level parsing at this stage.
-- `.dat` values remain candidates until unit context is supplied from export/run
-  metadata.
+- The implemented scanner lives in
+  [FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md).
+- Recognize known heading prefixes, section spans, candidate section kinds, and
+  bounded snippets only.
+- Unknown `.dat` headings are preserved as `FP_DAT_UNKNOWN_SECTION`.
+- Unsupported headings are preserved as `FP_DAT_SECTION_HEADING_UNSUPPORTED`.
+- Table-like headings are marked as candidates with
+  `FP_DAT_TABLE_CANDIDATE_UNPARSED`; rows and columns are not extracted.
+- Numeric-looking tokens remain snippets with `FP_DAT_NUMERIC_VALUES_NOT_PARSED`;
+  values are not extracted or converted.
+- No mesh reconstruction, element-level parsing, unit inference, or correctness
+  claims at this stage.
 
 ### Phase 3 `.frd` field/block scanner
 
@@ -106,11 +112,12 @@ without adding parser implementation.
 
 ## `.dat` parser plan
 
-- Implement only a small, deterministic text subset:
-  scalar summary candidates and compact tables from known labels.
+- The current implementation scans only a small, deterministic text subset:
+  headings, spans, candidate kinds, snippets, and diagnostics.
+- The future parser remains limited to a controlled educational linear-static
+  subset with explicit metadata and reviewed limitations.
 - Reject unsupported sections as `FP_UNSUPPORTED_SECTION`.
-- Parse numeric tokens conservatively; failed conversions become
-  `FP_NUMERIC_CONVERSION_FAILED`.
+- Do not parse numeric tokens in the section scanner.
 - No unit inference from token shape; units must be provided by metadata or explicit
   parser phase configuration.
 
@@ -159,6 +166,14 @@ The parser layer exposes deterministic parser diagnostics with these codes:
 - `FP_STATUS_NO_RECOGNIZED_LINES`
 - `FP_STATUS_PARTIAL_SUMMARY`
 - `FP_STATUS_NUMERIC_VALUES_NOT_PARSED`
+- `FP_DAT_SECTION_SCAN_ONLY`
+- `FP_DAT_SECTION_HEADING_UNSUPPORTED`
+- `FP_DAT_SECTION_TOO_LARGE`
+- `FP_DAT_SECTION_LINE_LIMIT_EXCEEDED`
+- `FP_DAT_TABLE_CANDIDATE_UNPARSED`
+- `FP_DAT_NUMERIC_VALUES_NOT_PARSED`
+- `FP_DAT_UNKNOWN_SECTION`
+- `FP_DAT_NO_RECOGNIZED_SECTIONS`
 - `FP_DAT_PARSE_NOT_IMPLEMENTED`
 - `FP_DAT_SECTION_UNSUPPORTED`
 - `FP_DAT_TABLE_HEADER_UNSUPPORTED`

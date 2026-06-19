@@ -1178,3 +1178,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   release mutation, asset upload, tag mutation, issue mutation, live issue `#8`
   validation, bundled-solver claim, or certification claim. Implementation and
   live validation require separate future gates.
+
+## ADR-0061: FEASpec CalculiX DAT Section Scanner Is Metadata-Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-19
+- Context: ADR-0060 defined a minimal `.dat` parser design, but full `.dat`
+  numeric parsing, table extraction, and unit handling remain too broad for the
+  first implementation slice. The result import model can still benefit from
+  section-level evidence for review previews.
+- Decision: Add a `.dat` metadata section scanner under
+  `src/osw/experimental/feaspec/`. It accepts explicit `.dat` files, preserves
+  metadata scanner evidence, identifies conservative heading text, section
+  spans, section kinds, unsupported and unknown sections, bounded snippets, and
+  section counts, then attaches `dat_section_summary` metadata to result-import
+  previews.
+- Consequences: Numeric-looking tokens remain snippets and are not extracted as
+  values. Table-like headings remain candidates and rows/columns are not
+  extracted. The scanner infers no units, writes no files, persists no
+  ResultDataset, executes no solver, calls no SolverAdapter or runner code,
+  mutates no ProjectSchema, installs no dependencies, adds no VLM APIs or
+  credentials, validates no issue `#8`, mutates no release/tag/asset state, and
+  closes no issues. Minimal `.dat` value parsing and live prepared-machine
+  validation remain separate future gates.

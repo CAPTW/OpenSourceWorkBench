@@ -26,6 +26,7 @@ def _write_result_dir(
     *,
     include_primary: bool = True,
     include_status: bool = False,
+    dat_text: str = "not parsed\n",
     solver_execution_performed: bool = True,
 ) -> Path:
     root.mkdir()
@@ -60,7 +61,7 @@ def _write_result_dir(
     (root / "README_RUN_FIRST.txt").write_text("review first\n", encoding="utf-8")
     (root / "cli_preview_case.inp").write_text("*NODE\n", encoding="utf-8")
     if include_primary:
-        (root / "cli_preview_case.dat").write_text("not parsed\n", encoding="utf-8")
+        (root / "cli_preview_case.dat").write_text(dat_text, encoding="utf-8")
         (root / "cli_preview_case.frd").write_text("not parsed\n", encoding="utf-8")
     if include_status:
         (root / "cli_preview_case.sta").write_text(
@@ -197,6 +198,43 @@ def test_json_preview_includes_text_only_status_summary_when_status_files_exist(
     assert status_summary["numeric_tokens_not_parsed"] is True
 
 
+def test_json_preview_includes_dat_section_summary_when_dat_file_is_present(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    result_dir = _write_result_dir(
+        tmp_path / "result",
+        dat_text="CalculiX result file\nTOTAL ENERGY SUMMARY\nenergy text 1.0\n",
+    )
+
+    code, out, err = _run_cli(
+        [
+            "feaspec-calculix-result-import-preview",
+            "--result-dir",
+            str(result_dir),
+            "--format",
+            "json",
+        ],
+        capsys,
+    )
+
+    assert code == 0
+    assert err == ""
+    payload = json.loads(out)
+    dat_summary = payload["dat_section_summary"]
+    assert dat_summary["available"] is True
+    assert dat_summary["file_count"] == 1
+    assert dat_summary["section_count"] == 2
+    assert dat_summary["numerical_values_parsed"] is False
+    assert dat_summary["numeric_values_extracted"] is False
+    assert dat_summary["tables_extracted"] is False
+    assert dat_summary["units_inferred"] is False
+    assert dat_summary["writes_files"] is False
+    assert dat_summary["kind_counts"]["header"] == 1
+    assert dat_summary["kind_counts"]["scalar_candidate"] == 1
+    assert dat_summary["numeric_tokens_not_parsed"] is True
+
+
 def test_text_preview_prints_status_summary_when_status_files_exist(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -220,6 +258,35 @@ def test_text_preview_prints_status_summary_when_status_files_exist(
     assert "Status summary: available" in out
     assert "Status numeric values parsed: false" in out
     assert "Status category counts:" in out
+
+
+def test_text_preview_prints_dat_section_summary_when_dat_file_is_present(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    result_dir = _write_result_dir(
+        tmp_path / "result",
+        dat_text="CalculiX result file\nTOTAL ENERGY SUMMARY\nenergy text 1.0\n",
+    )
+    before = sorted(path.name for path in result_dir.iterdir())
+
+    code, out, err = _run_cli(
+        [
+            "feaspec-calculix-result-import-preview",
+            "--result-dir",
+            str(result_dir),
+        ],
+        capsys,
+    )
+    after = sorted(path.name for path in result_dir.iterdir())
+
+    assert code == 0
+    assert err == ""
+    assert before == after
+    assert "DAT section summary: available" in out
+    assert "DAT numeric values parsed: false" in out
+    assert "DAT tables extracted: false" in out
+    assert "DAT section kind counts:" in out
 
 
 def test_json_preview_can_hide_top_level_artifacts_and_diagnostics(

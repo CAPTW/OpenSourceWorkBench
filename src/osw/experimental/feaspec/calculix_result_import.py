@@ -15,6 +15,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from .calculix_result_dat_section_scanner import scan_calculix_dat_sections
 from .calculix_result_diagnostics import (
     CalculiXResultImportDiagnosticCode,
     CalculiXResultImportSeverity,
@@ -509,6 +510,10 @@ def _classify_artifacts(
         kind = _artifact_kind(path)
         parser_scan = scan_calculix_result_file_metadata(path)
         metadata_payload: dict[str, Any] = {"result_parser": parser_scan.to_dict()}
+        if kind is CalculiXResultArtifactKind.DAT:
+            dat_section_scan = scan_calculix_dat_sections(path, metadata=parser_scan)
+            metadata_payload["dat_section_scan"] = dat_section_scan.to_dict()
+            metadata_payload["dat_section_summary"] = dat_section_scan.summary.to_dict()
         if kind in {CalculiXResultArtifactKind.STA, CalculiXResultArtifactKind.CVG}:
             status_scan = scan_calculix_status_file(path, metadata=parser_scan)
             metadata_payload["status_scan"] = status_scan.to_dict()

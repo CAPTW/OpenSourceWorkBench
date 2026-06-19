@@ -72,6 +72,7 @@ JSON output includes:
 - `solver_execution_performed`;
 - `files_written`;
 - `status_summary`;
+- `dat_section_summary`;
 - `limitations`.
 
 Top-level `solver_execution_performed` describes this preview command and is
@@ -81,6 +82,11 @@ always `false`. Source run metadata remains visible under `provenance` and the
 When `.sta` or `.cvg` files are present, `status_summary` contains text-only
 category counts, completion/failure text indicators, and bounded per-file
 summaries. It does not parse numeric convergence values and does not write files.
+
+When `.dat` files are present, `dat_section_summary` contains section kind
+counts, section counts, unsupported/unknown counts, and bounded per-file
+summaries. It does not extract numeric values, does not extract tables, does not
+infer units, and does not write files.
 
 ## Exit Codes
 
@@ -107,11 +113,14 @@ The preview can classify:
 - other files as unsupported artifact references.
 
 The `.dat` and `.frd` files are classified by path, suffix, size, and hash only.
-The `.sta` and `.cvg` files may include text-only status summaries. There is no
+The `.sta` and `.cvg` files may include text-only status summaries. The `.dat`
+files may include section-only heading/span/snippet summaries. There is no
 numerical parser and no numeric convergence-value parsing capability.
 The future `.dat` subset is design-only in
 [FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md);
-this CLI preview does not add `.dat` parser implementation.
+the implemented
+[FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md)
+does not add numerical `.dat` parser implementation.
 
 ## Safety Boundary
 
@@ -123,6 +132,8 @@ The CLI preview preserves these boundaries:
 - no external command invocation;
 - no numerical parser;
 - no numeric convergence parser;
+- no numeric value extraction;
+- no table extraction;
 - no ResultDataset write;
 - no ResultDataset persistence;
 - no ProjectSchema mutation;

@@ -118,6 +118,12 @@ request should stop, park, or defer.
   issue `#8` separation without implementing `.dat` parsing, numerical
   extraction, ResultDataset writes, solver execution, SolverAdapter/runner
   paths, ProjectSchema mutation, bundled solvers, or certification claims.
+- Experimental FEASpec CalculiX `.dat` metadata section scanning that
+  classifies heading text, line spans, section kinds, unsupported and unknown
+  sections, bounded snippets, and counts while still avoiding numeric value
+  extraction, table extraction, unit inference, ResultDataset writes, solver
+  execution, SolverAdapter/runner paths, ProjectSchema mutation, live issue
+  `#8` validation, bundled solvers, and certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and

@@ -15,9 +15,13 @@ No numerical parser. No ResultDataset write. No solver execution.
 - `src/osw/experimental/feaspec/calculix_result_parser_diagnostics.py`
 - `src/osw/experimental/feaspec/calculix_result_status_scanner.py` consumes this
   metadata for `.sta` / `.cvg` text-only status summaries.
+- `src/osw/experimental/feaspec/calculix_result_dat_section_scanner.py` consumes
+  this metadata for `.dat` heading/span/snippet section summaries.
 - [FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md)
   uses this metadata as the future provenance source for `.dat` preview
-  candidates. It does not add `.dat` parser implementation.
+  candidates. The implemented
+  [FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md)
+  remains section metadata only and does not add numerical parsing.
 
 ## Public API
 
@@ -86,6 +90,14 @@ The scanner uses `FP_*` diagnostics from
 - `FP_STATUS_NO_RECOGNIZED_LINES`
 - `FP_STATUS_PARTIAL_SUMMARY`
 - `FP_STATUS_NUMERIC_VALUES_NOT_PARSED`
+- `FP_DAT_SECTION_SCAN_ONLY`
+- `FP_DAT_SECTION_HEADING_UNSUPPORTED`
+- `FP_DAT_SECTION_TOO_LARGE`
+- `FP_DAT_SECTION_LINE_LIMIT_EXCEEDED`
+- `FP_DAT_TABLE_CANDIDATE_UNPARSED`
+- `FP_DAT_NUMERIC_VALUES_NOT_PARSED`
+- `FP_DAT_UNKNOWN_SECTION`
+- `FP_DAT_NO_RECOGNIZED_SECTIONS`
 
 ## Relationship to result import model
 
@@ -94,8 +106,10 @@ The scanner uses `FP_*` diagnostics from
   parser phase, and parse-not-implemented flag.
 - `.sta` and `.cvg` artifacts may also include text-only `status_scan` and
   `status_summary` payloads from the status scanner.
-- `.dat` artifacts remain metadata-only until a separate implementation gate
-  adds the reviewed minimal parser subset.
+- `.dat` artifacts may also include section-only `dat_section_scan` and
+  `dat_section_summary` payloads from the `.dat` section scanner.
+- `.dat` numerical parsing remains unimplemented until a separate implementation
+  gate adds the reviewed minimal parser subset.
 - FI parse-not-implemented warnings remain warnings; no numerical parse is added.
 
 ## Safety boundary

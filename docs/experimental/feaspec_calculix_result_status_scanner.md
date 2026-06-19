@@ -29,9 +29,12 @@ The API returns pure Python data objects and performs no file writes.
 - `.cvg`
 
 Other suffixes are rejected for this scanner. `.dat` and `.frd` remain
-metadata-only in this phase.
+outside this status scanner.
 [FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md)
 defines a future `.dat` subset separately and does not change this scanner.
+The implemented
+[FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md)
+classifies `.dat` headings/spans/snippets only and does not parse numeric values.
 
 ## Captured status summary
 

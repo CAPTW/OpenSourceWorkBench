@@ -406,6 +406,13 @@ ResultDataset preview mapping while adding no parser code, numerical
 extraction, solver execution, issue `#8` validation, ProjectSchema mutation, or
 VFEA completion claim.
 
+[FEASpec CalculiX `.dat` metadata section scanner](../experimental/feaspec_calculix_result_dat_section_scanner.md)
+adds the first `.dat` scanner implementation slice. It classifies only section
+headings, spans, section kinds, unsupported/unknown sections, snippets, and
+counts. It does not extract numeric values, extract tables, infer units, write
+ResultDataset files, execute CalculiX, validate issue `#8`, mutate
+ProjectSchema, or complete VFEA.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

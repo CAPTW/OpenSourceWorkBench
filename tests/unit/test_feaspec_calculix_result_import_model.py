@@ -330,6 +330,31 @@ def test_inspect_includes_status_summary_for_sta_cvg_artifacts(
     )
 
 
+def test_inspect_includes_dat_section_summary_for_dat_artifacts(
+    tmp_path: Path,
+) -> None:
+    root = _write_metadata_bundle(tmp_path / "bundle", primary_suffix=None)
+    (root / "beam_case.dat").write_text(
+        "CalculiX result file\nTOTAL ENERGY SUMMARY\nenergy text 1.0\n",
+        encoding="utf-8",
+    )
+    before = sorted(path.name for path in root.iterdir())
+
+    inspection = inspect_calculix_result_directory(root)
+    dat_artifact = next(
+        artifact
+        for artifact in inspection.artifacts
+        if artifact.kind is CalculiXResultArtifactKind.DAT
+    )
+    after = sorted(path.name for path in root.iterdir())
+
+    assert before == after
+    assert "dat_section_summary" in dat_artifact.metadata
+    assert "dat_section_scan" in dat_artifact.metadata
+    assert dat_artifact.metadata["dat_section_summary"]["section_count"] == 2
+    assert dat_artifact.metadata["dat_section_summary"]["numeric_tokens_not_parsed"]
+
+
 def test_explain_result_import_plan_is_reviewer_readable(tmp_path: Path) -> None:
     root = _write_metadata_bundle(tmp_path / "bundle", primary_suffix=".dat")
 

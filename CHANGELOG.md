@@ -243,6 +243,15 @@ by a dedicated release/tag gate.
   ResultDataset writes, solver execution, SolverAdapter/runner paths,
   ProjectSchema mutation, issue `#8` validation, bundled solvers, or
   certification claims.
+- Added an experimental FEASpec CalculiX `.dat` metadata section scanner under
+  `src/osw/experimental/feaspec/`. It classifies direct `.dat` heading text,
+  section spans, section kinds, unsupported/unknown sections, bounded snippets,
+  and section counts, then enriches result-import previews with
+  `dat_section_summary` metadata. It does not extract numeric values, extract
+  table rows or columns, infer units, write ResultDataset files, execute
+  CalculiX, call SolverAdapter or runner code, mutate ProjectSchema, validate
+  or close issue `#8`, add VLM APIs, bundle external solvers, or claim
+  industrial certification.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA
