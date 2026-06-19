@@ -276,6 +276,29 @@ def test_build_result_dataset_draft_contains_artifacts_provenance_limitations_an
     assert payload["artifacts"]
 
 
+def test_build_result_dataset_draft_includes_dat_minimal_candidates(
+    tmp_path: Path,
+) -> None:
+    root = _write_metadata_bundle(tmp_path / "bundle", primary_suffix=None)
+    (root / "beam_case.dat").write_text(
+        "TOTAL ENERGY SUMMARY\nmax displacement = 2.5 mm\n"
+        "DISPLACEMENTS\nnode | ux\nunits | - | mm\n1 | 0.1\n",
+        encoding="utf-8",
+    )
+
+    plan = plan_calculix_result_import(root)
+    draft = build_calculix_result_dataset_draft(plan)
+    payload = draft.to_dict()
+
+    assert draft.writes_files is False
+    assert "dat_minimal_candidates" in draft.scalar_summaries
+    assert draft.scalar_summaries["dat_minimal_candidates"][0]["label"] == (
+        "max displacement"
+    )
+    assert draft.tables
+    assert payload["tables"][0]["section_heading"] == "DISPLACEMENTS"
+
+
 def test_inspect_includes_metadata_scanner_snapshot(tmp_path: Path) -> None:
     root = _write_metadata_bundle(tmp_path / "bundle", primary_suffix=".frd")
     before = sorted(path.name for path in root.iterdir())
@@ -351,8 +374,11 @@ def test_inspect_includes_dat_section_summary_for_dat_artifacts(
     assert before == after
     assert "dat_section_summary" in dat_artifact.metadata
     assert "dat_section_scan" in dat_artifact.metadata
+    assert "dat_minimal_parse" in dat_artifact.metadata
+    assert "dat_minimal_parse_summary" in dat_artifact.metadata
     assert dat_artifact.metadata["dat_section_summary"]["section_count"] == 2
     assert dat_artifact.metadata["dat_section_summary"]["numeric_tokens_not_parsed"]
+    assert dat_artifact.metadata["dat_minimal_parse_summary"]["minimal_parser"] is True
 
 
 def test_explain_result_import_plan_is_reviewer_readable(tmp_path: Path) -> None:
@@ -362,4 +388,8 @@ def test_explain_result_import_plan_is_reviewer_readable(tmp_path: Path) -> None
     lines = explain_calculix_result_import_plan(plan)
 
     assert any("result import status" in line.lower() for line in lines)
-    assert any("numerical result parser implemented: false" in line.lower() for line in lines)
+    assert any(
+        "broad numerical result parser implemented: false" in line.lower()
+        for line in lines
+    )
+    assert any("minimal .dat parser available: true" in line.lower() for line in lines)

@@ -43,9 +43,11 @@ def test_dat_minimal_design_doc_exists() -> None:
 def test_status_and_forbidden_capabilities_are_explicit() -> None:
     text = _normalized()
 
-    assert "design-only" in text
-    assert "no `.dat` parser implementation" in text
-    assert "no numerical result parsing" in text
+    assert "design baseline retained" in text
+    assert "bounded minimal parser implemented" in text
+    assert "no free-form `.dat` parser" in text
+    assert "no `.frd` parser" in text
+    assert "no unit inference" in text
     assert "no resultdataset write" in text
     assert "no solver execution" in text
 
@@ -140,8 +142,10 @@ def test_doc_does_not_claim_forbidden_capabilities() -> None:
     text = _normalized()
 
     forbidden_claims = (
-        "parser implementation exists",
-        "`.dat` parser exists",
+        "free-form `.dat` parser exists",
+        "broad `.dat` parser exists",
+        "`.frd` parser exists",
+        "unit inference exists",
         "numerical result parsing exists",
         "resultdataset persistence exists",
         "live validation passed",

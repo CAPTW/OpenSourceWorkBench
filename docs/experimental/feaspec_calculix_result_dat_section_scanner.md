@@ -100,9 +100,10 @@ parse-not-implemented diagnostics.
 ## Relationship to result import model
 
 `inspect_calculix_result_directory` attaches `dat_section_scan` and
-`dat_section_summary` payloads to `.dat` artifact metadata. The result import
-model still has no numerical parser, no table extraction, and no ResultDataset
-write.
+`dat_section_summary` payloads to `.dat` artifact metadata. The section scanner
+still has no numerical parser, no table extraction, and no ResultDataset write.
+A separate minimal `.dat` parser may consume these section candidates and attach
+bounded preview summaries without changing the scanner boundary.
 
 The `feaspec-calculix-result-import-preview` CLI may report `.dat` section
 summary counts in text or JSON. The command remains preview-only and does not

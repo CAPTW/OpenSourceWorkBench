@@ -451,8 +451,8 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Inspect an explicit CalculiX result directory and preview the experimental "
             "FEASpec result-import plan. The command writes no files, performs no solver "
-            "execution, does not parse numerical .dat/.frd content, and keeps issue #8 "
-            "live validation separate."
+            "execution, parses only bounded explicit .dat candidates, does not parse "
+            ".frd content, and keeps issue #8 live validation separate."
         ),
     )
     feaspec_calculix_result_import_parser.add_argument(
@@ -471,7 +471,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Exit 2 when the result import plan is blocked, unsupported, or still "
-            "requires a future numerical parser."
+            "requires a future parser slice."
         ),
     )
     feaspec_calculix_result_import_parser.add_argument(
@@ -2700,6 +2700,9 @@ def _build_feaspec_calculix_result_import_preview(
     dat_section_summary = _feaspec_calculix_result_import_dat_section_summary(
         plan.artifacts
     )
+    dat_minimal_parse_summary = (
+        _feaspec_calculix_result_import_dat_minimal_parse_summary(plan.artifacts)
+    )
     status_value = plan.status.value
     strict_blocked = (
         plan.status
@@ -2729,6 +2732,7 @@ def _build_feaspec_calculix_result_import_preview(
         "dataset_draft": dataset_draft.to_dict(),
         "status_summary": status_summary,
         "dat_section_summary": dat_section_summary,
+        "dat_minimal_parse_summary": dat_minimal_parse_summary,
         "parse_not_implemented": parse_not_implemented,
         "solver_execution_performed": False,
         "source_run_solver_execution_performed": (
@@ -2740,7 +2744,8 @@ def _build_feaspec_calculix_result_import_preview(
         "limitations": [
             "Preview only; no files are written.",
             "No solver execution is performed by this command.",
-            "No numerical .dat, .frd, .sta, or .cvg parser is implemented.",
+            "No free-form .dat parser or .frd parser is implemented.",
+            "Minimal .dat parsing is bounded to explicit scalar/table candidates.",
             ".dat section summaries are metadata-only when present.",
             "Status summaries from .sta/.cvg are text-only when present.",
             "No ResultDataset persistence or ProjectSchema mutation is performed.",
@@ -2801,6 +2806,54 @@ def _feaspec_calculix_result_import_dat_section_summary(
         "numerical_values_parsed": False,
         "numeric_values_extracted": False,
         "tables_extracted": False,
+        "units_inferred": False,
+        "writes_files": False,
+    }
+
+
+def _feaspec_calculix_result_import_dat_minimal_parse_summary(
+    artifacts: Sequence[object],
+) -> dict[str, object]:
+    dat_artifacts: list[dict[str, object]] = []
+    scalar_count = 0
+    table_count = 0
+    unsupported_content_count = 0
+    parsed_numeric_value_count = 0
+
+    for artifact in artifacts:
+        metadata = getattr(artifact, "metadata", {})
+        if not isinstance(metadata, Mapping):
+            continue
+        summary = metadata.get("dat_minimal_parse_summary")
+        if not isinstance(summary, Mapping):
+            continue
+        scalar_count += _int_value(summary.get("scalar_candidate_count"))
+        table_count += _int_value(summary.get("table_candidate_count"))
+        unsupported_content_count += _int_value(summary.get("unsupported_content_count"))
+        parsed_numeric_value_count += _int_value(
+            summary.get("parsed_numeric_value_count")
+        )
+        kind = getattr(artifact, "kind", "")
+        kind_value = getattr(kind, "value", str(kind))
+        dat_artifacts.append(
+            {
+                "filename": getattr(artifact, "filename", ""),
+                "kind": kind_value,
+                "summary": dict(summary),
+            }
+        )
+
+    return {
+        "available": bool(dat_artifacts),
+        "file_count": len(dat_artifacts),
+        "scalar_candidate_count": scalar_count,
+        "table_candidate_count": table_count,
+        "unsupported_content_count": unsupported_content_count,
+        "parsed_numeric_value_count": parsed_numeric_value_count,
+        "files": dat_artifacts,
+        "minimal_parser": bool(dat_artifacts),
+        "freeform_parser": False,
+        "frd_parser": False,
         "units_inferred": False,
         "writes_files": False,
     }
@@ -2873,7 +2926,7 @@ def _print_feaspec_calculix_result_import_preview(
     print("Preview only: true")
     print("Files written: false")
     print("Solver execution performed by this command: false")
-    print("Numerical parser implemented: false")
+    print("Broad numerical parser implemented: false")
     print("ResultDataset persistence: false")
     print("ProjectSchema mutation: false")
     print("Issue #8 remains separate.")
@@ -2912,6 +2965,32 @@ def _print_feaspec_calculix_result_import_preview(
                 f"{key}={value}" for key, value in sorted(counts.items())
             )
             print(f"DAT section kind counts: {rendered}")
+    dat_minimal_parse_summary = preview.get("dat_minimal_parse_summary", {})
+    if (
+        isinstance(dat_minimal_parse_summary, Mapping)
+        and dat_minimal_parse_summary.get("available")
+    ):
+        print("DAT minimal parse summary: available")
+        print(
+            "DAT scalar candidates: "
+            f"{dat_minimal_parse_summary.get('scalar_candidate_count', 0)}"
+        )
+        print(
+            "DAT table candidates: "
+            f"{dat_minimal_parse_summary.get('table_candidate_count', 0)}"
+        )
+        print(
+            "DAT parsed numeric values: "
+            f"{dat_minimal_parse_summary.get('parsed_numeric_value_count', 0)}"
+        )
+        print(
+            "DAT free-form parser: "
+            f"{str(dat_minimal_parse_summary.get('freeform_parser', False)).lower()}"
+        )
+        print(
+            "DAT units inferred: "
+            f"{str(dat_minimal_parse_summary.get('units_inferred', False)).lower()}"
+        )
     print(
         "Source run solver execution performed: "
         f"{str(preview['source_run_solver_execution_performed']).lower()}"

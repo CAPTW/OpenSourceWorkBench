@@ -1,13 +1,18 @@
 # FEASpec CalculiX `.dat` minimal parser design
 
-Status: design-only.
-No `.dat` parser implementation. No numerical result parsing. No numeric value
-extraction. No ResultDataset write. No solver execution.
+Status: design baseline retained; bounded minimal parser implemented.
+No free-form `.dat` parser. No `.frd` parser. No unit inference.
+No ResultDataset write. No solver execution.
 
 The first implementation slice after this design is the
 [FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md).
 It recognizes headings, spans, section kinds, and bounded snippets only; it does
 not parse numeric values or extract tables.
+
+The minimal parser implementation is documented in
+[FEASpec CalculiX `.dat` minimal parser](feaspec_calculix_result_dat_parser.md).
+It consumes section scanner output and parses only explicit scalar/table
+candidate sections with explicit unit context.
 
 ## Release context
 
@@ -53,8 +58,8 @@ linear-static subset:
 - unsupported-section diagnostics for content outside the allowlist.
 
 Any candidate values remain preview candidates until unit context and review
-evidence are available. This design does not implement parsing or extract
-numeric values.
+evidence are available. The minimal implementation extracts only bounded
+candidate values from explicit allowlisted scalar/table text with units.
 
 The implemented section scanner covers only metadata for this subset: headings,
 spans, snippets, known/unknown/unsupported section categories, and counts.
@@ -110,8 +115,9 @@ hidden truncation or success.
 - `FP_DAT_PROVENANCE_MISSING`
 - `FP_DAT_RESULT_DATASET_WRITE_FORBIDDEN`
 
-These are design codes for a later implementation gate. They are not runtime
-diagnostics in this gate.
+These are design codes for broader future parser slices. Runtime diagnostics for
+the minimal implementation are documented in
+`feaspec_calculix_result_dat_parser.md`.
 
 ## Parser output model
 
@@ -171,10 +177,10 @@ passes.
 
 ## Non-goals
 
-- No parser implementation.
-- No `.dat` parser implementation.
-- No numerical extraction.
-- No numerical result parsing.
+- No free-form parser implementation.
+- No broad `.dat` parser implementation.
+- No unsupported numerical extraction.
+- No broad numerical result parsing.
 - No `.frd` parser.
 - No ResultDataset persistence.
 - No ResultDataset write.

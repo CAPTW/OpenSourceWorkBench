@@ -190,7 +190,7 @@ def test_result_import_docs_preserve_model_only_boundaries() -> None:
     text = DOC_PATH.read_text(encoding="utf-8").lower()
 
     assert "result import model only" in text
-    assert "no numerical parser" in text
+    assert "no broad numerical parser" in text
     assert "no solver execution" in text
     assert "no resultdataset write" in text
     assert "issue `#8` remains open" in text
@@ -214,7 +214,7 @@ def test_result_import_preview_cli_docs_preserve_preview_only_boundaries() -> No
     text = CLI_DOC_PATH.read_text(encoding="utf-8").lower()
 
     assert "preview only" in text
-    assert "no numerical parser" in text
+    assert "no broad numerical parser" in text
     assert "no resultdataset write" in text
     assert "no resultdataset persistence" in text
     assert "no solver execution" in text

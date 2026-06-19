@@ -126,7 +126,7 @@ def test_text_preview_exits_zero_and_writes_no_files(
     assert "Preview only: true" in out
     assert "Files written: false" in out
     assert "Solver execution performed by this command: false" in out
-    assert "Numerical parser implemented: false" in out
+    assert "Broad numerical parser implemented: false" in out
     assert "ResultDataset persistence: false" in out
     assert "Issue #8 remains separate." in out
     assert "External solvers are optional and not bundled." in out
@@ -160,11 +160,12 @@ def test_json_preview_has_required_fields_and_no_write_flags(
     assert payload["provenance"]["case_id"] == "cli_preview_case"
     assert payload["dataset_draft"]["writes_files"] is False
     assert payload["dataset_draft"]["artifacts"]
+    assert payload["dat_minimal_parse_summary"]["available"] is True
     assert payload["parse_not_implemented"] is True
     assert payload["solver_execution_performed"] is False
     assert payload["source_run_solver_execution_performed"] is True
     assert payload["files_written"] is False
-    assert any("No numerical" in item for item in payload["limitations"])
+    assert any("No free-form .dat parser" in item for item in payload["limitations"])
 
 
 def test_json_preview_includes_text_only_status_summary_when_status_files_exist(
@@ -235,6 +236,47 @@ def test_json_preview_includes_dat_section_summary_when_dat_file_is_present(
     assert dat_summary["numeric_tokens_not_parsed"] is True
 
 
+def test_json_preview_includes_dat_minimal_parse_summary_when_dat_file_is_present(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    result_dir = _write_result_dir(
+        tmp_path / "result",
+        dat_text=(
+            "TOTAL ENERGY SUMMARY\nmax displacement = 2.5 mm\n"
+            "DISPLACEMENTS\nnode | ux\nunits | - | mm\n1 | 0.1\n"
+        ),
+    )
+
+    code, out, err = _run_cli(
+        [
+            "feaspec-calculix-result-import-preview",
+            "--result-dir",
+            str(result_dir),
+            "--format",
+            "json",
+        ],
+        capsys,
+    )
+
+    assert code == 0
+    assert err == ""
+    payload = json.loads(out)
+    dat_parse_summary = payload["dat_minimal_parse_summary"]
+    assert dat_parse_summary["available"] is True
+    assert dat_parse_summary["file_count"] == 1
+    assert dat_parse_summary["scalar_candidate_count"] == 1
+    assert dat_parse_summary["table_candidate_count"] == 1
+    assert dat_parse_summary["parsed_numeric_value_count"] == 2
+    assert dat_parse_summary["minimal_parser"] is True
+    assert dat_parse_summary["freeform_parser"] is False
+    assert dat_parse_summary["frd_parser"] is False
+    assert dat_parse_summary["units_inferred"] is False
+    assert dat_parse_summary["writes_files"] is False
+    assert payload["dataset_draft"]["scalar_summaries"]["dat_minimal_candidates"]
+    assert payload["dataset_draft"]["tables"]
+
+
 def test_text_preview_prints_status_summary_when_status_files_exist(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -287,6 +329,35 @@ def test_text_preview_prints_dat_section_summary_when_dat_file_is_present(
     assert "DAT numeric values parsed: false" in out
     assert "DAT tables extracted: false" in out
     assert "DAT section kind counts:" in out
+
+
+def test_text_preview_prints_dat_minimal_parse_summary_when_dat_file_is_present(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    result_dir = _write_result_dir(
+        tmp_path / "result",
+        dat_text="TOTAL ENERGY SUMMARY\nmax displacement = 2.5 mm\n",
+    )
+    before = sorted(path.name for path in result_dir.iterdir())
+
+    code, out, err = _run_cli(
+        [
+            "feaspec-calculix-result-import-preview",
+            "--result-dir",
+            str(result_dir),
+        ],
+        capsys,
+    )
+    after = sorted(path.name for path in result_dir.iterdir())
+
+    assert code == 0
+    assert err == ""
+    assert before == after
+    assert "DAT minimal parse summary: available" in out
+    assert "DAT scalar candidates: 1" in out
+    assert "DAT free-form parser: false" in out
+    assert "DAT units inferred: false" in out
 
 
 def test_json_preview_can_hide_top_level_artifacts_and_diagnostics(

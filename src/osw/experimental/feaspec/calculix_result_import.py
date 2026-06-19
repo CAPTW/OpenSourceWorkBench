@@ -15,6 +15,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from .calculix_result_dat_parser import parse_calculix_dat_minimal
 from .calculix_result_dat_section_scanner import scan_calculix_dat_sections
 from .calculix_result_diagnostics import (
     CalculiXResultImportDiagnosticCode,
@@ -440,7 +441,7 @@ def plan_calculix_result_import(
         provenance=provenance,
         diagnostics=diagnostics,
         limitations=_limitations(),
-        parser_available=False,
+        parser_available=_has_dat_minimal_parse(inspection.artifacts),
         result_dataset_write_allowed=False,
     )
 
@@ -459,8 +460,8 @@ def build_calculix_result_dataset_draft(
         solver="CalculiX",
         analysis_type="linear_static",
         status=plan.status,
-        scalar_summaries=_metadata_scalar_summaries(plan.inspection.run_metadata),
-        tables=(),
+        scalar_summaries=_result_scalar_summaries(plan),
+        tables=_result_tables(plan.artifacts),
         artifacts=plan.artifacts,
         field_references=_field_references(plan.artifacts),
         provenance=plan.provenance,
@@ -478,7 +479,8 @@ def explain_calculix_result_import_plan(
     lines = [
         f"FEASpec CalculiX result import status: {plan.status.value}.",
         "Result import model only: true.",
-        "Numerical result parser implemented: false.",
+        "Broad numerical result parser implemented: false.",
+        f"Minimal .dat parser available: {str(plan.parser_available).lower()}.",
         "ResultDataset write allowed: false.",
         "Solver execution performed by this import model: false.",
         f"Artifacts inspected: {len(plan.artifacts)}.",
@@ -512,8 +514,16 @@ def _classify_artifacts(
         metadata_payload: dict[str, Any] = {"result_parser": parser_scan.to_dict()}
         if kind is CalculiXResultArtifactKind.DAT:
             dat_section_scan = scan_calculix_dat_sections(path, metadata=parser_scan)
+            dat_minimal_parse = parse_calculix_dat_minimal(
+                path,
+                section_scan=dat_section_scan,
+            )
             metadata_payload["dat_section_scan"] = dat_section_scan.to_dict()
             metadata_payload["dat_section_summary"] = dat_section_scan.summary.to_dict()
+            metadata_payload["dat_minimal_parse"] = dat_minimal_parse.to_dict()
+            metadata_payload["dat_minimal_parse_summary"] = (
+                dat_minimal_parse.summary_dict()
+            )
         if kind in {CalculiXResultArtifactKind.STA, CalculiXResultArtifactKind.CVG}:
             status_scan = scan_calculix_status_file(path, metadata=parser_scan)
             metadata_payload["status_scan"] = status_scan.to_dict()
@@ -536,7 +546,6 @@ def _classify_artifacts(
                 )
             )
         if kind in {
-            CalculiXResultArtifactKind.DAT,
             CalculiXResultArtifactKind.FRD,
             CalculiXResultArtifactKind.STA,
             CalculiXResultArtifactKind.CVG,
@@ -737,6 +746,53 @@ def _metadata_scalar_summaries(
     return {}
 
 
+def _result_scalar_summaries(
+    plan: FEASpecCalculiXResultImportPlan,
+) -> Mapping[str, Any]:
+    scalars = dict(_metadata_scalar_summaries(plan.inspection.run_metadata))
+    candidates: list[Mapping[str, Any]] = []
+    for artifact in plan.artifacts:
+        payload = artifact.metadata.get("dat_minimal_parse")
+        if not isinstance(payload, Mapping):
+            continue
+        scalar_candidates = payload.get("scalar_candidates", ())
+        if isinstance(scalar_candidates, Sequence) and not isinstance(
+            scalar_candidates,
+            (str, bytes),
+        ):
+            candidates.extend(
+                dict(item) for item in scalar_candidates if isinstance(item, Mapping)
+            )
+    if candidates:
+        scalars["dat_minimal_candidates"] = candidates
+    return scalars
+
+
+def _result_tables(
+    artifacts: Sequence[CalculiXResultArtifact],
+) -> tuple[Mapping[str, Any], ...]:
+    tables: list[Mapping[str, Any]] = []
+    for artifact in artifacts:
+        payload = artifact.metadata.get("dat_minimal_parse")
+        if not isinstance(payload, Mapping):
+            continue
+        table_candidates = payload.get("table_candidates", ())
+        if isinstance(table_candidates, Sequence) and not isinstance(
+            table_candidates,
+            (str, bytes),
+        ):
+            tables.extend(
+                dict(item) for item in table_candidates if isinstance(item, Mapping)
+            )
+    return tuple(tables)
+
+
+def _has_dat_minimal_parse(
+    artifacts: Sequence[CalculiXResultArtifact],
+) -> bool:
+    return any("dat_minimal_parse_summary" in artifact.metadata for artifact in artifacts)
+
+
 def _field_references(
     artifacts: Sequence[CalculiXResultArtifact],
 ) -> tuple[Mapping[str, Any], ...]:
@@ -868,7 +924,9 @@ def _dedupe_diagnostics(
 
 def _limitations() -> tuple[str, ...]:
     return (
-        "Result import model only; numerical .dat/.frd/.sta/.cvg parsing is not implemented.",
+        "Result import model only; .dat parsing is bounded to explicit scalar/table candidates.",
+        "No free-form .dat parser, .frd parser, .sta numerical parser, "
+        "or .cvg numerical parser is implemented.",
         "No ResultDataset file is written by this model.",
         "No solver execution, solver adapter call, runner call, or external command is performed.",
         "Issue #8 live CalculiX validation remains separate and open.",

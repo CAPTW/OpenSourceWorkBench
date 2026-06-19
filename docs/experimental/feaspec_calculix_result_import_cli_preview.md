@@ -1,8 +1,9 @@
 # FEASpec CalculiX result import CLI preview
 
-Status: experimental CLI preview implemented. This is preview only: no
-numerical parser, no ResultDataset write, no ResultDataset persistence, no
-solver execution, and no ProjectSchema mutation.
+Status: experimental CLI preview implemented. This is preview only: bounded
+minimal `.dat` candidate summaries, no broad numerical parser, no ResultDataset
+write, no ResultDataset persistence, no solver execution, and no ProjectSchema
+mutation.
 
 ## Release Context
 
@@ -73,6 +74,7 @@ JSON output includes:
 - `files_written`;
 - `status_summary`;
 - `dat_section_summary`;
+- `dat_minimal_parse_summary`;
 - `limitations`.
 
 Top-level `solver_execution_performed` describes this preview command and is
@@ -87,6 +89,12 @@ When `.dat` files are present, `dat_section_summary` contains section kind
 counts, section counts, unsupported/unknown counts, and bounded per-file
 summaries. It does not extract numeric values, does not extract tables, does not
 infer units, and does not write files.
+
+When `.dat` files contain explicit scalar candidates or small delimited table
+candidates with explicit units, `dat_minimal_parse_summary` contains bounded
+candidate counts and parsed-preview value counts. This summary is still
+preview-only: no free-form `.dat` parsing, no `.frd` parsing, no unit
+inference, no ResultDataset persistence, and no solver execution.
 
 ## Exit Codes
 
@@ -112,15 +120,18 @@ The preview can classify:
 - `.inp`;
 - other files as unsupported artifact references.
 
-The `.dat` and `.frd` files are classified by path, suffix, size, and hash only.
-The `.sta` and `.cvg` files may include text-only status summaries. The `.dat`
-files may include section-only heading/span/snippet summaries. There is no
-numerical parser and no numeric convergence-value parsing capability.
-The future `.dat` subset is design-only in
-[FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md);
+The `.dat` and `.frd` files are classified by path, suffix, size, and hash. The
+`.sta` and `.cvg` files may include text-only status summaries. The `.dat` files
+may include section-only heading/span/snippet summaries and bounded minimal
+scalar/table candidate summaries. There is no broad numerical parser and no
+numeric convergence-value parsing capability.
+[FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md)
+records the bounded `.dat` subset;
 the implemented
 [FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md)
-does not add numerical `.dat` parser implementation.
+does not extract numeric values itself, and the implemented
+[FEASpec CalculiX `.dat` minimal parser](feaspec_calculix_result_dat_parser.md)
+parses only explicit scalar/table candidates with explicit unit context.
 
 ## Safety Boundary
 
@@ -130,10 +141,10 @@ The CLI preview preserves these boundaries:
 - no SolverAdapter integration;
 - no runner integration;
 - no external command invocation;
-- no numerical parser;
+- no broad numerical parser;
 - no numeric convergence parser;
-- no numeric value extraction;
-- no table extraction;
+- no free-form numeric value extraction;
+- no free-form table extraction;
 - no ResultDataset write;
 - no ResultDataset persistence;
 - no ProjectSchema mutation;
@@ -151,9 +162,9 @@ issue `#8` pass evidence, and does not close issue `#8`.
 
 ## Non-Goals
 
-- No numerical parsing.
+- No broad numerical parsing.
 - No `.frd` parser.
-- No `.dat` parser.
+- No free-form `.dat` parser.
 - No write-capable import command.
 - No ResultDataset persistence.
 - No solver execution.
@@ -169,5 +180,6 @@ issue `#8` pass evidence, and does not close issue `#8`.
 
 - `OSW-EXP-030_FEASPEC_RESULT_IMPORT_PARSER_DESIGN`
 - `OSW-EXP-033_FEASPEC_RESULT_PARSER_DAT_MINIMAL_DESIGN`
+- `OSW-EXP-035_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
 - `OSW-EXP-031_FEASPEC_RESULTDATASET_DRAFT_REVIEW`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

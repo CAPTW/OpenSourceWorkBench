@@ -3,12 +3,12 @@
 Status: design-only.
 
 This document defines a staged parsing strategy. The `.sta` / `.cvg` status
-scanner is implemented as a text-only scanner, and the `.dat` metadata section
-scanner is implemented as a heading/span/snippet scanner. `.dat` numerical
-parsing and `.frd` parsing remain unimplemented. This design does not implement
-numerical result parsing, does not write ResultDataset files, and does not
-execute CalculiX. The dedicated `.dat` minimal parser design refines the future
-`.dat` subset.
+scanner is implemented as a text-only scanner, the `.dat` metadata section
+scanner is implemented as a heading/span/snippet scanner, and a bounded `.dat`
+minimal parser is implemented for explicit scalar/table candidates with explicit
+units. Broad `.dat` numerical parsing and `.frd` parsing remain unimplemented.
+This design does not implement a broad numerical result parser, does not write
+ResultDataset files, and does not execute CalculiX.
 
 ## Release context
 
@@ -79,11 +79,13 @@ execute CalculiX. The dedicated `.dat` minimal parser design refines the future
 ### Phase 2 `.dat` text summary/table scanner
 
 - Implemented first as a text-only metadata section scanner for direct `.dat`
-  files; the current gate does not extract tables or numeric values.
+  files.
 - The detailed design lives in
   [FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md).
 - The implemented scanner lives in
   [FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md).
+- The implemented minimal parser lives in
+  [FEASpec CalculiX `.dat` minimal parser](feaspec_calculix_result_dat_parser.md).
 - Recognize known heading prefixes, section spans, candidate section kinds, and
   bounded snippets only.
 - Unknown `.dat` headings are preserved as `FP_DAT_UNKNOWN_SECTION`.
@@ -94,6 +96,9 @@ execute CalculiX. The dedicated `.dat` minimal parser design refines the future
   values are not extracted or converted.
 - No mesh reconstruction, element-level parsing, unit inference, or correctness
   claims at this stage.
+- The minimal parser slice is implemented for explicit scalar candidates and
+  small delimited table candidates with explicit units only. It remains bounded,
+  preview-only, and does not implement a free-form `.dat` parser.
 
 ### Phase 3 `.frd` field/block scanner
 
@@ -114,10 +119,13 @@ execute CalculiX. The dedicated `.dat` minimal parser design refines the future
 
 - The current implementation scans only a small, deterministic text subset:
   headings, spans, candidate kinds, snippets, and diagnostics.
+- The minimal implementation additionally parses explicit `label = value unit`
+  and `label: value unit` scalar candidates, plus small pipe- or comma-delimited
+  tables with explicit unit rows or explicit unit context.
 - The future parser remains limited to a controlled educational linear-static
   subset with explicit metadata and reviewed limitations.
 - Reject unsupported sections as `FP_UNSUPPORTED_SECTION`.
-- Do not parse numeric tokens in the section scanner.
+- Do not parse free-form numeric tokens outside the bounded minimal parser.
 - No unit inference from token shape; units must be provided by metadata or explicit
   parser phase configuration.
 
@@ -174,6 +182,21 @@ The parser layer exposes deterministic parser diagnostics with these codes:
 - `FP_DAT_NUMERIC_VALUES_NOT_PARSED`
 - `FP_DAT_UNKNOWN_SECTION`
 - `FP_DAT_NO_RECOGNIZED_SECTIONS`
+- `FP_DAT_PARSE_MINIMAL_ONLY`
+- `FP_DAT_SCALAR_CANDIDATE_PARSED`
+- `FP_DAT_TABLE_CANDIDATE_PARSED`
+- `FP_DAT_UNITS_REQUIRED`
+- `FP_DAT_UNITS_MISSING`
+- `FP_DAT_UNIT_INFERENCE_FORBIDDEN`
+- `FP_DAT_UNSUPPORTED_SECTION_SKIPPED`
+- `FP_DAT_UNKNOWN_TABLE_SKIPPED`
+- `FP_DAT_TABLE_ROW_LIMIT_EXCEEDED`
+- `FP_DAT_TABLE_COLUMN_LIMIT_EXCEEDED`
+- `FP_DAT_SCALAR_LIMIT_EXCEEDED`
+- `FP_DAT_NUMERIC_CONVERSION_FAILED`
+- `FP_DAT_AMBIGUOUS_VALUE_SKIPPED`
+- `FP_DAT_RAW_TEXT_PRESERVED`
+- `FP_DAT_RESULT_DATASET_WRITE_FORBIDDEN`
 - `FP_DAT_PARSE_NOT_IMPLEMENTED`
 - `FP_DAT_SECTION_UNSUPPORTED`
 - `FP_DAT_TABLE_HEADER_UNSUPPORTED`
@@ -255,8 +278,9 @@ Result import can map parser output into future ResultDataset contracts as:
 
 ## Non-goals
 
-- No numerical parser implementation in this gate.
-- No `.dat` parser implementation in this gate.
+- No broad numerical parser implementation in this design baseline.
+- No free-form `.dat` parser implementation.
+- No `.frd` parser implementation.
 - No resultdataset write.
 - No solver execution.
 - No SolverAdapter/runner wiring.

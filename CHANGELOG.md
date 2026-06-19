@@ -252,6 +252,15 @@ by a dedicated release/tag gate.
   CalculiX, call SolverAdapter or runner code, mutate ProjectSchema, validate
   or close issue `#8`, add VLM APIs, bundle external solvers, or claim
   industrial certification.
+- Added an experimental FEASpec CalculiX `.dat` minimal parser under
+  `src/osw/experimental/feaspec/`. It consumes section-scanner output and
+  parses only explicit scalar candidates plus small delimited table candidates
+  with explicit units or caller `unit_context`, preserving raw text, line
+  provenance, diagnostics, and limitations. It enriches result-import previews
+  in memory only and does not implement free-form `.dat` parsing, `.frd`
+  parsing, unit inference, mesh/field reconstruction, ResultDataset writes,
+  solver execution, SolverAdapter/runner calls, ProjectSchema mutation, issue
+  `#8` validation, VLM APIs, bundled solvers, or certification claims.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

@@ -1,7 +1,8 @@
 # FEASpec CalculiX result import model
 
 Status: experimental result import model implemented. Result import model only:
-no numerical parser, no ResultDataset write, and no solver execution.
+minimal bounded `.dat` candidate enrichment, no broad numerical parser, no
+ResultDataset write, and no solver execution.
 
 ## Release Context
 
@@ -17,6 +18,7 @@ The implementation lives under the experimental FEASpec package:
 - `src/osw/experimental/feaspec/calculix_result_diagnostics.py`
 - `src/osw/experimental/feaspec/calculix_result_status_scanner.py`
 - `src/osw/experimental/feaspec/calculix_result_dat_section_scanner.py`
+- `src/osw/experimental/feaspec/calculix_result_dat_parser.py`
 
 The public package exports the result import model API from
 `osw.experimental.feaspec`.
@@ -51,14 +53,19 @@ The model inspects already-existing files only:
 The `.dat`, `.frd`, `.sta`, and `.cvg` files are classified by path, suffix,
 size, SHA-256, and parser metadata scans. `.sta` and `.cvg` files may also
 carry text-only status summaries. `.dat` files may carry section-only heading,
-span, kind, and snippet summaries. Numerical result content, tables, and numeric
-convergence values are not parsed.
+span, kind, and snippet summaries, plus bounded minimal scalar/table candidate
+summaries when explicit units are available. Broad numerical result content,
+free-form tables, `.frd` field data, and numeric convergence values are not
+parsed.
 [FEASpec CalculiX `.dat` minimal parser design](feaspec_calculix_result_dat_minimal_parser_design.md)
-records the future `.dat` subset; this model still includes no `.dat` parser
-implementation.
+records the bounded `.dat` subset.
 The implemented
 [FEASpec CalculiX `.dat` metadata section scanner](feaspec_calculix_result_dat_section_scanner.md)
 does not extract numeric values or table rows.
+The implemented
+[FEASpec CalculiX `.dat` minimal parser](feaspec_calculix_result_dat_parser.md)
+parses only explicit scalar candidates and small delimited table candidates with
+explicit unit context.
 
 ## Artifact Classification
 
@@ -111,9 +118,10 @@ diagnostics.
 
 - artifact references;
 - field references for deferred `.frd` handling;
-- scalar summary placeholders, populated only when metadata already supplies
-  scalar summary data;
-- table placeholders;
+- scalar summary placeholders, populated from metadata and bounded `.dat`
+  minimal parser candidates when available;
+- table placeholders, populated from bounded `.dat` minimal parser candidates
+  when available;
 - provenance from run metadata and export manifest;
 - limitations;
 - diagnostics.
@@ -145,6 +153,19 @@ sections, unsupported sections, and bounded snippets only. They do not extract
 numeric values, do not extract table rows or columns, do not infer units, and do
 not certify solver correctness.
 
+## DAT Minimal Parse Enrichment
+
+For `.dat` artifacts, artifact metadata can also include:
+
+- `dat_minimal_parse`
+- `dat_minimal_parse_summary`
+
+These payloads contain in-memory scalar/table preview candidates only for
+explicit scalar lines and small delimited tables with explicit units. They do
+not infer units, do not parse free-form `.dat` output, do not parse `.frd`
+fields, do not certify solver correctness, and do not write ResultDataset
+files.
+
 ## Safety Boundary
 
 The model preserves these boundaries:
@@ -153,10 +174,10 @@ The model preserves these boundaries:
 - no subprocess path;
 - no SolverAdapter integration;
 - no runner integration;
-- no numerical parser;
+- no broad numerical parser;
 - no numeric convergence parser;
-- no numeric value extraction;
-- no table extraction;
+- no free-form numeric value extraction;
+- no free-form table extraction;
 - no file writes;
 - no ProjectSchema mutation;
 - no VLM API;
@@ -170,8 +191,9 @@ The model preserves these boundaries:
 
 `feaspec-calculix-result-import-preview` is a thin CLI preview over this model.
 It requires an explicit `--result-dir`, supports text or JSON output, and keeps
-the same result import model only boundary: no numerical parser, no
-ResultDataset write, no ResultDataset persistence, and no solver execution.
+the same result import model only boundary: no broad numerical parser, no
+free-form `.dat` parser, no ResultDataset write, no ResultDataset persistence,
+and no solver execution.
 
 The preview command does not persist the in-memory draft, does not create
 directories, does not call SolverAdapter or runner code, and does not validate
@@ -195,10 +217,10 @@ This result import model does not validate local `ccx`, does not record issue
 
 ## Non-Goals
 
-- No numerical parsing.
+- No broad numerical parsing.
 - No `.frd` parser.
-- No `.dat` parser.
-- No `.dat` parser implementation.
+- No free-form `.dat` parser.
+- No broad `.dat` parser implementation.
 - No ResultDataset persistence.
 - No certification.
 - No industrial certification.
@@ -214,4 +236,5 @@ This result import model does not validate local `ccx`, does not record issue
 - `OSW-EXP-029_FEASPEC_RESULT_IMPORT_CLI_PREVIEW`
 - `OSW-EXP-030_FEASPEC_RESULT_IMPORT_PARSER_DESIGN`
 - `OSW-EXP-033_FEASPEC_RESULT_PARSER_DAT_MINIMAL_DESIGN`
+- `OSW-EXP-035_FEASPEC_RESULT_PARSER_DAT_MINIMAL_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

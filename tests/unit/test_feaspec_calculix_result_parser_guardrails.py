@@ -45,7 +45,7 @@ def test_parser_guardrails_do_not_claim_numerical_capability_or_certification() 
     text = _normalized(PARSER_DOC_PATH)
 
     assert "does not implement" in text
-    assert "no numerical parser" in text
+    assert "no broad numerical parser" in text
     assert "no resultdataset write" in text
     assert "no solver execution" in text
     assert "issue `#8` remains open" in text

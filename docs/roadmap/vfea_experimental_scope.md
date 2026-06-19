@@ -413,6 +413,14 @@ counts. It does not extract numeric values, extract tables, infer units, write
 ResultDataset files, execute CalculiX, validate issue `#8`, mutate
 ProjectSchema, or complete VFEA.
 
+[FEASpec CalculiX `.dat` minimal parser](../experimental/feaspec_calculix_result_dat_parser.md)
+adds the next bounded parser slice. It accepts only explicit scalar candidates
+and small delimited table candidates with explicit units, preserves raw text
+and line provenance, and enriches result-import previews in memory only. It
+does not implement free-form `.dat` parsing, `.frd` parsing, unit inference,
+ResultDataset persistence, solver execution, issue `#8` validation,
+ProjectSchema mutation, or VFEA completion.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

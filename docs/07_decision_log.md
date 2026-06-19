@@ -1201,3 +1201,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   credentials, validates no issue `#8`, mutates no release/tag/asset state, and
   closes no issues. Minimal `.dat` value parsing and live prepared-machine
   validation remain separate future gates.
+
+## ADR-0062: FEASpec CalculiX DAT Minimal Parser Is Bounded And Preview-Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-19
+- Context: ADR-0061 provides section-level `.dat` evidence. The next parser
+  slice can safely add value previews only for explicit, reviewed candidate
+  sections without broadening into free-form CalculiX output parsing.
+- Decision: Add a minimal `.dat` parser under
+  `src/osw/experimental/feaspec/`. It consumes section-scanner output, accepts
+  only explicit scalar candidates in `label = value unit` or
+  `label: value unit` form, and accepts only small delimited table candidates
+  with explicit unit rows or caller-provided `unit_context`. It preserves raw
+  text, line provenance, section headings, diagnostics, and limitation flags,
+  then exposes in-memory candidate summaries through the result import model
+  and preview CLI.
+- Consequences: This parser is not a free-form `.dat` parser, not an `.frd`
+  parser, and not live CalculiX validation. It infers no units, reconstructs no
+  mesh or field data, writes no ResultDataset files, executes no solver, calls
+  no SolverAdapter or runner code, mutates no ProjectSchema, installs no
+  dependencies, adds no VLM APIs or credentials, mutates no release/tag/asset
+  state, and closes no issues. ResultDataset persistence, `.frd` parsing, and
+  prepared-machine issue `#8` validation remain separate future gates.

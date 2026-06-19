@@ -52,7 +52,7 @@ def test_design_status_and_no_implementation_scope() -> None:
 
     assert "design-only" in text
     assert "does not implement" in text
-    assert "no numerical parser implementation" in text
+    assert "no broad numerical parser implementation" in text
     assert "no resultdataset write" in text
     assert "does not execute calculix" in text
     assert "no solver execution" in text
