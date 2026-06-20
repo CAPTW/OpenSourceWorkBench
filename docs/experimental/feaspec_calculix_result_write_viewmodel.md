@@ -269,4 +269,8 @@ fixtures are added by this gate.
   records the dialog-layer output-directory selection implementation. The
   view-model source remains unchanged and continues to provide display-only
   save-plan analysis for the selected directory.
+- [FEASpec CalculiX result write GUI writer integration design](feaspec_calculix_result_write_gui_writer_integration_design.md)
+  records the future GUI writer-call boundary and post-write state refresh
+  contract. It does not change this view-model source and does not add writer
+  invocation, GUI file writes, solver execution, or issue `#8` validation.
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

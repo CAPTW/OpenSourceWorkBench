@@ -151,6 +151,11 @@ tracked solver output fixtures. The tests do not stage `.dat`, `.frd`, `.sta`,
   which adds directory-only output selection while preserving no writer
   invocation, no ResultDataset file writes, no directory creation during
   selection, no solver execution, and no issue `#8` validation.
+- [FEASpec CalculiX result write GUI writer integration design](feaspec_calculix_result_write_gui_writer_integration_design.md)
+  documents the future writer-integration contract for final confirmation,
+  acknowledgement gating, writer call boundary, failure recovery, post-write
+  display, retry behavior, and state refresh while preserving no implementation
+  in that design gate.
 - `OSW-EXP-050_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION_DESIGN`
-- `OSW-EXP-051_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION_NO_SOLVER`
+- `OSW-EXP-051_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

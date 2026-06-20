@@ -1533,3 +1533,27 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   mutation, no VLM API, no dependency install, no release/tag or asset
   mutation, no issue mutation, no live issue `#8` validation, and no
   bundled-solver or certification claim.
+
+## ADR-0077: FEASpec CalculiX Result Write GUI Writer Calls Need A Design Gate
+
+- Status: Accepted for experimental design
+- Date: 2026-06-20
+- Context: ADR-0076 allowed the write dialog to collect an explicit output
+  directory while intentionally keeping GUI writer invocation and GUI file
+  writes out of scope. The next bounded step is to document the future
+  confirmation, acknowledgement, writer-call, failure, retry, and post-write
+  display contract before any GUI or view-model source changes.
+- Decision: Add a design-only GUI writer-integration contract for FEASpec
+  CalculiX ResultDataset writes. The contract requires explicit output
+  directory selection, ready write-plan and schema evidence, limitations and
+  review acknowledgements, overwrite/create-dir acknowledgements when needed,
+  final confirmation, a single future library-writer call boundary, visible
+  failure handling, post-write summary, retry rules, state refresh rules, and
+  mocked tests.
+- Consequences: This gate adds no GUI source mutation, no view-model source
+  mutation, no writer invocation, no GUI file writes, no CLI behavior change,
+  no library writer behavior change, no artifact copying, no solver execution,
+  no SolverAdapter or runner integration, no subprocess use, no ProjectSchema
+  mutation, no VLM API, no dependency install, no release/tag or asset
+  mutation, no issue mutation, no live issue `#8` validation, and no
+  bundled-solver or certification claim.

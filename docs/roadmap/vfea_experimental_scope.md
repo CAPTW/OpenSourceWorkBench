@@ -511,6 +511,14 @@ cancel no-op behavior, but still invokes no writer, writes no ResultDataset
 files, creates no directories during selection, copies no artifacts, executes
 no solver, validates no issue `#8`, and does not complete VFEA.
 
+[FEASpec CalculiX result write GUI writer integration design](../experimental/feaspec_calculix_result_write_gui_writer_integration_design.md)
+adds the design-only future writer-integration contract for the write dialog.
+It defines write enablement, final confirmation, acknowledgement gating, a
+single library-writer call boundary, failure recovery, post-write display,
+retry behavior, state refresh, and mocked tests while adding no GUI writer
+invocation, no GUI file writes, no GUI or view-model source mutation, no solver
+execution, no issue `#8` validation, and no VFEA completion.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

@@ -522,6 +522,14 @@ Scope drift is any change that:
   mutation, dependency install, live issue `#8` validation, release mutation,
   issue closure, certification, or bundled-solver claim without a separate
   gate;
+- turns the FEASpec CalculiX result write GUI writer-integration design into
+  GUI source mutation, view-model source mutation, active GUI file writes,
+  actual writer invocation, CLI behavior change, library writer behavior
+  change, artifact copying, solver execution path, SolverAdapter/runner
+  integration, subprocess or external command invocation, ProjectSchema
+  mutation, dependency install, live issue `#8` validation, release mutation,
+  issue closure, certification, or bundled-solver claim without a separate
+  gate;
 - turns the FEASpec human review record model into GUI approval workflow, run
   gate behavior, result import behavior, SolverAdapter/runner integration,
   subprocess or external command invocation, live `ccx` validation,

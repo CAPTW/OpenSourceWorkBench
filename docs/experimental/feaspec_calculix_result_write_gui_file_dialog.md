@@ -120,5 +120,11 @@ used to close issue `#8`.
 ## Next Implementation Slices
 
 - `OSW-EXP-050_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION_DESIGN`
-- `OSW-EXP-051_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION_NO_SOLVER`
+- [FEASpec CalculiX result write GUI writer integration design](feaspec_calculix_result_write_gui_writer_integration_design.md)
+  records the future writer-call boundary, final confirmation, acknowledgement
+  gating, failure recovery, post-write display, retry behavior, and test plan.
+  It adds no GUI writer invocation, no GUI file writes, no GUI or view-model
+  source mutation, no CLI behavior change, no library writer behavior change,
+  no solver execution, and no issue `#8` validation.
+- `OSW-EXP-051_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

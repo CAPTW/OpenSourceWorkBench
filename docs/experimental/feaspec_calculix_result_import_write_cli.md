@@ -144,6 +144,11 @@ defines the future output-directory chooser policy for GUI work while keeping
 the CLI semantics unchanged. It remains planning-only and adds no QFileDialog
 implementation, writer invocation, ResultDataset write, or solver execution.
 
+[FEASpec CalculiX result write GUI writer integration design](feaspec_calculix_result_write_gui_writer_integration_design.md)
+defines a future GUI writer-call boundary over the same plan, schema, and
+library writer layers. That design does not call this CLI command and does not
+change CLI options, exit codes, output formats, or write behavior.
+
 ## Non-goals
 
 - no GUI write command;
@@ -163,4 +168,5 @@ implementation, writer invocation, ResultDataset write, or solver execution.
 - [FEASpec CalculiX result write view-model](feaspec_calculix_result_write_viewmodel.md)
 - [FEASpec CalculiX result write dialog](feaspec_calculix_result_write_dialog.md)
 - [FEASpec CalculiX result write GUI file dialog planning](feaspec_calculix_result_write_gui_file_dialog_planning.md)
+- [FEASpec CalculiX result write GUI writer integration design](feaspec_calculix_result_write_gui_writer_integration_design.md)
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

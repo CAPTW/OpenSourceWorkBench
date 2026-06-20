@@ -362,6 +362,14 @@ by a dedicated release/tag gate.
   directory creation during selection, artifact copying, CLI behavior change,
   solver execution, SolverAdapter/runner path, ProjectSchema mutation, VLM
   API, release mutation, or issue `#8` validation.
+- Added a design-only FEASpec CalculiX result write GUI writer-integration
+  contract. It defines future write-action enablement, final confirmation,
+  acknowledgement gating, single library-writer call boundary, failure
+  handling, post-write display, retry behavior, state refresh, and mocked test
+  expectations while adding no GUI writer invocation, GUI file writes, GUI or
+  view-model source mutation, CLI behavior change, library writer behavior
+  change, solver execution, SolverAdapter/runner path, ProjectSchema mutation,
+  VLM API, release mutation, or issue `#8` validation.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

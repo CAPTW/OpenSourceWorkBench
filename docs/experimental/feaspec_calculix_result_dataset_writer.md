@@ -152,6 +152,12 @@ adds the first UI-agnostic state layer for that future surface. It can display
 writer-result summaries supplied by a caller, but it does not invoke this
 writer and does not write ResultDataset files.
 
+[FEASpec CalculiX result write GUI writer integration design](feaspec_calculix_result_write_gui_writer_integration_design.md)
+defines the future GUI confirmation, acknowledgement, and single-call boundary
+for invoking this library writer. The design changes no writer behavior and
+does not add GUI source, GUI file writes, solver execution, or issue `#8`
+validation.
+
 ## Fixture policy
 
 Writer tests create synthetic result directories and write outputs only under
@@ -185,4 +191,5 @@ record issue `#8` pass evidence, and does not close issue `#8`.
 - `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_DESIGN`
 - `OSW-EXP-044_FEASPEC_RESULT_IMPORT_WRITE_CLI_IMPLEMENTATION`
 - `OSW-EXP-046_FEASPEC_RESULT_IMPORT_WRITE_GUI_VIEWMODEL`
+- `OSW-EXP-050_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION_DESIGN`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
