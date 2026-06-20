@@ -347,6 +347,13 @@ by a dedicated release/tag gate.
   writer invocation, ResultDataset file write, CLI behavior change, solver
   execution, SolverAdapter/runner path, ProjectSchema mutation, VLM API,
   release mutation, or issue `#8` validation.
+- Added a design/planning-only FEASpec CalculiX result write GUI file-dialog
+  contract. It defines future output-directory selection, default-directory
+  policy, cancel no-op behavior, path validation, create-dir and overwrite
+  acknowledgements, CLI/GUI consistency, and mocked implementation tests while
+  adding no QFileDialog implementation, GUI source change, writer invocation,
+  ResultDataset file write, solver execution, SolverAdapter/runner path,
+  ProjectSchema mutation, VLM API, release mutation, or issue `#8` validation.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

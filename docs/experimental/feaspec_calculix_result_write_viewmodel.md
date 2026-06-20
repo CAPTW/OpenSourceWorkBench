@@ -259,5 +259,8 @@ fixtures are added by this gate.
 
 - `OSW-EXP-047_FEASPEC_RESULT_IMPORT_WRITE_GUI_DIALOG_IMPLEMENTATION` completed
   as a display-only dialog.
-- `OSW-EXP-048_FEASPEC_RESULT_IMPORT_WRITE_GUI_FILE_DIALOG_PLANNING`
+- [FEASpec CalculiX result write GUI file dialog planning](feaspec_calculix_result_write_gui_file_dialog_planning.md)
+  records the future QFileDialog/output-directory policy without changing the
+  view-model source, opening file dialogs, invoking the writer, writing files,
+  or validating issue `#8`.
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

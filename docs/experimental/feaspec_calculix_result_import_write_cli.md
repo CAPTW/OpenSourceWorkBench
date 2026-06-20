@@ -139,6 +139,11 @@ and save-path planning over the same import/write/schema records. The
 view-model does not change this CLI behavior, does not call this CLI command,
 does not invoke the writer, and does not add a GUI write command.
 
+[FEASpec CalculiX result write GUI file dialog planning](feaspec_calculix_result_write_gui_file_dialog_planning.md)
+defines the future output-directory chooser policy for GUI work while keeping
+the CLI semantics unchanged. It remains planning-only and adds no QFileDialog
+implementation, writer invocation, ResultDataset write, or solver execution.
+
 ## Non-goals
 
 - no GUI write command;
@@ -156,5 +161,6 @@ does not invoke the writer, and does not add a GUI write command.
 
 - [FEASpec CalculiX result import write GUI design](feaspec_calculix_result_import_write_gui_design.md)
 - [FEASpec CalculiX result write view-model](feaspec_calculix_result_write_viewmodel.md)
-- `OSW-EXP-047_FEASPEC_RESULT_IMPORT_WRITE_GUI_DIALOG_IMPLEMENTATION`
+- [FEASpec CalculiX result write dialog](feaspec_calculix_result_write_dialog.md)
+- [FEASpec CalculiX result write GUI file dialog planning](feaspec_calculix_result_write_gui_file_dialog_planning.md)
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

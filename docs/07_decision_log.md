@@ -1488,3 +1488,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   ProjectSchema mutation, no VLM API, no dependency install, no release/tag or
   asset mutation, no issue mutation, no live issue `#8` validation, and no
   bundled-solver or certification claim.
+
+## ADR-0075: FEASpec CalculiX Result Write File Dialog Needs A Planning Gate
+
+- Status: Accepted for experimental design
+- Date: 2026-06-20
+- Context: ADR-0074 added a display-only ResultDataset write dialog while
+  intentionally leaving output-directory selection, QFileDialog behavior, and
+  GUI writer invocation disabled. The next bounded step is to document the
+  future chooser contract before any GUI source or persistence behavior is
+  changed.
+- Decision: Add a design/planning-only file-dialog contract for future FEASpec
+  CalculiX ResultDataset write GUI work. The contract defines directory-only
+  selection, default-directory policy, cancel no-op behavior, path validation,
+  create-directory acknowledgement, overwrite acknowledgement, CLI/GUI
+  consistency, and future mocked implementation tests.
+- Consequences: This gate adds no QFileDialog implementation, no GUI source
+  changes, no view-model source changes, no CLI behavior change, no library
+  writer behavior change, no writer invocation, no ResultDataset file write,
+  no directory creation during selection, no artifact copy, no solver
+  execution, no SolverAdapter or runner integration, no subprocess use, no
+  ProjectSchema mutation, no VLM API, no dependency install, no release/tag or
+  asset mutation, no issue mutation, no live issue `#8` validation, and no
+  bundled-solver or certification claim.

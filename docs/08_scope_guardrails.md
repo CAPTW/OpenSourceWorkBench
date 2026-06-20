@@ -206,6 +206,13 @@ request should stop, park, or defer.
   writer invocation, ResultDataset writes, CLI behavior changes, solver
   execution, SolverAdapter/runner paths, ProjectSchema mutation, live issue
   `#8` validation, bundled solvers, and certification claims out of scope.
+- Design/planning-only FEASpec CalculiX result write GUI file-dialog behavior
+  that defines future output-directory selection, default-directory policy,
+  cancel no-op behavior, path validation, create-dir and overwrite
+  acknowledgements, CLI/GUI consistency, and mocked implementation tests
+  without adding QFileDialog implementation, GUI source changes, writer
+  invocation, ResultDataset writes, solver execution, live issue `#8`
+  validation, bundled solvers, or certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
@@ -494,6 +501,13 @@ Scope drift is any change that:
   subprocess or external command invocation, ProjectSchema mutation,
   dependency install, live issue `#8` validation, release mutation, issue
   closure, certification, or bundled-solver claim without a separate gate;
+- turns the FEASpec CalculiX result write GUI file-dialog planning into
+  QFileDialog implementation, GUI source mutation, active GUI file writes,
+  writer invocation, directory creation during selection, artifact copying,
+  solver execution path, SolverAdapter/runner integration, subprocess or
+  external command invocation, ProjectSchema mutation, dependency install,
+  live issue `#8` validation, release mutation, issue closure, certification,
+  or bundled-solver claim without a separate gate;
 - turns the FEASpec human review record model into GUI approval workflow, run
   gate behavior, result import behavior, SolverAdapter/runner integration,
   subprocess or external command invocation, live `ccx` validation,

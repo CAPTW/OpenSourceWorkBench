@@ -114,7 +114,11 @@ tracked solver output fixtures. The tests do not stage `.dat`, `.frd`, `.sta`,
 
 ## Next implementation slices
 
-- `OSW-EXP-048_FEASPEC_RESULT_IMPORT_WRITE_GUI_FILE_DIALOG_PLANNING`
+- [FEASpec CalculiX result write GUI file dialog planning](feaspec_calculix_result_write_gui_file_dialog_planning.md)
+  defines `OSW-EXP-048_FEASPEC_RESULT_IMPORT_WRITE_GUI_FILE_DIALOG_PLANNING`
+  as design/planning-only. It adds no QFileDialog implementation, no GUI source
+  changes, no writer invocation, no ResultDataset file write, no solver
+  execution, and no issue `#8` validation.
 - `OSW-EXP-049_FEASPEC_RESULT_IMPORT_WRITE_GUI_FILE_DIALOG_IMPLEMENTATION`
 - `OSW-EXP-050_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION_NO_SOLVER`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

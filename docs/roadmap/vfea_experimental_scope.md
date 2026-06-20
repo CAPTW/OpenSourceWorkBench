@@ -494,6 +494,15 @@ QFileDialog, no writer invocation, no ResultDataset file writes, no solver
 execution, no ProjectSchema mutation, no issue `#8` validation, and does not
 complete VFEA.
 
+[FEASpec CalculiX result write GUI file dialog planning](../experimental/feaspec_calculix_result_write_gui_file_dialog_planning.md)
+adds the design/planning-only output-directory chooser contract for future GUI
+work. It defines directory-selection policy, default-directory behavior,
+cancel no-op behavior, create-dir and overwrite acknowledgement handling, path
+validation, CLI/GUI consistency, and future mocked tests while adding no
+QFileDialog implementation, no GUI source changes, no writer invocation, no
+ResultDataset persistence, no solver execution, no issue `#8` validation, and
+does not complete VFEA.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

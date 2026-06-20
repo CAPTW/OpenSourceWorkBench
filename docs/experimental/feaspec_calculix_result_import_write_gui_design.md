@@ -243,5 +243,11 @@ and no subprocess invocation.
   QFileDialog, writer invocation, ResultDataset write behavior, solver
   execution, SolverAdapter/runner path, ProjectSchema mutation, or issue `#8`
   validation.
-- `OSW-EXP-048_FEASPEC_RESULT_IMPORT_WRITE_GUI_FILE_DIALOG_PLANNING`
+- [FEASpec CalculiX result write GUI file dialog planning](feaspec_calculix_result_write_gui_file_dialog_planning.md)
+  defines `OSW-EXP-048_FEASPEC_RESULT_IMPORT_WRITE_GUI_FILE_DIALOG_PLANNING`
+  as a planning-only contract for future output-directory selection,
+  default-directory policy, create-dir acknowledgement, overwrite
+  acknowledgement, CLI/GUI consistency, and mocked implementation tests. It
+  adds no GUI source, no QFileDialog implementation, no writer invocation, no
+  ResultDataset write, no solver execution, and no issue `#8` validation.
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
