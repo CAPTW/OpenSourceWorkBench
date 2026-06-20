@@ -236,7 +236,12 @@ and no subprocess invocation.
 
 - [FEASpec CalculiX result write view-model](feaspec_calculix_result_write_viewmodel.md)
   implemented `OSW-EXP-046_FEASPEC_RESULT_IMPORT_WRITE_GUI_VIEWMODEL` as a pure
-  Python state layer only. It adds no GUI dialog, file dialog, writer
-  invocation, or ResultDataset write behavior.
-- `OSW-EXP-047_FEASPEC_RESULT_IMPORT_WRITE_GUI_DIALOG_IMPLEMENTATION`
+  Python state layer only.
+- [FEASpec CalculiX result write dialog](feaspec_calculix_result_write_dialog.md)
+  implements `OSW-EXP-047_FEASPEC_RESULT_IMPORT_WRITE_GUI_DIALOG_IMPLEMENTATION`
+  as a display-only PySide6 surface over the view-model. It adds no
+  QFileDialog, writer invocation, ResultDataset write behavior, solver
+  execution, SolverAdapter/runner path, ProjectSchema mutation, or issue `#8`
+  validation.
+- `OSW-EXP-048_FEASPEC_RESULT_IMPORT_WRITE_GUI_FILE_DIALOG_PLANNING`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

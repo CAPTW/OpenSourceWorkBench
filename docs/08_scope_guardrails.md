@@ -201,6 +201,11 @@ request should stop, park, or defer.
   writer, writing ResultDataset files, running solvers, importing
   SolverAdapter/runner/subprocess paths, mutating ProjectSchema, validating
   issue `#8`, or making certification claims.
+- Experimental FEASpec CalculiX result write dialog behavior that renders the
+  write view-model in a display-only PySide6 dialog while keeping QFileDialog,
+  writer invocation, ResultDataset writes, CLI behavior changes, solver
+  execution, SolverAdapter/runner paths, ProjectSchema mutation, live issue
+  `#8` validation, bundled solvers, and certification claims out of scope.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and

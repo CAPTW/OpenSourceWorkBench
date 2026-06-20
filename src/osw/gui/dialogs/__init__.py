@@ -8,6 +8,7 @@ __all__ = [
     "ChmReactorDialog",
     "CalculixDeckDialog",
     "ExecutablePathDialog",
+    "FEASpecCalculiXResultWriteDialog",
     "FEASpecHumanReviewDialog",
     "GmshMeshDialog",
     "MatPreviewDialog",
@@ -65,6 +66,12 @@ def __getattr__(name: str) -> object:
         from osw.gui.dialogs.feaspec_human_review_dialog import FEASpecHumanReviewDialog
 
         return FEASpecHumanReviewDialog
+    if name == "FEASpecCalculiXResultWriteDialog":
+        from osw.gui.dialogs.feaspec_calculix_result_write_dialog import (
+            FEASpecCalculiXResultWriteDialog,
+        )
+
+        return FEASpecCalculiXResultWriteDialog
     if name == "ReportExportDialog":
         from osw.gui.dialogs.report_export_dialog import ReportExportDialog
 

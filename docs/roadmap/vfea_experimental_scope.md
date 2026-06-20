@@ -487,6 +487,13 @@ and lexical save-path plans without adding PySide/Qt imports, GUI dialog or
 file-dialog behavior, writer invocation, ResultDataset persistence, solver
 execution, ProjectSchema mutation, issue `#8` validation, or VFEA completion.
 
+[FEASpec CalculiX result write dialog](../experimental/feaspec_calculix_result_write_dialog.md)
+adds an experimental display-only PySide6 dialog over that state layer. It
+shows the reviewed write evidence and disabled action reasons, but adds no
+QFileDialog, no writer invocation, no ResultDataset file writes, no solver
+execution, no ProjectSchema mutation, no issue `#8` validation, and does not
+complete VFEA.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

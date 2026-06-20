@@ -203,6 +203,13 @@ continues to own the existing CLI wrapper.
 This view-model is a presentation state layer over those records. It does not
 alter writer behavior and does not add a GUI write command.
 
+[FEASpec CalculiX result write dialog](feaspec_calculix_result_write_dialog.md)
+now consumes this view-model in a display-only PySide6 dialog. That dialog
+renders panels, actions, disabled reasons, acknowledgements, safety text,
+planned files, and optional writer-result summaries, but it still has no
+QFileDialog, no writer invocation, no ResultDataset file write, no solver
+execution, and no issue `#8` validation.
+
 ## Relationship to issue #8
 
 The view-model does not validate live `ccx`. Issue `#8` remains open until a
@@ -250,5 +257,7 @@ fixtures are added by this gate.
 
 ## Next implementation slices
 
-- `OSW-EXP-047_FEASPEC_RESULT_IMPORT_WRITE_GUI_DIALOG_IMPLEMENTATION`
+- `OSW-EXP-047_FEASPEC_RESULT_IMPORT_WRITE_GUI_DIALOG_IMPLEMENTATION` completed
+  as a display-only dialog.
+- `OSW-EXP-048_FEASPEC_RESULT_IMPORT_WRITE_GUI_FILE_DIALOG_PLANNING`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

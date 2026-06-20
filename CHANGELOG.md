@@ -340,6 +340,13 @@ by a dedicated release/tag gate.
   PySide/Qt import, GUI dialog, file dialog, writer invocation, ResultDataset
   write, solver execution, SolverAdapter/runner path, ProjectSchema mutation,
   VLM API, release mutation, or issue `#8` validation.
+- Added an experimental FEASpec CalculiX result write dialog under
+  `src/osw/gui/dialogs/`. It renders the write view-model as a display-only
+  PySide6 dialog with source, artifact, diagnostics, draft mapping, write plan,
+  schema/manifest, safety, actions, and result panels. It adds no QFileDialog,
+  writer invocation, ResultDataset file write, CLI behavior change, solver
+  execution, SolverAdapter/runner path, ProjectSchema mutation, VLM API,
+  release mutation, or issue `#8` validation.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

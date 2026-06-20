@@ -1468,3 +1468,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   runner integration, no subprocess use, no ProjectSchema mutation, no VLM API,
   no dependency install, no release/tag or asset mutation, no issue mutation,
   no live issue `#8` validation, and no bundled-solver or certification claim.
+
+## ADR-0074: FEASpec CalculiX Result Write Dialog Is Display-Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-20
+- Context: ADR-0073 added the UI-agnostic state layer for the ResultDataset
+  write GUI while leaving PySide6 source, file-dialog behavior, and GUI writer
+  invocation out of scope. The next bounded slice is to render that state in a
+  GUI dialog without crossing the persistence boundary.
+- Decision: Add `FEASpecCalculiXResultWriteDialog` as a display-only PySide6
+  dialog over `FEASpecCalculiXResultWriteViewModel`. The dialog renders source,
+  artifact, diagnostics, draft mapping, write plan, schema/manifest, safety,
+  action, acknowledgement, and result-summary panels while keeping write and
+  output-directory actions disabled.
+- Consequences: The dialog adds no QFileDialog, no writer invocation, no CLI
+  behavior change, no ResultDataset file write, no artifact copy, no solver
+  execution, no SolverAdapter or runner integration, no subprocess use, no
+  ProjectSchema mutation, no VLM API, no dependency install, no release/tag or
+  asset mutation, no issue mutation, no live issue `#8` validation, and no
+  bundled-solver or certification claim.
