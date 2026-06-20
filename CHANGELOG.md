@@ -313,6 +313,14 @@ by a dedicated release/tag gate.
   additional numerical results, executes no solver, calls no SolverAdapter or
   runner code, mutates no ProjectSchema, validates no issue `#8`, adds no VLM
   APIs, bundles no solvers, and claims no certification.
+- Added a design-only FEASpec CalculiX result import write CLI contract for a
+  future `feaspec-calculix-result-import-write` command. It defines plan-only
+  default behavior, future explicit write mode, required result/output
+  directories, limitations/review acknowledgements, exit codes, text/JSON
+  output, path policy, and safety boundaries without registering a command,
+  changing the library writer, writing ResultDataset files, copying artifacts,
+  executing solvers, mutating ProjectSchema, validating issue `#8`, editing
+  releases, or claiming certification.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

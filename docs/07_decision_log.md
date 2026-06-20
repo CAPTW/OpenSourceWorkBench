@@ -1380,3 +1380,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   dependencies, adds no VLM API, mutates no release/tag or asset state, creates
   or closes no issues, records no live issue `#8` validation, and makes no
   bundled-solver or certification claim.
+
+## ADR-0070: FEASpec CalculiX Result Import Write CLI Starts As Design-Only
+
+- Status: Accepted for experimental design
+- Date: 2026-06-20
+- Context: ADR-0067, ADR-0068, and ADR-0069 provide the reviewed write plan,
+  schema payload, and library writer needed for ResultDataset persistence, but
+  exposing that persistence through a CLI needs a separate review contract
+  before implementation.
+- Decision: Define the future
+  `feaspec-calculix-result-import-write` command as a design-only gate. The
+  proposed command defaults to plan-only review, requires explicit result and
+  output directories, records future acknowledgements for limitations, review,
+  overwrite, and directory creation, defines text/JSON output and exit codes,
+  and may call the library writer only in a later implementation gate when an
+  explicit future `--write` mode and all preconditions are satisfied.
+- Consequences: This gate registers no CLI command, changes no library writer
+  behavior, writes no ResultDataset files, copies no original solver artifacts,
+  parses no additional numerical results, executes no solver, calls no
+  SolverAdapter or runner code, invokes no external commands, mutates no
+  ProjectSchema, installs no dependencies, adds no VLM API, mutates no
+  release/tag or asset state, creates or closes no issues, records no live
+  issue `#8` validation, and makes no bundled-solver or certification claim.

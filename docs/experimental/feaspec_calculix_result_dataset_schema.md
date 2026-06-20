@@ -197,6 +197,14 @@ and valid write plan. This schema module remains an in-memory model: it still
 performs no file writes, no ResultDataset persistence, no artifact copying, and
 no solver execution.
 
+## Relationship to future write CLI
+
+[FEASpec CalculiX result import write CLI design](feaspec_calculix_result_import_write_cli_design.md)
+defines a future review surface over the preview, draft mapping, write plan,
+schema payload, and library writer layers. That design is not registered as a
+CLI command by this gate, does not change this schema model, writes no files,
+and executes no solver.
+
 ## Relationship to result import model and CLI preview
 
 The result import model and `feaspec-calculix-result-import-preview` remain
@@ -264,5 +272,6 @@ does not record issue `#8` pass evidence, and does not close issue `#8`.
 
 - `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
   (completed as the separate library writer)
-- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_PREVIEW_ONLY`
+- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_DESIGN`
+- `OSW-EXP-044_FEASPEC_RESULT_IMPORT_WRITE_CLI_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

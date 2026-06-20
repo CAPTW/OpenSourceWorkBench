@@ -177,6 +177,10 @@ documents the separate library-only persistence API for validated plan/schema
 payloads. The current `feaspec-calculix-result-import-preview` command does not
 call that writer, has no write mode, writes no files, copies no artifacts, and
 executes no solver.
+[FEASpec CalculiX result import write CLI design](feaspec_calculix_result_import_write_cli_design.md)
+documents the future write command contract over these existing layers. The
+design is not registered in the current CLI and does not change this preview
+command's no-write behavior.
 
 ## Safety Boundary
 

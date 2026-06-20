@@ -134,6 +134,14 @@ The result import model and `feaspec-calculix-result-import-preview` remain
 preview-only. This writer is library-only and is not exposed as a write-capable
 CLI or GUI flow.
 
+## Relationship to future write CLI
+
+[FEASpec CalculiX result import write CLI design](feaspec_calculix_result_import_write_cli_design.md)
+defines how a future command may call this library writer after preview,
+draft-mapping, write-plan, schema-payload, and acknowledgement checks pass. The
+design gate does not register that command, does not change writer behavior,
+and performs no ResultDataset writes.
+
 ## Fixture policy
 
 Writer tests create synthetic result directories and write outputs only under

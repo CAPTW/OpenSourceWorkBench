@@ -466,6 +466,12 @@ only the five standard ResultDataset review files from a valid plan/payload and
 still adds no import-write CLI/GUI path, artifact copying, solver execution,
 issue `#8` validation, ProjectSchema mutation, or VFEA completion.
 
+[FEASpec CalculiX result import write CLI design](../experimental/feaspec_calculix_result_import_write_cli_design.md)
+defines the future command contract for invoking that reviewed persistence
+stack. It is design-only, is not registered as a CLI command, performs no
+ResultDataset writes, copies no artifacts, executes no solver, validates no
+issue `#8`, and does not complete VFEA.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

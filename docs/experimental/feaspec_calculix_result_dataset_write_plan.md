@@ -187,6 +187,14 @@ solver.
 consumes this reviewed plan plus a schema payload. The writer is the separate
 explicit persistence layer; this planning module remains in-memory only.
 
+## Relationship to future write CLI
+
+[FEASpec CalculiX result import write CLI design](feaspec_calculix_result_import_write_cli_design.md)
+defines a future command contract for composing the result import preview,
+draft mapping, this write plan, schema payload, and library writer. It is
+design-only, is not registered in the CLI, and does not add file writes or
+solver execution to this planning module.
+
 ## Relationship to result import model and CLI preview
 
 The result import model and `feaspec-calculix-result-import-preview` remain
