@@ -244,6 +244,11 @@ request should stop, park, or defer.
   future publish work to a separate release-boundary decision without runtime
   source changes, solver execution, issue mutation, release mutation, version
   bump, bundled solvers, or certification claims.
+- Post-experimental release-boundary decision documentation that selects the
+  next prerelease boundary from evidence while avoiding metadata alignment, tag
+  creation, release edits, asset build/upload, issue mutation, solver
+  execution, dependency install, bundled-solver claims, and certification
+  claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
@@ -605,6 +610,10 @@ Scope drift is any change that:
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is
   passing evidence;
+- turns a post-experimental release-boundary decision into metadata alignment,
+  version bumping, tag creation, release editing, asset build/upload, issue
+  mutation, solver execution, or a claim that selected-target artifacts already
+  exist;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

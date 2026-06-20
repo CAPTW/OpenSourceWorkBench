@@ -547,6 +547,11 @@ the OSW-VALID-004 live CalculiX rerun. It records the live `ccx` result as
 validation, and requires a future release-boundary decision before any new
 release assets.
 
+[Post-experimental release-boundary decision](../release/post_exp_release_boundary_decision.md)
+selects `v0.1.5-rc1` as the next boundary for this substantial post-release
+experimental line. Metadata alignment, tag creation, release edits, asset
+build/upload, and issue closure remain deferred to separate gates.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

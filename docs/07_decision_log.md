@@ -1636,3 +1636,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   release edits, asset builds/uploads, issue closure, solver execution, solver
   installation, ProjectSchema mutation, and VLM APIs remain out of scope until
   separate explicit gates.
+
+## ADR-0082: Post-Experimental Boundary Selects v0.1.5-rc1
+
+- Status: Accepted for release-boundary planning
+- Date: 2026-06-20
+- Context: After `v0.1.4-rc1`, `develop` gained a substantial
+  FEASpec/CalculiX experimental line covering FEASpec models/validation/bridge,
+  no-run CalculiX export, installed-only run-gate implementation, result
+  import, scanner/parser layers, ResultDataset write planning/schema/writer,
+  write CLI, and write GUI closure. OSW-VALID-004 remains `skipped-missing`
+  because `ccx` was not installed.
+- Decision: Select `v0.1.5-rc1` as the next prerelease boundary. This is a
+  decision-only boundary selection; metadata alignment, final revalidation,
+  tag creation, tag push, asset build/upload, release draft/publish, and any
+  issue closure remain separate gates.
+- Consequences: Package and CLI metadata still report `0.1.4rc1` until a
+  future metadata-alignment gate. The selected target tag, GitHub Release, and
+  assets do not exist as a result of this decision. Issues `#6` through `#11`
+  remain open, and no live CalculiX validation pass or certification claim is
+  made.

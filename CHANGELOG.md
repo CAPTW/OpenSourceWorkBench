@@ -26,6 +26,11 @@ by a dedicated release/tag gate.
   skipped-missing CalculiX validation, notes that `develop` is newer than the
   public release tag, and requires a future release-boundary decision before
   any new version metadata, tag, release, or asset work.
+- Added a post-experimental release-boundary decision selecting `v0.1.5-rc1`
+  as the next prerelease boundary for the substantial FEASpec/CalculiX
+  ResultDataset capability line. This decision does not bump version metadata,
+  create tags, edit releases, build/upload assets, execute solvers, close
+  issues, or claim live optional validation completion.
 - Added a prepared-machine plan for issues `#6` through `#11`, defining
   required packages/executables, future installed-only validation commands,
   pass/partial/keep-open criteria, and separate closure-gate requirements.

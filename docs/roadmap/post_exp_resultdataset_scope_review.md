@@ -127,3 +127,10 @@ validation evidence.
 - `OSW-PLAN-008_POST_EXP_RELEASE_BOUNDARY_DECISION`
 - or rerun `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED` on a
   prepared machine with `ccx` already installed.
+
+Follow-up release-boundary decision:
+[Post-experimental release-boundary decision](../release/post_exp_release_boundary_decision.md)
+selects `v0.1.5-rc1` as the next prerelease boundary because `develop`
+contains substantial post-`v0.1.4-rc1` experimental capability. The decision
+does not bump metadata, create a tag, build assets, edit a release, or close
+issues.
