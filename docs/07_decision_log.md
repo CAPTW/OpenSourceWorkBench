@@ -1104,7 +1104,7 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   provenance, and builds a pure in-memory ResultDataset draft with artifact and
   field references.
 - Consequences: The model does not parse numerical `.frd`, `.dat`, `.sta`, or
-  `.cvg` contents, write ResultDataset files, add a write-capable import CLI,
+  `.cvg` contents, write ResultDataset files, perform CLI write behavior,
   execute CalculiX, call SolverAdapter or runner code, mutate ProjectSchema,
   install dependencies, add VLM APIs, validate issue `#8`, mutate
   releases/assets/tags, or close issues. Parser design, CLI preview,
@@ -1280,7 +1280,7 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   references, provenance, diagnostics, and limitations into a serializable
   draft payload and compact summary for the CLI preview.
 - Consequences: This gate adds no ResultDataset persistence or file writes, no
-  write-capable import command, no additional `.frd` numerical field parsing,
+  CLI persistence behavior in the mapping layer, no additional `.frd` numerical field parsing,
   no mesh reconstruction, no unit inference, no solver execution, no
   SolverAdapter or runner integration, no subprocess invocation, no
   ProjectSchema mutation, no dependency install, no VLM API, no release/tag or
@@ -1301,7 +1301,7 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   atomic-write strategy, artifact reference policy, validation-before-write
   rules, CLI/GUI future entry points, and `FDW_*` diagnostics.
 - Consequences: This gate adds no ResultDataset persistence implementation, no
-  file writes, no write-capable import CLI or GUI behavior, no atomic-write
+  file writes, no CLI or GUI implementation, no atomic-write
   code, no schema implementation, no `.frd` numerical field parsing, no mesh
   reconstruction, no solver execution, no SolverAdapter or runner integration,
   no subprocess invocation, no ProjectSchema mutation, no dependency install,
@@ -1324,8 +1324,8 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   atomic write paths, artifact references, and `FDW_*` diagnostics, and exposes
   validation/explanation helpers. All write flags remain false.
 - Consequences: This gate adds no actual ResultDataset persistence, no file
-  writes, no directory creation, no artifact copying, no write-capable import
-  CLI or GUI behavior, no schema migration implementation, no `.frd` numerical
+  writes, no directory creation, no artifact copying, no CLI behavior in the
+  write-plan model, no GUI behavior, no schema migration implementation, no `.frd` numerical
   field parsing, no mesh reconstruction, no solver execution, no SolverAdapter
   or runner integration, no subprocess invocation, no ProjectSchema mutation,
   no dependency install, no VLM API, no release/tag or asset mutation, no issue
@@ -1347,8 +1347,8 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   schema/provenance/artifact/manifest readiness with `FDS_*` diagnostics, and
   exposes explanation helpers. All persistence and write flags remain false.
 - Consequences: This gate adds no actual ResultDataset persistence, no file
-  writes, no directory creation, no artifact copying, no write-capable import
-  CLI or GUI behavior, no atomic write implementation, no `.frd` numerical
+  writes, no directory creation, no artifact copying, no CLI behavior in the
+  schema model, no GUI behavior, no atomic write implementation, no `.frd` numerical
   field parsing, no mesh reconstruction, no solver execution, no SolverAdapter
   or runner integration, no subprocess invocation, no ProjectSchema mutation,
   no dependency install, no VLM API, no release/tag or asset mutation, no issue
@@ -1373,8 +1373,8 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   blocks unplanned collisions, blocked plans, blocked schema payloads, and
   artifact-copy requests.
 - Consequences: This gate adds actual library file writes only for the five
-  standard ResultDataset review files. It adds no write-capable import CLI or
-  GUI behavior, copies no original solver artifacts, parses no additional
+  standard ResultDataset review files. It contains no CLI or GUI behavior,
+  copies no original solver artifacts, parses no additional
   numerical results, executes no solver, calls no SolverAdapter or runner code,
   invokes no external commands, mutates no ProjectSchema, installs no
   dependencies, adds no VLM API, mutates no release/tag or asset state, creates
@@ -1403,3 +1403,27 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   ProjectSchema, installs no dependencies, adds no VLM API, mutates no
   release/tag or asset state, creates or closes no issues, records no live
   issue `#8` validation, and makes no bundled-solver or certification claim.
+
+## ADR-0071: FEASpec CalculiX Result Import Write CLI Implementation
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-20
+- Context: ADR-0070 defined the review-gated command contract after the
+  ResultDataset draft mapping, write plan, schema payload, and library writer
+  layers were in place. The next bounded slice is to expose that reviewed
+  persistence stack through a CLI without adding GUI write behavior, artifact
+  copying, solver execution, or ProjectSchema mutation.
+- Decision: Register `feaspec-calculix-result-import-write` as an experimental
+  command. The command defaults to plan-only review, requires explicit
+  `--write`, `--output-dir`, `--acknowledge-limitations`, and
+  `--acknowledge-review-required` before invoking the library writer, and
+  reports text/JSON status, diagnostics, planned files, written files, and
+  safety flags.
+- Consequences: The command writes only the standard ResultDataset review files
+  through the existing library writer when all review gates pass. It copies no
+  original solver artifacts, parses no additional numerical results, executes
+  no solver, calls no SolverAdapter or runner code, invokes no external
+  commands, mutates no ProjectSchema, installs no dependencies, adds no VLM
+  API, mutates no release/tag or asset state, creates or closes no issues,
+  records no live issue `#8` validation, and makes no bundled-solver or
+  certification claim.

@@ -107,14 +107,15 @@ and executes no solver.
 packages this draft mapping and a reviewed write plan into deterministic
 in-memory ResultDataset, manifest, diagnostics, provenance, and review README
 payload records. It remains model-only: no ResultDataset persistence, no file
-writes, no write-capable import CLI, and no solver execution.
+writes in this mapping layer and no solver execution. The separate
+`feaspec-calculix-result-import-write` CLI may consume the mapping after review.
 
 [FEASpec CalculiX ResultDataset writer](feaspec_calculix_result_dataset_writer.md)
 adds the explicit library-only persistence slice after the schema payload
 model. It consumes a validated write plan and schema payload, writes only the
 five standard ResultDataset files under the caller-reviewed output directory,
-and still adds no import-write CLI/GUI command, artifact copying, solver
-execution, ProjectSchema mutation, or issue `#8` validation.
+and contains no CLI/GUI behavior, artifact copying, solver execution,
+ProjectSchema mutation, or issue `#8` validation.
 
 ## Relationship to #8
 
@@ -126,7 +127,7 @@ passes.
 
 - no persistence;
 - no ResultDataset write;
-- no write-capable import command;
+- no write behavior in this mapping layer;
 - no `.frd` numerical parser;
 - no mesh reconstruction;
 - no solver execution;

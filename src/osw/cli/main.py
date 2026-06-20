@@ -486,6 +486,68 @@ def build_parser() -> argparse.ArgumentParser:
         default=True,
         help="Include diagnostic records in output; default true.",
     )
+    feaspec_calculix_result_import_write_parser = subparsers.add_parser(
+        "feaspec-calculix-result-import-write",
+        help="Plan or explicitly write FEASpec CalculiX ResultDataset review files.",
+        description=(
+            "Review an explicit CalculiX result directory, build the experimental "
+            "ResultDataset write plan, and optionally write the standard review "
+            "files. The default mode is plan-only: no files are written, no solver "
+            "is executed, and original solver artifacts are not copied."
+        ),
+    )
+    feaspec_calculix_result_import_write_parser.add_argument(
+        "--result-dir",
+        required=True,
+        help="Existing CalculiX result directory to inspect.",
+    )
+    feaspec_calculix_result_import_write_parser.add_argument(
+        "--output-dir",
+        required=True,
+        help="Explicit target directory for the standard ResultDataset layout.",
+    )
+    feaspec_calculix_result_import_write_parser.add_argument(
+        "--format",
+        default="text",
+        choices=("text", "json"),
+        help="Write review output format.",
+    )
+    feaspec_calculix_result_import_write_mode = (
+        feaspec_calculix_result_import_write_parser.add_mutually_exclusive_group()
+    )
+    feaspec_calculix_result_import_write_mode.add_argument(
+        "--plan-only",
+        action="store_true",
+        help="Build and display the write plan without writing files. This is the default.",
+    )
+    feaspec_calculix_result_import_write_mode.add_argument(
+        "--write",
+        action="store_true",
+        help=(
+            "Write the standard ResultDataset review files. Requires both "
+            "acknowledgement flags."
+        ),
+    )
+    feaspec_calculix_result_import_write_parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing standard ResultDataset files after review.",
+    )
+    feaspec_calculix_result_import_write_parser.add_argument(
+        "--create-dir",
+        action="store_true",
+        help="Allow creation of the explicit output directory when parent policy allows it.",
+    )
+    feaspec_calculix_result_import_write_parser.add_argument(
+        "--acknowledge-limitations",
+        action="store_true",
+        help="Acknowledge carried import and parser limitations before write mode.",
+    )
+    feaspec_calculix_result_import_write_parser.add_argument(
+        "--acknowledge-review-required",
+        action="store_true",
+        help="Acknowledge the README_REVIEW_FIRST human-review workflow before write mode.",
+    )
     human_review_create_parser = subparsers.add_parser(
         "feaspec-human-review-create",
         help="Create a FEASpec human review record JSON file.",
@@ -1499,6 +1561,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             preview,
             strict=args.strict,
         )
+
+    if args.command == "feaspec-calculix-result-import-write":
+        try:
+            record = _build_feaspec_calculix_result_import_write(args)
+        except (OSError, TypeError, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        if args.format == "json":
+            print(json.dumps(record, indent=2, sort_keys=True))
+        else:
+            _print_feaspec_calculix_result_import_write(record)
+        return _feaspec_calculix_result_import_write_exit_code(record)
 
     if args.command == "feaspec-human-review-create":
         try:
@@ -3176,6 +3250,377 @@ def _feaspec_calculix_result_import_preview_exit_code(
     if not bool(preview.get("result_dir_readable", False)):
         return 1
     if strict and bool(preview.get("strict_blocked", False)):
+        return 2
+    return 0
+
+
+def _build_feaspec_calculix_result_import_write(
+    args: argparse.Namespace,
+) -> dict[str, object]:
+    from osw.experimental.feaspec.calculix_result_dataset_draft_mapping import (
+        build_calculix_result_dataset_draft_mapping,
+        summarize_calculix_result_dataset_draft_mapping,
+    )
+    from osw.experimental.feaspec.calculix_result_dataset_schema import (
+        build_calculix_result_dataset_schema_payload,
+        validate_calculix_result_dataset_schema_payload,
+    )
+    from osw.experimental.feaspec.calculix_result_dataset_write_plan import (
+        plan_calculix_result_dataset_write,
+        validate_calculix_result_dataset_write_plan,
+    )
+    from osw.experimental.feaspec.calculix_result_dataset_writer import (
+        write_calculix_result_dataset,
+    )
+    from osw.experimental.feaspec.calculix_result_import import (
+        plan_calculix_result_import,
+    )
+
+    result_dir = Path(args.result_dir).expanduser()
+    output_dir = Path(args.output_dir).expanduser()
+    mode = "write" if bool(args.write) else "plan-only"
+    import_plan = plan_calculix_result_import(result_dir)
+    draft_mapping = build_calculix_result_dataset_draft_mapping(import_plan)
+    draft_summary = summarize_calculix_result_dataset_draft_mapping(draft_mapping)
+    limitations_acknowledged_for_plan = (
+        bool(args.acknowledge_limitations) if args.write else True
+    )
+    write_plan = plan_calculix_result_dataset_write(
+        draft_mapping,
+        output_dir=output_dir,
+        overwrite=bool(args.overwrite),
+        create_dir=bool(args.create_dir),
+        acknowledge_limitations=limitations_acknowledged_for_plan,
+        copy_artifacts=False,
+    )
+    write_plan_validation = validate_calculix_result_dataset_write_plan(write_plan)
+    schema_payload = build_calculix_result_dataset_schema_payload(
+        draft_mapping,
+        write_plan,
+    )
+    schema_validation = validate_calculix_result_dataset_schema_payload(schema_payload)
+    cli_diagnostics = _feaspec_calculix_result_import_write_cli_diagnostics(
+        args,
+        import_status=import_plan.status,
+    )
+
+    pre_write_diagnostics = [
+        *_result_import_write_diagnostic_records(
+            import_plan.diagnostics,
+            source="result_import",
+        ),
+        *_result_import_write_diagnostic_records(
+            write_plan_validation.diagnostics,
+            source="write_plan",
+        ),
+        *_result_import_write_diagnostic_records(
+            schema_validation.diagnostics,
+            source="schema_payload",
+        ),
+        *cli_diagnostics,
+    ]
+    pre_write_blocked = any(_diagnostic_blocks_write(item) for item in pre_write_diagnostics)
+    writer_result = None
+    if args.write and not pre_write_blocked:
+        writer_result = write_calculix_result_dataset(
+            write_plan,
+            schema_payload,
+            overwrite=bool(args.overwrite),
+        )
+
+    writer_diagnostics = (
+        _result_import_write_diagnostic_records(
+            writer_result.diagnostics,
+            source="library_writer",
+        )
+        if writer_result is not None
+        else []
+    )
+    diagnostics = _dedupe_cli_diagnostics([*pre_write_diagnostics, *writer_diagnostics])
+    written_files = (
+        [item.to_dict() for item in writer_result.written_files]
+        if writer_result is not None
+        else []
+    )
+    write_status = _feaspec_calculix_result_import_write_status(
+        mode=mode,
+        blocked=pre_write_blocked,
+        writer_result=writer_result,
+    )
+    limitations = _feaspec_calculix_result_import_write_limitations(
+        import_plan.limitations,
+        getattr(draft_mapping, "limitations", ()),
+    )
+
+    return {
+        "command": "feaspec-calculix-result-import-write",
+        "version": __version__,
+        "mode": mode,
+        "result_dir": str(result_dir.resolve()),
+        "result_dir_readable": bool(result_dir.is_dir()),
+        "output_dir": str(output_dir),
+        "import_status": import_plan.status.value,
+        "draft_mapping_status": draft_mapping.status.value,
+        "draft_mapping_summary": draft_summary.to_dict(),
+        "plan_status": write_plan_validation.status.value,
+        "schema_status": schema_validation.status.value,
+        "write_status": write_status,
+        "planned_files": [item.to_dict() for item in write_plan.planned_files],
+        "written_files": written_files,
+        "diagnostics": diagnostics,
+        "diagnostic_count": len(diagnostics),
+        "blocker_count": sum(1 for item in diagnostics if _diagnostic_blocks_write(item)),
+        "limitations": limitations,
+        "acknowledgements": {
+            "limitations": bool(args.acknowledge_limitations),
+            "review_required": bool(args.acknowledge_review_required),
+        },
+        "files_written": bool(written_files),
+        "solver_execution_performed": False,
+        "source_run_solver_execution_performed": (
+            import_plan.provenance.solver_execution_performed
+        ),
+        "artifact_copy_performed": False,
+        "issue_mutation_performed": False,
+        "release_mutation_performed": False,
+        "tag_mutation_performed": False,
+        "projectschema_mutation_performed": False,
+        "gui_write_command_added": False,
+        "cli_write_command_added": True,
+    }
+
+
+def _feaspec_calculix_result_import_write_cli_diagnostics(
+    args: argparse.Namespace,
+    *,
+    import_status: object,
+) -> list[dict[str, object]]:
+    diagnostics: list[dict[str, object]] = []
+    status_text = str(getattr(import_status, "value", import_status))
+    if status_text in {"blocked", "unsupported"}:
+        diagnostics.append(
+            _cli_write_diagnostic(
+                "FCW_IMPORT_NOT_READY",
+                "blocker",
+                "Result import plan is not ready for ResultDataset write review.",
+                suggested_fix="Resolve result import blockers before write planning.",
+            )
+        )
+    if args.write and not bool(args.acknowledge_limitations):
+        diagnostics.append(
+            _cli_write_diagnostic(
+                "FCW_LIMITATIONS_ACKNOWLEDGEMENT_REQUIRED",
+                "blocker",
+                "Write mode requires --acknowledge-limitations.",
+                suggested_fix="Review limitations, then pass --acknowledge-limitations.",
+            )
+        )
+    if args.write and not bool(args.acknowledge_review_required):
+        diagnostics.append(
+            _cli_write_diagnostic(
+                "FCW_REVIEW_ACKNOWLEDGEMENT_REQUIRED",
+                "blocker",
+                "Write mode requires --acknowledge-review-required.",
+                suggested_fix="Review the README_REVIEW_FIRST workflow before writing.",
+            )
+        )
+    return diagnostics
+
+
+def _cli_write_diagnostic(
+    code: str,
+    severity: str,
+    message: str,
+    *,
+    path: str = "",
+    suggested_fix: str = "",
+) -> dict[str, object]:
+    return {
+        "code": code,
+        "severity": severity,
+        "message": message,
+        "path": path,
+        "suggested_fix": suggested_fix,
+        "blocks_write": severity == "blocker",
+        "source": "cli",
+    }
+
+
+def _result_import_write_diagnostic_records(
+    diagnostics: object,
+    *,
+    source: str,
+) -> list[dict[str, object]]:
+    if not isinstance(diagnostics, Sequence) or isinstance(diagnostics, (str, bytes)):
+        return []
+    records: list[dict[str, object]] = []
+    for diagnostic in diagnostics:
+        record: dict[str, object]
+        if isinstance(diagnostic, Mapping):
+            record = dict(diagnostic)
+        else:
+            to_dict = getattr(diagnostic, "to_dict", None)
+            payload = to_dict() if callable(to_dict) else {"message": str(diagnostic)}
+            record = dict(payload) if isinstance(payload, Mapping) else {"message": str(payload)}
+        record.setdefault("source", source)
+        records.append(record)
+    return records
+
+
+def _diagnostic_blocks_write(record: Mapping[str, object]) -> bool:
+    severity = str(record.get("severity", "")).lower()
+    return bool(
+        severity == "blocker"
+        or record.get("blocks_write")
+        or record.get("blocks_import")
+        or record.get("blocks_mapping")
+        or record.get("blocks_payload")
+    )
+
+
+def _dedupe_cli_diagnostics(
+    diagnostics: Sequence[Mapping[str, object]],
+) -> list[dict[str, object]]:
+    seen: set[tuple[str, str, str, str]] = set()
+    unique: list[dict[str, object]] = []
+    for diagnostic in diagnostics:
+        record = dict(diagnostic)
+        key = (
+            str(record.get("code", "")),
+            str(record.get("path", "")),
+            str(record.get("message", "")),
+            str(record.get("source", "")),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(record)
+    return unique
+
+
+def _feaspec_calculix_result_import_write_status(
+    *,
+    mode: str,
+    blocked: bool,
+    writer_result: object | None,
+) -> str:
+    if writer_result is not None:
+        return str(getattr(getattr(writer_result, "status", ""), "value", ""))
+    if blocked:
+        return "blocked"
+    return "plan-only" if mode == "plan-only" else "blocked"
+
+
+def _feaspec_calculix_result_import_write_limitations(
+    import_limitations: object,
+    draft_limitations: object,
+) -> list[dict[str, object]]:
+    records: list[dict[str, object]] = []
+    if isinstance(import_limitations, Sequence) and not isinstance(
+        import_limitations,
+        (str, bytes),
+    ):
+        records.extend(
+            {"message": str(item), "source": "result-import-plan"}
+            for item in import_limitations
+        )
+    if isinstance(draft_limitations, Sequence) and not isinstance(
+        draft_limitations,
+        (str, bytes),
+    ):
+        for item in draft_limitations:
+            if isinstance(item, Mapping):
+                records.append(dict(item))
+            else:
+                to_dict = getattr(item, "to_dict", None)
+                payload = to_dict() if callable(to_dict) else None
+                records.append(
+                    dict(payload)
+                    if isinstance(payload, Mapping)
+                    else {"message": str(item), "source": "draft-mapping"}
+                )
+    seen: set[tuple[str, str]] = set()
+    unique: list[dict[str, object]] = []
+    for record in records:
+        key = (str(record.get("message", "")), str(record.get("source", "")))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(record)
+    return unique
+
+
+def _print_feaspec_calculix_result_import_write(
+    record: Mapping[str, object],
+) -> None:
+    print("FEASpec CalculiX result import write")
+    print(f"Mode: {record['mode']}")
+    print(f"Result directory: {record['result_dir']}")
+    print(f"Output directory: {record['output_dir']}")
+    print(f"Import status: {record['import_status']}")
+    print(f"Plan status: {record['plan_status']}")
+    print(f"Schema status: {record['schema_status']}")
+    print(f"Write status: {record['write_status']}")
+    print(f"Files written: {str(record['files_written']).lower()}")
+    print("Solver execution performed by this command: false")
+    print("Artifact copying performed by this command: false")
+    print("Issue/release/tag mutation performed: false")
+    print("Issue #8 remains separate and open.")
+    print("Planned files:")
+    planned_files = record.get("planned_files", ())
+    if isinstance(planned_files, Sequence) and planned_files:
+        for item in planned_files:
+            if isinstance(item, Mapping):
+                print(
+                    f"  - {item.get('relative_path', '')}: "
+                    f"{item.get('target_path', '')}"
+                )
+    else:
+        print("  - none")
+    written_files = record.get("written_files", ())
+    if isinstance(written_files, Sequence) and written_files:
+        print("Written files:")
+        for item in written_files:
+            if isinstance(item, Mapping):
+                print(
+                    f"  - {item.get('relative_path', '')} "
+                    f"({item.get('payload_kind', '')}, "
+                    f"{item.get('size_bytes', 0)} bytes, "
+                    f"sha256={item.get('sha256', '')})"
+                )
+    print(f"Diagnostics: {record.get('diagnostic_count', 0)}")
+    diagnostics = record.get("diagnostics", ())
+    if isinstance(diagnostics, Sequence) and diagnostics:
+        for item in diagnostics:
+            if not isinstance(item, Mapping):
+                continue
+            severity = str(item.get("severity", "")).upper() or "INFO"
+            path = f" [{item.get('path')}]" if item.get("path") else ""
+            print(
+                f"  - {severity} {item.get('code', 'diagnostic')}{path}: "
+                f"{item.get('message', '')}"
+            )
+    else:
+        print("  - none")
+    print(f"Limitations: {len(record.get('limitations', ()) or ())}")
+    limitations = record.get("limitations", ())
+    if isinstance(limitations, Sequence):
+        for item in limitations:
+            if isinstance(item, Mapping):
+                print(f"  - {item.get('message', '')}")
+            else:
+                print(f"  - {item}")
+
+
+def _feaspec_calculix_result_import_write_exit_code(
+    record: Mapping[str, object],
+) -> int:
+    write_status = str(record.get("write_status", ""))
+    if write_status in {"failed", "partial-cleanup-failed"}:
+        return 1
+    if not bool(record.get("result_dir_readable", False)):
+        return 2
+    if _int_value(record.get("blocker_count")) > 0 or write_status == "blocked":
         return 2
     return 0
 

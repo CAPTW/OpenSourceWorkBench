@@ -197,19 +197,18 @@ and valid write plan. This schema module remains an in-memory model: it still
 performs no file writes, no ResultDataset persistence, no artifact copying, and
 no solver execution.
 
-## Relationship to future write CLI
+## Relationship to write CLI
 
-[FEASpec CalculiX result import write CLI design](feaspec_calculix_result_import_write_cli_design.md)
-defines a future review surface over the preview, draft mapping, write plan,
-schema payload, and library writer layers. That design is not registered as a
-CLI command by this gate, does not change this schema model, writes no files,
-and executes no solver.
+[FEASpec CalculiX result import write CLI](feaspec_calculix_result_import_write_cli.md)
+is the separate review surface over the preview, draft mapping, write plan,
+schema payload, and library writer layers. It does not change this schema
+model, and this schema module itself writes no files and executes no solver.
 
 ## Relationship to result import model and CLI preview
 
 The result import model and `feaspec-calculix-result-import-preview` remain
-preview-only. The schema payload model is not wired as a write-capable import
-CLI, adds no `--output` persistence mode, and performs no file writes.
+preview-only. The schema payload model is consumed by the separate write CLI
+but does not add CLI behavior or perform file writes itself.
 
 ## Safety boundary
 
@@ -217,7 +216,7 @@ This model preserves:
 
 - no file writes;
 - no ResultDataset persistence;
-- no write-capable import CLI;
+- no CLI behavior inside this schema model;
 - no GUI write/import command;
 - no atomic write implementation;
 - no artifact copying;
@@ -253,7 +252,7 @@ does not record issue `#8` pass evidence, and does not close issue `#8`.
 - no actual file writes;
 - no atomic write implementation;
 - no artifact copy implementation;
-- no write-capable import CLI;
+- no CLI behavior inside this schema model;
 - no GUI write/import command;
 - no `.frd` numerical parser;
 - no mesh reconstruction;

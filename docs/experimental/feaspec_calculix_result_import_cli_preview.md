@@ -43,9 +43,10 @@ The CLI is a thin adapter over the FEASpec CalculiX result import model:
 - `summarize_calculix_result_dataset_draft_mapping(mapping)`
 - `explain_calculix_result_import_plan(plan)`
 
-The CLI does not add a write/import command and does not add a numerical result
-parser. The in-memory draft returned in JSON remains a preview record with
-`writes_files=false`.
+The CLI preview does not add write behavior and does not add a numerical result
+parser. The separate `feaspec-calculix-result-import-write` command owns
+review-gated persistence. The in-memory draft returned in preview JSON remains
+a preview record with `writes_files=false`.
 
 ## Text Output
 
@@ -163,24 +164,23 @@ documents the in-memory mapping from these summaries into a future
 ResultDataset draft boundary without persistence.
 [FEASpec CalculiX ResultDataset write design](feaspec_calculix_result_dataset_write_design.md)
 documents the future reviewed persistence boundary. The current CLI still has
-no write/import command, no `--output` persistence mode, and no file writes.
+no `--output` persistence mode and no file writes.
 [FEASpec CalculiX ResultDataset write plan](feaspec_calculix_result_dataset_write_plan.md)
 documents the implemented in-memory planning model for future persistence; it
-is not wired as a CLI write mode and still performs no actual file writes.
+is consumed by the separate write CLI and still performs no actual file writes.
 [FEASpec CalculiX ResultDataset schema payload model](feaspec_calculix_result_dataset_schema.md)
-documents the implemented in-memory schema payload bundle for future
+documents the implemented in-memory schema payload bundle for
 ResultDataset, manifest, diagnostics, provenance, and review README records. It
-is not a write-capable import CLI, has no `--output` persistence mode, writes no
-files, persists no ResultDataset, and executes no solver.
+is consumed by the separate write CLI, writes no files itself, persists no
+ResultDataset, and executes no solver.
 [FEASpec CalculiX ResultDataset writer](feaspec_calculix_result_dataset_writer.md)
 documents the separate library-only persistence API for validated plan/schema
 payloads. The current `feaspec-calculix-result-import-preview` command does not
 call that writer, has no write mode, writes no files, copies no artifacts, and
 executes no solver.
-[FEASpec CalculiX result import write CLI design](feaspec_calculix_result_import_write_cli_design.md)
-documents the future write command contract over these existing layers. The
-design is not registered in the current CLI and does not change this preview
-command's no-write behavior.
+[FEASpec CalculiX result import write CLI](feaspec_calculix_result_import_write_cli.md)
+documents the separate write command over these existing layers. That command
+does not change this preview command's no-write behavior.
 
 ## Safety Boundary
 
@@ -196,7 +196,7 @@ The CLI preview preserves these boundaries:
 - no free-form table extraction;
 - no ResultDataset write;
 - no ResultDataset persistence;
-- no write-capable import CLI;
+- no write behavior in this preview command;
 - no ProjectSchema mutation;
 - no VLM API;
 - no provider credentials or API key fields;
@@ -215,7 +215,7 @@ issue `#8` pass evidence, and does not close issue `#8`.
 - No broad numerical parsing.
 - No `.frd` numerical field parser.
 - No free-form `.dat` parser.
-- No write-capable import command.
+- No write behavior in this preview command.
 - No ResultDataset persistence.
 - No solver execution.
 - No certification.

@@ -81,18 +81,19 @@ def test_writer_source_has_no_execution_artifact_copy_or_provider_tokens() -> No
     assert "sub" + "process" not in text
 
 
-def test_no_cli_write_command_was_added() -> None:
+def test_cli_wrapper_is_separate_from_library_writer() -> None:
     text = CLI_SOURCE.read_text(encoding="utf-8")
 
-    assert "feaspec-calculix-result-import-write" not in text
-    assert "write_calculix_result_dataset" not in text
+    assert "feaspec-calculix-result-import-write" in text
+    assert "write_calculix_result_dataset" in text
+    assert "copy_artifacts=False" in text
 
 
 def test_writer_docs_preserve_safety_boundary() -> None:
     text = DOC_PATH.read_text(encoding="utf-8").lower()
 
     assert "experimental library writer implemented" in text
-    assert "no cli write command" in text
+    assert "cli write command exists as a separate wrapper" in text
     assert "no gui write command" in text
     assert "no solver execution" in text
     assert "no artifact copying" in text
@@ -114,7 +115,6 @@ def test_writer_docs_preserve_safety_boundary() -> None:
     ):
         assert code in text
     for forbidden_claim in (
-        "cli write command exists",
         "gui write command exists",
         "solver execution is allowed",
         "live validation passed",

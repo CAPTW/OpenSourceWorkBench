@@ -187,20 +187,19 @@ solver.
 consumes this reviewed plan plus a schema payload. The writer is the separate
 explicit persistence layer; this planning module remains in-memory only.
 
-## Relationship to future write CLI
+## Relationship to write CLI
 
-[FEASpec CalculiX result import write CLI design](feaspec_calculix_result_import_write_cli_design.md)
-defines a future command contract for composing the result import preview,
-draft mapping, this write plan, schema payload, and library writer. It is
-design-only, is not registered in the CLI, and does not add file writes or
-solver execution to this planning module.
+[FEASpec CalculiX result import write CLI](feaspec_calculix_result_import_write_cli.md)
+composes the result import preview, draft mapping, this write plan, schema
+payload, and library writer. The CLI is separate from this planning module and
+does not add file writes or solver execution to the plan model itself.
 
 ## Relationship to result import model and CLI preview
 
 The result import model and `feaspec-calculix-result-import-preview` remain
-preview-only. The write plan can be called from tests or future review surfaces
-to inspect path and validation readiness, but there is still no write-capable
-import CLI, no `--output` persistence mode, no GUI write/import command, and no
+preview-only. The write plan can be called from tests and the separate
+review-gated import write CLI to inspect path and validation readiness, but
+this module still has no CLI behavior, no GUI write/import command, and no
 ResultDataset persistence.
 
 ## Safety boundary
@@ -211,7 +210,7 @@ This model preserves:
 - no directory creation;
 - no artifact copying;
 - no ResultDataset persistence;
-- no write-capable import CLI;
+- no CLI behavior inside this write plan model;
 - no GUI write/import command;
 - no solver execution;
 - no subprocess;
@@ -245,7 +244,7 @@ does not record issue `#8` pass evidence, and does not close issue `#8`.
 - no actual file writes;
 - no atomic write implementation;
 - no artifact copy implementation;
-- no write-capable import CLI;
+- no CLI behavior inside this write plan model;
 - no GUI write/import command;
 - no `.frd` numerical parser;
 - no mesh reconstruction;
@@ -265,4 +264,5 @@ does not record issue `#8` pass evidence, and does not close issue `#8`.
 - `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
   (completed as the separate library writer)
 - `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_DESIGN`
+- `OSW-EXP-044_FEASPEC_RESULT_IMPORT_WRITE_CLI_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

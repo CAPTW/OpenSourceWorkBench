@@ -281,7 +281,7 @@ passes.
 
 - no persistence implementation;
 - no actual file writes;
-- no write-capable import CLI;
+- no write behavior in this design document;
 - no GUI write/import command;
 - no `.frd` numerical parser;
 - no mesh reconstruction;

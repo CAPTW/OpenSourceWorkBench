@@ -102,7 +102,7 @@ def test_schema_docs_preserve_safety_boundary() -> None:
     assert "no resultdataset persistence" in text
     assert "no file writes" in text
     assert "no solver execution" in text
-    assert "no write-capable import cli" in text
+    assert "no cli behavior inside this schema model" in text
     assert "issue `#8` remains open" in text
     assert "no bundled solver" in text
     assert "no industrial certification" in text
@@ -114,7 +114,6 @@ def test_schema_docs_preserve_safety_boundary() -> None:
     for forbidden_claim in (
         "resultdataset persistence exists",
         "file writes are implemented",
-        "write-capable import cli exists",
         "frd numerical parsing exists",
         "mesh reconstruction exists",
         "live validation passed",

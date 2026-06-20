@@ -1,18 +1,19 @@
 # FEASpec CalculiX result import write CLI design
 
-Status: design-only. No CLI write command implementation. No GUI write
+Status: historical design implemented by
+`docs/experimental/feaspec_calculix_result_import_write_cli.md`. No GUI write
 command. No solver execution.
 
 ## Release context
 
 - `v0.1.4-rc1` is a public prerelease.
-- This design is post-release development on `develop`.
+- The design and implementation are post-release development on `develop`.
 - The public release, release tag, release assets, and GitHub issues are not
-  edited by this gate.
+  edited by this work.
 
 ## Relationship to existing layers
 
-The future write CLI is a review surface over existing layers:
+The write CLI is a review surface over existing layers:
 
 - `feaspec-calculix-result-import-preview` inspects an explicit result
   directory and returns a preview-only result import plan.
@@ -26,27 +27,25 @@ The future write CLI is a review surface over existing layers:
 - The library writer writes the five standard ResultDataset review files only
   after the plan and schema payload are valid.
 
-This design does not add a CLI command, does not change the library writer, and
-does not add any GUI write path.
+The implementation registers a CLI command, does not change the library
+writer, and does not add any GUI write path.
 
-## Proposed command
-
-Future command name:
+## Command
 
 ```text
 osw feaspec-calculix-result-import-write
 ```
 
-The command is proposed only. It is not registered in the CLI by this design
-gate.
+The command is registered as of
+`OSW-EXP-044_FEASPEC_RESULT_IMPORT_WRITE_CLI_IMPLEMENTATION`.
 
 ## Command modes
 
 - `--plan-only`: inspect inputs, build the import plan, draft mapping, write
   plan, and schema payload readiness, then print text or JSON output without
   writing files.
-- future `--write`: perform the same planning flow and call the library writer
-  only when all write preconditions and acknowledgements are satisfied.
+- `--write`: perform the same planning flow and call the library writer only
+  when all write preconditions and acknowledgements are satisfied.
 - text output: human-readable review-first summary.
 - JSON output: machine-readable plan and write readiness payload.
 
@@ -63,33 +62,30 @@ paths or derive a write target from unreviewed artifact names.
 
 ## Safety and acknowledgement options
 
-- `--acknowledge-limitations`: required before future write mode can call the
-  writer when limitations are present.
-- `--acknowledge-review-required`: required before future write mode can call
-  the writer, confirming the `README_REVIEW_FIRST.txt` workflow.
+- `--acknowledge-limitations`: required before write mode can call the writer
+  when limitations are present.
+- `--acknowledge-review-required`: required before write mode can call the
+  writer, confirming the `README_REVIEW_FIRST.txt` workflow.
 - `--overwrite`: opt in to overwriting existing standard files after review.
 - `--create-dir`: opt in to creating the explicit output directory when the
   parent policy allows it.
 - `--format text|json`: choose text or JSON output; default is `text`.
 
-Future implementation may add `--strict` if automation needs blocked
-preconditions to exit with code `2` in plan-only mode.
-
 ## Default behavior
 
 - Plan-only by default.
-- No files written unless the future `--write` mode is explicit.
+- No files written unless `--write` mode is explicit.
 - No solver execution.
 - No artifact copying.
 - No release, tag, asset, or issue mutation.
 
-The default command should be useful for review automation and tutorials
-without modifying the filesystem.
+The default command is useful for review automation and tutorials without
+modifying the filesystem.
 
-## Future write behavior
+## Write behavior
 
-When future `--write` is present, the command should compose the existing
-layers in this order:
+When `--write` is present, the command composes the existing layers in this
+order:
 
 1. Call the result import planner for `--result-dir`.
 2. Build the ResultDataset draft mapping.
@@ -102,46 +98,45 @@ layers in this order:
 7. Print text or JSON output that records files written, diagnostics, and
    safety flags.
 
-The future write path must not copy original `.dat`, `.frd`, `.sta`, `.cvg`,
-log, or export artifacts. Artifact references remain references.
+The write path must not copy original `.dat`, `.frd`, `.sta`, `.cvg`, log, or
+export artifacts. Artifact references remain references.
 
 ## Exit codes
 
-- `0`: successful plan-only review or successful future write.
+- `0`: successful plan-only review or successful write.
 - `2`: blocked plan or write preconditions, including missing
   acknowledgements, invalid output path, existing output without overwrite,
   blocked import plan, blocked write plan, or blocked schema payload.
-- `1`: CLI usage errors, read errors, unreadable result directory, invalid JSON
-  serialization, or unexpected internal errors.
+- `1`: CLI usage errors, read errors, invalid JSON serialization, writer
+  failure, or unexpected internal errors.
 
 ## Text output
 
-Text output should include:
+Text output includes:
 
-- proposed command mode;
+- command mode;
 - result directory and output directory;
-- plan status and future write status;
+- plan status and write status;
 - planned files;
 - diagnostics and blocker count;
 - limitations and required acknowledgements;
+- written standard files and hashes when write mode succeeds;
 - safety notes stating no solver execution, no artifact copying, no issue
   mutation, and no release mutation.
 
-Future successful write output may include one line per written standard file
-with relative path, payload kind, byte size, and SHA-256.
-
 ## JSON output
 
-JSON output should include:
+JSON output includes:
 
 - `command`;
 - `mode`;
 - `result_dir`;
 - `output_dir`;
 - `plan_status`;
+- `schema_status`;
 - `write_status`;
 - `planned_files`;
-- `written_files` for future write mode;
+- `written_files`;
 - `diagnostics`;
 - `files_written`;
 - `solver_execution_performed`;
@@ -151,8 +146,8 @@ JSON output should include:
 - `limitations`;
 - `acknowledgements`.
 
-In plan-only mode, `files_written` must be `false`, `written_files` must be
-empty, and `solver_execution_performed` must be `false`.
+In plan-only mode, `files_written` is `false`, `written_files` is empty, and
+`solver_execution_performed` is `false`.
 
 ## Path and overwrite policy
 
@@ -166,16 +161,17 @@ empty, and `solver_execution_performed` must be `false`.
 - Do not overwrite existing standard files unless `--overwrite` is explicit.
 - Block unplanned files in the target directory.
 
-The future CLI should mirror the write-plan and library-writer policies rather
-than duplicating weaker path checks.
+The CLI mirrors the write-plan and library-writer policies rather than
+duplicating weaker path checks.
 
 ## Safety boundary
 
-The future command must preserve:
+The command preserves:
 
 - no solver execution;
 - no CalculiX `ccx` invocation;
 - no artifact copying by default or by hidden behavior;
+- no GUI write command;
 - no release mutation;
 - no issue mutation;
 - no tag mutation;
@@ -196,19 +192,14 @@ The future command must preserve:
 
 ## Relationship to issue #8
 
-The write CLI design does not validate live `ccx`. Issue `#8` remains open
-until a separate prepared-machine live CalculiX validation gate records passing
-evidence. A future write command may persist review files, but that is not live
-solver validation and must not close issue `#8`.
+The write CLI does not validate live `ccx`. Issue `#8` remains open until a
+separate prepared-machine live CalculiX validation gate records passing
+evidence. Persisting review files is not live solver validation and must not
+close issue `#8`.
 
 ## Non-goals
 
-- no implementation in this gate;
-- no CLI write command registration;
 - no GUI write command;
-- no ResultDataset write performed by this design gate;
-- no library writer behavior change;
-- no artifact copy implementation;
 - no solver execution;
 - no live `ccx` validation;
 - no SolverAdapter or runner integration;
@@ -218,9 +209,12 @@ solver validation and must not close issue `#8`.
 - no industrial certification;
 - no bundled solver.
 
-## Future implementation tests
+## Implementation tests
 
-Future implementation should include tests for:
+The future implementation tests defined by this design are now implemented as
+focused CLI and guardrail tests.
+
+Implementation tests cover:
 
 - command help;
 - default plan-only behavior;
@@ -231,14 +225,15 @@ Future implementation should include tests for:
 - create-dir behavior;
 - text output;
 - JSON output;
-- writer invocation mocked or observed only after `--write`;
-- writer not invoked in plan-only mode;
+- writer invocation mocked or observed;
+- writer invocation only after `--write`;
+- no writer invocation in plan-only mode;
 - no solver execution;
 - no artifact copying;
 - no issue, release, asset, tag, or ProjectSchema mutation.
 
 ## Next implementation slices
 
-- `OSW-EXP-044_FEASPEC_RESULT_IMPORT_WRITE_CLI_IMPLEMENTATION`
 - `OSW-EXP-045_FEASPEC_RESULT_IMPORT_WRITE_GUI_DESIGN`
+- `OSW-EXP-046_FEASPEC_RESULT_IMPORT_WRITE_GUI_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

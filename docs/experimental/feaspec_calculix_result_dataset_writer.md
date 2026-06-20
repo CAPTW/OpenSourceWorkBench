@@ -1,7 +1,6 @@
 # FEASpec CalculiX ResultDataset writer
 
-Status: experimental library writer implemented. No CLI write command. No GUI
-write command. No solver execution.
+Status: experimental library writer implemented. CLI write command exists as a separate wrapper. No GUI write command. No solver execution.
 
 ## Release context
 
@@ -100,7 +99,7 @@ This implementation preserves:
 
 - no solver execution;
 - no artifact copying;
-- no CLI write command;
+- no CLI behavior inside this library writer;
 - no GUI write command;
 - no subprocess;
 - no SolverAdapter;
@@ -131,16 +130,15 @@ layers. Their own APIs still do not write files.
 ## Relationship to result import model and CLI preview
 
 The result import model and `feaspec-calculix-result-import-preview` remain
-preview-only. This writer is library-only and is not exposed as a write-capable
-CLI or GUI flow.
+preview-only. The separate `feaspec-calculix-result-import-write` command is a
+review-gated CLI wrapper over this library writer; no GUI write flow exists.
 
-## Relationship to future write CLI
+## Relationship to write CLI
 
-[FEASpec CalculiX result import write CLI design](feaspec_calculix_result_import_write_cli_design.md)
-defines how a future command may call this library writer after preview,
-draft-mapping, write-plan, schema-payload, and acknowledgement checks pass. The
-design gate does not register that command, does not change writer behavior,
-and performs no ResultDataset writes.
+[FEASpec CalculiX result import write CLI](feaspec_calculix_result_import_write_cli.md)
+calls this library writer after preview, draft-mapping, write-plan,
+schema-payload, and acknowledgement checks pass. The CLI wrapper does not
+change writer behavior and performs no solver execution or artifact copying.
 
 ## Fixture policy
 
@@ -155,7 +153,7 @@ record issue `#8` pass evidence, and does not close issue `#8`.
 
 ## Non-goals
 
-- no CLI write command;
+- no CLI behavior inside this library writer;
 - no GUI write command;
 - no numerical `.frd` parser;
 - no mesh reconstruction;

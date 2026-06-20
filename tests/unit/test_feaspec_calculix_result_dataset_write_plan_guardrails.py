@@ -100,7 +100,7 @@ def test_write_plan_docs_preserve_safety_boundary() -> None:
     assert "no resultdataset persistence" in text
     assert "no actual file writes" in text
     assert "no solver execution" in text
-    assert "no write-capable import cli" in text
+    assert "no cli behavior inside this write plan model" in text
     assert "issue `#8` remains open" in text
     assert "no bundled solver" in text
     assert "no industrial certification" in text
@@ -112,7 +112,6 @@ def test_write_plan_docs_preserve_safety_boundary() -> None:
     for forbidden_claim in (
         "resultdataset persistence exists",
         "actual file writes are implemented",
-        "write-capable import cli exists",
         "live validation passed",
         "ccx validation has passed",
         "external solvers are bundled",

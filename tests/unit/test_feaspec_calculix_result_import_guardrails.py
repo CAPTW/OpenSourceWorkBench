@@ -137,12 +137,12 @@ def test_result_import_model_does_not_mutate_project_schema_source() -> None:
     assert "plan_calculix_result_import" not in text
 
 
-def test_result_import_preview_cli_command_is_registered_without_write_import_command() -> None:
+def test_result_import_preview_and_write_cli_commands_are_registered() -> None:
     commands = _subcommand_names()
 
     assert "feaspec-calculix-result-import-preview" in commands
     assert "feaspec-calculix-result-import" not in commands
-    assert "feaspec-calculix-result-import-write" not in commands
+    assert "feaspec-calculix-result-import-write" in commands
 
 
 def test_result_import_preview_cli_helper_uses_no_runner_solver_adapter_or_writes() -> None:
@@ -231,6 +231,5 @@ def test_result_import_preview_cli_docs_preserve_preview_only_boundaries() -> No
         "industrial certification is provided",
         "external solvers are bundled",
         "stable production",
-        "write/import command exists",
     ):
         assert forbidden_claim not in text

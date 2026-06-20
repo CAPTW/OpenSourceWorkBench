@@ -34,23 +34,23 @@ def test_cli_write_design_doc_exists() -> None:
     assert DOC_PATH.exists()
 
 
-def test_status_and_non_implementation_are_explicit() -> None:
+def test_status_and_implementation_boundary_are_explicit() -> None:
     text = _normalized()
 
-    assert "design-only" in text
-    assert "no cli write command implementation" in text
+    assert "historical design implemented" in text
+    assert "the command is registered" in text
     assert "no gui write command" in text
     assert "no solver execution" in text
 
 
-def test_proposed_command_and_modes_are_defined() -> None:
+def test_command_and_modes_are_defined() -> None:
     text = _normalized()
 
-    assert "proposed command" in text
+    assert "command" in text
     assert "feaspec-calculix-result-import-write" in text
     assert "command modes" in text
     assert "--plan-only" in text
-    assert "future `--write`" in text
+    assert "`--write`" in text
 
 
 def test_required_options_and_acknowledgements_are_defined() -> None:
@@ -72,8 +72,8 @@ def test_default_and_future_write_behavior_are_defined() -> None:
 
     assert "default behavior" in text
     assert "plan-only by default" in text
-    assert "no files written unless the future `--write` mode is explicit" in text
-    assert "future write behavior" in text
+    assert "no files written unless `--write` mode is explicit" in text
+    assert "write behavior" in text
     assert "call the result import planner" in text
     assert "build the resultdataset draft mapping" in text
     assert "build a write plan" in text
@@ -85,7 +85,7 @@ def test_exit_codes_and_output_contracts_are_defined() -> None:
     text = _normalized()
 
     assert "exit codes" in text
-    assert "`0`: successful plan-only review or successful future write" in text
+    assert "`0`: successful plan-only review or successful write" in text
     assert "`2`: blocked plan or write preconditions" in text
     assert "`1`: cli usage errors" in text
     assert "text output" in text
@@ -128,8 +128,6 @@ def test_doc_does_not_claim_forbidden_capabilities() -> None:
     text = _normalized()
 
     forbidden_claims = (
-        "command is implemented",
-        "cli write command exists",
         "gui write command exists",
         "solver execution is allowed",
         "live validation passed",
@@ -141,5 +139,5 @@ def test_doc_does_not_claim_forbidden_capabilities() -> None:
         assert claim not in text
 
 
-def test_actual_cli_write_command_is_not_registered_yet() -> None:
-    assert "feaspec-calculix-result-import-write" not in _subcommand_names()
+def test_actual_cli_write_command_is_registered() -> None:
+    assert "feaspec-calculix-result-import-write" in _subcommand_names()

@@ -212,7 +212,7 @@ by a dedicated release/tag gate.
   `.dat`/`.frd`/`.sta`/`.cvg` artifacts, preserves provenance, reports `FI_*`
   diagnostics, and builds an in-memory ResultDataset draft with artifact and
   field references. It does not parse numerical result content, write
-  ResultDataset files, add a write-capable import CLI, execute CalculiX, call
+  ResultDataset files, perform persistence itself, execute CalculiX, call
   SolverAdapter or runner code, mutate ProjectSchema, validate or close issue
   `#8`, add VLM APIs, bundle external solvers, or claim industrial
   certification.
@@ -292,35 +292,40 @@ by a dedicated release/tag gate.
   intent, path safety, planned standard files, future atomic write paths,
   artifact references, draft diagnostics, provenance, and limitations
   acknowledgement in memory only. It writes no files, creates no directories,
-  copies no artifacts, performs no ResultDataset persistence, adds no
-  write-capable import CLI/GUI, executes no solver, calls no SolverAdapter or
-  runner code, mutates no ProjectSchema, validates no issue `#8`, adds no VLM
-  APIs, bundles no solvers, and claims no certification.
+  copies no artifacts, performs no ResultDataset persistence, contains no
+  CLI/GUI behavior, executes no solver, calls no SolverAdapter or runner code,
+  mutates no ProjectSchema, validates no issue `#8`, adds no VLM APIs, bundles
+  no solvers, and claims no certification.
 - Added an experimental FEASpec CalculiX ResultDataset schema payload model
   under `src/osw/experimental/feaspec/`. It assembles deterministic in-memory
   ResultDataset, manifest, diagnostics, provenance, and review README payload
   records from the reviewed draft mapping and write plan. It writes no files,
   creates no directories, copies no artifacts, performs no ResultDataset
-  persistence, adds no write-capable import CLI/GUI, executes no solver, calls
-  no SolverAdapter or runner code, mutates no ProjectSchema, validates no issue
+  persistence, contains no CLI/GUI behavior, executes no solver, calls no
+  SolverAdapter or runner code, mutates no ProjectSchema, validates no issue
   `#8`, adds no VLM APIs, bundles no solvers, and claims no certification.
 - Added an experimental FEASpec CalculiX ResultDataset library writer under
   `src/osw/experimental/feaspec/`. It consumes a validated write plan and schema
   payload, writes exactly `result_dataset.json`, `result_dataset_manifest.json`,
   `diagnostics.json`, `provenance.json`, and `README_REVIEW_FIRST.txt` with
-  atomic temp/replace behavior, and returns size/SHA-256 metadata. It adds no
-  import-write CLI/GUI command, copies no original solver artifacts, parses no
+  atomic temp/replace behavior, and returns size/SHA-256 metadata. It contains
+  no CLI/GUI behavior, copies no original solver artifacts, parses no
   additional numerical results, executes no solver, calls no SolverAdapter or
   runner code, mutates no ProjectSchema, validates no issue `#8`, adds no VLM
   APIs, bundles no solvers, and claims no certification.
-- Added a design-only FEASpec CalculiX result import write CLI contract for a
-  future `feaspec-calculix-result-import-write` command. It defines plan-only
-  default behavior, future explicit write mode, required result/output
-  directories, limitations/review acknowledgements, exit codes, text/JSON
-  output, path policy, and safety boundaries without registering a command,
-  changing the library writer, writing ResultDataset files, copying artifacts,
-  executing solvers, mutating ProjectSchema, validating issue `#8`, editing
-  releases, or claiming certification.
+- Added a historical design contract for the FEASpec CalculiX result import
+  write CLI. It defined plan-only default behavior, explicit write mode,
+  required result/output directories, limitations/review acknowledgements, exit
+  codes, text/JSON output, path policy, and safety boundaries before the
+  implementation gate.
+- Added `feaspec-calculix-result-import-write`, an experimental review-gated
+  CLI command for CalculiX ResultDataset persistence. It defaults to plan-only,
+  requires explicit `--write`, `--output-dir`, `--acknowledge-limitations`, and
+  `--acknowledge-review-required` before writing, delegates file persistence to
+  the library writer, writes only the five standard ResultDataset review files,
+  copies no original solver artifacts, executes no solver, calls no
+  SolverAdapter or runner code, mutates no ProjectSchema, validates no issue
+  `#8`, edits no releases, and claims no certification.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

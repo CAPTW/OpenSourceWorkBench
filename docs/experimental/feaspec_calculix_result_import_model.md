@@ -38,7 +38,8 @@ The public package exports the result import model API from
 
 The API accepts an explicit result directory and returns pure Python data
 objects. A separate preview-only CLI command now exposes this model for
-inspection, but no write-capable import command exists and no files are written.
+inspection. The separate `feaspec-calculix-result-import-write` command owns
+review-gated persistence; this import model itself writes no files.
 
 ## Inspected Inputs
 
@@ -170,13 +171,13 @@ artifact references, and limitations acknowledgement while keeping
 implements the in-memory schema bundle after the write plan. It assembles
 ResultDataset, manifest, diagnostics, provenance, and review README payload
 records for review only. It does not write files, persist a ResultDataset,
-create a write-capable import CLI, or execute solvers.
+perform write-capable CLI behavior itself, or execute solvers.
 
 [FEASpec CalculiX ResultDataset writer](feaspec_calculix_result_dataset_writer.md)
 implements the separate library-only persistence boundary for those reviewed
 plan/schema payloads. The import model does not call it automatically and still
-does not add an import-write CLI/GUI path, copy source artifacts, execute
-CalculiX, mutate ProjectSchema, or validate issue `#8`.
+does not write files, copy source artifacts, execute CalculiX, mutate
+ProjectSchema, or validate issue `#8`.
 
 ## Status Summary Enrichment
 
@@ -287,7 +288,7 @@ This result import model does not validate local `ccx`, does not record issue
 - No bundled solver.
 - No SolverAdapter handoff.
 - No runner handoff.
-- No write-capable import command.
+- No write behavior in this import model.
 - No VLM API.
 - No provider credentials.
 

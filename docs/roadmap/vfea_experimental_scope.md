@@ -457,20 +457,21 @@ ProjectSchema mutation, or VFEA completion.
 adds the in-memory schema bundle for the reviewed draft/write-plan boundary. It
 records ResultDataset, manifest, diagnostics, provenance, and review README
 payloads while still adding no ResultDataset persistence, file writes,
-write-capable import CLI, solver execution, issue `#8` validation,
-ProjectSchema mutation, or VFEA completion.
+CLI behavior, solver execution, issue `#8` validation, ProjectSchema mutation,
+or VFEA completion.
 
 [FEASpec CalculiX ResultDataset writer](../experimental/feaspec_calculix_result_dataset_writer.md)
 adds reviewed library-only file persistence for that schema bundle. It writes
 only the five standard ResultDataset review files from a valid plan/payload and
-still adds no import-write CLI/GUI path, artifact copying, solver execution,
-issue `#8` validation, ProjectSchema mutation, or VFEA completion.
+contains no CLI/GUI behavior, artifact copying, solver execution, issue `#8`
+validation, ProjectSchema mutation, or VFEA completion.
 
-[FEASpec CalculiX result import write CLI design](../experimental/feaspec_calculix_result_import_write_cli_design.md)
-defines the future command contract for invoking that reviewed persistence
-stack. It is design-only, is not registered as a CLI command, performs no
-ResultDataset writes, copies no artifacts, executes no solver, validates no
-issue `#8`, and does not complete VFEA.
+[FEASpec CalculiX result import write CLI](../experimental/feaspec_calculix_result_import_write_cli.md)
+implements the reviewed command boundary for invoking that persistence stack.
+It defaults to plan-only review and requires explicit write and review
+acknowledgements before writing standard ResultDataset review files. It copies
+no artifacts, executes no solver, validates no issue `#8`, and does not
+complete VFEA.
 
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
