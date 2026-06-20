@@ -212,6 +212,12 @@ pure Python and still has no PySide/Qt import, no file-dialog implementation,
 no writer invocation, no ResultDataset file write, no solver execution, and no
 issue `#8` validation.
 
+[FEASpec CalculiX result write GUI post-write polish](feaspec_calculix_result_write_gui_post_write_polish.md)
+is implemented in the dialog layer. It formats writer-result status, written
+files, hashes, diagnostics, limitations, failure details, retry guidance, and
+copy-ready display text without changing this view-model's pure state/action
+boundary, write enablement semantics, or no-writer-invocation rule.
+
 ## Relationship to issue #8
 
 The view-model does not validate live `ccx`. Issue `#8` remains open until a
@@ -273,4 +279,7 @@ fixtures are added by this gate.
   records the future GUI writer-call boundary and post-write state refresh
   contract. It does not change this view-model source and does not add writer
   invocation, GUI file writes, solver execution, or issue `#8` validation.
+- [FEASpec CalculiX result write GUI post-write polish](feaspec_calculix_result_write_gui_post_write_polish.md)
+  records dialog-layer display polish only. This view-model still imports no
+  PySide/Qt, invokes no writer, writes no files, and validates no issue `#8`.
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

@@ -90,6 +90,14 @@ confirmation, the dialog delegates actual ResultDataset file write behavior to
 the existing library writer and displays the returned status, diagnostics, and
 written-file metadata.
 
+[FEASpec CalculiX result write GUI post-write polish](feaspec_calculix_result_write_gui_post_write_polish.md)
+records the current post-write display improvements. The dialog shows a
+written-file table with payload kind, size, and SHA-256 hash; grouped
+diagnostics; grouped limitations; failure details; retry guidance; and a
+deterministic copy-ready plain-text summary as display/accessor text only. It
+adds no OS clipboard integration, no open-output shell command, no artifact
+copying, no CLI behavior change, and no library writer behavior change.
+
 ## Safety boundary
 
 This GUI dialog preserves:
@@ -169,6 +177,14 @@ tracked solver output fixtures. The tests do not stage `.dat`, `.frd`, `.sta`,
   after enabled gates and confirmation while preserving no solver execution,
   no artifact copying, no CLI behavior change, no library writer behavior
   change, and no issue `#8` validation.
+- [FEASpec CalculiX result write GUI post-write polish](feaspec_calculix_result_write_gui_post_write_polish.md)
+  documents `OSW-EXP-052_FEASPEC_RESULT_IMPORT_WRITE_GUI_POST_WRITE_POLISH`,
+  which improves post-write status, written files, hashes, diagnostics,
+  limitations, failures, retry guidance, and copy-ready display text while
+  preserving no solver execution, no artifact copying, no open-output shell,
+  no OS clipboard integration, no CLI/writer behavior change, and no issue
+  `#8` validation.
 - `OSW-EXP-050_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION_DESIGN`
 - `OSW-EXP-051_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION`
+- `OSW-EXP-052_FEASPEC_RESULT_IMPORT_WRITE_GUI_POST_WRITE_POLISH`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

@@ -67,6 +67,16 @@ The GUI writer boundary is deliberately narrow:
 The dialog does not implement raw JSON file writes, atomic-write internals, or
 library writer policy. Those remain in the existing writer layer.
 
+## Post-write display polish
+
+[FEASpec CalculiX result write GUI post-write polish](feaspec_calculix_result_write_gui_post_write_polish.md)
+extends this dialog's result display with a written-file table, payload kind,
+byte size, SHA-256 hash, grouped diagnostics, grouped limitations, failure
+details, retry guidance, and a deterministic copy-ready plain-text summary.
+That polish is display/accessor only: no OS clipboard integration, no
+open-output shell command, no artifact copying, no new writer invocation path,
+no CLI behavior change, and no library writer behavior change.
+
 ## Safety boundary
 
 This GUI integration preserves:
@@ -137,4 +147,5 @@ output fixtures are added by this gate.
 ## Next implementation slices
 
 - `OSW-EXP-052_FEASPEC_RESULT_IMPORT_WRITE_GUI_POST_WRITE_POLISH`
+- `OSW-EXP-053_FEASPEC_RESULT_IMPORT_WRITE_GUI_CLOSURE_REVIEW`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

@@ -1579,3 +1579,22 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   use, no ProjectSchema mutation, no VLM API, no dependency install, no
   release/tag or asset mutation, no issue mutation, no live issue `#8`
   validation, and no bundled-solver or certification claim.
+
+## ADR-0079: FEASpec CalculiX Result Write GUI Post-Write Display Is Polish Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-20
+- Context: ADR-0078 added the guarded GUI call into the existing library writer.
+  The next bounded step is to make successful and failed writer results easier
+  to inspect without changing writer semantics or adding a new persistence path.
+- Decision: Add dialog-layer post-write display/accessor helpers for status,
+  written-file table rows, payload kind, size, SHA-256 hash, grouped
+  diagnostics, grouped limitations, failure details, retry guidance, and
+  deterministic copy-ready plain text.
+- Consequences: This gate adds no OS clipboard integration, no open-output
+  shell command, no artifact copying, no new writer invocation path, no CLI
+  behavior change, no library writer behavior change, no solver execution, no
+  SolverAdapter or runner integration, no subprocess use, no ProjectSchema
+  mutation, no VLM API, no dependency install, no release/tag or asset
+  mutation, no issue mutation, no live issue `#8` validation, and no
+  bundled-solver or certification claim.

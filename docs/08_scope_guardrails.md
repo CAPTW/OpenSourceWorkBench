@@ -228,6 +228,12 @@ request should stop, park, or defer.
   no original solver artifacts, opens no output-folder command, changes no CLI
   or library writer behavior, runs no solver, validates no issue `#8`, bundles
   no solvers, and makes no certification claims.
+- Experimental FEASpec CalculiX result write GUI post-write polish behavior
+  that formats writer status, written files, hashes, diagnostics, limitations,
+  failure details, retry guidance, and copy-ready display text only. It still
+  adds no OS clipboard integration, no open-output shell command, no artifact
+  copying, no CLI/library writer behavior change, no solver execution, no
+  issue `#8` validation, no bundled solvers, and no certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and

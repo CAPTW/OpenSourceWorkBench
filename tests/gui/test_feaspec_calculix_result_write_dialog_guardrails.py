@@ -18,6 +18,12 @@ DOC_PATH = (
     / "experimental"
     / "feaspec_calculix_result_write_gui_writer_integration.md"
 )
+POST_WRITE_DOC_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "experimental"
+    / "feaspec_calculix_result_write_gui_post_write_polish.md"
+)
 
 
 def _source_text() -> str:
@@ -39,6 +45,10 @@ def _doc_text() -> str:
     return " ".join(DOC_PATH.read_text(encoding="utf-8").lower().split())
 
 
+def _post_write_doc_text() -> str:
+    return " ".join(POST_WRITE_DOC_PATH.read_text(encoding="utf-8").lower().split())
+
+
 def test_dialog_imports_only_gui_and_viewmodel_safe_layers() -> None:
     imports = _imported_modules()
 
@@ -56,8 +66,12 @@ def test_dialog_uses_only_directory_chooser_and_no_execution_paths() -> None:
     source = _source_text()
     imports = _imported_modules()
     forbidden_tokens = (
+        "clipboard",
+        "pyperclip",
         "getSaveFileName",
         "getOpenFileName",
+        "QDesktopServices",
+        "startfile",
         "prepare_calculix_result_dataset_write_payloads",
         "SolverAdapter",
         "CalculiXRunner",
@@ -124,6 +138,21 @@ def test_docs_keep_release_and_validation_claims_bounded() -> None:
     assert "issue `#8` can close" not in text
 
 
+def test_post_write_polish_docs_keep_gui_boundary_bounded() -> None:
+    text = _post_write_doc_text()
+
+    assert "post-write polish only" in text
+    assert "no solver execution" in text
+    assert "no artifact copying" in text
+    assert "no open-output shell command" in text
+    assert "no os clipboard integration" in text
+    assert "issue `#8` remains open" in text
+    assert "external solvers are optional and not bundled" in text
+    assert "no industrial certification" in text
+    assert "live calculix validation passed" not in text
+    assert "issue `#8` can close" not in text
+
+
 def test_dialog_tests_use_tmp_path_not_tracked_result_fixtures() -> None:
     test_text = "\n".join(
         path.read_text(encoding="utf-8")
@@ -140,6 +169,10 @@ def test_dialog_tests_use_tmp_path_not_tracked_result_fixtures() -> None:
             / "tests"
             / "gui"
             / "test_feaspec_calculix_result_write_dialog_writer_integration.py",
+            REPO_ROOT
+            / "tests"
+            / "gui"
+            / "test_feaspec_calculix_result_write_dialog_post_write.py",
         )
     )
 

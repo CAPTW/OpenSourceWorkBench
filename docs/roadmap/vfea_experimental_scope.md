@@ -527,6 +527,13 @@ existing library writer. It writes only standard ResultDataset review files,
 copies no original solver artifacts, executes no solver, changes no CLI/library
 writer behavior, validates no issue `#8`, and does not complete VFEA.
 
+[FEASpec CalculiX result write GUI post-write polish](../experimental/feaspec_calculix_result_write_gui_post_write_polish.md)
+improves the post-write display for the guarded write dialog. It shows clearer
+status, written-file table rows, SHA-256 hashes, grouped diagnostics, grouped
+limitations, failure details, retry guidance, and copy-ready display text while
+adding no OS clipboard integration, no open-output shell command, no artifact
+copying, no solver execution, no issue `#8` validation, and no VFEA completion.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

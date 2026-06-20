@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import json
 from collections.abc import Callable, Mapping, Sequence
 from os import fspath
@@ -192,17 +193,144 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
     def written_files_text(self) -> str:
         """Return a compact list of files reported by the writer result."""
 
-        written_files = self._writer_result_summary.get("written_files", ())
-        if not isinstance(written_files, Sequence) or isinstance(written_files, str):
-            return ""
+        return self.written_files_table_text()
+
+    def written_files_table_text(self) -> str:
+        """Return written-file metadata as deterministic display text."""
+
+        records = self._written_file_records()
+        if not records:
+            return "<none reported>"
+        lines = ["File | Payload kind | Size | sha256"]
+        for item in records:
+            relative_path = _display_value(
+                item.get("relative_path") or item.get("path") or item.get("name")
+            )
+            payload_kind = _display_value(item.get("payload_kind"), "<unknown>")
+            size = _display_value(item.get("size_bytes", item.get("size")), "<unknown>")
+            sha256 = _display_value(item.get("sha256"), "<missing>")
+            lines.append(f"{relative_path} | {payload_kind} | {size} bytes | {sha256}")
+        return "\n".join(lines)
+
+    def diagnostics_group_text(self) -> str:
+        """Return writer diagnostics grouped by reader-facing severity."""
+
+        diagnostics = self._diagnostic_records()
+        if not diagnostics:
+            return "<none reported>"
+        grouped: dict[str, list[str]] = {
+            "blocker": [],
+            "error": [],
+            "warning": [],
+            "info": [],
+        }
+        for diagnostic in diagnostics:
+            group = self._diagnostic_group(diagnostic)
+            grouped[group].append(self._diagnostic_line(diagnostic))
         lines: list[str] = []
-        for item in written_files:
-            if not isinstance(item, Mapping):
+        for group in ("blocker", "error", "warning", "info"):
+            items = grouped[group]
+            if not items:
                 continue
-            relative_path = item.get("relative_path") or item.get("path") or "<unknown>"
-            size = item.get("size_bytes") or item.get("size") or "<unknown>"
-            sha256 = item.get("sha256") or "<missing>"
-            lines.append(f"{relative_path} | {size} bytes | {sha256}")
+            lines.append(f"{group.title()} diagnostics:")
+            lines.extend(f"- {item}" for item in items)
+        return "\n".join(lines)
+
+    def limitations_group_text(self) -> str:
+        """Return ResultDataset write limitations from the writer and view-model."""
+
+        limitations = self._limitation_lines()
+        if not limitations:
+            return "<none reported>"
+        return "\n".join(f"- {item}" for item in limitations)
+
+    def retry_guidance_text(self) -> str:
+        """Return display-only retry guidance for the current writer result."""
+
+        if not self._writer_result_summary:
+            return "No write has been attempted in this dialog session."
+        status = self._writer_result_status()
+        if status in {"written", "written-with-warnings", "completed"}:
+            return (
+                "Write completed. Review the written ResultDataset files and "
+                "README_REVIEW_FIRST before using the dataset."
+            )
+        guidance = [
+            "Review diagnostics and limitations before retrying.",
+            "Refresh the write plan if source artifacts, parser summaries, or output path changed.",
+            "Check that the selected output directory still matches the reviewed write plan.",
+            "Renew overwrite acknowledgement when standard ResultDataset files already exist.",
+            "Renew create-directory acknowledgement when the target directory must be created.",
+            "Retry manually only after review; no automatic retry is performed.",
+        ]
+        if status == "partial-cleanup-failed":
+            guidance.append(
+                "Inspect the target directory for temporary files before retrying."
+            )
+        return "\n".join(f"- {item}" for item in guidance)
+
+    def copy_ready_summary_text(self) -> str:
+        """Return a deterministic plain-text summary suitable for manual copying."""
+
+        lines = [
+            "FEASpec CalculiX ResultDataset write summary",
+            f"Status: {self.post_write_status_text()}",
+            f"Output directory: {self._writer_target_dir_text()}",
+            "",
+            "Written files:",
+            self.written_files_table_text(),
+            "",
+            "Diagnostics:",
+            self.diagnostics_group_text(),
+            "",
+            "Limitations:",
+            self.limitations_group_text(),
+            "",
+            "Retry guidance:",
+            self.retry_guidance_text(),
+            "",
+            "Safety: no solver execution; no artifact copying; issue #8 remains open.",
+        ]
+        return "\n".join(lines)
+
+    def post_write_status_text(self) -> str:
+        """Return a concise post-write status line."""
+
+        if not self._writer_result_summary:
+            return "not-attempted"
+        status = self._writer_result_status() or "<missing>"
+        count = len(self._written_file_records())
+        target = self._writer_target_dir_text()
+        if status == "partial-cleanup-failed":
+            return f"{status}: manual cleanup review required for {target}"
+        if status in {"failed", "blocked"}:
+            return f"{status}: no successful ResultDataset write confirmed for {target}"
+        return f"{status}: {count} written file(s) reported for {target}"
+
+    def failure_details_text(self) -> str:
+        """Return display-only failure details for failed or blocked results."""
+
+        status = self._writer_result_status()
+        failure_statuses = {"failed", "partial-cleanup-failed", "blocked"}
+        has_failure_diagnostic = any(
+            self._diagnostic_group(item) in {"blocker", "error"}
+            for item in self._diagnostic_records()
+        )
+        if status not in failure_statuses and not has_failure_diagnostic:
+            return "No failure reported."
+        lines = [f"Status: {status or '<missing>'}"]
+        if status == "partial-cleanup-failed":
+            lines.append(
+                "Partial cleanup failed: inspect the output directory for "
+                "temporary files before retrying."
+            )
+        lines.append("Failure diagnostics:")
+        failure_lines = [
+            self._diagnostic_line(item)
+            for item in self._diagnostic_records()
+            if self._diagnostic_group(item) in {"blocker", "error"}
+        ]
+        lines.extend(f"- {item}" for item in failure_lines or ["<none reported>"])
         return "\n".join(lines)
 
     def write_confirmation_text(self) -> str:
@@ -555,7 +683,7 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
                 "No writer result summary is present. The writer has not been "
                 "invoked in this dialog session."
             )
-        return self._json_text(self._writer_result_summary)
+        return self._format_writer_result(self._writer_result_summary)
 
     def _rows_text(self, panel: FEASpecCalculiXResultWritePanel) -> str:
         rows = self._viewmodel.rows_for(panel)
@@ -742,10 +870,37 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
     def _format_writer_result(self, result: object) -> str:
         sections: list[str] = []
         if isinstance(result, FEASpecCalculiXResultDatasetWriteResult):
+            sections.append("Writer explanation:")
             sections.extend(explain_calculix_result_dataset_write_result(result))
         mapping = self._mapping(result)
         if mapping:
-            sections.append(self._json_text(mapping))
+            sections.extend(
+                (
+                    "Post-write status:",
+                    self.post_write_status_text(),
+                    "",
+                    "Written files:",
+                    self.written_files_table_text(),
+                    "",
+                    "Diagnostics:",
+                    self.diagnostics_group_text(),
+                    "",
+                    "Limitations:",
+                    self.limitations_group_text(),
+                    "",
+                    "Failure details:",
+                    self.failure_details_text(),
+                    "",
+                    "Retry guidance:",
+                    self.retry_guidance_text(),
+                    "",
+                    "Copy-ready summary:",
+                    self.copy_ready_summary_text(),
+                    "",
+                    "Raw writer result:",
+                    self._json_text(mapping),
+                )
+            )
         if not sections:
             sections.append(str(result))
         return "\n".join(sections)
@@ -753,6 +908,69 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
     def _writer_result_status(self) -> str:
         status = self._writer_result_summary.get("status")
         return str(status) if status is not None else ""
+
+    def _writer_target_dir_text(self) -> str:
+        target = (
+            self._writer_result_summary.get("target_dir")
+            or self._writer_result_summary.get("output_dir")
+            or self._selected_output_dir
+            or self._viewmodel.output_dir
+        )
+        return _display_value(target, "<missing>")
+
+    def _written_file_records(self) -> tuple[Mapping[str, Any], ...]:
+        return self._sequence_of_mappings(
+            self._writer_result_summary.get("written_files")
+        )
+
+    def _diagnostic_records(self) -> tuple[Mapping[str, Any], ...]:
+        diagnostics = list(
+            self._sequence_of_mappings(self._writer_result_summary.get("diagnostics"))
+        )
+        prepared = self._mapping(self._writer_result_summary.get("prepared_payloads"))
+        diagnostics.extend(self._sequence_of_mappings(prepared.get("diagnostics")))
+        return tuple(_dedupe_mappings(diagnostics))
+
+    def _diagnostic_group(self, diagnostic: Mapping[str, Any]) -> str:
+        severity = str(diagnostic.get("severity", "")).casefold()
+        if bool(
+            diagnostic.get("blocks_write")
+            or diagnostic.get("blocks_payload")
+            or diagnostic.get("blocks_import")
+            or diagnostic.get("blocks_mapping")
+        ) or severity == "blocker":
+            return "blocker"
+        if severity in {"error", "failed", "failure"}:
+            return "error"
+        if severity == "warning":
+            return "warning"
+        return "info"
+
+    def _diagnostic_line(self, diagnostic: Mapping[str, Any]) -> str:
+        code = _display_value(diagnostic.get("code"), "<uncoded>")
+        message = _display_value(diagnostic.get("message"), "<no message>")
+        path = _display_value(diagnostic.get("path"), "")
+        fix = _display_value(diagnostic.get("suggested_fix"), "")
+        parts = [code, message]
+        if path:
+            parts.append(f"path={path}")
+        if fix:
+            parts.append(f"fix={fix}")
+        return " | ".join(parts)
+
+    def _limitation_lines(self) -> tuple[str, ...]:
+        lines: list[str] = []
+        writer_limitations = self._writer_result_summary.get("limitations")
+        if isinstance(writer_limitations, str):
+            lines.append(_limitation_text(writer_limitations))
+        elif isinstance(writer_limitations, Sequence):
+            for item in writer_limitations:
+                lines.append(_limitation_text(item))
+        for row in self._viewmodel.rows_for(
+            FEASpecCalculiXResultWritePanel.SAFETY_LIMITATIONS
+        ):
+            lines.append(_limitation_text(row.value))
+        return tuple(_dedupe(item for item in lines if item))
 
     def _json_text(self, payload: Mapping[str, Any]) -> str:
         if not payload:
@@ -799,6 +1017,32 @@ def _display_directory_text(path_text: str) -> str:
     return str(Path(path_text))
 
 
+def _display_value(value: object, fallback: str = "<unknown>") -> str:
+    if value is None:
+        return fallback
+    text = str(value)
+    return text if text else fallback
+
+
+def _limitation_text(value: object) -> str:
+    if isinstance(value, Mapping):
+        return _display_value(
+            value.get("message") or value.get("limitation") or value.get("text"),
+            "",
+        )
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.startswith("{") and stripped.endswith("}"):
+            try:
+                parsed = ast.literal_eval(stripped)
+            except (SyntaxError, ValueError):
+                return stripped
+            if isinstance(parsed, Mapping):
+                return _limitation_text(parsed)
+        return stripped
+    return _display_value(value, "")
+
+
 def _dedupe(values: Sequence[str]) -> list[str]:
     result: list[str] = []
     seen: set[str] = set()
@@ -806,6 +1050,22 @@ def _dedupe(values: Sequence[str]) -> list[str]:
         if value and value not in seen:
             result.append(value)
             seen.add(value)
+    return result
+
+
+def _dedupe_mappings(records: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
+    result: list[Mapping[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+    for record in records:
+        key = (
+            str(record.get("code", "")),
+            str(record.get("path", "")),
+            str(record.get("message", "")),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(dict(record))
     return result
 
 

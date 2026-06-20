@@ -149,6 +149,11 @@ defines a future GUI writer-call boundary over the same plan, schema, and
 library writer layers. That design does not call this CLI command and does not
 change CLI options, exit codes, output formats, or write behavior.
 
+[FEASpec CalculiX result write GUI post-write polish](feaspec_calculix_result_write_gui_post_write_polish.md)
+formats existing GUI writer results after guarded writes. It does not call this
+CLI command and does not change CLI options, exit codes, text output, JSON
+output, or write behavior.
+
 ## Non-goals
 
 - no GUI write command;
@@ -169,4 +174,5 @@ change CLI options, exit codes, output formats, or write behavior.
 - [FEASpec CalculiX result write dialog](feaspec_calculix_result_write_dialog.md)
 - [FEASpec CalculiX result write GUI file dialog planning](feaspec_calculix_result_write_gui_file_dialog_planning.md)
 - [FEASpec CalculiX result write GUI writer integration design](feaspec_calculix_result_write_gui_writer_integration_design.md)
+- [FEASpec CalculiX result write GUI post-write polish](feaspec_calculix_result_write_gui_post_write_polish.md)
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

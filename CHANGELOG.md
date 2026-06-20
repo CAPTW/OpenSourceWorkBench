@@ -379,6 +379,13 @@ by a dedicated release/tag gate.
   changes no CLI/library writer behavior, executes no solver, calls no
   SolverAdapter/runner/subprocess path, mutates no ProjectSchema, edits no
   release/tag/assets/issues, and does not validate or close issue `#8`.
+- Polished the FEASpec CalculiX result write GUI post-write display. The dialog
+  now shows clearer status, written-file table rows with payload kind, size, and
+  SHA-256 hash, grouped diagnostics, grouped limitations, failure details,
+  retry guidance, and a deterministic copy-ready text summary as display text
+  only. It adds no OS clipboard integration, open-output shell command, artifact
+  copying, CLI/library writer behavior change, solver execution, ProjectSchema
+  mutation, release/tag/asset/issue mutation, or issue `#8` validation.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA
