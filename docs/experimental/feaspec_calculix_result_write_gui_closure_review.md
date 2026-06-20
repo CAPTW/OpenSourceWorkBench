@@ -137,3 +137,9 @@ without a new gate.
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
 - `OSW-PLAN-007_POST_EXP_RESULTDATASET_SCOPE_REVIEW`
 - optional release-boundary planning gate
+
+Follow-up scope review:
+[Post-experimental ResultDataset scope review](../roadmap/post_exp_resultdataset_scope_review.md)
+records the completed FEASpec/ResultDataset review-file persistence line,
+keeps issue `#8` open after skipped-missing live CalculiX validation, and
+routes new release/version work to a separate release-boundary decision.

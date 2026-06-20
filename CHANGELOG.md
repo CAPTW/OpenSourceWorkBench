@@ -20,6 +20,12 @@ by a dedicated release/tag gate.
   `skipped-missing`; no solver execution, dependency install, solver install,
   release mutation, asset upload, issue closure, bundled solver claim, or
   certification claim occurred.
+- Added a post-experimental ResultDataset scope review after the FEASpec/
+  CalculiX parser/import/write/GUI line. The review records completed
+  review-file persistence scope, keeps issues `#6` through `#11` open after
+  skipped-missing CalculiX validation, notes that `develop` is newer than the
+  public release tag, and requires a future release-boundary decision before
+  any new version metadata, tag, release, or asset work.
 - Added a prepared-machine plan for issues `#6` through `#11`, defining
   required packages/executables, future installed-only validation commands,
   pass/partial/keep-open criteria, and separate closure-gate requirements.

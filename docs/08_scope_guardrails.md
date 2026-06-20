@@ -238,6 +238,12 @@ request should stop, park, or defer.
   experimental review-file persistence slice without adding runtime source
   changes, parser changes, writer changes, solver execution, live issue `#8`
   validation, bundled solvers, or certification claims.
+- Post-experimental ResultDataset scope review that summarizes completed
+  FEASpec/CalculiX parser/import/write/GUI evidence, records skipped-missing
+  live CalculiX validation, keeps issues `#6` through `#11` open, and routes
+  future publish work to a separate release-boundary decision without runtime
+  source changes, solver execution, issue mutation, release mutation, version
+  bump, bundled solvers, or certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
@@ -595,6 +601,10 @@ Scope drift is any change that:
   command invocation, live `ccx` validation, ProjectSchema mutation, VLM API
   integration, credential handling, dependency install, issue closure, or
   solver execution without a separate gate;
+- turns a post-experimental ResultDataset scope review into runtime source
+  changes, solver execution, issue closure, release mutation, tag or asset
+  work, version metadata changes, or a claim that skipped-missing validation is
+  passing evidence;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

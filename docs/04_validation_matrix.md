@@ -125,6 +125,7 @@ a separate gate.
 | v0.1.4-rc1 live optional validation matrix | [Live optional validation matrix for v0.1.4-rc1](validation/live_optional_validation_matrix_v0_1_4rc1.md) and local ignored artifacts under `artifacts/validation/live_optional/OSW-VALID-002/` | Installed-only audit for issues `#6`-`#11` records missing optional stacks as `skipped-missing` on this machine. No dependency install, solver install, release mutation, asset upload, issue closure, or certification claim occurs. | completed with warnings |
 | Prepared live optional validation environments | [Prepared environment plan for live optional validation](validation/live_optional_validation_environment_plan.md), open issues `#6`-`#11`, and OSW-VALID-002 evidence | Defines required packages/executables, future validation commands, pass/partial/keep-open criteria, prepared-machine profiles, and closure-gate boundaries without installing dependencies or running live solvers. | planning |
 | Live CalculiX run-gate validation for v0.1.4-rc1 | [Live CalculiX run-gate validation for v0.1.4-rc1](validation/live_calculix_run_gate_validation_v0_1_4rc1.md) and ignored artifacts under `artifacts/validation/live_optional/OSW-VALID-004/` | Installed-only issue `#8` audit classified the current machine as `skipped-missing` because `ccx` was not discovered. No solver execution, dependency install, solver install, release mutation, tag mutation, asset upload, issue closure, bundled solver claim, or certification claim occurred. | skipped-missing |
+| Post-experimental ResultDataset scope review | [Post-experimental ResultDataset scope review](roadmap/post_exp_resultdataset_scope_review.md) and `tests/unit/test_post_exp_resultdataset_scope_review_docs.py` | Records the completed FEASpec/CalculiX ResultDataset write GUI and parser/import/write line, keeps OSW-VALID-004 as `skipped-missing`, keeps issues `#6`-`#11` open, and requires a future release-boundary decision before new assets. No solver execution, issue mutation, release mutation, or version bump occurs. | completed with open validation |
 | Public release wording | GitHub Release notes body audit | Notes say public prerelease, assets attached, unsigned portable ZIP, no MSI, no code signing, and no bundled solvers. | completed for `v0.1.3-rc1` |
 | Roadmap triage | GitHub issues and milestones | Maintenance tasks are assigned or deferred before feature work starts. | planned |
 
@@ -151,6 +152,13 @@ The issue `#8` successor audit is recorded in
 [Live CalculiX run-gate validation for v0.1.4-rc1](validation/live_calculix_run_gate_validation_v0_1_4rc1.md).
 It also classified this machine as `skipped-missing` because `ccx` was not on
 PATH, so no installed-only run gate or solver execution occurred.
+
+The
+[Post-experimental ResultDataset scope review](roadmap/post_exp_resultdataset_scope_review.md)
+connects the completed ResultDataset write GUI scope to that skipped-missing
+validation evidence. It keeps issues `#6` through `#11` open for prepared
+machines and records that new release assets require a later release-boundary
+decision.
 
 This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory

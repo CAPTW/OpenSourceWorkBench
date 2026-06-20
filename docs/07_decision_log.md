@@ -1618,3 +1618,21 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   mutation, no VLM API, no dependency install, no release/tag or asset
   mutation, no issue mutation, no live issue `#8` validation, and no
   bundled-solver or certification claim.
+
+## ADR-0081: Post-Experimental ResultDataset Scope Keeps Validation Open
+
+- Status: Accepted for planning review
+- Date: 2026-06-20
+- Context: The FEASpec/CalculiX ResultDataset parser/import/write/GUI line is
+  complete for experimental review-file persistence, and OSW-VALID-004 reran
+  the installed-only live CalculiX validation gate. The local environment did
+  not have `ccx`, so the validation result is `skipped-missing`.
+- Decision: Record a docs/tests-only post-experimental scope review that
+  separates completed ResultDataset work from open live optional validation and
+  from future release-boundary decisions.
+- Consequences: Develop is intentionally newer than the public `v0.1.4-rc1`
+  tag while package metadata still reports `0.1.4rc1`. Issues `#6` through
+  `#11`, including issue `#8`, remain open. New version metadata, release tags,
+  release edits, asset builds/uploads, issue closure, solver execution, solver
+  installation, ProjectSchema mutation, and VLM APIs remain out of scope until
+  separate explicit gates.

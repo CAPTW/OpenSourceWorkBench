@@ -93,3 +93,8 @@ the installed-only run gate records passing evidence.
 
 Rerun on a prepared machine with `ccx` already installed on PATH, or continue
 with `OSW-PLAN-007_POST_EXP_RESULTDATASET_SCOPE_REVIEW`.
+
+The follow-up
+[Post-experimental ResultDataset scope review](../roadmap/post_exp_resultdataset_scope_review.md)
+keeps this result classified as `skipped-missing`, keeps issue `#8` open, and
+separates prepared-machine validation from future release-boundary decisions.

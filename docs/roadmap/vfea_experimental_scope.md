@@ -540,6 +540,13 @@ review-file persistence. The closure adds no runtime behavior, no source
 writer changes, no solver execution, no live `ccx` validation, no issue `#8`
 closure, and no VFEA completion.
 
+[Post-experimental ResultDataset scope review](post_exp_resultdataset_scope_review.md)
+summarizes the full FEASpec/CalculiX ResultDataset line after that closure and
+the OSW-VALID-004 live CalculiX rerun. It records the live `ccx` result as
+`skipped-missing`, keeps issues `#6` through `#11` open for prepared-machine
+validation, and requires a future release-boundary decision before any new
+release assets.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing
