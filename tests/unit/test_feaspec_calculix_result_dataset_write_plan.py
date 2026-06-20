@@ -130,6 +130,13 @@ def test_all_write_diagnostic_codes_are_available() -> None:
         "FDW_ATOMIC_WRITE_NOT_IMPLEMENTED",
         "FDW_ARTIFACT_COPY_NOT_IMPLEMENTED",
         "FDW_RESULTDATASET_PERSISTENCE_FORBIDDEN",
+        "FDW_WRITE_COMPLETED",
+        "FDW_WRITE_FAILED",
+        "FDW_TEMP_WRITE_FAILED",
+        "FDW_TARGET_REPLACE_FAILED",
+        "FDW_UNPLANNED_FILE_COLLISION",
+        "FDW_WRITTEN_FILE_HASH_FAILED",
+        "FDW_ARTIFACT_COPY_FORBIDDEN",
     }
 
     assert required <= {item.value for item in CalculiXResultDatasetWriteDiagnosticCode}

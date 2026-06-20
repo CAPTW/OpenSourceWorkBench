@@ -1354,3 +1354,29 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   no dependency install, no VLM API, no release/tag or asset mutation, no issue
   mutation, no live issue `#8` validation, and no bundled-solver or
   certification claim.
+
+## ADR-0069: FEASpec CalculiX ResultDataset Writer Is Library-Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-20
+- Context: ADR-0067 and ADR-0068 added the reviewed write plan and deterministic
+  schema payload records needed for ResultDataset persistence, but no file
+  writer existed. The next useful slice is explicit library persistence for
+  already reviewed plan/schema payloads without adding an import-write CLI or
+  GUI path.
+- Decision: Add an experimental library-only ResultDataset writer under
+  `src/osw/experimental/feaspec/`. The writer validates the write plan and
+  schema payload, writes exactly `result_dataset.json`,
+  `result_dataset_manifest.json`, `diagnostics.json`, `provenance.json`, and
+  `README_REVIEW_FIRST.txt` under the caller-reviewed output directory, uses
+  temp-file plus replace behavior, returns file size/SHA-256 metadata, and
+  blocks unplanned collisions, blocked plans, blocked schema payloads, and
+  artifact-copy requests.
+- Consequences: This gate adds actual library file writes only for the five
+  standard ResultDataset review files. It adds no write-capable import CLI or
+  GUI behavior, copies no original solver artifacts, parses no additional
+  numerical results, executes no solver, calls no SolverAdapter or runner code,
+  invokes no external commands, mutates no ProjectSchema, installs no
+  dependencies, adds no VLM API, mutates no release/tag or asset state, creates
+  or closes no issues, records no live issue `#8` validation, and makes no
+  bundled-solver or certification claim.

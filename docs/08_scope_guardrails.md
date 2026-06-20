@@ -172,6 +172,13 @@ request should stop, park, or defer.
   copying, solver execution, SolverAdapter/runner paths, ProjectSchema
   mutation, live issue `#8` validation, bundled solvers, and certification
   claims.
+- Experimental FEASpec CalculiX ResultDataset library writer that consumes a
+  validated write plan and schema payload, writes exactly the standard
+  ResultDataset JSON, manifest, diagnostics, provenance, and review README
+  files under explicit caller-reviewed output directories, and still avoids
+  import-write CLI/GUI behavior, artifact copying, solver execution,
+  SolverAdapter/runner paths, ProjectSchema mutation, live issue `#8`
+  validation, bundled solvers, and certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
@@ -430,6 +437,12 @@ Scope drift is any change that:
   integration, subprocess or external command invocation, ProjectSchema
   mutation, dependency install, live issue `#8` validation, release mutation,
   issue closure, certification, or solver execution without a separate gate;
+- turns the FEASpec CalculiX ResultDataset library writer into an import-write
+  CLI or GUI command, artifact-copying implementation, solver execution path,
+  numerical `.frd` parser, mesh reconstruction path, SolverAdapter/runner
+  integration, subprocess or external command invocation, ProjectSchema
+  mutation, dependency install, live issue `#8` validation, release mutation,
+  issue closure, certification, or bundled-solver claim without a separate gate;
 - turns the FEASpec human review record model into GUI approval workflow, run
   gate behavior, result import behavior, SolverAdapter/runner integration,
   subprocess or external command invocation, live `ccx` validation,

@@ -109,6 +109,13 @@ in-memory ResultDataset, manifest, diagnostics, provenance, and review README
 payload records. It remains model-only: no ResultDataset persistence, no file
 writes, no write-capable import CLI, and no solver execution.
 
+[FEASpec CalculiX ResultDataset writer](feaspec_calculix_result_dataset_writer.md)
+adds the explicit library-only persistence slice after the schema payload
+model. It consumes a validated write plan and schema payload, writes only the
+five standard ResultDataset files under the caller-reviewed output directory,
+and still adds no import-write CLI/GUI command, artifact copying, solver
+execution, ProjectSchema mutation, or issue `#8` validation.
+
 ## Relationship to #8
 
 The draft mapping does not validate live `ccx`.
@@ -129,6 +136,6 @@ passes.
 
 ## Next implementation slices
 
-- `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
-- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_PREVIEW_ONLY`
+- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_DESIGN`
+- `OSW-EXP-044_FEASPEC_RESULT_IMPORT_WRITE_CLI_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

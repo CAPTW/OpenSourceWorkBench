@@ -172,6 +172,12 @@ ResultDataset, manifest, diagnostics, provenance, and review README payload
 records for review only. It does not write files, persist a ResultDataset,
 create a write-capable import CLI, or execute solvers.
 
+[FEASpec CalculiX ResultDataset writer](feaspec_calculix_result_dataset_writer.md)
+implements the separate library-only persistence boundary for those reviewed
+plan/schema payloads. The import model does not call it automatically and still
+does not add an import-write CLI/GUI path, copy source artifacts, execute
+CalculiX, mutate ProjectSchema, or validate issue `#8`.
+
 ## Status Summary Enrichment
 
 For `.sta` and `.cvg` artifacts, artifact metadata can include:
@@ -295,6 +301,6 @@ This result import model does not validate local `ccx`, does not record issue
 - `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
 - `OSW-EXP-038_FEASPEC_RESULT_IMPORT_RESULTDATASET_DRAFT_MAPPING`
 - `OSW-EXP-039_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
-- `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
-- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_PREVIEW_ONLY`
+- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_DESIGN`
+- `OSW-EXP-044_FEASPEC_RESULT_IMPORT_WRITE_CLI_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

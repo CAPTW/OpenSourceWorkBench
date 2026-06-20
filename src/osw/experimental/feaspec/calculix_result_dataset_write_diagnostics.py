@@ -1,4 +1,4 @@
-"""Diagnostics for FEASpec CalculiX ResultDataset write planning."""
+"""Diagnostics for FEASpec CalculiX ResultDataset write planning and writing."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ class CalculiXResultDatasetWriteSeverity(str, Enum):
 
 
 class CalculiXResultDatasetWriteDiagnosticCode(str, Enum):
-    """Stable diagnostic code catalog for write planning."""
+    """Stable diagnostic code catalog for write planning and writing."""
 
     FDW_WRITE_NOT_IMPLEMENTED = "FDW_WRITE_NOT_IMPLEMENTED"
     FDW_OUTPUT_PATH_REQUIRED = "FDW_OUTPUT_PATH_REQUIRED"
@@ -46,11 +46,18 @@ class CalculiXResultDatasetWriteDiagnosticCode(str, Enum):
     FDW_RESULTDATASET_PERSISTENCE_FORBIDDEN = (
         "FDW_RESULTDATASET_PERSISTENCE_FORBIDDEN"
     )
+    FDW_WRITE_COMPLETED = "FDW_WRITE_COMPLETED"
+    FDW_WRITE_FAILED = "FDW_WRITE_FAILED"
+    FDW_TEMP_WRITE_FAILED = "FDW_TEMP_WRITE_FAILED"
+    FDW_TARGET_REPLACE_FAILED = "FDW_TARGET_REPLACE_FAILED"
+    FDW_UNPLANNED_FILE_COLLISION = "FDW_UNPLANNED_FILE_COLLISION"
+    FDW_WRITTEN_FILE_HASH_FAILED = "FDW_WRITTEN_FILE_HASH_FAILED"
+    FDW_ARTIFACT_COPY_FORBIDDEN = "FDW_ARTIFACT_COPY_FORBIDDEN"
 
 
 @dataclass(frozen=True, slots=True)
 class FEASpecCalculiXResultDatasetWriteDiagnostic:
-    """A single FEASpec CalculiX ResultDataset write-plan diagnostic."""
+    """A single FEASpec CalculiX ResultDataset write diagnostic."""
 
     code: CalculiXResultDatasetWriteDiagnosticCode
     severity: CalculiXResultDatasetWriteSeverity

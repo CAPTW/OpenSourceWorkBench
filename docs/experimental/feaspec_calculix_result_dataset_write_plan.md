@@ -150,6 +150,20 @@ Historical design diagnostics such as `FDW_ATOMIC_WRITE_FAILED` and
 `FDW_PARTIAL_WRITE_CLEANUP_FAILED` remain future implementation concerns, not
 implemented behavior in this planning gate.
 
+Writer implementation diagnostics now live in the shared catalog for the
+separate library writer:
+
+- `FDW_WRITE_COMPLETED`
+- `FDW_WRITE_FAILED`
+- `FDW_TEMP_WRITE_FAILED`
+- `FDW_TARGET_REPLACE_FAILED`
+- `FDW_UNPLANNED_FILE_COLLISION`
+- `FDW_WRITTEN_FILE_HASH_FAILED`
+- `FDW_ARTIFACT_COPY_FORBIDDEN`
+
+The write-plan module still performs no actual file writes and no
+ResultDataset persistence.
+
 ## Relationship to draft mapping
 
 [FEASpec CalculiX ResultDataset draft mapping](feaspec_calculix_result_dataset_draft_mapping.md)
@@ -166,6 +180,12 @@ in-memory ResultDataset, manifest, diagnostics, provenance, and review README
 payload records. It still performs no actual file writes, creates no
 directories, copies no artifacts, persists no ResultDataset, and executes no
 solver.
+
+## Relationship to library writer
+
+[FEASpec CalculiX ResultDataset writer](feaspec_calculix_result_dataset_writer.md)
+consumes this reviewed plan plus a schema payload. The writer is the separate
+explicit persistence layer; this planning module remains in-memory only.
 
 ## Relationship to result import model and CLI preview
 
@@ -235,5 +255,6 @@ does not record issue `#8` pass evidence, and does not close issue `#8`.
 ## Next implementation slices
 
 - `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
-- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_PREVIEW_ONLY`
+  (completed as the separate library writer)
+- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_DESIGN`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

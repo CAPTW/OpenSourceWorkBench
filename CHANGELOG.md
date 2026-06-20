@@ -304,6 +304,15 @@ by a dedicated release/tag gate.
   persistence, adds no write-capable import CLI/GUI, executes no solver, calls
   no SolverAdapter or runner code, mutates no ProjectSchema, validates no issue
   `#8`, adds no VLM APIs, bundles no solvers, and claims no certification.
+- Added an experimental FEASpec CalculiX ResultDataset library writer under
+  `src/osw/experimental/feaspec/`. It consumes a validated write plan and schema
+  payload, writes exactly `result_dataset.json`, `result_dataset_manifest.json`,
+  `diagnostics.json`, `provenance.json`, and `README_REVIEW_FIRST.txt` with
+  atomic temp/replace behavior, and returns size/SHA-256 metadata. It adds no
+  import-write CLI/GUI command, copies no original solver artifacts, parses no
+  additional numerical results, executes no solver, calls no SolverAdapter or
+  runner code, mutates no ProjectSchema, validates no issue `#8`, adds no VLM
+  APIs, bundles no solvers, and claims no certification.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

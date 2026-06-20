@@ -189,6 +189,14 @@ references, and write-plan diagnostics. This schema model consumes the write
 plan to build manifest and review README payload records. A blocked write plan
 blocks schema payload readiness.
 
+## Relationship to library writer
+
+[FEASpec CalculiX ResultDataset writer](feaspec_calculix_result_dataset_writer.md)
+is the separate explicit persistence layer that consumes a valid schema payload
+and valid write plan. This schema module remains an in-memory model: it still
+performs no file writes, no ResultDataset persistence, no artifact copying, and
+no solver execution.
+
 ## Relationship to result import model and CLI preview
 
 The result import model and `feaspec-calculix-result-import-preview` remain
@@ -255,5 +263,6 @@ does not record issue `#8` pass evidence, and does not close issue `#8`.
 ## Next implementation slices
 
 - `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
+  (completed as the separate library writer)
 - `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_PREVIEW_ONLY`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

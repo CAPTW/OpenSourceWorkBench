@@ -3,6 +3,12 @@
 Status: design-only. No ResultDataset persistence implementation. No file
 writes. No solver execution.
 
+This historical design remains the planning reference. The subsequent
+[FEASpec CalculiX ResultDataset writer](feaspec_calculix_result_dataset_writer.md)
+implements the library-only persistence slice while preserving the no CLI
+write command, no GUI write command, no artifact copying, and no solver
+execution boundaries.
+
 ## Release context
 
 - `v0.1.4-rc1` is a public prerelease.
@@ -37,6 +43,12 @@ adds the next in-memory slice. It assembles ResultDataset, manifest,
 diagnostics, provenance, and review README payload records from the reviewed
 draft mapping and write plan, but still performs no file writes, no
 ResultDataset persistence, no artifact copying, and no solver execution.
+
+The implemented
+[FEASpec CalculiX ResultDataset writer](feaspec_calculix_result_dataset_writer.md)
+is the explicit library-only writer that consumes a valid plan and schema
+payload. It does not add a CLI/GUI write command, artifact copy mode, or solver
+execution.
 
 ## Write goals
 
@@ -190,6 +202,13 @@ Validation failure should prevent file writes.
 - `FDW_ATOMIC_WRITE_FAILED`
 - `FDW_PARTIAL_WRITE_CLEANUP_FAILED`
 - `FDW_RESULTDATASET_PERSISTENCE_FORBIDDEN`
+- `FDW_WRITE_COMPLETED`
+- `FDW_WRITE_FAILED`
+- `FDW_TEMP_WRITE_FAILED`
+- `FDW_TARGET_REPLACE_FAILED`
+- `FDW_UNPLANNED_FILE_COLLISION`
+- `FDW_WRITTEN_FILE_HASH_FAILED`
+- `FDW_ARTIFACT_COPY_FORBIDDEN`
 
 ## CLI future design
 
@@ -275,5 +294,6 @@ passes.
 ## Future implementation slices
 
 - `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
-- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_PREVIEW_ONLY`
+- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_DESIGN`
+- `OSW-EXP-044_FEASPEC_RESULT_IMPORT_WRITE_CLI_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
