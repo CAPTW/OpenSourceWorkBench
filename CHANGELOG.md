@@ -333,6 +333,13 @@ by a dedicated release/tag gate.
   implementing no GUI source, file dialog, CLI behavior change, ResultDataset
   write, solver execution, SolverAdapter/runner path, ProjectSchema mutation,
   or issue `#8` validation.
+- Added an experimental FEASpec CalculiX result write view-model under
+  `src/osw/experimental/feaspec/`. It computes UI-agnostic panels, rows, action
+  states, disabled reasons, acknowledgements, preview records, and lexical
+  save-path plans for the future ResultDataset write GUI while adding no
+  PySide/Qt import, GUI dialog, file dialog, writer invocation, ResultDataset
+  write, solver execution, SolverAdapter/runner path, ProjectSchema mutation,
+  VLM API, release mutation, or issue `#8` validation.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

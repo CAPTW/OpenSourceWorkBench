@@ -194,6 +194,13 @@ request should stop, park, or defer.
   file-dialog policy, acknowledgements, and CLI/GUI consistency without adding
   GUI source, file dialogs, CLI behavior changes, solver execution, live issue
   `#8` validation, or certification claims.
+- Experimental FEASpec CalculiX result write view-model behavior that computes
+  UI-agnostic panels, rows, action states, disabled reasons,
+  acknowledgements, preview records, and lexical save-path plans without
+  importing PySide/Qt or GUI modules, opening file dialogs, invoking the
+  writer, writing ResultDataset files, running solvers, importing
+  SolverAdapter/runner/subprocess paths, mutating ProjectSchema, validating
+  issue `#8`, or making certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
@@ -476,6 +483,12 @@ Scope drift is any change that:
   external command invocation, ProjectSchema mutation, dependency install, live
   issue `#8` validation, release mutation, issue closure, certification, or
   bundled-solver claim without a separate gate;
+- turns the FEASpec CalculiX result write view-model into a GUI dialog,
+  file-dialog implementation, writer invocation path, ResultDataset write,
+  artifact copying, solver execution path, SolverAdapter/runner integration,
+  subprocess or external command invocation, ProjectSchema mutation,
+  dependency install, live issue `#8` validation, release mutation, issue
+  closure, certification, or bundled-solver claim without a separate gate;
 - turns the FEASpec human review record model into GUI approval workflow, run
   gate behavior, result import behavior, SolverAdapter/runner integration,
   subprocess or external command invocation, live `ccx` validation,

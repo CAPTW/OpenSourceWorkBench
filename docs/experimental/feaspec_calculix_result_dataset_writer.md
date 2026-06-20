@@ -147,6 +147,11 @@ defines a future review-first GUI surface over the same preview, draft mapping,
 write plan, schema payload, and library writer layers. This writer contains no
 GUI behavior and does not open file dialogs or choose output directories.
 
+[FEASpec CalculiX result write view-model](feaspec_calculix_result_write_viewmodel.md)
+adds the first UI-agnostic state layer for that future surface. It can display
+writer-result summaries supplied by a caller, but it does not invoke this
+writer and does not write ResultDataset files.
+
 ## Fixture policy
 
 Writer tests create synthetic result directories and write outputs only under
@@ -179,4 +184,5 @@ record issue `#8` pass evidence, and does not close issue `#8`.
 
 - `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_DESIGN`
 - `OSW-EXP-044_FEASPEC_RESULT_IMPORT_WRITE_CLI_IMPLEMENTATION`
+- `OSW-EXP-046_FEASPEC_RESULT_IMPORT_WRITE_GUI_VIEWMODEL`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

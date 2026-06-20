@@ -1448,3 +1448,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   integration, no subprocess use, no ProjectSchema mutation, no VLM API, no
   dependency install, no release/tag or asset mutation, no issue mutation, no
   live issue `#8` validation, and no bundled-solver or certification claim.
+
+## ADR-0073: FEASpec CalculiX Result Write View-Model Is UI-Agnostic
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-20
+- Context: ADR-0072 defined the future ResultDataset write GUI workflow while
+  keeping GUI source and file-dialog behavior out of scope. The next bounded
+  slice is a pure state layer that a future GUI can bind to without adding
+  PySide/Qt dependencies or hidden persistence behavior.
+- Decision: Add `calculix_result_write_viewmodel.py` as a UI-agnostic
+  state/action model over existing result-import, draft-mapping, write-plan,
+  schema-payload, and optional writer-result records. It computes panels, rows,
+  action states, disabled reasons, acknowledgements, preview records, and
+  lexical save-path plans.
+- Consequences: The view-model adds no GUI dialog, no file dialog, no
+  `QFileDialog`, no writer invocation, no CLI behavior change, no ResultDataset
+  file write, no artifact copy, no solver execution, no SolverAdapter or
+  runner integration, no subprocess use, no ProjectSchema mutation, no VLM API,
+  no dependency install, no release/tag or asset mutation, no issue mutation,
+  no live issue `#8` validation, and no bundled-solver or certification claim.

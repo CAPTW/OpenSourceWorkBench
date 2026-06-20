@@ -175,3 +175,10 @@ path updates the existing save plan and writes nothing until the save
 integration is triggered. It adds no export bundle write, `.inp` write, result
 import, run gate, SolverAdapter/runner/subprocess path, ProjectSchema mutation,
 VLM API, or solver execution.
+
+[FEASpec CalculiX result write view-model](feaspec_calculix_result_write_viewmodel.md)
+reuses the same UI-agnostic pattern for the ResultDataset write stack. It
+computes panels, actions, disabled reasons, acknowledgements, and save-target
+state without adding a GUI dialog, file dialog, writer invocation,
+ResultDataset persistence, SolverAdapter/runner/subprocess path,
+ProjectSchema mutation, VLM API, or solver execution.

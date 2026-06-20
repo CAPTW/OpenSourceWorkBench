@@ -480,6 +480,13 @@ policy, acknowledgements, and CLI/GUI consistency while adding no GUI source,
 file dialog, CLI behavior change, solver execution, issue `#8` validation,
 ProjectSchema mutation, or VFEA completion.
 
+[FEASpec CalculiX result write view-model](../experimental/feaspec_calculix_result_write_viewmodel.md)
+adds an experimental UI-agnostic state/action layer for the same write stack.
+It computes panels, rows, disabled reasons, acknowledgements, preview records,
+and lexical save-path plans without adding PySide/Qt imports, GUI dialog or
+file-dialog behavior, writer invocation, ResultDataset persistence, solver
+execution, ProjectSchema mutation, issue `#8` validation, or VFEA completion.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

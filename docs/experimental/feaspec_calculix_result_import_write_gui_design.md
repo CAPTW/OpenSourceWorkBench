@@ -26,6 +26,10 @@ layers:
   manifest, diagnostics, provenance, and review README payload records.
 - The library writer writes the five standard ResultDataset review files only
   after the plan and schema payload are valid.
+- The ResultDataset write view-model provides the first UI-agnostic state layer
+  over those records. It computes panels, rows, action states, disabled
+  reasons, acknowledgements, and lexical save-path plans, but it does not
+  implement a GUI command, file dialog, or writer invocation.
 - Existing human review GUI patterns use a pure view-model, explicit disabled
   reasons, visible safety copy, and mockable file-dialog providers.
 
@@ -230,6 +234,9 @@ and no subprocess invocation.
 
 ## Next implementation slices
 
-- `OSW-EXP-046_FEASPEC_RESULT_IMPORT_WRITE_GUI_VIEWMODEL`
+- [FEASpec CalculiX result write view-model](feaspec_calculix_result_write_viewmodel.md)
+  implemented `OSW-EXP-046_FEASPEC_RESULT_IMPORT_WRITE_GUI_VIEWMODEL` as a pure
+  Python state layer only. It adds no GUI dialog, file dialog, writer
+  invocation, or ResultDataset write behavior.
 - `OSW-EXP-047_FEASPEC_RESULT_IMPORT_WRITE_GUI_DIALOG_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

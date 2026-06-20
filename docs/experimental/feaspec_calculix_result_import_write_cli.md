@@ -131,6 +131,14 @@ The write CLI does not validate live `ccx`. Issue `#8` remains open until a
 separate prepared-machine live CalculiX validation gate records passing
 evidence. Persisting review files is not live solver validation.
 
+## Relationship to write GUI view-model
+
+[FEASpec CalculiX result write view-model](feaspec_calculix_result_write_viewmodel.md)
+exposes UI-agnostic panels, action states, disabled reasons, acknowledgements,
+and save-path planning over the same import/write/schema records. The
+view-model does not change this CLI behavior, does not call this CLI command,
+does not invoke the writer, and does not add a GUI write command.
+
 ## Non-goals
 
 - no GUI write command;
@@ -147,6 +155,6 @@ evidence. Persisting review files is not live solver validation.
 ## Next implementation slices
 
 - [FEASpec CalculiX result import write GUI design](feaspec_calculix_result_import_write_gui_design.md)
-- `OSW-EXP-046_FEASPEC_RESULT_IMPORT_WRITE_GUI_VIEWMODEL`
+- [FEASpec CalculiX result write view-model](feaspec_calculix_result_write_viewmodel.md)
 - `OSW-EXP-047_FEASPEC_RESULT_IMPORT_WRITE_GUI_DIALOG_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
