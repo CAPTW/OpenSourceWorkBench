@@ -103,6 +103,12 @@ future atomic write paths from this draft mapping, but it still writes no
 files, creates no directories, copies no artifacts, persists no ResultDataset,
 and executes no solver.
 
+[FEASpec CalculiX ResultDataset schema payload model](feaspec_calculix_result_dataset_schema.md)
+packages this draft mapping and a reviewed write plan into deterministic
+in-memory ResultDataset, manifest, diagnostics, provenance, and review README
+payload records. It remains model-only: no ResultDataset persistence, no file
+writes, no write-capable import CLI, and no solver execution.
+
 ## Relationship to #8
 
 The draft mapping does not validate live `ccx`.
@@ -123,6 +129,6 @@ passes.
 
 ## Next implementation slices
 
-- `OSW-EXP-041_FEASPEC_RESULT_IMPORT_DATASET_WRITE_SCHEMA_MODEL`
 - `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
+- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_PREVIEW_ONLY`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

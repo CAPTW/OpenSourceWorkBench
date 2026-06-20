@@ -1331,3 +1331,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   no dependency install, no VLM API, no release/tag or asset mutation, no issue
   mutation, no live issue `#8` validation, and no bundled-solver or
   certification claim.
+
+## ADR-0068: FEASpec CalculiX ResultDataset Schema Payloads Are In-Memory
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-20
+- Context: ADR-0067 added an in-memory write plan for reviewed ResultDataset
+  drafts. A future persistence gate still needs stable JSON-shaped payload
+  records for the ResultDataset body, manifest, diagnostics, provenance, and
+  review README before any file-writing implementation or CLI write surface can
+  be reviewed.
+- Decision: Add an experimental in-memory ResultDataset schema payload model
+  under `src/osw/experimental/feaspec/`. The model consumes the reviewed draft
+  mapping and write plan, assembles deterministic payload records, validates
+  schema/provenance/artifact/manifest readiness with `FDS_*` diagnostics, and
+  exposes explanation helpers. All persistence and write flags remain false.
+- Consequences: This gate adds no actual ResultDataset persistence, no file
+  writes, no directory creation, no artifact copying, no write-capable import
+  CLI or GUI behavior, no atomic write implementation, no `.frd` numerical
+  field parsing, no mesh reconstruction, no solver execution, no SolverAdapter
+  or runner integration, no subprocess invocation, no ProjectSchema mutation,
+  no dependency install, no VLM API, no release/tag or asset mutation, no issue
+  mutation, no live issue `#8` validation, and no bundled-solver or
+  certification claim.

@@ -453,6 +453,13 @@ limitations acknowledgement while still adding no ResultDataset persistence,
 actual file writes, artifact copying, solver execution, issue `#8` validation,
 ProjectSchema mutation, or VFEA completion.
 
+[FEASpec CalculiX ResultDataset schema payload model](../experimental/feaspec_calculix_result_dataset_schema.md)
+adds the in-memory schema bundle for the reviewed draft/write-plan boundary. It
+records ResultDataset, manifest, diagnostics, provenance, and review README
+payloads while still adding no ResultDataset persistence, file writes,
+write-capable import CLI, solver execution, issue `#8` validation,
+ProjectSchema mutation, or VFEA completion.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

@@ -22,6 +22,7 @@ The implementation lives under the experimental FEASpec package:
 - `src/osw/experimental/feaspec/calculix_result_frd_block_scanner.py`
 - `src/osw/experimental/feaspec/calculix_result_dataset_draft_mapping.py`
 - `src/osw/experimental/feaspec/calculix_result_dataset_write_plan.py`
+- `src/osw/experimental/feaspec/calculix_result_dataset_schema.py`
 
 The public package exports the result import model API from
 `osw.experimental.feaspec`.
@@ -165,6 +166,12 @@ artifact references, and limitations acknowledgement while keeping
 `writes_files=false`, `result_dataset_persistence=false`, and
 `solver_execution_performed=false`.
 
+[FEASpec CalculiX ResultDataset schema payload model](feaspec_calculix_result_dataset_schema.md)
+implements the in-memory schema bundle after the write plan. It assembles
+ResultDataset, manifest, diagnostics, provenance, and review README payload
+records for review only. It does not write files, persist a ResultDataset,
+create a write-capable import CLI, or execute solvers.
+
 ## Status Summary Enrichment
 
 For `.sta` and `.cvg` artifacts, artifact metadata can include:
@@ -288,6 +295,6 @@ This result import model does not validate local `ccx`, does not record issue
 - `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
 - `OSW-EXP-038_FEASPEC_RESULT_IMPORT_RESULTDATASET_DRAFT_MAPPING`
 - `OSW-EXP-039_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
-- `OSW-EXP-041_FEASPEC_RESULT_IMPORT_DATASET_WRITE_SCHEMA_MODEL`
 - `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
+- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_PREVIEW_ONLY`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

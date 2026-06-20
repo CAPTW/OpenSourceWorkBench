@@ -167,6 +167,11 @@ no write/import command, no `--output` persistence mode, and no file writes.
 [FEASpec CalculiX ResultDataset write plan](feaspec_calculix_result_dataset_write_plan.md)
 documents the implemented in-memory planning model for future persistence; it
 is not wired as a CLI write mode and still performs no actual file writes.
+[FEASpec CalculiX ResultDataset schema payload model](feaspec_calculix_result_dataset_schema.md)
+documents the implemented in-memory schema payload bundle for future
+ResultDataset, manifest, diagnostics, provenance, and review README records. It
+is not a write-capable import CLI, has no `--output` persistence mode, writes no
+files, persists no ResultDataset, and executes no solver.
 
 ## Safety Boundary
 
@@ -221,6 +226,6 @@ issue `#8` pass evidence, and does not close issue `#8`.
 - `OSW-EXP-037_FEASPEC_RESULT_PARSER_FRD_BLOCK_SCANNER_IMPLEMENTATION`
 - `OSW-EXP-038_FEASPEC_RESULT_IMPORT_RESULTDATASET_DRAFT_MAPPING`
 - `OSW-EXP-039_FEASPEC_RESULT_IMPORT_DATASET_WRITE_DESIGN`
-- `OSW-EXP-041_FEASPEC_RESULT_IMPORT_DATASET_WRITE_SCHEMA_MODEL`
 - `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
+- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_PREVIEW_ONLY`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

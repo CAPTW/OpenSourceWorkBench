@@ -31,6 +31,13 @@ readiness, artifact references, limitations acknowledgement, and planned atomic
 write paths while still performing no ResultDataset persistence or actual file
 writes.
 
+The implemented
+[FEASpec CalculiX ResultDataset schema payload model](feaspec_calculix_result_dataset_schema.md)
+adds the next in-memory slice. It assembles ResultDataset, manifest,
+diagnostics, provenance, and review README payload records from the reviewed
+draft mapping and write plan, but still performs no file writes, no
+ResultDataset persistence, no artifact copying, and no solver execution.
+
 ## Write goals
 
 A future write gate should:
@@ -267,6 +274,6 @@ passes.
 
 ## Future implementation slices
 
-- `OSW-EXP-041_FEASPEC_RESULT_IMPORT_DATASET_WRITE_SCHEMA_MODEL`
 - `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
+- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_PREVIEW_ONLY`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

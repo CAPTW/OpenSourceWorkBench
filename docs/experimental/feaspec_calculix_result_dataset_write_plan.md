@@ -158,6 +158,15 @@ mapping, preserves artifact and provenance evidence, carries diagnostics and
 limitations forward, and plans a future reviewed output layout. It does not
 turn the draft into persisted `ResultDataset` files.
 
+## Relationship to schema payload model
+
+[FEASpec CalculiX ResultDataset schema payload model](feaspec_calculix_result_dataset_schema.md)
+consumes this write plan and the draft mapping to assemble deterministic
+in-memory ResultDataset, manifest, diagnostics, provenance, and review README
+payload records. It still performs no actual file writes, creates no
+directories, copies no artifacts, persists no ResultDataset, and executes no
+solver.
+
 ## Relationship to result import model and CLI preview
 
 The result import model and `feaspec-calculix-result-import-preview` remain
@@ -225,6 +234,6 @@ does not record issue `#8` pass evidence, and does not close issue `#8`.
 
 ## Next implementation slices
 
-- `OSW-EXP-041_FEASPEC_RESULT_IMPORT_DATASET_WRITE_SCHEMA_MODEL`
 - `OSW-EXP-042_FEASPEC_RESULT_IMPORT_DATASET_WRITE_IMPLEMENTATION`
+- `OSW-EXP-043_FEASPEC_RESULT_IMPORT_WRITE_CLI_PREVIEW_ONLY`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
