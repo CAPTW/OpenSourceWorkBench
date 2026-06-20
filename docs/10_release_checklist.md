@@ -330,6 +330,7 @@ or full solver parity.
 | External solver availability is not guaranteed. | `PASS` | README, install guide, known limitations, and demo smoke checklist state external solvers are optional. |
 | Results without validation evidence remain marked as preview, template-based, fixture-backed, or educational. | `PASS` | Validation matrix and known limitations use this language. |
 | FEASpec CalculiX GUI ResultDataset writes remain review-gated. | `PASS` | The write dialog requires enabled write-plan/schema/acknowledgement gates and explicit confirmation, delegates only to the library writer, copies no original solver artifacts, executes no solver, and leaves issue `#8` open. |
+| FEASpec CalculiX result write GUI scope is closed narrowly. | `PASS` | [Closure review](experimental/feaspec_calculix_result_write_gui_closure_review.md) records the experimental GUI write slice as complete for review-file persistence only, with no live `ccx` validation, no solver execution, no issue `#8` closure, no bundled solver claim, and no certification claim. |
 
 ## Report Evidence Checklist
 

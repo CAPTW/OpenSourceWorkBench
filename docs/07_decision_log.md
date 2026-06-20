@@ -1598,3 +1598,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   mutation, no VLM API, no dependency install, no release/tag or asset
   mutation, no issue mutation, no live issue `#8` validation, and no
   bundled-solver or certification claim.
+
+## ADR-0080: FEASpec CalculiX Result Write GUI Scope Is Closed Narrowly
+
+- Status: Accepted for experimental closure
+- Date: 2026-06-20
+- Context: ADR-0078 added the guarded GUI call into the existing library writer,
+  and ADR-0079 polished post-write display. The remaining step is to record
+  whether this GUI write slice is complete or needs more runtime work.
+- Decision: Close the experimental FEASpec CalculiX ResultDataset write GUI
+  scope for review-file persistence. The closed workflow covers inspection,
+  explicit output-directory selection, limitations and review acknowledgements,
+  final confirmation, a single existing library-writer call boundary, standard
+  ResultDataset review-file persistence, post-write status, hashes,
+  diagnostics, limitations, and retry guidance.
+- Consequences: This closure adds docs/tests only and no runtime behavior
+  change, no source writer change, no parser change, no solver execution, no
+  SolverAdapter or runner integration, no subprocess use, no ProjectSchema
+  mutation, no VLM API, no dependency install, no release/tag or asset
+  mutation, no issue mutation, no live issue `#8` validation, and no
+  bundled-solver or certification claim.

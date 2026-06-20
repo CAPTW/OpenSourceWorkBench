@@ -218,6 +218,12 @@ files, hashes, diagnostics, limitations, failure details, retry guidance, and
 copy-ready display text without changing this view-model's pure state/action
 boundary, write enablement semantics, or no-writer-invocation rule.
 
+[FEASpec CalculiX result write GUI closure review](feaspec_calculix_result_write_gui_closure_review.md)
+closes the later dialog-layer ResultDataset write GUI slice as complete for
+experimental review-file persistence. This view-model remains UI-agnostic and
+still invokes no writer, writes no files, executes no solver, and validates no
+issue `#8`.
+
 ## Relationship to issue #8
 
 The view-model does not validate live `ccx`. Issue `#8` remains open until a
@@ -282,4 +288,7 @@ fixtures are added by this gate.
 - [FEASpec CalculiX result write GUI post-write polish](feaspec_calculix_result_write_gui_post_write_polish.md)
   records dialog-layer display polish only. This view-model still imports no
   PySide/Qt, invokes no writer, writes no files, and validates no issue `#8`.
+- [FEASpec CalculiX result write GUI closure review](feaspec_calculix_result_write_gui_closure_review.md)
+  records the closure decision for the later GUI slice without changing this
+  view-model source or safety boundary.
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

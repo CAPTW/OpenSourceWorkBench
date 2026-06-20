@@ -154,6 +154,11 @@ formats existing GUI writer results after guarded writes. It does not call this
 CLI command and does not change CLI options, exit codes, text output, JSON
 output, or write behavior.
 
+[FEASpec CalculiX result write GUI closure review](feaspec_calculix_result_write_gui_closure_review.md)
+closes the experimental GUI slice for review-file persistence. It does not call
+this CLI command, does not change CLI options, exit codes, output formats, or
+write behavior, and does not validate issue `#8`.
+
 ## Non-goals
 
 - no GUI write command;
@@ -175,4 +180,5 @@ output, or write behavior.
 - [FEASpec CalculiX result write GUI file dialog planning](feaspec_calculix_result_write_gui_file_dialog_planning.md)
 - [FEASpec CalculiX result write GUI writer integration design](feaspec_calculix_result_write_gui_writer_integration_design.md)
 - [FEASpec CalculiX result write GUI post-write polish](feaspec_calculix_result_write_gui_post_write_polish.md)
+- [FEASpec CalculiX result write GUI closure review](feaspec_calculix_result_write_gui_closure_review.md)
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

@@ -234,6 +234,10 @@ request should stop, park, or defer.
   adds no OS clipboard integration, no open-output shell command, no artifact
   copying, no CLI/library writer behavior change, no solver execution, no
   issue `#8` validation, no bundled solvers, and no certification claims.
+- FEASpec CalculiX result write GUI closure review that records the completed
+  experimental review-file persistence slice without adding runtime source
+  changes, parser changes, writer changes, solver execution, live issue `#8`
+  validation, bundled solvers, or certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and

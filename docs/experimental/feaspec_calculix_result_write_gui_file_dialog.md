@@ -127,4 +127,8 @@ used to close issue `#8`.
   source mutation, no CLI behavior change, no library writer behavior change,
   no solver execution, and no issue `#8` validation.
 - `OSW-EXP-051_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION`
+- [FEASpec CalculiX result write GUI closure review](feaspec_calculix_result_write_gui_closure_review.md)
+  confirms the later GUI write stack is complete for experimental
+  ResultDataset review-file persistence while preserving no solver execution,
+  no artifact copying, and issue `#8` separation.
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

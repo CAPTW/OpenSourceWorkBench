@@ -147,5 +147,9 @@ output fixtures are added by this gate.
 ## Next implementation slices
 
 - `OSW-EXP-052_FEASPEC_RESULT_IMPORT_WRITE_GUI_POST_WRITE_POLISH`
-- `OSW-EXP-053_FEASPEC_RESULT_IMPORT_WRITE_GUI_CLOSURE_REVIEW`
+- [FEASpec CalculiX result write GUI closure review](feaspec_calculix_result_write_gui_closure_review.md)
+  records the completed experimental GUI write flow after post-write polish.
+  The closure review is docs/tests only and does not change GUI writer
+  behavior, library writer behavior, solver execution policy, or issue `#8`
+  state.
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

@@ -184,6 +184,11 @@ tracked solver output fixtures. The tests do not stage `.dat`, `.frd`, `.sta`,
   preserving no solver execution, no artifact copying, no open-output shell,
   no OS clipboard integration, no CLI/writer behavior change, and no issue
   `#8` validation.
+- [FEASpec CalculiX result write GUI closure review](feaspec_calculix_result_write_gui_closure_review.md)
+  records the closure decision that the experimental ResultDataset write GUI
+  slice is complete for review-file persistence. It adds no runtime behavior,
+  source changes, solver execution, live `ccx` validation, or issue `#8`
+  closure.
 - `OSW-EXP-050_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION_DESIGN`
 - `OSW-EXP-051_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION`
 - `OSW-EXP-052_FEASPEC_RESULT_IMPORT_WRITE_GUI_POST_WRITE_POLISH`

@@ -112,5 +112,9 @@ External solvers are optional and not bundled.
 
 ## Next implementation slices
 
-- `OSW-EXP-053_FEASPEC_RESULT_IMPORT_WRITE_GUI_CLOSURE_REVIEW`
+- [FEASpec CalculiX result write GUI closure review](feaspec_calculix_result_write_gui_closure_review.md)
+  closes the experimental review-first ResultDataset write GUI slice as
+  complete for standard review-file persistence. It adds no runtime behavior,
+  no source writer changes, no solver execution, no live `ccx` validation, and
+  no issue `#8` closure.
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
