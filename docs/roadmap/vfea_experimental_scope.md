@@ -473,6 +473,13 @@ acknowledgements before writing standard ResultDataset review files. It copies
 no artifacts, executes no solver, validates no issue `#8`, and does not
 complete VFEA.
 
+[FEASpec CalculiX result import write GUI design](../experimental/feaspec_calculix_result_import_write_gui_design.md)
+defines the future GUI workflow for that ResultDataset write stack. It is
+design-only and records entry points, panels, disabled reasons, file-dialog
+policy, acknowledgements, and CLI/GUI consistency while adding no GUI source,
+file dialog, CLI behavior change, solver execution, issue `#8` validation,
+ProjectSchema mutation, or VFEA completion.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

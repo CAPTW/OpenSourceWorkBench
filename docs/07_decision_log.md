@@ -1427,3 +1427,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   API, mutates no release/tag or asset state, creates or closes no issues,
   records no live issue `#8` validation, and makes no bundled-solver or
   certification claim.
+
+## ADR-0072: FEASpec CalculiX Result Import Write GUI Starts As Design-Only
+
+- Status: Accepted for experimental design
+- Date: 2026-06-20
+- Context: ADR-0071 exposed the reviewed ResultDataset write stack through a
+  CLI while deliberately leaving GUI write behavior absent. The next bounded
+  step is to define the future GUI workflow contract before any PySide6 source,
+  file-dialog, or persistence wiring is added.
+- Decision: Add a design-only future GUI contract for FEASpec CalculiX result
+  import writes. The contract defines preview entry points, a future
+  ResultDataset write dialog, project-context entry behavior, panels/tabs,
+  action states, disabled reasons, explicit output-directory file-dialog
+  policy, limitations/review/overwrite/create-directory acknowledgements,
+  CLI/GUI consistency, and future implementation tests.
+- Consequences: This gate adds no GUI source, no file-dialog implementation,
+  no CLI behavior change, no library writer change, no ResultDataset file
+  write, no artifact copy, no solver execution, no SolverAdapter or runner
+  integration, no subprocess use, no ProjectSchema mutation, no VLM API, no
+  dependency install, no release/tag or asset mutation, no issue mutation, no
+  live issue `#8` validation, and no bundled-solver or certification claim.

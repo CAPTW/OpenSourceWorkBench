@@ -202,6 +202,14 @@ review-gated import write CLI to inspect path and validation readiness, but
 this module still has no CLI behavior, no GUI write/import command, and no
 ResultDataset persistence.
 
+## Relationship to future write GUI
+
+[FEASpec CalculiX result import write GUI design](feaspec_calculix_result_import_write_gui_design.md)
+defines how a future GUI should expose this write plan: explicit output
+directory, visible disabled reasons, limitations/review acknowledgements,
+overwrite/create-directory acknowledgement, and review-first confirmation. This
+planning module still does not implement GUI behavior or file dialogs.
+
 ## Safety boundary
 
 This model preserves:

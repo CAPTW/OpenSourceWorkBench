@@ -326,6 +326,13 @@ by a dedicated release/tag gate.
   copies no original solver artifacts, executes no solver, calls no
   SolverAdapter or runner code, mutates no ProjectSchema, validates no issue
   `#8`, edits no releases, and claims no certification.
+- Added a design-only FEASpec CalculiX result import write GUI contract. It
+  defines future preview entry points, ResultDataset write dialog flow,
+  panels/tabs, action states, disabled reasons, file-dialog policy,
+  acknowledgements, CLI/GUI consistency, and no-run safety boundaries while
+  implementing no GUI source, file dialog, CLI behavior change, ResultDataset
+  write, solver execution, SolverAdapter/runner path, ProjectSchema mutation,
+  or issue `#8` validation.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

@@ -140,6 +140,13 @@ calls this library writer after preview, draft-mapping, write-plan,
 schema-payload, and acknowledgement checks pass. The CLI wrapper does not
 change writer behavior and performs no solver execution or artifact copying.
 
+## Relationship to future write GUI
+
+[FEASpec CalculiX result import write GUI design](feaspec_calculix_result_import_write_gui_design.md)
+defines a future review-first GUI surface over the same preview, draft mapping,
+write plan, schema payload, and library writer layers. This writer contains no
+GUI behavior and does not open file dialogs or choose output directories.
+
 ## Fixture policy
 
 Writer tests create synthetic result directories and write outputs only under

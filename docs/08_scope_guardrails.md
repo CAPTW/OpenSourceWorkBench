@@ -189,6 +189,11 @@ request should stop, park, or defer.
   acknowledgement while still avoiding artifact copying, solver execution,
   SolverAdapter/runner paths, ProjectSchema mutation, live issue `#8`
   validation, bundled solvers, and certification claims.
+- Design-only FEASpec CalculiX result import write GUI planning that defines
+  future preview entry points, panels, action states, disabled reasons,
+  file-dialog policy, acknowledgements, and CLI/GUI consistency without adding
+  GUI source, file dialogs, CLI behavior changes, solver execution, live issue
+  `#8` validation, or certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
@@ -464,6 +469,12 @@ Scope drift is any change that:
   path, SolverAdapter/runner integration, subprocess or external command
   invocation, ProjectSchema mutation, dependency install, live issue `#8`
   validation, release mutation, issue closure, certification, or
+  bundled-solver claim without a separate gate;
+- turns the FEASpec CalculiX result import write GUI design into GUI source,
+  file-dialog implementation, hidden ResultDataset writes, artifact copying,
+  solver execution path, SolverAdapter/runner integration, subprocess or
+  external command invocation, ProjectSchema mutation, dependency install, live
+  issue `#8` validation, release mutation, issue closure, certification, or
   bundled-solver claim without a separate gate;
 - turns the FEASpec human review record model into GUI approval workflow, run
   gate behavior, result import behavior, SolverAdapter/runner integration,

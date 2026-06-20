@@ -146,6 +146,7 @@ evidence. Persisting review files is not live solver validation.
 
 ## Next implementation slices
 
-- `OSW-EXP-045_FEASPEC_RESULT_IMPORT_WRITE_GUI_DESIGN`
-- `OSW-EXP-046_FEASPEC_RESULT_IMPORT_WRITE_GUI_IMPLEMENTATION`
+- [FEASpec CalculiX result import write GUI design](feaspec_calculix_result_import_write_gui_design.md)
+- `OSW-EXP-046_FEASPEC_RESULT_IMPORT_WRITE_GUI_VIEWMODEL`
+- `OSW-EXP-047_FEASPEC_RESULT_IMPORT_WRITE_GUI_DIALOG_IMPLEMENTATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`
