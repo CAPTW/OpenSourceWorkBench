@@ -370,6 +370,15 @@ by a dedicated release/tag gate.
   view-model source mutation, CLI behavior change, library writer behavior
   change, solver execution, SolverAdapter/runner path, ProjectSchema mutation,
   VLM API, release mutation, or issue `#8` validation.
+- Added experimental FEASpec CalculiX result write GUI writer integration under
+  `src/osw/gui/dialogs/`. The write action now enables only when reviewed gates
+  and acknowledgements pass, requires explicit confirmation, and delegates
+  actual ResultDataset persistence to the existing library writer. It writes
+  only standard ResultDataset review files under the selected output directory,
+  copies no original solver artifacts, opens no output folder shell command,
+  changes no CLI/library writer behavior, executes no solver, calls no
+  SolverAdapter/runner/subprocess path, mutates no ProjectSchema, edits no
+  release/tag/assets/issues, and does not validate or close issue `#8`.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

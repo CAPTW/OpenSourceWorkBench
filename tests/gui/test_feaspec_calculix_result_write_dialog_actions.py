@@ -105,7 +105,7 @@ def test_action_buttons_render_write_disabled_and_file_dialog_enabled(
     assert choose_button.isEnabled() is True
 
 
-def test_disabled_reasons_include_viewmodel_and_display_only_gate(
+def test_disabled_reasons_include_viewmodel_and_guarded_writer_inputs(
     app: object,
     tmp_path: Path,
 ) -> None:
@@ -120,7 +120,7 @@ def test_disabled_reasons_include_viewmodel_and_display_only_gate(
 
     assert "missing_output_dir" in text
     assert "write_plan_blocked" in text
-    assert "display_only_dialog" in text
+    assert "writer_inputs_not_callable" in text
     assert "FDW_OUTPUT_DIR_MISSING" in dialog.diagnostics_text()
 
 

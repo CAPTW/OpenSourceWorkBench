@@ -1557,3 +1557,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   mutation, no VLM API, no dependency install, no release/tag or asset
   mutation, no issue mutation, no live issue `#8` validation, and no
   bundled-solver or certification claim.
+
+## ADR-0078: FEASpec CalculiX Result Write GUI Uses The Library Writer Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-20
+- Context: ADR-0077 defined the GUI writer-integration contract. The bounded
+  implementation slice is to let the write dialog persist reviewed
+  ResultDataset files without changing CLI behavior, library writer behavior,
+  parser behavior, solver execution policy, or issue state.
+- Decision: Enable the `WRITE_RESULT_DATASET` action only when reviewed
+  write-plan, schema, selected output directory, and acknowledgement gates are
+  satisfied. Before writing, require explicit confirmation. On acceptance, call
+  the existing library writer once and display writer status, diagnostics, and
+  written-file metadata. Keep the writer injectable and confirmation injectable
+  for tests.
+- Consequences: This gate adds guarded GUI ResultDataset persistence through
+  the existing library writer. It adds no CLI behavior change, no library
+  writer behavior change, no artifact copying, no open-output-folder command,
+  no solver execution, no SolverAdapter or runner integration, no subprocess
+  use, no ProjectSchema mutation, no VLM API, no dependency install, no
+  release/tag or asset mutation, no issue mutation, no live issue `#8`
+  validation, and no bundled-solver or certification claim.

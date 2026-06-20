@@ -1,9 +1,9 @@
 # FEASpec CalculiX result write dialog
 
-Status: experimental GUI dialog implemented. Output-directory selection
-implemented with QFileDialog directory selection for choosing an output
-directory. No writer invocation. No ResultDataset file write. No solver
-execution.
+Status: experimental GUI dialog implemented. Output-directory selection is
+implemented with `QFileDialog` directory selection. The dialog now includes
+review-first writer integration through the existing library writer after
+enabled gates and explicit confirmation. No solver execution.
 
 ## Release context
 
@@ -18,12 +18,13 @@ execution.
 
 ## Dialog input
 
-The dialog accepts `FEASpecCalculiXResultWriteViewModel` and an optional
-mockable output-directory chooser for tests. It does not accept a writer
-object, runner, solver adapter, CLI command, ProjectSchema mutator, or
-artifact-copy provider. The view-model remains the source for panels, rows,
-actions, disabled reasons, acknowledgements, safety messages, planned files,
-and optional writer-result summary text.
+The dialog accepts `FEASpecCalculiXResultWriteViewModel`, an optional mockable
+output-directory chooser for tests, an injectable ResultDataset writer, and an
+injectable confirmation callback for tests. It does not accept a runner, solver
+adapter, CLI command, ProjectSchema mutator, artifact-copy provider, VLM
+provider, or credential provider. The view-model remains the source for panels,
+rows, actions, disabled reasons, acknowledgements, safety messages, planned
+files, and optional writer-result summary text.
 
 ## Panels and tabs
 
@@ -39,18 +40,22 @@ The dialog renders read-only panels for:
 - actions;
 - result summary.
 
-Each panel remains inspectable without writing files or running solvers. The
-dialog is a review surface for write-plan evidence, not a persistence command
-surface.
+Each panel remains inspectable before writing files or running solvers. The
+dialog is a review-first persistence surface for ResultDataset files only; it is
+not a solver execution surface.
 
 ## Action rendering
 
 The dialog renders action labels and disabled reasons from the view-model. The
 choose-output-directory action is enabled and opens a directory-only chooser.
-The write action and open-written-output action stay disabled in this gate.
+The write action is enabled only when the reviewed write plan, schema payload,
+selected output directory, and acknowledgements are ready. The open-written-
+output action stays disabled in this gate.
 
 Choosing an output directory updates dialog-local display state and visible
-save-plan analysis. It does not enable a hidden write path.
+save-plan analysis. It does not call the writer or create files. If the selected
+directory no longer matches the reviewed write-plan target, the write action is
+blocked until the state is reviewed again.
 
 ## Output-directory selection
 
@@ -80,15 +85,18 @@ do not mutate state, write files, create directories, or change planned paths.
 The write-plan panel lists planned standard ResultDataset files from the
 existing view-model payload and the dialog-local selected output directory. The
 result panel renders an optional writer-result summary when the caller provides
-one. Rendering an existing summary does not invoke the writer.
+one. Rendering an existing summary does not invoke the writer. After explicit
+confirmation, the dialog delegates actual ResultDataset file write behavior to
+the existing library writer and displays the returned status, diagnostics, and
+written-file metadata.
 
 ## Safety boundary
 
 This GUI dialog preserves:
 
 - QFileDialog directory selection only;
-- no writer invocation;
-- no ResultDataset file write;
+- writer invocation only after enabled gates and explicit confirmation;
+- actual ResultDataset file write only through the existing library writer;
 - no artifact copy;
 - no directory creation during selection;
 - no CLI behavior change;
@@ -103,7 +111,8 @@ This GUI dialog preserves:
 - no release, tag, asset, or issue mutation.
 
 The dialog must not become a hidden persistence path or a direct external
-execution path.
+execution path. All writes remain explicit, review-gated, and limited to the
+standard ResultDataset files.
 
 External solvers are optional and not bundled.
 
@@ -122,14 +131,12 @@ tracked solver output fixtures. The tests do not stage `.dat`, `.frd`, `.sta`,
 
 ## Non-goals
 
-- no writer integration;
-- no GUI file write behavior;
-- no ResultDataset persistence;
-- no artifact copying;
-- no CLI behavior change;
-- no library writer behavior change;
 - no solver execution;
 - no live `ccx` validation;
+- no artifact copying;
+- no open-output-folder command;
+- no CLI behavior change;
+- no library writer behavior change;
 - no SolverAdapter or runner integration;
 - no subprocess use;
 - no ProjectSchema mutation;
@@ -156,6 +163,12 @@ tracked solver output fixtures. The tests do not stage `.dat`, `.frd`, `.sta`,
   acknowledgement gating, writer call boundary, failure recovery, post-write
   display, retry behavior, and state refresh while preserving no implementation
   in that design gate.
+- [FEASpec CalculiX result write GUI writer integration](feaspec_calculix_result_write_gui_writer_integration.md)
+  documents `OSW-EXP-051_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION`,
+  which adds the guarded GUI writer call through the existing library writer
+  after enabled gates and confirmation while preserving no solver execution,
+  no artifact copying, no CLI behavior change, no library writer behavior
+  change, and no issue `#8` validation.
 - `OSW-EXP-050_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION_DESIGN`
 - `OSW-EXP-051_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

@@ -238,8 +238,8 @@ def test_safety_text_keeps_no_run_boundary(app: object, tmp_path: Path) -> None:
     dialog = FEASpecCalculiXResultWriteDialog(_viewmodel(tmp_path))
     text = dialog.safety_text()
 
-    assert "No writer call." in text
-    assert "No ResultDataset file write." in text
+    assert "Writer calls require enabled gates" in text
+    assert "existing library writer" in text
     assert "No artifact copying." in text
     assert "No directory creation during selection." in text
     assert "No solver execution." in text

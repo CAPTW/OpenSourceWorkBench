@@ -16,7 +16,7 @@ DOC_PATH = (
     REPO_ROOT
     / "docs"
     / "experimental"
-    / "feaspec_calculix_result_write_dialog.md"
+    / "feaspec_calculix_result_write_gui_writer_integration.md"
 )
 
 
@@ -43,12 +43,12 @@ def test_dialog_imports_only_gui_and_viewmodel_safe_layers() -> None:
     imports = _imported_modules()
 
     assert "PySide6" in imports
+    assert "osw.experimental.feaspec.calculix_result_dataset_writer" in imports
     assert "osw.experimental.feaspec.calculix_result_write_viewmodel" in imports
     assert "osw.gui.qt_compat" in imports
     assert "osw.gui.theme_tokens" in imports
     assert not any(module.startswith("osw.solvers") for module in imports)
     assert not any(module.startswith("osw.runners") for module in imports)
-    assert not any("calculix_result_dataset_writer" in module for module in imports)
     assert not any("calculix_result_import_write" in module for module in imports)
 
 
@@ -58,7 +58,6 @@ def test_dialog_uses_only_directory_chooser_and_no_execution_paths() -> None:
     forbidden_tokens = (
         "getSaveFileName",
         "getOpenFileName",
-        "write_calculix_result_dataset",
         "prepare_calculix_result_dataset_write_payloads",
         "SolverAdapter",
         "CalculiXRunner",
@@ -94,14 +93,16 @@ def test_dialog_does_not_write_files_or_mutate_runtime_state() -> None:
     assert ".unlink(" not in source
 
 
-def test_docs_describe_display_only_no_write_boundary() -> None:
+def test_docs_describe_guarded_gui_writer_boundary() -> None:
     text = _doc_text()
 
-    assert "output-directory selection implemented" in text
+    assert "gui writer integration implemented" in text
     assert "accepts `feaspeccalculixresultwriteviewmodel`" in text
     assert "qfiledialog directory selection" in text
-    assert "no writer invocation" in text
-    assert "no resultdataset file write" in text
+    assert "explicit confirmation" in text
+    assert "existing library writer" in text
+    assert "actual resultdataset file write" in text
+    assert "selected output directory" in text
     assert "no cli behavior change" in text
     assert "no solver execution" in text
     assert "no subprocess" in text
@@ -135,6 +136,10 @@ def test_dialog_tests_use_tmp_path_not_tracked_result_fixtures() -> None:
             / "tests"
             / "gui"
             / "test_feaspec_calculix_result_write_dialog_actions.py",
+            REPO_ROOT
+            / "tests"
+            / "gui"
+            / "test_feaspec_calculix_result_write_dialog_writer_integration.py",
         )
     )
 

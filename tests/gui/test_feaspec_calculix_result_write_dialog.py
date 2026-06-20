@@ -164,8 +164,8 @@ def test_dialog_renders_safety_and_acknowledgements(
 
     assert "Experimental FEASpec CalculiX ResultDataset write dialog." in safety
     assert "directory-only QFileDialog" in safety
-    assert "No writer call." in safety
-    assert "No ResultDataset file write." in safety
+    assert "Writer calls require enabled gates" in safety
+    assert "existing library writer" in safety
     assert "No directory creation during selection." in safety
     assert "No solver execution." in safety
     assert "Issue #8 live CalculiX validation remains separate and open." in safety

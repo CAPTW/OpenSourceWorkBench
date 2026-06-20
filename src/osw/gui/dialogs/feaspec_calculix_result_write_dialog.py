@@ -1,4 +1,4 @@
-"""Display-only FEASpec CalculiX ResultDataset write dialog."""
+"""Review-first FEASpec CalculiX ResultDataset write dialog."""
 
 from __future__ import annotations
 
@@ -8,9 +8,15 @@ from os import fspath
 from pathlib import Path
 from typing import Any
 
+from osw.experimental.feaspec.calculix_result_dataset_writer import (
+    FEASpecCalculiXResultDatasetWriteResult,
+    explain_calculix_result_dataset_write_result,
+    write_calculix_result_dataset,
+)
 from osw.experimental.feaspec.calculix_result_write_viewmodel import (
     FEASpecCalculiXResultWriteAction,
     FEASpecCalculiXResultWriteActionAvailability,
+    FEASpecCalculiXResultWriteActionState,
     FEASpecCalculiXResultWritePanel,
     FEASpecCalculiXResultWriteRow,
     FEASpecCalculiXResultWriteViewModel,
@@ -29,7 +35,7 @@ _BaseDialog: Any = QtWidgets.QDialog if QtWidgets is not None else object
 
 
 class FEASpecCalculiXResultWriteDialog(_BaseDialog):
-    """Read-only PySide6 surface for the ResultDataset write view-model."""
+    """PySide6 surface for review-first ResultDataset writes."""
 
     def __init__(
         self,
@@ -38,6 +44,8 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         *,
         theme_tokens: ThemeTokens | None = None,
         output_directory_chooser: Callable[[str, str], object] | None = None,
+        result_dataset_writer: Callable[..., object] | None = None,
+        write_confirmation: Callable[[str], bool] | None = None,
     ) -> None:
         if QtCore is None or QtWidgets is None:
             raise PySide6UnavailableError(pyside6_missing_message("result write dialog"))
@@ -50,8 +58,17 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         self._write_invocations = 0
         self._file_dialog_invocations = 0
         self._output_directory_chooser = output_directory_chooser
+        self._result_dataset_writer = (
+            result_dataset_writer or write_calculix_result_dataset
+        )
+        self._write_confirmation = write_confirmation
         self._selected_output_dir = viewmodel.output_dir
         self._selected_save_plan = viewmodel.save_plan
+        self._write_completed = False
+        self._writer_result_object: object | None = None
+        self._writer_result_summary = self._mapping(viewmodel.writer_result_summary)
+        self._last_writer_result_text = ""
+        self._last_confirmation_text = ""
         self._action_buttons: dict[
             FEASpecCalculiXResultWriteAction,
             QtWidgets.QPushButton,
@@ -137,6 +154,11 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
     def has_write_enabled(self) -> bool:
         """Return true only if a write button is enabled."""
 
+        return self.write_button_enabled()
+
+    def write_button_enabled(self) -> bool:
+        """Return whether the guarded write button is currently enabled."""
+
         button = self._action_buttons.get(
             FEASpecCalculiXResultWriteAction.WRITE_RESULT_DATASET
         )
@@ -151,6 +173,42 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         """Return the number of write invocations made by this dialog."""
 
         return self._write_invocations
+
+    def trigger_write_for_test(self, *, confirm: bool = True) -> bool:
+        """Run the guarded write path with an injected confirmation result."""
+
+        original = self._write_confirmation
+        self._write_confirmation = lambda _text: confirm
+        try:
+            return self._attempt_write()
+        finally:
+            self._write_confirmation = original
+
+    def last_writer_result_text(self) -> str:
+        """Return the latest writer-result panel text."""
+
+        return self._last_writer_result_text
+
+    def written_files_text(self) -> str:
+        """Return a compact list of files reported by the writer result."""
+
+        written_files = self._writer_result_summary.get("written_files", ())
+        if not isinstance(written_files, Sequence) or isinstance(written_files, str):
+            return ""
+        lines: list[str] = []
+        for item in written_files:
+            if not isinstance(item, Mapping):
+                continue
+            relative_path = item.get("relative_path") or item.get("path") or "<unknown>"
+            size = item.get("size_bytes") or item.get("size") or "<unknown>"
+            sha256 = item.get("sha256") or "<missing>"
+            lines.append(f"{relative_path} | {size} bytes | {sha256}")
+        return "\n".join(lines)
+
+    def write_confirmation_text(self) -> str:
+        """Return the latest confirmation text shown or injected in tests."""
+
+        return self._last_confirmation_text
 
     def action_button(
         self,
@@ -188,7 +246,7 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         layout = QtWidgets.QVBoxLayout(self)
 
         self.header_label = QtWidgets.QLabel(
-            "FEASpec CalculiX ResultDataset write - display only"
+            "FEASpec CalculiX ResultDataset write - review first"
         )
         self.header_label.setObjectName("oswFeaspecCalculixResultWriteHeader")
         self.header_label.setWordWrap(True)
@@ -251,9 +309,10 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         self._populate_actions_panel()
         self.tabs.addTab(self.actions_panel, "Actions")
 
+        self._last_writer_result_text = self._result_text()
         self.result_panel = self._read_only_text(
             "oswFeaspecCalculixResultWriteResultPanel",
-            self._result_text(),
+            self._last_writer_result_text,
         )
         self.tabs.addTab(self.result_panel, "Result")
 
@@ -328,12 +387,16 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
             if action.action is FEASpecCalculiXResultWriteAction.CHOOSE_OUTPUT_DIRECTORY:
                 button.setEnabled(True)
                 button.setToolTip(
-                    "Choose an output directory only; no files are written."
+                    "Choose an output directory; no files are written by selection."
                 )
                 button.clicked.connect(self.choose_output_directory)
+            elif action.action is FEASpecCalculiXResultWriteAction.WRITE_RESULT_DATASET:
+                button.setEnabled(self._write_action_ready())
+                button.setToolTip(reason or "Write after review confirmation.")
+                button.clicked.connect(self._attempt_write)
             else:
                 button.setEnabled(False)
-                button.setToolTip(reason or "Display-only in this implementation gate.")
+                button.setToolTip(reason or "Not implemented in this gate.")
                 button.clicked.connect(
                     lambda _checked=False, a=action.action: self._noop(a)
                 )
@@ -342,6 +405,7 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
             buttons.addWidget(button, index // 2, index % 2)
         layout.addLayout(buttons)
         self._refresh_output_directory_display()
+        self._refresh_action_buttons()
         layout.addStretch(1)
 
     def _noop(self, _action: FEASpecCalculiXResultWriteAction) -> None:
@@ -366,17 +430,25 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         self.output_directory_field.setText(self._selected_output_dir)
         status_lines = [
             f"Selected output directory: {self._selected_output_dir or '<missing>'}",
-            "Selection updates dialog state only.",
-            "No directory creation.",
-            "No file writes.",
-            "No writer invocation.",
+            "Selection updates the reviewed target state.",
+            "Directory creation and file writes occur only after confirmation.",
+            "The writer is not invoked by directory selection.",
             "",
             "Save target analysis:",
             self._json_text(self._selected_save_plan.to_dict()),
         ]
+        if not self._selected_output_matches_write_plan():
+            status_lines.extend(
+                (
+                    "",
+                    "Write blocker: selected output does not match the reviewed write plan.",
+                )
+            )
         self.output_directory_status.setPlainText("\n".join(status_lines))
         if hasattr(self, "write_plan_panel"):
             self.write_plan_panel.setPlainText(self._write_plan_text())
+        if hasattr(self, "action_summary"):
+            self._refresh_action_buttons()
 
     def _apply_theme(self) -> None:
         self.setStyleSheet(
@@ -400,7 +472,7 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
 
     def _source_text(self) -> str:
         lines = [
-            "ResultDataset write dialog state: output-directory selection only.",
+            "ResultDataset write dialog state: review-first writer integration.",
             f"Result directory: {self._viewmodel.result_dir or '<missing>'}",
             f"Output directory: {self._selected_output_dir or '<missing>'}",
             f"Import status: {self._viewmodel.import_summary.get('status', '')}",
@@ -451,8 +523,8 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         lines = [
             "Experimental FEASpec CalculiX ResultDataset write dialog.",
             "Output-directory selection uses directory-only QFileDialog behavior.",
-            "No writer call.",
-            "No ResultDataset file write.",
+            "Writer calls require enabled gates, selected output, and confirmation.",
+            "ResultDataset files are written only through the existing library writer.",
             "No artifact copying.",
             "No directory creation during selection.",
             "No solver execution.",
@@ -478,12 +550,12 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         return "\n".join(lines)
 
     def _result_text(self) -> str:
-        if not self._viewmodel.writer_result_summary:
+        if not self._writer_result_summary:
             return (
-                "No writer result summary is present. This dialog does not invoke "
-                "the writer."
+                "No writer result summary is present. The writer has not been "
+                "invoked in this dialog session."
             )
-        return self._json_text(self._viewmodel.writer_result_summary)
+        return self._json_text(self._writer_result_summary)
 
     def _rows_text(self, panel: FEASpecCalculiXResultWritePanel) -> str:
         rows = self._viewmodel.rows_for(panel)
@@ -508,15 +580,179 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         self,
         action: FEASpecCalculiXResultWriteActionAvailability,
     ) -> str:
+        if action.action is FEASpecCalculiXResultWriteAction.WRITE_RESULT_DATASET:
+            return "; ".join(self._current_write_disabled_reasons())
         reasons = [reason.value for reason in action.disabled_reasons]
-        if action.action in {
-            FEASpecCalculiXResultWriteAction.WRITE_RESULT_DATASET,
-            FEASpecCalculiXResultWriteAction.OPEN_WRITTEN_OUTPUT,
-        }:
-            reasons.append("display_only_dialog")
+        if action.action is FEASpecCalculiXResultWriteAction.OPEN_WRITTEN_OUTPUT:
+            reasons.append("open_output_not_implemented")
         if not reasons and action.safety_note:
             reasons.append(action.safety_note)
         return "; ".join(reasons)
+
+    def _refresh_action_buttons(self) -> None:
+        self._action_reason_texts = []
+        if hasattr(self, "action_summary"):
+            self.action_summary.clear()
+        for action in self._viewmodel.actions:
+            button = self._action_buttons.get(action.action)
+            if button is None:
+                continue
+            if action.action is FEASpecCalculiXResultWriteAction.CHOOSE_OUTPUT_DIRECTORY:
+                enabled = action.enabled
+            elif action.action is FEASpecCalculiXResultWriteAction.WRITE_RESULT_DATASET:
+                enabled = self._write_action_ready()
+            else:
+                enabled = False
+            button.setEnabled(enabled)
+            reason = self._disabled_reason_text(action)
+            if reason:
+                self._action_reason_texts.append(reason)
+            button.setToolTip(reason or "Ready.")
+            if hasattr(self, "action_summary"):
+                self.action_summary.addItem(self._action_summary_text(action))
+
+    def _write_action_ready(self) -> bool:
+        action = self._viewmodel.action_for(
+            FEASpecCalculiXResultWriteAction.WRITE_RESULT_DATASET
+        )
+        return (
+            action.state is FEASpecCalculiXResultWriteActionState.ENABLED
+            and not self._current_write_disabled_reasons()
+        )
+
+    def _current_write_disabled_reasons(self) -> list[str]:
+        action = self._viewmodel.action_for(
+            FEASpecCalculiXResultWriteAction.WRITE_RESULT_DATASET
+        )
+        reasons = [reason.value for reason in action.disabled_reasons]
+        if action.state is not FEASpecCalculiXResultWriteActionState.ENABLED:
+            reasons.append(action.state.value)
+        if self._write_completed:
+            reasons.append("write_completed")
+        if not self._writer_inputs_are_callable():
+            reasons.append("writer_inputs_not_callable")
+        if not self._selected_output_dir:
+            reasons.append("output_directory_not_selected")
+        if not self._selected_save_plan.can_write_target:
+            reasons.extend(
+                reason.value for reason in self._selected_save_plan.disabled_reasons
+            )
+        if self._selected_output_dir and not self._selected_output_matches_write_plan():
+            reasons.append("selected_output_mismatch")
+        return _dedupe(reasons)
+
+    def _writer_inputs_are_callable(self) -> bool:
+        write_plan = self._viewmodel.inputs.write_plan
+        schema_payload = self._viewmodel.inputs.schema_payload
+        if write_plan is None or schema_payload is None:
+            return False
+        if isinstance(write_plan, Mapping) or isinstance(schema_payload, Mapping):
+            return False
+        return hasattr(write_plan, "target") and hasattr(schema_payload, "dataset")
+
+    def _selected_output_matches_write_plan(self) -> bool:
+        write_plan = self._viewmodel.inputs.write_plan
+        target = getattr(write_plan, "target", None)
+        target_dir = getattr(target, "output_dir", None)
+        if target_dir is None or not self._selected_output_dir:
+            return False
+        try:
+            return Path(self._selected_output_dir) == Path(fspath(target_dir))
+        except (TypeError, ValueError):
+            return False
+
+    def _attempt_write(self, _checked: bool = False) -> bool:
+        if not self._write_action_ready():
+            self._refresh_action_buttons()
+            return False
+        confirmation_text = self._build_confirmation_text()
+        self._last_confirmation_text = confirmation_text
+        if not self._confirm_write(confirmation_text):
+            return False
+
+        self._write_invocations += 1
+        try:
+            result = self._result_dataset_writer(
+                self._viewmodel.inputs.write_plan,
+                self._viewmodel.inputs.schema_payload,
+                overwrite=self._viewmodel.acknowledgements.overwrite,
+            )
+        except Exception as exc:  # pragma: no cover - defensive GUI boundary
+            result = {
+                "status": "failed",
+                "diagnostics": [
+                    {
+                        "code": "FGW_WRITER_EXCEPTION",
+                        "severity": "error",
+                        "message": str(exc),
+                    }
+                ],
+            }
+
+        self._writer_result_object = result
+        self._writer_result_summary = self._mapping(result)
+        self._last_writer_result_text = self._format_writer_result(result)
+        self.result_panel.setPlainText(self._last_writer_result_text)
+        self._write_completed = self._writer_result_status() in {
+            "written",
+            "written-with-warnings",
+            "completed",
+        }
+        self._refresh_action_buttons()
+        return self._write_completed
+
+    def _build_confirmation_text(self) -> str:
+        write_plan = self._viewmodel.inputs.write_plan
+        target = getattr(write_plan, "target", None)
+        target_dir = getattr(target, "output_dir", self._selected_output_dir)
+        planned_files = getattr(write_plan, "planned_files", ())
+        file_names: list[str] = []
+        if isinstance(planned_files, Sequence) and not isinstance(planned_files, str):
+            for planned_file in planned_files:
+                relative_path = getattr(planned_file, "relative_path", None)
+                if relative_path is not None:
+                    file_names.append(str(relative_path))
+        files_text = "\n".join(f"- {name}" for name in file_names)
+        if not files_text:
+            files_text = "- standard ResultDataset files"
+        return (
+            "Write FEASpec CalculiX ResultDataset files?\n\n"
+            f"Target directory: {target_dir}\n"
+            f"Selected directory: {self._selected_output_dir}\n"
+            f"Overwrite: {self._viewmodel.acknowledgements.overwrite}\n\n"
+            "Planned files:\n"
+            f"{files_text}\n\n"
+            "This action writes ResultDataset review files only. It does not copy "
+            "solver artifacts or execute CalculiX."
+        )
+
+    def _confirm_write(self, text: str) -> bool:
+        if self._write_confirmation is not None:
+            return bool(self._write_confirmation(text))
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirm ResultDataset write",
+            text,
+            QtWidgets.QMessageBox.StandardButton.Yes
+            | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.No,
+        )
+        return reply == QtWidgets.QMessageBox.StandardButton.Yes
+
+    def _format_writer_result(self, result: object) -> str:
+        sections: list[str] = []
+        if isinstance(result, FEASpecCalculiXResultDatasetWriteResult):
+            sections.extend(explain_calculix_result_dataset_write_result(result))
+        mapping = self._mapping(result)
+        if mapping:
+            sections.append(self._json_text(mapping))
+        if not sections:
+            sections.append(str(result))
+        return "\n".join(sections)
+
+    def _writer_result_status(self) -> str:
+        status = self._writer_result_summary.get("status")
+        return str(status) if status is not None else ""
 
     def _json_text(self, payload: Mapping[str, Any]) -> str:
         if not payload:
@@ -561,6 +797,16 @@ def _selected_directory_text(selected: object) -> str:
 
 def _display_directory_text(path_text: str) -> str:
     return str(Path(path_text))
+
+
+def _dedupe(values: Sequence[str]) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        if value and value not in seen:
+            result.append(value)
+            seen.add(value)
+    return result
 
 
 __all__ = ["FEASpecCalculiXResultWriteDialog"]

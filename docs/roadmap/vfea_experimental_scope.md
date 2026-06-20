@@ -490,10 +490,10 @@ execution, ProjectSchema mutation, issue `#8` validation, or VFEA completion.
 [FEASpec CalculiX result write dialog](../experimental/feaspec_calculix_result_write_dialog.md)
 adds an experimental PySide6 dialog over that state layer. It shows the
 reviewed write evidence, disabled write action reasons, and later
-directory-only output selection, but adds no writer invocation, no
-ResultDataset file writes, no directory creation during selection, no solver
-execution, no ProjectSchema mutation, no issue `#8` validation, and does not
-complete VFEA.
+directory-only output selection. The latest GUI writer integration delegates
+ResultDataset persistence to the library writer only after enabled gates and
+explicit confirmation. It copies no artifacts, executes no solver, mutates no
+ProjectSchema, validates no issue `#8`, and does not complete VFEA.
 
 [FEASpec CalculiX result write GUI file dialog planning](../experimental/feaspec_calculix_result_write_gui_file_dialog_planning.md)
 adds the design/planning-only output-directory chooser contract for future GUI
@@ -518,6 +518,14 @@ single library-writer call boundary, failure recovery, post-write display,
 retry behavior, state refresh, and mocked tests while adding no GUI writer
 invocation, no GUI file writes, no GUI or view-model source mutation, no solver
 execution, no issue `#8` validation, and no VFEA completion.
+
+[FEASpec CalculiX result write GUI writer integration](../experimental/feaspec_calculix_result_write_gui_writer_integration.md)
+adds the guarded GUI writer call for reviewed ResultDataset persistence. The
+dialog requires the reviewed write plan, schema payload, selected output
+directory, acknowledgements, and explicit confirmation before delegating to the
+existing library writer. It writes only standard ResultDataset review files,
+copies no original solver artifacts, executes no solver, changes no CLI/library
+writer behavior, validates no issue `#8`, and does not complete VFEA.
 
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)

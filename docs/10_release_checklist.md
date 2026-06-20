@@ -327,6 +327,7 @@ or full solver parity.
 | HTML report export is deterministic and data-only. | `PASS` | `OSW-FUNC-011_REPORT_GENERATOR_BINDING` exports ProjectSchema-backed HTML summaries without executing solvers, scripts, MATLAB, Octave, or external commands. |
 | External solver availability is not guaranteed. | `PASS` | README, install guide, known limitations, and demo smoke checklist state external solvers are optional. |
 | Results without validation evidence remain marked as preview, template-based, fixture-backed, or educational. | `PASS` | Validation matrix and known limitations use this language. |
+| FEASpec CalculiX GUI ResultDataset writes remain review-gated. | `PASS` | The write dialog requires enabled write-plan/schema/acknowledgement gates and explicit confirmation, delegates only to the library writer, copies no original solver artifacts, executes no solver, and leaves issue `#8` open. |
 
 ## Report Evidence Checklist
 

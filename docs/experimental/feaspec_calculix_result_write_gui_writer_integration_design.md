@@ -3,6 +3,11 @@
 Status: design-only. No GUI writer invocation. No GUI file writes. No solver
 execution.
 
+Implementation follow-up:
+[FEASpec CalculiX result write GUI writer integration](feaspec_calculix_result_write_gui_writer_integration.md)
+documents the later guarded GUI writer call through the existing library writer.
+This design page remains the historical pre-implementation contract.
+
 ## Release context
 
 - `v0.1.4-rc1` is a public prerelease.
@@ -208,5 +213,6 @@ solver validation.
 ## Next implementation slices
 
 - `OSW-EXP-051_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION`
+- [FEASpec CalculiX result write GUI writer integration](feaspec_calculix_result_write_gui_writer_integration.md)
 - `OSW-EXP-052_FEASPEC_RESULT_IMPORT_WRITE_GUI_POST_WRITE_POLISH`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

@@ -203,10 +203,11 @@ request should stop, park, or defer.
   issue `#8`, or making certification claims.
 - Experimental FEASpec CalculiX result write dialog behavior that renders the
   write view-model in a PySide6 dialog and may collect directory-only output
-  selection while keeping writer invocation, ResultDataset writes, CLI
-  behavior changes, solver execution, SolverAdapter/runner paths,
-  ProjectSchema mutation, live issue `#8` validation, bundled solvers, and
-  certification claims out of scope.
+  selection and perform guarded ResultDataset persistence only through the
+  existing library writer after enabled gates and explicit confirmation, while
+  keeping artifact copying, CLI/library writer behavior changes, solver
+  execution, SolverAdapter/runner paths, ProjectSchema mutation, live issue
+  `#8` validation, bundled solvers, and certification claims out of scope.
 - Design/planning-only FEASpec CalculiX result write GUI file-dialog behavior
   that defines future output-directory selection, default-directory policy,
   cancel no-op behavior, path validation, create-dir and overwrite
@@ -220,6 +221,13 @@ request should stop, park, or defer.
   ResultDataset files, creating directories during selection, copying
   artifacts, changing CLI behavior, running solvers, validating issue `#8`,
   bundling solvers, or making certification claims.
+- Experimental FEASpec CalculiX result write GUI writer integration behavior
+  that enables write only after reviewed state and confirmation, delegates
+  actual ResultDataset file writes to the existing library writer, writes only
+  standard review files under the selected output directory, and still copies
+  no original solver artifacts, opens no output-folder command, changes no CLI
+  or library writer behavior, runs no solver, validates no issue `#8`, bundles
+  no solvers, and makes no certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
