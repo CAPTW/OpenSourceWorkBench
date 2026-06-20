@@ -229,6 +229,11 @@ and must not be used to close issue `#8`.
 
 ## Next implementation slices
 
-- `OSW-EXP-049_FEASPEC_RESULT_IMPORT_WRITE_GUI_FILE_DIALOG_IMPLEMENTATION`
+- [FEASpec CalculiX result write GUI file dialog](feaspec_calculix_result_write_gui_file_dialog.md)
+  records the separate `OSW-EXP-049_FEASPEC_RESULT_IMPORT_WRITE_GUI_FILE_DIALOG_IMPLEMENTATION`
+  gate. That follow-up implements directory-only output-directory selection
+  while preserving no writer invocation, no ResultDataset file writes, no
+  directory creation during selection, no solver execution, and no issue `#8`
+  validation.
 - `OSW-EXP-050_FEASPEC_RESULT_IMPORT_WRITE_GUI_WRITER_INTEGRATION_NO_SOLVER`
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

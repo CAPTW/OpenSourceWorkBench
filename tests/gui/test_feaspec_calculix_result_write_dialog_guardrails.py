@@ -52,12 +52,12 @@ def test_dialog_imports_only_gui_and_viewmodel_safe_layers() -> None:
     assert not any("calculix_result_import_write" in module for module in imports)
 
 
-def test_dialog_does_not_reference_write_file_dialog_or_execution_paths() -> None:
+def test_dialog_uses_only_directory_chooser_and_no_execution_paths() -> None:
     source = _source_text()
     imports = _imported_modules()
     forbidden_tokens = (
-        "QFileDialog",
-        "getExistingDirectory",
+        "getSaveFileName",
+        "getOpenFileName",
         "write_calculix_result_dataset",
         "prepare_calculix_result_dataset_write_payloads",
         "SolverAdapter",
@@ -75,6 +75,9 @@ def test_dialog_does_not_reference_write_file_dialog_or_execution_paths() -> Non
 
     for token in forbidden_tokens:
         assert token not in source
+    assert "QFileDialog" in source
+    assert "getExistingDirectory" in source
+    assert "ShowDirsOnly" in source
     assert "sub" + "process" not in source
     assert not any("runner" in module for module in imports)
     assert not any("solvers" in module and "adapter" in module for module in imports)
@@ -94,9 +97,9 @@ def test_dialog_does_not_write_files_or_mutate_runtime_state() -> None:
 def test_docs_describe_display_only_no_write_boundary() -> None:
     text = _doc_text()
 
-    assert "display-only gui dialog implemented" in text
+    assert "output-directory selection implemented" in text
     assert "accepts `feaspeccalculixresultwriteviewmodel`" in text
-    assert "no qfiledialog" in text
+    assert "qfiledialog directory selection" in text
     assert "no writer invocation" in text
     assert "no resultdataset file write" in text
     assert "no cli behavior change" in text

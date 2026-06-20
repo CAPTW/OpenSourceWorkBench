@@ -202,10 +202,11 @@ request should stop, park, or defer.
   SolverAdapter/runner/subprocess paths, mutating ProjectSchema, validating
   issue `#8`, or making certification claims.
 - Experimental FEASpec CalculiX result write dialog behavior that renders the
-  write view-model in a display-only PySide6 dialog while keeping QFileDialog,
-  writer invocation, ResultDataset writes, CLI behavior changes, solver
-  execution, SolverAdapter/runner paths, ProjectSchema mutation, live issue
-  `#8` validation, bundled solvers, and certification claims out of scope.
+  write view-model in a PySide6 dialog and may collect directory-only output
+  selection while keeping writer invocation, ResultDataset writes, CLI
+  behavior changes, solver execution, SolverAdapter/runner paths,
+  ProjectSchema mutation, live issue `#8` validation, bundled solvers, and
+  certification claims out of scope.
 - Design/planning-only FEASpec CalculiX result write GUI file-dialog behavior
   that defines future output-directory selection, default-directory policy,
   cancel no-op behavior, path validation, create-dir and overwrite
@@ -213,6 +214,12 @@ request should stop, park, or defer.
   without adding QFileDialog implementation, GUI source changes, writer
   invocation, ResultDataset writes, solver execution, live issue `#8`
   validation, bundled solvers, or certification claims.
+- Experimental FEASpec CalculiX result write GUI file-dialog behavior that
+  uses directory-only output selection to update dialog-local selected-path
+  display and save-plan analysis without invoking the writer, writing
+  ResultDataset files, creating directories during selection, copying
+  artifacts, changing CLI behavior, running solvers, validating issue `#8`,
+  bundling solvers, or making certification claims.
 - Experimental FEASpec human review record model that serializes reviewer
   state/action, accepted-warning reasons, diagnostic decisions, validator
   summary/hash, bridge/case/export summaries, acknowledgements, and
@@ -508,6 +515,13 @@ Scope drift is any change that:
   external command invocation, ProjectSchema mutation, dependency install,
   live issue `#8` validation, release mutation, issue closure, certification,
   or bundled-solver claim without a separate gate;
+- turns the FEASpec CalculiX result write GUI file-dialog implementation into
+  active GUI file writes, writer invocation, directory creation during
+  selection, artifact copying, solver execution path, SolverAdapter/runner
+  integration, subprocess or external command invocation, ProjectSchema
+  mutation, dependency install, live issue `#8` validation, release mutation,
+  issue closure, certification, or bundled-solver claim without a separate
+  gate;
 - turns the FEASpec human review record model into GUI approval workflow, run
   gate behavior, result import behavior, SolverAdapter/runner integration,
   subprocess or external command invocation, live `ccx` validation,

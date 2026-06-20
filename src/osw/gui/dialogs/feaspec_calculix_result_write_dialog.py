@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping, Sequence
+from os import fspath
+from pathlib import Path
 from typing import Any
 
 from osw.experimental.feaspec.calculix_result_write_viewmodel import (
@@ -12,6 +14,7 @@ from osw.experimental.feaspec.calculix_result_write_viewmodel import (
     FEASpecCalculiXResultWritePanel,
     FEASpecCalculiXResultWriteRow,
     FEASpecCalculiXResultWriteViewModel,
+    plan_calculix_result_write_save_path,
 )
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
 from osw.gui.theme_tokens import DARK_TOKENS, ThemeTokens
@@ -34,6 +37,7 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         parent: object | None = None,
         *,
         theme_tokens: ThemeTokens | None = None,
+        output_directory_chooser: Callable[[str, str], object] | None = None,
     ) -> None:
         if QtCore is None or QtWidgets is None:
             raise PySide6UnavailableError(pyside6_missing_message("result write dialog"))
@@ -44,6 +48,10 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         self._viewmodel = viewmodel
         self._tokens = theme_tokens or DARK_TOKENS
         self._write_invocations = 0
+        self._file_dialog_invocations = 0
+        self._output_directory_chooser = output_directory_chooser
+        self._selected_output_dir = viewmodel.output_dir
+        self._selected_save_plan = viewmodel.save_plan
         self._action_buttons: dict[
             FEASpecCalculiXResultWriteAction,
             QtWidgets.QPushButton,
@@ -88,6 +96,34 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
 
         return self.write_plan_panel.toPlainText()
 
+    def save_plan_text(self) -> str:
+        """Return the current save-plan display text."""
+
+        return self.write_plan_panel.toPlainText()
+
+    def output_directory_text(self) -> str:
+        """Return the selected output-directory field text."""
+
+        return self.output_directory_field.text()
+
+    def selected_output_directory(self) -> str:
+        """Return the currently selected output directory."""
+
+        return self._selected_output_dir
+
+    def choose_output_directory_enabled(self) -> bool:
+        """Return whether output-directory selection is available."""
+
+        button = self._action_buttons.get(
+            FEASpecCalculiXResultWriteAction.CHOOSE_OUTPUT_DIRECTORY
+        )
+        return bool(button and button.isEnabled())
+
+    def file_dialog_invocation_count(self) -> int:
+        """Return how often the directory chooser was invoked."""
+
+        return self._file_dialog_invocations
+
     def result_summary_text(self) -> str:
         """Return the result-summary panel text."""
 
@@ -109,7 +145,7 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
     def has_file_dialog_controls(self) -> bool:
         """Return whether active directory-selection controls exist."""
 
-        return False
+        return self.choose_output_directory_enabled()
 
     def write_invocation_count(self) -> int:
         """Return the number of write invocations made by this dialog."""
@@ -123,6 +159,30 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         """Return a rendered action button for focused GUI tests."""
 
         return self._action_buttons.get(action)
+
+    def choose_output_directory(self) -> bool:
+        """Select an output directory and refresh display-only save-plan state."""
+
+        self._file_dialog_invocations += 1
+        selected = self._select_output_directory()
+        selected_text = _selected_directory_text(selected)
+        if not selected_text:
+            return False
+        return self.select_output_directory_for_test(selected_text)
+
+    def select_output_directory_for_test(self, path: object) -> bool:
+        """Apply a selected output directory without opening a file dialog."""
+
+        selected_text = _selected_directory_text(path)
+        if not selected_text:
+            return False
+        self._selected_output_dir = _display_directory_text(selected_text)
+        self._selected_save_plan = plan_calculix_result_write_save_path(
+            self._viewmodel,
+            self._selected_output_dir,
+        )
+        self._refresh_output_directory_display()
+        return True
 
     def _build_layout(self) -> None:
         layout = QtWidgets.QVBoxLayout(self)
@@ -211,6 +271,26 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         self.action_summary.setObjectName("oswFeaspecCalculixResultWriteActionSummary")
         layout.addWidget(self.action_summary)
 
+        output_group = QtWidgets.QGroupBox("Output directory")
+        output_group.setObjectName("oswFeaspecCalculixResultWriteOutputDirectoryGroup")
+        output_layout = QtWidgets.QVBoxLayout(output_group)
+        output_row = QtWidgets.QHBoxLayout()
+        self.output_directory_field = QtWidgets.QLineEdit()
+        self.output_directory_field.setObjectName(
+            "oswFeaspecCalculixResultWriteOutputDirectory"
+        )
+        self.output_directory_field.setReadOnly(True)
+        output_row.addWidget(self.output_directory_field, stretch=1)
+        output_layout.addLayout(output_row)
+        self.output_directory_status = QtWidgets.QPlainTextEdit()
+        self.output_directory_status.setObjectName(
+            "oswFeaspecCalculixResultWriteOutputDirectoryStatus"
+        )
+        self.output_directory_status.setReadOnly(True)
+        self.output_directory_status.setMaximumHeight(120)
+        output_layout.addWidget(self.output_directory_status)
+        layout.addWidget(output_group)
+
         self._acknowledgement_boxes: list[object] = []
         ack_group = QtWidgets.QGroupBox("Acknowledgements")
         ack_layout = QtWidgets.QVBoxLayout(ack_group)
@@ -244,18 +324,59 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
             button.setObjectName(
                 f"oswFeaspecCalculixResultWriteAction_{action.action.value}"
             )
-            button.setEnabled(False)
             reason = self._disabled_reason_text(action)
-            button.setToolTip(reason or "Display-only in this implementation gate.")
-            button.clicked.connect(lambda _checked=False, a=action.action: self._noop(a))
+            if action.action is FEASpecCalculiXResultWriteAction.CHOOSE_OUTPUT_DIRECTORY:
+                button.setEnabled(True)
+                button.setToolTip(
+                    "Choose an output directory only; no files are written."
+                )
+                button.clicked.connect(self.choose_output_directory)
+            else:
+                button.setEnabled(False)
+                button.setToolTip(reason or "Display-only in this implementation gate.")
+                button.clicked.connect(
+                    lambda _checked=False, a=action.action: self._noop(a)
+                )
             self._action_buttons[action.action] = button
             self._action_reason_texts.append(reason)
             buttons.addWidget(button, index // 2, index % 2)
         layout.addLayout(buttons)
+        self._refresh_output_directory_display()
         layout.addStretch(1)
 
     def _noop(self, _action: FEASpecCalculiXResultWriteAction) -> None:
         return None
+
+    def _select_output_directory(self) -> object:
+        title = "Choose ResultDataset Output Directory"
+        initial_dir = self._selected_output_dir or self._viewmodel.output_dir
+        if self._output_directory_chooser is not None:
+            return self._output_directory_chooser(title, initial_dir)
+        return QtWidgets.QFileDialog.getExistingDirectory(
+            self,
+            title,
+            initial_dir,
+            QtWidgets.QFileDialog.Option.ShowDirsOnly
+            | QtWidgets.QFileDialog.Option.DontResolveSymlinks,
+        )
+
+    def _refresh_output_directory_display(self) -> None:
+        if not hasattr(self, "output_directory_field"):
+            return
+        self.output_directory_field.setText(self._selected_output_dir)
+        status_lines = [
+            f"Selected output directory: {self._selected_output_dir or '<missing>'}",
+            "Selection updates dialog state only.",
+            "No directory creation.",
+            "No file writes.",
+            "No writer invocation.",
+            "",
+            "Save target analysis:",
+            self._json_text(self._selected_save_plan.to_dict()),
+        ]
+        self.output_directory_status.setPlainText("\n".join(status_lines))
+        if hasattr(self, "write_plan_panel"):
+            self.write_plan_panel.setPlainText(self._write_plan_text())
 
     def _apply_theme(self) -> None:
         self.setStyleSheet(
@@ -279,9 +400,9 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
 
     def _source_text(self) -> str:
         lines = [
-            "ResultDataset write dialog state: display-only.",
+            "ResultDataset write dialog state: output-directory selection only.",
             f"Result directory: {self._viewmodel.result_dir or '<missing>'}",
-            f"Output directory: {self._viewmodel.output_dir or '<missing>'}",
+            f"Output directory: {self._selected_output_dir or '<missing>'}",
             f"Import status: {self._viewmodel.import_summary.get('status', '')}",
             f"Draft mapping status: {self._viewmodel.draft_mapping_summary.get('status', '')}",
             f"Write plan status: {self._viewmodel.write_plan_summary.get('status', '')}",
@@ -299,8 +420,10 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
         lines = [
             self._rows_text(FEASpecCalculiXResultWritePanel.WRITE_PLAN),
             "",
+            f"Selected output directory: {self._selected_output_dir or '<missing>'}",
+            "",
             "Save target analysis:",
-            self._json_text(self._viewmodel.save_plan.to_dict()),
+            self._json_text(self._selected_save_plan.to_dict()),
             "",
             "Planned files:",
             self._planned_files_text(),
@@ -326,11 +449,12 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
 
     def _safety_text(self) -> str:
         lines = [
-            "Display-only FEASpec CalculiX ResultDataset write dialog.",
-            "No file dialog.",
+            "Experimental FEASpec CalculiX ResultDataset write dialog.",
+            "Output-directory selection uses directory-only QFileDialog behavior.",
             "No writer call.",
             "No ResultDataset file write.",
             "No artifact copying.",
+            "No directory creation during selection.",
             "No solver execution.",
             "No command execution.",
             "No release, tag, asset, or issue mutation.",
@@ -386,7 +510,6 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
     ) -> str:
         reasons = [reason.value for reason in action.disabled_reasons]
         if action.action in {
-            FEASpecCalculiXResultWriteAction.CHOOSE_OUTPUT_DIRECTORY,
             FEASpecCalculiXResultWriteAction.WRITE_RESULT_DATASET,
             FEASpecCalculiXResultWriteAction.OPEN_WRITTEN_OUTPUT,
         }:
@@ -418,6 +541,26 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
             if isinstance(item, Mapping):
                 records.append(dict(item))
         return tuple(records)
+
+
+def _selected_directory_text(selected: object) -> str:
+    if selected is None:
+        return ""
+    if isinstance(selected, str):
+        return selected.strip()
+    if isinstance(selected, Path):
+        return fspath(selected)
+    if isinstance(selected, Sequence) and not isinstance(selected, str | bytes):
+        if not selected:
+            return ""
+        return _selected_directory_text(selected[0])
+    if hasattr(selected, "__fspath__"):
+        return str(fspath(selected)).strip()
+    return str(selected).strip()
+
+
+def _display_directory_text(path_text: str) -> str:
+    return str(Path(path_text))
 
 
 __all__ = ["FEASpecCalculiXResultWriteDialog"]

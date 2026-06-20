@@ -162,10 +162,11 @@ def test_dialog_renders_safety_and_acknowledgements(
     dialog = FEASpecCalculiXResultWriteDialog(_write_viewmodel(tmp_path))
     safety = dialog.safety_text()
 
-    assert "Display-only FEASpec CalculiX ResultDataset write dialog." in safety
-    assert "No file dialog." in safety
+    assert "Experimental FEASpec CalculiX ResultDataset write dialog." in safety
+    assert "directory-only QFileDialog" in safety
     assert "No writer call." in safety
     assert "No ResultDataset file write." in safety
+    assert "No directory creation during selection." in safety
     assert "No solver execution." in safety
     assert "Issue #8 live CalculiX validation remains separate and open." in safety
     assert "External solvers are optional and not bundled." in safety

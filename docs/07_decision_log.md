@@ -1511,3 +1511,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   ProjectSchema mutation, no VLM API, no dependency install, no release/tag or
   asset mutation, no issue mutation, no live issue `#8` validation, and no
   bundled-solver or certification claim.
+
+## ADR-0076: FEASpec CalculiX Result Write File Dialog Selects Directories Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-20
+- Context: ADR-0075 defined the output-directory chooser contract for the
+  ResultDataset write dialog. The next bounded slice is to let the dialog
+  collect explicit output-directory intent without invoking the writer or
+  creating any ResultDataset files.
+- Decision: Enable the `CHOOSE_OUTPUT_DIRECTORY` action in
+  `FEASpecCalculiXResultWriteDialog` and use directory-only
+  `QFileDialog.getExistingDirectory` behavior. The dialog accepts an injectable
+  chooser for tests, treats cancel as no-op, updates only dialog-local selected
+  directory display, and refreshes visible save-plan analysis through the
+  existing view-model helper.
+- Consequences: This gate adds no writer invocation, no ResultDataset file
+  write, no directory creation during selection, no artifact copying, no CLI
+  behavior change, no library writer behavior change, no solver execution, no
+  SolverAdapter or runner integration, no subprocess use, no ProjectSchema
+  mutation, no VLM API, no dependency install, no release/tag or asset
+  mutation, no issue mutation, no live issue `#8` validation, and no
+  bundled-solver or certification claim.

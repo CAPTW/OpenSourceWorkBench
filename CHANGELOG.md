@@ -340,13 +340,13 @@ by a dedicated release/tag gate.
   PySide/Qt import, GUI dialog, file dialog, writer invocation, ResultDataset
   write, solver execution, SolverAdapter/runner path, ProjectSchema mutation,
   VLM API, release mutation, or issue `#8` validation.
-- Added an experimental FEASpec CalculiX result write dialog under
-  `src/osw/gui/dialogs/`. It renders the write view-model as a display-only
+- Added the initial experimental FEASpec CalculiX result write dialog under
+  `src/osw/gui/dialogs/`. It rendered the write view-model as a display-only
   PySide6 dialog with source, artifact, diagnostics, draft mapping, write plan,
-  schema/manifest, safety, actions, and result panels. It adds no QFileDialog,
-  writer invocation, ResultDataset file write, CLI behavior change, solver
-  execution, SolverAdapter/runner path, ProjectSchema mutation, VLM API,
-  release mutation, or issue `#8` validation.
+  schema/manifest, safety, actions, and result panels. That initial slice
+  added no QFileDialog, writer invocation, ResultDataset file write, CLI
+  behavior change, solver execution, SolverAdapter/runner path, ProjectSchema
+  mutation, VLM API, release mutation, or issue `#8` validation.
 - Added a design/planning-only FEASpec CalculiX result write GUI file-dialog
   contract. It defines future output-directory selection, default-directory
   policy, cancel no-op behavior, path validation, create-dir and overwrite
@@ -354,6 +354,14 @@ by a dedicated release/tag gate.
   adding no QFileDialog implementation, GUI source change, writer invocation,
   ResultDataset file write, solver execution, SolverAdapter/runner path,
   ProjectSchema mutation, VLM API, release mutation, or issue `#8` validation.
+- Added experimental FEASpec CalculiX result write GUI output-directory
+  selection under `src/osw/gui/dialogs/`. It uses directory-only
+  `QFileDialog.getExistingDirectory` behavior with injectable test selection,
+  cancel no-op behavior, selected-directory display, and refreshed save-plan
+  analysis while adding no writer invocation, ResultDataset file write,
+  directory creation during selection, artifact copying, CLI behavior change,
+  solver execution, SolverAdapter/runner path, ProjectSchema mutation, VLM
+  API, release mutation, or issue `#8` validation.
 - Preserved the release boundaries: no dependency install, solver install,
   release mutation, asset upload, issue closure, bundled external solver,
   stable-production claim, industrial certification claim, or VFEA

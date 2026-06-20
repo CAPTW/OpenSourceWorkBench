@@ -77,7 +77,7 @@ def _viewmodel(tmp_path: Path, *, missing_output: bool = False):
     )
 
 
-def test_action_buttons_render_but_write_and_file_dialog_are_disabled(
+def test_action_buttons_render_write_disabled_and_file_dialog_enabled(
     app: object,
     tmp_path: Path,
 ) -> None:
@@ -91,7 +91,8 @@ def test_action_buttons_render_but_write_and_file_dialog_are_disabled(
     assert "Choose output directory" in dialog.action_labels()
     assert "Write ResultDataset" in dialog.action_labels()
     assert dialog.has_write_enabled() is False
-    assert dialog.has_file_dialog_controls() is False
+    assert dialog.has_file_dialog_controls() is True
+    assert dialog.choose_output_directory_enabled() is True
     write_button = dialog.action_button(
         FEASpecCalculiXResultWriteAction.WRITE_RESULT_DATASET
     )
@@ -101,7 +102,7 @@ def test_action_buttons_render_but_write_and_file_dialog_are_disabled(
     assert write_button is not None
     assert choose_button is not None
     assert write_button.isEnabled() is False
-    assert choose_button.isEnabled() is False
+    assert choose_button.isEnabled() is True
 
 
 def test_disabled_reasons_include_viewmodel_and_display_only_gate(
@@ -129,7 +130,10 @@ def test_action_button_clicks_do_not_create_files(app: object, tmp_path: Path) -
     )
 
     sentinel = tmp_path / "dataset" / "result_dataset.json"
-    dialog = FEASpecCalculiXResultWriteDialog(_viewmodel(tmp_path))
+    dialog = FEASpecCalculiXResultWriteDialog(
+        _viewmodel(tmp_path),
+        output_directory_chooser=lambda _title, _initial: str(tmp_path / "chosen"),
+    )
 
     for button in dialog.findChildren(QtWidgets.QPushButton):
         if button is dialog.close_button:
@@ -137,7 +141,9 @@ def test_action_button_clicks_do_not_create_files(app: object, tmp_path: Path) -
         button.click()
 
     assert sentinel.exists() is False
+    assert (tmp_path / "chosen").exists() is False
     assert dialog.write_invocation_count() == 0
+    assert dialog.file_dialog_invocation_count() == 1
 
 
 def test_close_button_only_closes_dialog(app: object, tmp_path: Path) -> None:

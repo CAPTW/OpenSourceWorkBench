@@ -204,11 +204,13 @@ This view-model is a presentation state layer over those records. It does not
 alter writer behavior and does not add a GUI write command.
 
 [FEASpec CalculiX result write dialog](feaspec_calculix_result_write_dialog.md)
-now consumes this view-model in a display-only PySide6 dialog. That dialog
-renders panels, actions, disabled reasons, acknowledgements, safety text,
-planned files, and optional writer-result summaries, but it still has no
-QFileDialog, no writer invocation, no ResultDataset file write, no solver
-execution, and no issue `#8` validation.
+now consumes this view-model in a PySide6 dialog. That dialog renders panels,
+actions, disabled reasons, acknowledgements, safety text, planned files, and
+optional writer-result summaries. A later GUI gate adds directory-only
+QFileDialog output selection in the dialog layer, while this view-model remains
+pure Python and still has no PySide/Qt import, no file-dialog implementation,
+no writer invocation, no ResultDataset file write, no solver execution, and no
+issue `#8` validation.
 
 ## Relationship to issue #8
 
@@ -263,4 +265,8 @@ fixtures are added by this gate.
   records the future QFileDialog/output-directory policy without changing the
   view-model source, opening file dialogs, invoking the writer, writing files,
   or validating issue `#8`.
+- [FEASpec CalculiX result write GUI file dialog](feaspec_calculix_result_write_gui_file_dialog.md)
+  records the dialog-layer output-directory selection implementation. The
+  view-model source remains unchanged and continues to provide display-only
+  save-plan analysis for the selected directory.
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

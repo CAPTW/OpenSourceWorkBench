@@ -1,7 +1,9 @@
 # FEASpec CalculiX result import write GUI design
 
-Status: design-only. No GUI write command implementation. No file dialog
-implementation. No solver execution.
+Status: design-only baseline. The initial GUI write command design remains
+review-first. No file dialog implementation in this design gate. A later
+dialog gate implements output-directory selection only. No GUI write command
+implementation. No writer invocation from the GUI. No solver execution.
 
 ## Release context
 
@@ -239,10 +241,10 @@ and no subprocess invocation.
   Python state layer only.
 - [FEASpec CalculiX result write dialog](feaspec_calculix_result_write_dialog.md)
   implements `OSW-EXP-047_FEASPEC_RESULT_IMPORT_WRITE_GUI_DIALOG_IMPLEMENTATION`
-  as a display-only PySide6 surface over the view-model. It adds no
-  QFileDialog, writer invocation, ResultDataset write behavior, solver
-  execution, SolverAdapter/runner path, ProjectSchema mutation, or issue `#8`
-  validation.
+  as a PySide6 surface over the view-model. The initial dialog gate kept
+  output-directory selection disabled, writer invocation absent, ResultDataset
+  write behavior absent, solver execution absent, SolverAdapter/runner paths
+  absent, ProjectSchema mutation absent, and issue `#8` validation absent.
 - [FEASpec CalculiX result write GUI file dialog planning](feaspec_calculix_result_write_gui_file_dialog_planning.md)
   defines `OSW-EXP-048_FEASPEC_RESULT_IMPORT_WRITE_GUI_FILE_DIALOG_PLANNING`
   as a planning-only contract for future output-directory selection,
@@ -250,4 +252,10 @@ and no subprocess invocation.
   acknowledgement, CLI/GUI consistency, and mocked implementation tests. It
   adds no GUI source, no QFileDialog implementation, no writer invocation, no
   ResultDataset write, no solver execution, and no issue `#8` validation.
+- [FEASpec CalculiX result write GUI file dialog](feaspec_calculix_result_write_gui_file_dialog.md)
+  implements `OSW-EXP-049_FEASPEC_RESULT_IMPORT_WRITE_GUI_FILE_DIALOG_IMPLEMENTATION`
+  as directory-only output selection in the dialog. It still adds no writer
+  invocation, no ResultDataset file writes, no directory creation during
+  selection, no CLI behavior change, no library writer behavior change, no
+  solver execution, and no issue `#8` validation.
 - `OSW-VALID-004_LIVE_CALCULIX_RUN_GATE_VALIDATION_IF_INSTALLED`

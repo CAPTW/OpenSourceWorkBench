@@ -488,9 +488,10 @@ file-dialog behavior, writer invocation, ResultDataset persistence, solver
 execution, ProjectSchema mutation, issue `#8` validation, or VFEA completion.
 
 [FEASpec CalculiX result write dialog](../experimental/feaspec_calculix_result_write_dialog.md)
-adds an experimental display-only PySide6 dialog over that state layer. It
-shows the reviewed write evidence and disabled action reasons, but adds no
-QFileDialog, no writer invocation, no ResultDataset file writes, no solver
+adds an experimental PySide6 dialog over that state layer. It shows the
+reviewed write evidence, disabled write action reasons, and later
+directory-only output selection, but adds no writer invocation, no
+ResultDataset file writes, no directory creation during selection, no solver
 execution, no ProjectSchema mutation, no issue `#8` validation, and does not
 complete VFEA.
 
@@ -502,6 +503,13 @@ validation, CLI/GUI consistency, and future mocked tests while adding no
 QFileDialog implementation, no GUI source changes, no writer invocation, no
 ResultDataset persistence, no solver execution, no issue `#8` validation, and
 does not complete VFEA.
+
+[FEASpec CalculiX result write GUI file dialog](../experimental/feaspec_calculix_result_write_gui_file_dialog.md)
+adds experimental directory-only output selection to the write dialog. It
+updates dialog-local selected-directory display and save-plan analysis with
+cancel no-op behavior, but still invokes no writer, writes no ResultDataset
+files, creates no directories during selection, copies no artifacts, executes
+no solver, validates no issue `#8`, and does not complete VFEA.
 
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
