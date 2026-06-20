@@ -15,6 +15,11 @@ by a dedicated release/tag gate.
   CoolProp/Cantera, and PyVista/meshio were missing, so each target was
   classified as `skipped-missing` and remains open for a prepared validation
   environment.
+- Recorded an OSW-VALID-004 installed-only CalculiX issue `#8` rerun for
+  `v0.1.4-rc1`. `ccx` was not discovered on this machine, so the result is
+  `skipped-missing`; no solver execution, dependency install, solver install,
+  release mutation, asset upload, issue closure, bundled solver claim, or
+  certification claim occurred.
 - Added a prepared-machine plan for issues `#6` through `#11`, defining
   required packages/executables, future installed-only validation commands,
   pass/partial/keep-open criteria, and separate closure-gate requirements.
