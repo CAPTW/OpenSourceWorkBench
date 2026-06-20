@@ -43,6 +43,7 @@ def _minimal_release_tree(root: Path, *, version: str = "0.1.0rc3") -> None:
         "0.1.3rc1": "v0.1.3-rc1",
         "0.1.3rc2.dev0": "v0.1.3-rc1",
         "0.1.4rc1": "v0.1.4-rc1",
+        "0.1.5rc1": "v0.1.5-rc1",
     }
     tag = tag_by_version.get(version, "v0.1.0-rc3")
     _write(
@@ -296,7 +297,7 @@ def test_release_metadata_accepts_aligned_rc3_tree(tmp_path: Path) -> None:
     assert check_release_metadata(tmp_path, expected_version="0.1.0rc3", check_tags=False) == []
 
 
-def test_default_release_metadata_accepts_current_v014rc1_history(
+def test_default_release_metadata_accepts_current_v015rc1_history(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -322,7 +323,7 @@ def test_default_release_metadata_accepts_current_v014rc1_history(
 def test_default_release_metadata_reports_installed_distribution_version_mismatch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _minimal_release_tree(tmp_path, version="0.1.4rc1")
+    _minimal_release_tree(tmp_path, version="0.1.5rc1")
     monkeypatch.setattr(
         release_metadata.importlib_metadata,
         "version",
@@ -331,13 +332,13 @@ def test_default_release_metadata_reports_installed_distribution_version_mismatc
 
     failures = check_release_metadata(
         tmp_path,
-        expected_version="0.1.4rc1",
+        expected_version="0.1.5rc1",
         check_tags=False,
         check_installed_distribution=True,
     )
 
     assert any(
-        "Installed package metadata version is 0.1.3rc1, expected 0.1.4rc1."
+        "Installed package metadata version is 0.1.3rc1, expected 0.1.5rc1."
         in failure
         for failure in failures
     )
@@ -346,17 +347,17 @@ def test_default_release_metadata_reports_installed_distribution_version_mismatc
 def test_default_release_metadata_accepts_when_installed_distribution_version_matches(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _minimal_release_tree(tmp_path, version="0.1.4rc1")
+    _minimal_release_tree(tmp_path, version="0.1.5rc1")
     monkeypatch.setattr(
         release_metadata.importlib_metadata,
         "version",
-        lambda _: "0.1.4rc1",
+        lambda _: "0.1.5rc1",
     )
 
     assert (
         check_release_metadata(
             tmp_path,
-            expected_version="0.1.4rc1",
+            expected_version="0.1.5rc1",
             check_tags=False,
             check_installed_distribution=True,
         )
@@ -367,7 +368,7 @@ def test_default_release_metadata_accepts_when_installed_distribution_version_ma
 def test_default_release_metadata_accepts_without_installed_distribution(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _minimal_release_tree(tmp_path, version="0.1.4rc1")
+    _minimal_release_tree(tmp_path, version="0.1.5rc1")
 
     def _missing(_: str) -> str:
         raise release_metadata.importlib_metadata.PackageNotFoundError("open-solver-workbench")
@@ -377,7 +378,7 @@ def test_default_release_metadata_accepts_without_installed_distribution(
     assert (
         check_release_metadata(
             tmp_path,
-            expected_version="0.1.4rc1",
+            expected_version="0.1.5rc1",
             check_tags=False,
             check_installed_distribution=True,
         )

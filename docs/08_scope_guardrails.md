@@ -614,6 +614,10 @@ Scope drift is any change that:
   version bumping, tag creation, release editing, asset build/upload, issue
   mutation, solver execution, or a claim that selected-target artifacts already
   exist;
+- turns v0.1.5-rc1 metadata alignment into tag creation, release
+  create/edit/publish, asset build/upload, issue mutation, solver execution,
+  dependency installation, or a claim that target release artifacts already
+  exist;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

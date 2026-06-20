@@ -134,3 +134,9 @@ selects `v0.1.5-rc1` as the next prerelease boundary because `develop`
 contains substantial post-`v0.1.4-rc1` experimental capability. The decision
 does not bump metadata, create a tag, build assets, edit a release, or close
 issues.
+
+Follow-up metadata alignment:
+[OpenSolver Workbench v0.1.5-rc1 candidate](../release/v0_1_5_rc1_candidate.md)
+aligns package metadata to `0.1.5rc1` for the selected candidate while keeping
+the `v0.1.5-rc1` tag, GitHub Release, and assets absent until later release
+gates.

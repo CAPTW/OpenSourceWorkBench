@@ -154,7 +154,7 @@ diagnostics or skips rather than pretending a workflow succeeded.
 - No full OpenFOAM field parser.
 - No plugin signing, remote plugin marketplace, or dependency auto-install.
 - No MSI installer or code signing yet.
-- The GitHub Release for `v0.1.3-rc1` is a public prerelease with assets; it is
+- The GitHub Release for `v0.1.4-rc1` is a public prerelease with assets; it is
   not a stable production release.
 
 See [Known Limitations For v0.1](docs/release/known_limitations_v0_1.md) for
@@ -162,14 +162,14 @@ the full public scope note.
 
 ## Release Status
 
-- Current `develop` package metadata: `0.1.4rc1`.
-- Current public prerelease tag: `v0.1.3-rc1`.
+- Current `develop` package metadata: `0.1.5rc1`.
+- Current public prerelease tag: `v0.1.4-rc1`.
 - Current public prerelease tag target:
-  `a6e8d3a8211e02359841d10e1947e16ab847b132`.
-- Next intended candidate tag: `v0.1.4-rc1` (not created yet).
+  `f1683b441ab308fd65318ef6de3f1282549946a1`.
+- Next intended candidate tag: `v0.1.5-rc1` (not created yet).
 - Current `develop` includes post-tag documentation/status updates and
-  v0.1.4-rc1 candidate metadata alignment.
-- A public GitHub Release prerelease exists for `v0.1.3-rc1`.
+  v0.1.5-rc1 candidate metadata alignment.
+- A public GitHub Release prerelease exists for `v0.1.4-rc1`.
 - Release assets are attached: wheel, sdist, Windows portable ZIP, checksums,
   and manifest.
 - Future maintenance and feature work are tracked in the
@@ -181,6 +181,7 @@ Useful release docs:
 
 - [v0.1.3rc1 Release Summary](docs/release/v0_1_3rc1_release_summary.md)
 - [v0.1.4-rc1 Candidate Metadata Alignment](docs/release/v0_1_4_rc1_candidate.md)
+- [v0.1.5-rc1 Candidate Metadata Alignment](docs/release/v0_1_5_rc1_candidate.md)
 - [v0.1 Release Notes](docs/release/v0_1_release_notes.md)
 - [Release Checklist](docs/10_release_checklist.md)
 - [Post-Public Release Checklist](docs/release/post_public_release_checklist.md)

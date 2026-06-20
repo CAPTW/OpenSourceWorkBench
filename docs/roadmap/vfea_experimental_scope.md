@@ -552,6 +552,11 @@ selects `v0.1.5-rc1` as the next boundary for this substantial post-release
 experimental line. Metadata alignment, tag creation, release edits, asset
 build/upload, and issue closure remain deferred to separate gates.
 
+[OpenSolver Workbench v0.1.5-rc1 candidate](../release/v0_1_5_rc1_candidate.md)
+records the follow-up package metadata alignment to `0.1.5rc1`. The alignment
+is metadata-only: it creates no `v0.1.5-rc1` tag, release, or assets, and it
+does not change the skipped-missing live optional validation state.
+
 Human review GUI evidence:
 [FEASpec human review GUI dialog implementation](../experimental/feaspec_human_review_gui_dialog_implementation.md)
 records the initial OSW-EXP-023 read-only PySide6 dialog that rendered existing

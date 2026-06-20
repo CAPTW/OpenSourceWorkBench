@@ -6,6 +6,22 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### v0.1.5rc1 Candidate Metadata Aligned
+
+Candidate package version: `0.1.5rc1`
+
+- Aligned package, import, CLI, installed editable metadata, release metadata
+  QA, and candidate documentation for the future `v0.1.5-rc1` prerelease
+  boundary selected by OSW-PLAN-008.
+- Added a `v0.1.5-rc1` candidate note documenting that metadata is aligned
+  while the tag, GitHub Release, and assets are not created yet.
+- Preserved the current public `v0.1.4-rc1` prerelease state and kept issues
+  `#6` through `#11`, including skipped-missing issue `#8`, open for
+  environment-dependent live optional validation.
+- No `v0.1.5-rc1` tag, release edit/create/publish, asset build/upload, issue
+  mutation, dependency install, solver execution, bundled solver claim, or
+  certification claim occurred in this metadata gate.
+
 ### v0.1.4-rc1 Public Prerelease And Live Optional Validation
 
 - Published `v0.1.4-rc1` as a public prerelease with wheel, sdist, Windows

@@ -226,7 +226,7 @@ def test_write_json_blocked_output_parses_and_records_no_write_flags(
     assert code == 2
     assert err == ""
     payload = json.loads(out)
-    assert payload["version"] == "0.1.4rc1"
+    assert payload["version"] == "0.1.5rc1"
     assert payload["target_solver"] == "calculix"
     assert payload["export_status"] == "blocked"
     assert payload["files_written"] is False

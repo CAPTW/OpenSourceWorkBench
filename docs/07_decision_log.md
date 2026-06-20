@@ -1656,3 +1656,15 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   assets do not exist as a result of this decision. Issues `#6` through `#11`
   remain open, and no live CalculiX validation pass or certification claim is
   made.
+
+## ADR-0083: Align Metadata To v0.1.5rc1 Before Tagging
+
+- Status: Accepted for release-candidate preparation
+- Date: 2026-06-20
+- Context: ADR-0082 selected `v0.1.5-rc1` as the next prerelease boundary
+  after substantial post-`v0.1.4-rc1` FEASpec/CalculiX ResultDataset work.
+- Decision: Align package, import, CLI, installed editable metadata, release
+  metadata QA, and candidate docs/tests to version `0.1.5rc1`.
+- Consequences: `develop` is prepared as a `v0.1.5-rc1` candidate branch, but
+  the `v0.1.5-rc1` tag, GitHub Release, release assets, asset upload, issue
+  closure, and live optional validation completion remain separate later gates.

@@ -9,6 +9,11 @@ FEASpec/CalculiX ResultDataset experimental line. It does not align metadata,
 create tags, edit releases, build assets, upload assets, execute solvers, or
 mutate issues.
 
+Follow-up note: OSW-RELEASE-032 later aligns package metadata to `0.1.5rc1`
+for the selected `v0.1.5-rc1` candidate. That follow-up metadata gate still
+does not create the tag, create or edit a release, build or upload assets,
+execute solvers, or mutate issues.
+
 ## Current public release
 
 - Current public release: `v0.1.4-rc1`
@@ -149,3 +154,6 @@ alignment, but it remains separate from this release-boundary decision.
 ## Next recommended action
 
 `OSW-RELEASE-032_V0_1_5RC1_METADATA_ALIGNMENT`
+
+Follow-up: [OpenSolver Workbench v0.1.5-rc1 candidate](v0_1_5_rc1_candidate.md)
+records the candidate metadata alignment after this decision.

@@ -50,7 +50,7 @@ README_REQUIRED_PHRASES = (
     "Optional Dependencies",
     "Known Limitations",
     "Release Status",
-    "v0.1.3-rc1",
+    "v0.1.4-rc1",
     "public GitHub Release prerelease",
     "post-public-release roadmap",
 )
