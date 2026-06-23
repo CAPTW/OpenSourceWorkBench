@@ -22,7 +22,8 @@ def test_doc_records_design_only_non_actions() -> None:
     text = _normalized()
 
     assert "design-only" in text
-    assert "no discovery implementation" in text
+    assert "no implementation in this gate" in text
+    assert "no discovery service source" in text
     assert "no solver execution" in text
     assert "no dependency installation" in text
     assert "no external command execution" in text
@@ -165,8 +166,6 @@ def test_doc_does_not_claim_implemented_surfaces_or_validation_success() -> None
     text = _normalized()
 
     for phrase in (
-        "discovery service is implemented",
-        "discovery is implemented",
         "cli doctor is implemented",
         "cli doctor exists",
         "gui health panel is implemented",

@@ -252,7 +252,19 @@ old or incomplete.
 
 ## Future implementation slices
 
-- `OSW-EXP-058_OPTIONAL_SOLVER_DISCOVERY_SERVICE_IMPLEMENTATION`
+- `OSW-EXP-058_OPTIONAL_SOLVER_DISCOVERY_SERVICE_IMPLEMENTATION` - completed as
+  the passive discovery source layer in
+  [Optional solver discovery service implementation](optional_solver_discovery_service_implementation.md).
 - `OSW-EXP-059_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW`
 - `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse
+
+## Implementation follow-up
+
+The implementation follow-up adds passive discovery models, injectable
+resolvers, default passive resolvers, redacted report serialization, health
+mapping, diagnostics, built-in manifest discovery, and explanation helpers. It
+still adds no CLI command source, GUI panel source, plugin loading, active smoke
+validation, solver execution, external command execution, dependency
+installation, issue mutation, release mutation, bundled-solver claim, or
+certification claim.

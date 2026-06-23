@@ -137,6 +137,7 @@ a separate gate.
 | Optional solver manifest UX design | [Optional solver manifest UX design](experimental/optional_solver_manifest_ux_design.md) and focused docs tests | Defines future optional stack manifest fields, health states, CLI/GUI surfaces, plugin-manifest trust boundaries, validation relationships, and safety/privacy limits for Gmsh, GNU Octave, CalculiX, OpenFOAM, CoolProp/Cantera, and PyVista/meshio. It implements no manifest schema, discovery service, CLI command, GUI panel, solver execution, dependency install, issue mutation, release mutation, bundled-solver claim, or certification claim. | design |
 | Optional solver manifest schema model | [Optional solver manifest schema model](experimental/optional_solver_manifest_schema_model.md), `src/osw/experimental/optional_solvers/`, and focused unit tests | Implements typed declarative manifest models, JSON helpers, structural diagnostics, and built-in manifest records for issues `#6` through `#11`. It performs no discovery, CLI/GUI implementation, health-check execution, optional package import probes, solver execution, dependency install, issue mutation, release mutation, bundled-solver claim, or certification claim. | automated schema/model evidence |
 | Optional solver discovery service design | [Optional solver discovery service design](experimental/optional_solver_discovery_service_design.md) and focused docs tests | Defines a future service contract for consuming declarative manifests, separating passive discovery from active validation, mapping health states, emitting diagnostics, redacting environment details, handling cache freshness, and handing off to CLI/GUI surfaces. It implements no discovery source, CLI/GUI behavior, optional package imports, external command execution, solver execution, dependency install, issue mutation, release mutation, bundled-solver claim, or certification claim. | design |
+| Optional solver passive discovery service | [Optional solver discovery service implementation](experimental/optional_solver_discovery_service_implementation.md), `src/osw/experimental/optional_solvers/`, and focused unit tests | Implements passive manifest-consuming discovery with injected resolvers, default passive resolvers, redacted report serialization, diagnostics, health-state mapping, and built-in manifest discovery. It implements no CLI/GUI behavior, plugin loading, active smoke validation, optional package imports, external command execution, solver execution, dependency install, issue mutation, release mutation, bundled-solver claim, or certification claim. | automated passive-discovery evidence |
 | Public release wording | GitHub Release notes body audit | Notes say public prerelease, assets attached, unsigned portable ZIP, no MSI, no code signing, and no bundled solvers. | completed for `v0.1.3-rc1` |
 | Roadmap triage | GitHub issues and milestones | Maintenance tasks are assigned or deferred before feature work starts. | planned |
 
@@ -217,6 +218,13 @@ keeps the next slice design-only. It defines passive metadata inspection,
 future presence checks, active validation-gate boundaries, diagnostics, privacy
 redaction, cache freshness, CLI/GUI handoff, and plugin trust boundaries without
 implementing discovery or treating skipped-missing evidence as a pass.
+
+[Optional solver discovery service implementation](experimental/optional_solver_discovery_service_implementation.md)
+adds passive manifest-consuming discovery with injected resolvers, redacted
+reports, diagnostics, health-state mapping, and built-in manifest evaluation.
+It remains presence evidence only: no CLI/GUI behavior, no active smoke
+validation, no external command execution, no solver execution, no dependency
+installation, and no issue-closure claim.
 
 This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory

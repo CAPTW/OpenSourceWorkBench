@@ -1,13 +1,31 @@
-"""Declarative optional solver manifest schema models.
+"""Declarative optional solver manifest and passive discovery helpers.
 
 The optional solver schema layer is metadata-only. It does not implement
-discovery, CLI commands, GUI panels, plugin loading, dependency installation,
-or solver execution.
+CLI commands, GUI panels, plugin loading, dependency installation, or solver
+execution. Passive discovery records presence evidence only.
 """
 
 from .builtin_manifests import (
     builtin_optional_solver_manifests,
     get_builtin_optional_solver_manifest,
+)
+from .discovery_models import (
+    OptionalSolverDiscoveryDiagnostic,
+    OptionalSolverDiscoveryOptions,
+    OptionalSolverDiscoveryReport,
+    OptionalSolverEnvironmentHintDiscovery,
+    OptionalSolverExecutableDiscovery,
+    OptionalSolverPathRedactionMode,
+    OptionalSolverPythonPackageDiscovery,
+    OptionalSolverStackDiscovery,
+    optional_solver_discovery_report_from_dict,
+    optional_solver_discovery_report_to_dict,
+)
+from .discovery_service import (
+    discover_builtin_optional_solvers,
+    discover_optional_solver_manifests,
+    discover_optional_solver_stack,
+    explain_optional_solver_discovery,
 )
 from .manifest_io import (
     dump_optional_solver_manifest_json,
@@ -34,19 +52,33 @@ from .manifest_validation import (
 __all__ = [
     "OptionalSolverCapability",
     "OptionalSolverDiagnosticSeverity",
+    "OptionalSolverDiscoveryDiagnostic",
+    "OptionalSolverDiscoveryOptions",
+    "OptionalSolverDiscoveryReport",
+    "OptionalSolverEnvironmentHintDiscovery",
+    "OptionalSolverExecutableDiscovery",
     "OptionalSolverHealthState",
     "OptionalSolverManifest",
     "OptionalSolverManifestDiagnostic",
     "OptionalSolverManifestValidationReport",
+    "OptionalSolverPathRedactionMode",
     "OptionalSolverProbe",
+    "OptionalSolverPythonPackageDiscovery",
     "OptionalSolverRequirement",
+    "OptionalSolverStackDiscovery",
     "OptionalSolverStackId",
     "OptionalSolverSupportStatus",
     "builtin_optional_solver_manifests",
+    "discover_builtin_optional_solvers",
+    "discover_optional_solver_manifests",
+    "discover_optional_solver_stack",
     "dump_optional_solver_manifest_json",
+    "explain_optional_solver_discovery",
     "explain_optional_solver_manifest",
     "get_builtin_optional_solver_manifest",
     "load_optional_solver_manifest_json",
+    "optional_solver_discovery_report_from_dict",
+    "optional_solver_discovery_report_to_dict",
     "parse_optional_solver_manifest_dict",
     "validate_optional_solver_manifest",
 ]

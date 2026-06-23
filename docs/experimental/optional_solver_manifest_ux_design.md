@@ -181,8 +181,11 @@ evidence.
 - `OSW-EXP-057_OPTIONAL_SOLVER_DISCOVERY_SERVICE_DESIGN` - completed as the
   design-only service contract in
   [Optional solver discovery service design](optional_solver_discovery_service_design.md).
-- `OSW-EXP-058_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW`
-- `OSW-EXP-059_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
+- `OSW-EXP-058_OPTIONAL_SOLVER_DISCOVERY_SERVICE_IMPLEMENTATION` - completed as
+  the passive discovery source layer in
+  [Optional solver discovery service implementation](optional_solver_discovery_service_implementation.md).
+- `OSW-EXP-059_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW`
+- `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
 
 ## Schema model follow-up
 
@@ -200,3 +203,12 @@ redaction, diagnostics, cache freshness, CLI/GUI handoff, and plugin manifest
 trust boundaries. It still adds no discovery implementation, CLI command, GUI
 panel, solver execution, external command execution, dependency installation,
 issue mutation, release mutation, bundled-solver claim, or certification claim.
+
+## Discovery service implementation follow-up
+
+The discovery implementation adds passive optional solver presence evidence,
+redacted discovery reports, health-state mapping, and built-in manifest
+evaluation. It still adds no CLI doctor, GUI health panel, plugin loading,
+active smoke validation, solver execution, external command execution,
+dependency installation, issue mutation, release mutation, bundled-solver
+claim, or certification claim.

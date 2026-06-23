@@ -24,6 +24,14 @@ def _source_files() -> list[Path]:
     return sorted(PACKAGE.glob("*.py"))
 
 
+def _schema_source_files() -> list[Path]:
+    return [
+        path
+        for path in _source_files()
+        if not path.name.startswith("discovery_")
+    ]
+
+
 def test_optional_solver_manifest_package_uses_no_subprocess() -> None:
     for path in _source_files():
         text = path.read_text(encoding="utf-8")
@@ -31,7 +39,7 @@ def test_optional_solver_manifest_package_uses_no_subprocess() -> None:
 
 
 def test_optional_solver_manifest_package_uses_no_shutil_which() -> None:
-    for path in _source_files():
+    for path in _schema_source_files():
         text = path.read_text(encoding="utf-8")
         assert "shutil.which" not in text
         assert "from shutil import which" not in text

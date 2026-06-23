@@ -612,5 +612,13 @@ or meshio components, but it does not implement discovery source, execute
 commands, import optional solver packages, run health checks, mutate issues, or
 provide validation success evidence.
 
+[Optional solver discovery service implementation](../experimental/optional_solver_discovery_service_implementation.md)
+adds passive manifest-consuming discovery for optional stack presence evidence.
+It can help future VFEA and FEASpec UX explain missing or partial CalculiX,
+Gmsh, PyVista, or meshio availability, but it still does not add CLI/GUI
+behavior, active smoke validation, external command execution, solver
+execution, dependency installation, issue mutation, or validation success
+evidence.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

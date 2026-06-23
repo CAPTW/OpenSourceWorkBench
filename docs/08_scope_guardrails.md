@@ -24,6 +24,12 @@ request should stop, park, or defer.
   separation, diagnostics, privacy redaction, cache freshness, CLI/GUI handoff,
   and plugin trust boundaries without implementing discovery or executing
   commands.
+- Experimental passive optional solver discovery services that consume
+  declarative manifests, use injectable resolvers, redact local paths and
+  environment values by default, map passive evidence to missing, partially
+  installed, discovered, or unknown states, and do not execute solver commands,
+  import optional solver packages, install dependencies, mutate issues, or
+  claim validation success.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.

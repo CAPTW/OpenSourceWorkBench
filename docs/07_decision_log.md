@@ -1812,3 +1812,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   open, skipped-missing evidence remains neither pass nor failure, and no
   release, asset, tag, issue, dependency, solver, ProjectSchema, VLM, bundled
   solver, certification, or version state changes occur in this design gate.
+
+## ADR-0092: Optional Solver Discovery Service Is Passive Only
+
+- Status: Accepted for experimental implementation
+- Date: 2026-06-23
+- Context: OSW-EXP-057 defined the discovery service contract after the
+  manifest schema/model layer. The next slice needs source-level passive
+  presence evidence without crossing into CLI, GUI, plugin loading, active
+  health checks, solver execution, or dependency installation.
+- Decision: Implement passive discovery under
+  `src/osw/experimental/optional_solvers/` with discovery result models,
+  injected resolvers, default passive resolvers, redacted report serialization,
+  health-state mapping, diagnostics, built-in manifest discovery, and
+  explanation helpers. Default executable lookup may use `shutil.which`;
+  Python package lookup may use import metadata and `find_spec`; no optional
+  solver package is imported.
+- Consequences: Discovery can inform future validation and UX surfaces, but it
+  is not validation-pass evidence and cannot close issues `#6` through `#11`.
+  CLI doctor preview, GUI health panel work, plugin loading, active smoke
+  validation, solver execution, dependency installation, release edits, issue
+  mutation, bundled-solver claims, certification claims, and version changes
+  remain out of scope.

@@ -115,8 +115,9 @@ def test_doc_lists_json_helpers_and_future_gates() -> None:
     assert "dump_optional_solver_manifest_json" in text
     for gate in (
         "OSW-EXP-057_OPTIONAL_SOLVER_DISCOVERY_SERVICE_DESIGN",
-        "OSW-EXP-058_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW",
-        "OSW-EXP-059_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN",
+        "OSW-EXP-058_OPTIONAL_SOLVER_DISCOVERY_SERVICE_IMPLEMENTATION",
+        "OSW-EXP-059_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW",
+        "OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN",
     ):
         assert gate in text
 

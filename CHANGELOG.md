@@ -6,6 +6,18 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Discovery Service Implementation
+
+- Added an experimental passive optional solver discovery service under
+  `src/osw/experimental/optional_solvers/`.
+- Added discovery result models, injected resolvers, default passive resolvers,
+  redacted report serialization, health-state mapping, diagnostics, built-in
+  manifest discovery, and explanation helpers.
+- Kept discovery passive: no CLI/GUI implementation, no plugin loading, no
+  active smoke validation, no external command execution, no optional solver
+  imports, no solver execution, no dependency install, no issue mutation, no
+  release mutation, no bundled-solver claim, and no certification claim.
+
 ### Optional Solver Discovery Service Design
 
 - Added a design-only optional solver discovery service contract that consumes

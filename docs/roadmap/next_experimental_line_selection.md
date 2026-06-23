@@ -110,6 +110,14 @@ It remains design-only and does not implement discovery, execute external
 commands, import optional solver packages, mutate issues, or claim validation
 success.
 
+The passive discovery implementation follow-up
+[optional solver discovery service implementation](../experimental/optional_solver_discovery_service_implementation.md)
+adds a source-level service for passive presence checks, injected resolvers,
+redacted reports, health-state mapping, diagnostics, and built-in manifest
+evaluation. It still does not add CLI commands, GUI panels, active smoke
+validation, external command execution, solver execution, dependency
+installation, issue mutation, or validation-pass claims.
+
 ## Guardrails
 
 - External solvers are not bundled.
