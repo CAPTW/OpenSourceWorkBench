@@ -620,5 +620,13 @@ behavior, active smoke validation, external command execution, solver
 execution, dependency installation, issue mutation, or validation success
 evidence.
 
+[Optional solver CLI doctor preview](../experimental/optional_solver_cli_doctor_preview.md)
+adds passive text/JSON `optional-solver-list`, `optional-solver-doctor`, and
+`optional-solver-explain` surfaces for that evidence. It can help users
+understand missing CalculiX, Gmsh, PyVista, or meshio prerequisites before
+prepared validation, but it does not add GUI behavior, active smoke validation,
+external solver command execution, solver execution, dependency installation,
+issue mutation, validation success evidence, or bundled-solver claims.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

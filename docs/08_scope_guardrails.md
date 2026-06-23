@@ -30,6 +30,11 @@ request should stop, park, or defer.
   installed, discovered, or unknown states, and do not execute solver commands,
   import optional solver packages, install dependencies, mutate issues, or
   claim validation success.
+- Experimental optional solver CLI preview commands that list built-in
+  manifests, explain one stack, and show passive doctor evidence in text or
+  JSON while redacting paths by default, never exposing environment values,
+  and not installing dependencies, running smoke checks, executing solver
+  commands, mutating issues, or claiming validation success.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.

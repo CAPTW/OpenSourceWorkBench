@@ -190,6 +190,19 @@ validation and closure-review gates provide appropriate installed-only evidence.
 
 ## Future gates
 
-- `OSW-EXP-059_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW`
+- `OSW-EXP-059_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW` - completed as the passive
+  CLI preview in
+  [Optional solver CLI doctor preview](optional_solver_cli_doctor_preview.md).
 - `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse
+
+## CLI preview follow-up
+
+The CLI preview follow-up exposes `optional-solver-list`,
+`optional-solver-doctor`, and `optional-solver-explain` over the built-in
+manifests and passive discovery reports. It supports text and JSON output,
+redacts paths by default, never exposes environment values, and treats missing
+optional stacks as valid setup evidence rather than validation success. It
+adds no GUI panel, plugin loading, active smoke validation, external solver
+command execution, solver execution, dependency installation, issue mutation,
+release mutation, bundled-solver claim, or certification claim.

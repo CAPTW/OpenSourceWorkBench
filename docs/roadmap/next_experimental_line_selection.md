@@ -118,6 +118,16 @@ evaluation. It still does not add CLI commands, GUI panels, active smoke
 validation, external command execution, solver execution, dependency
 installation, issue mutation, or validation-pass claims.
 
+The CLI preview follow-up
+[optional solver CLI doctor preview](../experimental/optional_solver_cli_doctor_preview.md)
+adds `optional-solver-list`, `optional-solver-doctor`, and
+`optional-solver-explain` as passive text/JSON surfaces over the manifest and
+discovery layers. It redacts paths by default, does not expose environment
+values, treats missing optional stacks as setup evidence, and still does not
+add GUI behavior, plugin loading, active smoke validation, solver execution,
+dependency installation, issue mutation, release mutation, or issue-closure
+claims.
+
 ## Guardrails
 
 - External solvers are not bundled.

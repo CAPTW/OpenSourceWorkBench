@@ -255,7 +255,9 @@ old or incomplete.
 - `OSW-EXP-058_OPTIONAL_SOLVER_DISCOVERY_SERVICE_IMPLEMENTATION` - completed as
   the passive discovery source layer in
   [Optional solver discovery service implementation](optional_solver_discovery_service_implementation.md).
-- `OSW-EXP-059_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW`
+- `OSW-EXP-059_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW` - completed as a passive
+  text/JSON CLI preview in
+  [Optional solver CLI doctor preview](optional_solver_cli_doctor_preview.md).
 - `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse
 
@@ -268,3 +270,12 @@ still adds no CLI command source, GUI panel source, plugin loading, active smoke
 validation, solver execution, external command execution, dependency
 installation, issue mutation, release mutation, bundled-solver claim, or
 certification claim.
+
+## CLI preview follow-up
+
+The CLI preview follow-up adds passive `optional-solver-list`,
+`optional-solver-doctor`, and `optional-solver-explain` surfaces over the
+manifest and discovery layers. It provides text and JSON output with default
+redaction, no environment-value exposure, no install command, no active smoke
+mode, no solver command execution, no issue mutation, no release mutation, and
+no validation-pass or issue-closure claim.

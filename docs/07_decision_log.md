@@ -1834,3 +1834,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   validation, solver execution, dependency installation, release edits, issue
   mutation, bundled-solver claims, certification claims, and version changes
   remain out of scope.
+
+## ADR-0093: Optional Solver CLI Doctor Preview Uses Passive Discovery Only
+
+- Status: Accepted for experimental CLI implementation
+- Date: 2026-06-24
+- Context: OSW-EXP-058 added passive manifest-consuming discovery, but users
+  still needed a command-line way to list built-in stacks, explain one stack,
+  and inspect passive setup evidence without running solvers or installing
+  dependencies.
+- Decision: Add `optional-solver-list`, `optional-solver-doctor`, and
+  `optional-solver-explain` as CLI preview commands over the built-in manifests
+  and passive discovery reports. Support text and JSON output, redact paths by
+  default, keep environment values out of output, allow full executable paths
+  only by explicit `--show-full-paths`, and do not add install, run-smoke, or
+  execute options.
+- Consequences: The CLI can explain missing, partial, discovered, or unknown
+  optional stack state, but it is not validation-pass evidence and cannot close
+  issues `#6` through `#11`. GUI health panels, plugin loading, active smoke
+  validation, solver execution, dependency installation, release edits, issue
+  mutation, bundled-solver claims, certification claims, and version changes
+  remain out of scope.

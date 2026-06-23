@@ -14,6 +14,16 @@ from typing import Any
 
 from osw import __version__
 from osw.core.executables import ExecutablePathRegistry
+from osw.experimental.optional_solvers import (
+    OptionalSolverDiscoveryOptions,
+    OptionalSolverDiscoveryReport,
+    OptionalSolverManifest,
+    OptionalSolverPathRedactionMode,
+    builtin_optional_solver_manifests,
+    discover_optional_solver_manifests,
+    get_builtin_optional_solver_manifest,
+    optional_solver_discovery_report_to_dict,
+)
 from osw.plugins.discovery import discover_local_plugin_manifests
 from osw.plugins.errors import PluginDiagnosticSeverity
 from osw.plugins.health import (
@@ -56,6 +66,173 @@ def doctor_lines() -> list[str]:
     return lines
 
 
+def _optional_solver_manifest_summary(
+    manifest: OptionalSolverManifest,
+    *,
+    include_requirements: bool,
+) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "stack_id": manifest.stack_id,
+        "display_name": manifest.display_name,
+        "related_issue": manifest.related_issue,
+        "support_status": manifest.support_status.value,
+    }
+    if include_requirements:
+        payload["executable_requirements"] = [
+            requirement.to_dict() for requirement in manifest.executable_requirements
+        ]
+        payload["python_package_requirements"] = [
+            requirement.to_dict() for requirement in manifest.python_package_requirements
+        ]
+        payload["environment_variable_hints"] = list(manifest.environment_variable_hints)
+    return payload
+
+
+def _format_optional_solver_list_text(
+    manifests: Sequence[OptionalSolverManifest],
+    *,
+    include_requirements: bool,
+) -> str:
+    lines = [
+        "OSW optional solver stacks",
+        "External solvers and optional science packages are not bundled.",
+    ]
+    for manifest in manifests:
+        issue = f"#{manifest.related_issue}" if manifest.related_issue is not None else "none"
+        lines.append(
+            f"- {manifest.stack_id}: {manifest.display_name} "
+            f"(issue {issue}, {manifest.support_status.value})"
+        )
+        if include_requirements:
+            for requirement in manifest.executable_requirements:
+                required = "required" if requirement.required else "optional"
+                label = requirement.display_name or requirement.identifier
+                lines.append(f"    executable: {requirement.identifier} ({label}, {required})")
+            for requirement in manifest.python_package_requirements:
+                required = "required" if requirement.required else "optional"
+                label = requirement.display_name or requirement.identifier
+                lines.append(f"    python package: {requirement.identifier} ({label}, {required})")
+            for name in manifest.environment_variable_hints:
+                lines.append(f"    environment hint: {name} (value redacted)")
+    return "\n".join(lines)
+
+
+def _select_optional_solver_manifests(
+    stack_ids: Sequence[str] | None,
+) -> tuple[OptionalSolverManifest, ...]:
+    if not stack_ids:
+        return builtin_optional_solver_manifests()
+    manifests: list[OptionalSolverManifest] = []
+    for stack_id in stack_ids:
+        manifests.append(get_builtin_optional_solver_manifest(stack_id))
+    return tuple(manifests)
+
+
+def _optional_solver_doctor_report(
+    manifests: Sequence[OptionalSolverManifest],
+    *,
+    show_full_paths: bool,
+) -> OptionalSolverDiscoveryReport:
+    path_redaction = (
+        OptionalSolverPathRedactionMode.FULL
+        if show_full_paths
+        else OptionalSolverPathRedactionMode.REDACTED
+    )
+    return discover_optional_solver_manifests(
+        manifests,
+        options=OptionalSolverDiscoveryOptions(
+            path_redaction=path_redaction,
+            include_environment_values=False,
+        ),
+    )
+
+
+def _format_optional_solver_doctor_text(
+    report: OptionalSolverDiscoveryReport,
+    *,
+    include_diagnostics: bool,
+) -> str:
+    lines = [
+        "OSW optional solver doctor",
+        "Passive discovery only: no solver commands, smoke checks, or installs run.",
+        "Paths are redacted by default unless full paths were explicitly requested.",
+        "Environment values are always redacted in this preview.",
+    ]
+    for stack in report.stacks:
+        issue = f"#{stack.related_issue}" if stack.related_issue is not None else "none"
+        lines.append(f"- {stack.stack_id}: {stack.health_state.value} (issue {issue})")
+        for executable in stack.executables:
+            detail = executable.path or executable.redacted_path or "missing"
+            lines.append(
+                f"    executable {executable.identifier}: "
+                f"{_found_text(executable.found)} ({detail})"
+            )
+        for package in stack.python_packages:
+            version = f", version {package.version}" if package.version else ""
+            lines.append(
+                f"    python package {package.identifier}: {_found_text(package.found)}{version}"
+            )
+        for hint in stack.environment_hints:
+            value = hint.redacted_value or ("present" if hint.present else "missing")
+            lines.append(f"    environment hint {hint.name}: {value}")
+        if include_diagnostics:
+            for diagnostic in stack.diagnostics:
+                lines.append(
+                    f"    {diagnostic.severity.value}: {diagnostic.code}: {diagnostic.message}"
+                )
+    lines.append("Missing or discovered passive evidence is not validation-pass evidence.")
+    lines.append("Issue closure requires separate validation and closure-review gates.")
+    return "\n".join(lines)
+
+
+def _format_optional_solver_explain_text(manifest: OptionalSolverManifest) -> str:
+    issue = f"#{manifest.related_issue}" if manifest.related_issue is not None else "none"
+    lines = [
+        f"{manifest.display_name} ({manifest.stack_id})",
+        f"related issue: {issue}",
+        f"support status: {manifest.support_status.value}",
+        f"non-bundled disclaimer: {manifest.non_bundled_disclaimer}",
+        "capabilities:",
+    ]
+    for capability in manifest.capabilities:
+        description = f" - {capability.description}" if capability.description else ""
+        lines.append(f"  - {capability.capability_id}{description}")
+    lines.append("requirements:")
+    for requirement in manifest.executable_requirements:
+        required = "required" if requirement.required else "optional"
+        lines.append(f"  - executable {requirement.identifier} ({required})")
+    for requirement in manifest.python_package_requirements:
+        required = "required" if requirement.required else "optional"
+        lines.append(f"  - python package {requirement.identifier} ({required})")
+    for name in manifest.environment_variable_hints:
+        lines.append(f"  - environment hint {name} (value redacted)")
+    lines.append("prepared-machine notes:")
+    for note in manifest.prepared_machine_notes:
+        lines.append(f"  - {note}")
+    lines.append("safety notes:")
+    for note in manifest.safety_notes:
+        lines.append(f"  - {note}")
+    lines.append(
+        "No solver execution, active smoke validation, dependency installation, "
+        "or issue mutation is performed."
+    )
+    return "\n".join(lines)
+
+
+def _optional_solver_explain_payload(manifest: OptionalSolverManifest) -> dict[str, object]:
+    return {
+        **manifest.to_dict(),
+        "issue_reference": f"#{manifest.related_issue}" if manifest.related_issue else "",
+        "passive_only": True,
+        "no_solver_execution": True,
+        "no_dependency_installation": True,
+    }
+
+
+def _found_text(found: bool) -> str:
+    return "found" if found else "missing"
+
+
 def _add_gmsh_geometry_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--kind",
@@ -85,6 +262,67 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"osw {__version__}")
     subparsers = parser.add_subparsers(dest="command")
     subparsers.add_parser("doctor", help="Report local bootstrap environment status.")
+    optional_solver_list_parser = subparsers.add_parser(
+        "optional-solver-list",
+        help="List built-in optional solver stack manifests.",
+    )
+    optional_solver_list_parser.add_argument(
+        "--format",
+        default="text",
+        choices=("text", "json"),
+        help="Output format.",
+    )
+    optional_solver_list_parser.add_argument(
+        "--include-requirements",
+        action="store_true",
+        help="Include declared executable, Python package, and environment requirements.",
+    )
+    optional_solver_doctor_parser = subparsers.add_parser(
+        "optional-solver-doctor",
+        help="Run passive optional solver discovery without executing solvers.",
+    )
+    optional_solver_doctor_parser.add_argument(
+        "--stack",
+        action="append",
+        default=[],
+        help="Built-in optional solver stack id to inspect. May be repeated.",
+    )
+    optional_solver_doctor_parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Inspect all built-in optional solver stacks.",
+    )
+    optional_solver_doctor_parser.add_argument(
+        "--format",
+        default="text",
+        choices=("text", "json"),
+        help="Output format.",
+    )
+    optional_solver_doctor_parser.add_argument(
+        "--show-full-paths",
+        action="store_true",
+        help="Include full executable paths instead of redacted paths.",
+    )
+    optional_solver_doctor_parser.add_argument(
+        "--include-diagnostics",
+        action="store_true",
+        help="Include passive discovery diagnostics in text output.",
+    )
+    optional_solver_explain_parser = subparsers.add_parser(
+        "optional-solver-explain",
+        help="Explain one built-in optional solver stack manifest.",
+    )
+    optional_solver_explain_parser.add_argument(
+        "--stack",
+        required=True,
+        help="Built-in optional solver stack id to explain.",
+    )
+    optional_solver_explain_parser.add_argument(
+        "--format",
+        default="text",
+        choices=("text", "json"),
+        help="Output format.",
+    )
     plugin_health_parser = subparsers.add_parser(
         "plugin-health",
         help="Report local plugin manifest, dependency, and executable status.",
@@ -1109,6 +1347,76 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "doctor":
         print("\n".join(doctor_lines()))
+        return 0
+
+    if args.command == "optional-solver-list":
+        manifests = builtin_optional_solver_manifests()
+        if args.format == "json":
+            print(
+                json.dumps(
+                    {
+                        "stacks": [
+                            _optional_solver_manifest_summary(
+                                manifest,
+                                include_requirements=args.include_requirements,
+                            )
+                            for manifest in manifests
+                        ],
+                        "passive_only": True,
+                        "external_solvers_bundled": False,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print(
+                _format_optional_solver_list_text(
+                    manifests,
+                    include_requirements=args.include_requirements,
+                )
+            )
+        return 0
+
+    if args.command == "optional-solver-doctor":
+        try:
+            manifests = _select_optional_solver_manifests(
+                () if args.all else tuple(args.stack)
+            )
+        except KeyError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        report = _optional_solver_doctor_report(
+            manifests,
+            show_full_paths=args.show_full_paths,
+        )
+        if args.format == "json":
+            print(
+                json.dumps(
+                    optional_solver_discovery_report_to_dict(report),
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print(
+                _format_optional_solver_doctor_text(
+                    report,
+                    include_diagnostics=args.include_diagnostics,
+                )
+            )
+        return 0
+
+    if args.command == "optional-solver-explain":
+        try:
+            manifest = get_builtin_optional_solver_manifest(args.stack)
+        except KeyError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        if args.format == "json":
+            print(json.dumps(_optional_solver_explain_payload(manifest), indent=2, sort_keys=True))
+        else:
+            print(_format_optional_solver_explain_text(manifest))
         return 0
 
     if args.command == "plugin-health":

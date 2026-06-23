@@ -175,7 +175,9 @@ Skipped-missing evidence is not a pass and not a failure.
 - `OSW-EXP-058_OPTIONAL_SOLVER_DISCOVERY_SERVICE_IMPLEMENTATION` - completed as
   the passive discovery source layer in
   [Optional solver discovery service implementation](optional_solver_discovery_service_implementation.md).
-- `OSW-EXP-059_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW`
+- `OSW-EXP-059_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW` - completed as the passive
+  CLI preview in
+  [Optional solver CLI doctor preview](optional_solver_cli_doctor_preview.md).
 - `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
 
 ## Discovery service design follow-up
@@ -196,3 +198,12 @@ add CLI commands, GUI panels, active smoke validation, external command
 execution, optional solver package imports, dependency installation, solver
 execution, issue mutation, release mutation, bundled-solver claims, or
 certification claims.
+
+## CLI preview follow-up
+
+The CLI preview follow-up uses the declarative manifests and passive discovery
+reports to list stacks, explain one stack, and report passive doctor status in
+text or JSON. It keeps paths redacted by default, keeps environment values out
+of output, and does not add GUI behavior, active smoke validation, solver
+execution, dependency installation, issue mutation, release mutation,
+bundled-solver claims, or certification claims.

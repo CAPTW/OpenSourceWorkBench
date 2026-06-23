@@ -6,6 +6,18 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver CLI Doctor Preview
+
+- Added experimental `optional-solver-list`, `optional-solver-doctor`, and
+  `optional-solver-explain` CLI preview commands.
+- Exposed built-in optional solver manifests and passive discovery reports in
+  text or JSON while redacting paths by default and keeping environment values
+  out of output.
+- Kept the CLI passive: no GUI behavior, no plugin loading, no active smoke
+  validation, no external solver command execution, no solver execution, no
+  dependency install, no issue mutation, no release mutation, no
+  bundled-solver claim, and no certification claim.
+
 ### Optional Solver Discovery Service Implementation
 
 - Added an experimental passive optional solver discovery service under
