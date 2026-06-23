@@ -6,6 +6,21 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Next Experimental Line Selection
+
+- Selected `Plugin ecosystem / optional solver manifest UX` as the next
+  experimental line after the completed `v0.1.5-rc1` release flow, fresh
+  post-public audit evidence, release-body cleanup, maintenance hardening, and
+  OSW-VALID-005 optional validation discovery.
+- Recorded that issues `#6` through `#11` remain open and were all classified
+  as `skipped-missing` in OSW-VALID-005 because the target optional solver or
+  science stacks were not installed on this machine.
+- Routed the next design gate to
+  `OSW-EXP-055_OPTIONAL_SOLVER_MANIFEST_UX_DESIGN`.
+- No source implementation, release edit, issue mutation, solver execution,
+  dependency install, version bump, bundled-solver claim, or certification
+  claim occurred.
+
 ### Prepared-Machine Live Optional Validation Matrix
 
 - Reran the live optional validation matrix for public `v0.1.5-rc1` and

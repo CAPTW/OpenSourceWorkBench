@@ -21,12 +21,14 @@ It does not perform the selected work.
 
 ## Current repository
 
-- Develop HEAD: `665aa100b71d1abd9cae25992e8fdf1ab94320b1`
+- Develop HEAD: `d141c9f4d53d8d1477a3b0ac5f7f6b28137dd6e1`
 - Release tag target: `85c8144f7ff19159ab02c40adb6483ce6b13c017`
 - CLI version: `osw 0.1.5rc1`
 - Installed package metadata: `0.1.5rc1`
-- Develop is newer than the release tag because OSW-PLAN-009 and
-  OSW-RELEASE-041 were post-release planning and release-body follow-up work.
+- Develop is newer than the release tag because post-release planning,
+  release-body follow-up, GUI aggregate timeout/release-monitoring hardening,
+  and prepared-machine optional validation discovery were follow-up work after
+  the public `v0.1.5-rc1` release.
 
 ## Open validation
 
@@ -101,3 +103,16 @@ smoke evidence, open issues `#6` through `#11`, unsigned portable ZIP status,
 no MSI/code signing, no bundled external solvers, and no certification claim.
 It does not edit the release, mutate assets or issues, execute solvers, bump
 versions, install dependencies, or mutate runtime source.
+
+## Next experimental-line follow-up
+
+OSW-VALID-005 later reran prepared-machine discovery and classified issues
+`#6` through `#11` as `skipped-missing` because the target optional solver and
+science stacks were absent on this machine. The follow-up
+[next experimental line selection](next_experimental_line_selection.md) selects
+`Plugin ecosystem / optional solver manifest UX` as the next experimental line.
+
+That selection is planning-only. It does not implement source features, edit
+the release, mutate issues, execute solvers, install dependencies, bump
+versions, claim bundled solvers, claim certification, or treat skipped-missing
+validation evidence as issue-closure evidence.

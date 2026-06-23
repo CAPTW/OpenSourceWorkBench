@@ -8,6 +8,9 @@ request should stop, park, or defer.
 - PySide6 GUI shell and workflow previews.
 - Plugin/add-in contracts for importers, solvers, scripts, post-processing, and
   reports.
+- Planning-only optional solver manifest UX design that improves optional
+  dependency discovery, plugin manifest guidance, and health messaging without
+  installing, bundling, or executing external solvers.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.

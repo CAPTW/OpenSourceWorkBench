@@ -1738,3 +1738,22 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   evidence for `v0.1.5-rc1`, while prepared-machine validation remains open.
   Release, asset, tag, issue, runtime source, dependency, and solver state stay
   unchanged by this decision.
+
+## ADR-0088: Next Experimental Line Selects Optional Solver Manifest UX
+
+- Status: Accepted for experimental planning
+- Date: 2026-06-23
+- Context: `v0.1.5-rc1` is public, the fresh post-public audit passed, release
+  body audit-pending wording was corrected, maintenance hardening completed,
+  and OSW-VALID-005 classified issues `#6` through `#11` as
+  `skipped-missing` because the target optional solver and science stacks were
+  absent on this machine.
+- Decision: Select `Plugin ecosystem / optional solver manifest UX` as the next
+  experimental line. The follow-up should design optional solver/plugin
+  manifest fields, health statuses, missing-dependency explanations, and user
+  guidance without installing dependencies, bundling solvers, executing
+  solvers, or claiming validation success.
+- Consequences: Prepared-machine validation remains open and environment
+  dependent. Issues `#6` through `#11` remain open. Release, asset, tag, issue,
+  runtime source, dependency, solver, version, and certification state stay
+  unchanged by this planning decision.
