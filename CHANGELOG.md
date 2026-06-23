@@ -24,6 +24,21 @@ by a dedicated release/tag gate.
   install, branch/tag mutation, asset mutation, runtime source mutation,
   bundled-solver claim, or certification claim occurred in this planning gate.
 
+### Post-v0.1.5-rc1 Worktrack Selection
+
+- Recorded that OSW-RELEASE-041 corrected stale post-public-audit wording in
+  the public `v0.1.5-rc1` release body while preserving title, prerelease
+  state, tags, assets, issues, and source state.
+- Selected the next worktrack as maintenance hardening for GUI aggregate
+  timeout behavior and release-monitoring notes. This planning gate does not
+  perform that maintenance work.
+- Kept prepared-machine validation as a later track because issues `#6`
+  through `#11` remain open and issue `#8` remains `skipped-missing` because
+  `ccx` was absent.
+- No release edit, asset mutation, issue mutation, solver execution, version
+  bump, dependency install, branch/tag mutation, runtime source mutation,
+  bundled-solver claim, or certification claim occurred in this planning gate.
+
 ### v0.1.5rc1 Candidate Metadata Aligned
 
 Candidate package version: `0.1.5rc1`

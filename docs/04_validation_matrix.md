@@ -129,6 +129,7 @@ a separate gate.
 | Post-experimental release-boundary decision | [Post-experimental release-boundary decision](release/post_exp_release_boundary_decision.md) and `tests/unit/test_post_exp_release_boundary_decision_docs.py` | Selects `v0.1.5-rc1` as the next boundary because post-`v0.1.4-rc1` develop contains substantial FEASpec/CalculiX ResultDataset capability. It performs no metadata alignment, tag creation, release edit, asset build/upload, issue mutation, solver execution, or validation claim. | decision |
 | v0.1.5-rc1 candidate metadata | [OpenSolver Workbench v0.1.5-rc1 candidate](release/v0_1_5_rc1_candidate.md), package metadata, CLI version, release metadata QA, and target tag/release absence checks | Package and CLI metadata are aligned to `0.1.5rc1`; the `v0.1.5-rc1` tag, GitHub Release, and assets remain absent until later gates. Issues `#6` through `#11` remain open and live CalculiX issue `#8` remains skipped-missing. | metadata aligned |
 | v0.1.5-rc1 public release and post-public audit | [Post-v0.1.5-rc1 next scope decision](roadmap/post_v0_1_5_rc1_next_scope_decision.md) and public release audit evidence | `v0.1.5-rc1` is a public prerelease with five expected assets, and the post-public download audit passed with checksum, manifest, wheel, sdist, and portable ZIP smoke evidence. Issues `#6` through `#11` remain open, and issue `#8` remains `skipped-missing` because `ccx` was absent. | public prerelease audit |
+| Post-v0.1.5-rc1 next worktrack selection | [Post-v0.1.5-rc1 next worktrack selection](roadmap/post_v0_1_5_rc1_next_worktrack_selection.md) and `tests/unit/test_post_v0_1_5_rc1_next_worktrack_selection_docs.py` | Selects maintenance hardening for GUI aggregate timeout behavior and release-monitoring notes after the completed release flow and corrected release body. It performs no release edit, asset mutation, issue mutation, source mutation, solver execution, or version bump. | planning |
 | Public release wording | GitHub Release notes body audit | Notes say public prerelease, assets attached, unsigned portable ZIP, no MSI, no code signing, and no bundled solvers. | completed for `v0.1.3-rc1` |
 | Roadmap triage | GitHub issues and milestones | Maintenance tasks are assigned or deferred before feature work starts. | planned |
 
@@ -169,6 +170,12 @@ records that `v0.1.5-rc1` is now public and that the post-public download
 audit passed. It keeps issues `#6` through `#11` open, preserves issue `#8` as
 `skipped-missing` because `ccx` was absent, and selects only a narrow release
 body note update as the next path.
+
+The
+[Post-v0.1.5-rc1 next worktrack selection](roadmap/post_v0_1_5_rc1_next_worktrack_selection.md)
+records that the release body note is corrected and selects maintenance
+hardening for GUI aggregate timeout behavior and release-monitoring notes. It
+does not perform live validation or claim issue closure.
 
 This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory

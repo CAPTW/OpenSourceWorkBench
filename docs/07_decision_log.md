@@ -1686,3 +1686,20 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   important follow-ups, but public-facing release text should be corrected
   first through a separate release-body update gate. No issue closure or live
   validation pass is claimed.
+
+## ADR-0085: Post-v0.1.5-rc1 Worktrack Selects Maintenance Hardening
+
+- Status: Accepted for post-release planning
+- Date: 2026-06-23
+- Context: OSW-RELEASE-041 corrected the stale post-public-audit wording in the
+  public `v0.1.5-rc1` release body. The release remains a public prerelease
+  with five expected assets, while issues `#6` through `#11` remain open and
+  issue `#8` remains `skipped-missing` because `ccx` was absent.
+- Decision: Select maintenance hardening for GUI aggregate timeout behavior and
+  release-monitoring notes as the next worktrack. Prepared-machine live
+  optional validation remains deferred until a prepared environment is
+  available.
+- Consequences: No release edit, asset mutation, issue mutation, solver
+  execution, source mutation, version bump, or dependency installation occurs
+  in this planning gate. The next recommended gate is
+  `OSW-MAINT-018_GUI_AGGREGATE_TIMEOUT_AND_RELEASE_MONITORING_HARDENING`.

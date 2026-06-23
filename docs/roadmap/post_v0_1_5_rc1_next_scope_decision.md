@@ -32,8 +32,8 @@ mutation, dependency upgrade, or solver execution was performed.
 
 ## Known non-blocking warnings
 
-- The release body may still say post-public audit pending even though the
-  public download audit has now passed.
+- OSW-RELEASE-041 corrected the release body note that previously said
+  post-public audit pending.
 - The GUI aggregate timeout required per-file fallback during the release QA
   line; that fallback evidence remains acceptable for the prerelease flow.
 - The Windows portable ZIP remains unsigned.
@@ -87,3 +87,10 @@ The next gate should narrowly update the public `v0.1.5-rc1` release body to
 replace stale "post-public audit pending" wording with public-safe wording that
 states the post-public audit passed, without changing assets, tags, issues,
 source, or release publication state.
+
+Follow-up:
+OSW-RELEASE-041 completed that narrow release-body note update. The next
+[post-v0.1.5-rc1 worktrack selection](post_v0_1_5_rc1_next_worktrack_selection.md)
+selects maintenance hardening for GUI aggregate timeout behavior and
+release-monitoring notes, without starting validation or experimental work in
+the planning gate.
