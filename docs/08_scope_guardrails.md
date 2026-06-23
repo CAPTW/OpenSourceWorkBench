@@ -11,6 +11,10 @@ request should stop, park, or defer.
 - Planning-only optional solver manifest UX design that improves optional
   dependency discovery, plugin manifest guidance, and health messaging without
   installing, bundling, or executing external solvers.
+- Design-only optional solver manifest UX contracts that define target stacks,
+  health states, future CLI/GUI surfaces, plugin-provided manifest trust
+  boundaries, and validation relationships without implementing schemas,
+  discovery services, CLI commands, GUI panels, or solver execution.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.

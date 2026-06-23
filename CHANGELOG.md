@@ -6,6 +6,19 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Manifest UX Design
+
+- Added a design-only optional solver manifest UX contract for Gmsh, GNU
+  Octave, CalculiX, OpenFOAM, CoolProp/Cantera, and PyVista/meshio stacks.
+- Defined future manifest fields, health states, CLI/GUI surfaces,
+  plugin-provided manifest trust boundaries, validation relationships, and
+  safety/privacy limits without implementing source behavior.
+- Kept issues `#6` through `#11` open and preserved OSW-VALID-005
+  `skipped-missing` evidence as neither pass nor failure.
+- No manifest schema implementation, discovery implementation, CLI/GUI
+  implementation, release edit, issue mutation, solver execution, dependency
+  install, bundled-solver claim, or certification claim occurred.
+
 ### Next Experimental Line Selection
 
 - Selected `Plugin ecosystem / optional solver manifest UX` as the next

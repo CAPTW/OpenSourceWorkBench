@@ -1757,3 +1757,21 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   dependent. Issues `#6` through `#11` remain open. Release, asset, tag, issue,
   runtime source, dependency, solver, version, and certification state stay
   unchanged by this planning decision.
+
+## ADR-0089: Optional Solver Manifest UX Starts Design-Only
+
+- Status: Accepted for experimental design
+- Date: 2026-06-23
+- Context: OSW-EXP-054 selected Plugin ecosystem / optional solver manifest UX
+  after OSW-VALID-005 classified all live optional validation targets as
+  `skipped-missing`. Users need clearer optional stack guidance before future
+  validation or plugin-health surfaces are implemented.
+- Decision: Define a design-only manifest UX contract covering target stacks,
+  manifest fields, health states, future CLI and GUI surfaces, plugin-provided
+  manifest trust boundaries, validation relationships, and safety/privacy
+  limits. Keep implementation of manifest schemas, discovery services, CLI
+  commands, and GUI panels in later gates.
+- Consequences: Issues `#6` through `#11` remain open. Skipped-missing
+  evidence remains neither pass nor failure. No release, asset, tag, issue,
+  runtime source, dependency, solver, version, ProjectSchema, VLM, bundled
+  solver, or certification state changes in this design gate.

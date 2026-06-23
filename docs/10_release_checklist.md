@@ -349,6 +349,7 @@ or full solver parity.
 | v0.1.5-rc1 public release follow-up remains scoped. | `PASS` | [Post-v0.1.5-rc1 next scope decision](roadmap/post_v0_1_5_rc1_next_scope_decision.md) records the public prerelease and passed public download audit while selecting only a narrow release-body note update as the next path. |
 | v0.1.5-rc1 next worktrack remains maintenance-scoped. | `PASS` | [Post-v0.1.5-rc1 next worktrack selection](roadmap/post_v0_1_5_rc1_next_worktrack_selection.md) selects GUI aggregate timeout and release-monitoring hardening instead of release, issue, solver, source, or asset mutation. |
 | Next experimental line is planning-only. | `PASS` | [Next experimental line selection](roadmap/next_experimental_line_selection.md) selects Plugin ecosystem / optional solver manifest UX after OSW-VALID-005 skipped-missing evidence, while performing no source implementation, release edit, issue mutation, solver execution, dependency install, bundled-solver claim, or certification claim. |
+| Optional solver manifest UX remains design-only. | `PASS` | [Optional solver manifest UX design](experimental/optional_solver_manifest_ux_design.md) defines future manifest fields, health states, CLI/GUI surfaces, plugin trust boundaries, and validation relationships without implementing schema/discovery/CLI/GUI behavior or mutating release, issue, solver, dependency, source, tag, asset, or version state. |
 
 ## Report Evidence Checklist
 

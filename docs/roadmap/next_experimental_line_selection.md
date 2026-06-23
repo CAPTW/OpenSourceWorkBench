@@ -84,6 +84,16 @@ manifest fields, health statuses, missing-dependency explanations, and UX
 guardrails without installing dependencies, bundling solvers, executing
 solvers, editing releases, or closing validation issues.
 
+## Design follow-up
+
+The follow-up
+[optional solver manifest UX design](../experimental/optional_solver_manifest_ux_design.md)
+defines the initial design-only contract for stack manifests, health states,
+future CLI/GUI surfaces, plugin-provided manifest trust boundaries, validation
+relationships, and safety/privacy limits. It keeps implementation split into
+later gates for manifest schema models, discovery service design, CLI doctor
+preview, and GUI health panel design.
+
 ## Guardrails
 
 - External solvers are not bundled.

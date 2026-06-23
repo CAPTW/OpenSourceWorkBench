@@ -591,5 +591,13 @@ integration runs. It adds no export bundle write, `.inp` write, result import,
 run gate, SolverAdapter/runner/subprocess path, ProjectSchema mutation, VLM
 API, issue `#8` validation, issue mutation, or solver execution.
 
+Optional solver manifest UX relationship:
+[Optional solver manifest UX design](../experimental/optional_solver_manifest_ux_design.md)
+is adjacent infrastructure for future optional stack health guidance. VFEA and
+FEASpec workflows may later benefit from clearer CalculiX, Gmsh, PyVista, or
+meshio availability diagnostics, but this roadmap does not treat manifest UX as
+solver installation, solver execution, validation success, issue closure
+evidence, a bundled-solver promise, or certification.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.
