@@ -169,6 +169,17 @@ Skipped-missing evidence is not a pass and not a failure.
 
 ## Future gates
 
-- `OSW-EXP-057_OPTIONAL_SOLVER_DISCOVERY_SERVICE_DESIGN`
+- `OSW-EXP-057_OPTIONAL_SOLVER_DISCOVERY_SERVICE_DESIGN` - completed as a
+  design-only service contract in
+  [Optional solver discovery service design](optional_solver_discovery_service_design.md).
 - `OSW-EXP-058_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW`
 - `OSW-EXP-059_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
+
+## Discovery service design follow-up
+
+The discovery service design defines how future gates can consume
+`OptionalSolverManifest` records, map evidence to health states, report
+diagnostics, redact local environment details, and hand off to CLI/GUI surfaces.
+It does not add discovery service source, command execution, optional package
+imports, CLI commands, GUI panels, issue mutation, release mutation, dependency
+installation, solver execution, bundled-solver claims, or certification claims.

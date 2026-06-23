@@ -6,6 +6,19 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Discovery Service Design
+
+- Added a design-only optional solver discovery service contract that consumes
+  declarative `OptionalSolverManifest` records in future gates.
+- Defined passive metadata inspection, future presence-check boundaries,
+  active validation-gate separation, result concepts, diagnostics,
+  health-state mapping, privacy/security rules, cache freshness, CLI/GUI
+  handoff, and plugin-manifest trust boundaries.
+- Preserved the boundary that discovery design does not implement source,
+  call `shutil.which`, import optional solver packages, run external commands,
+  execute solvers, install dependencies, mutate issues, edit releases, or claim
+  validation success.
+
 ### Optional Solver Manifest Schema Model
 
 - Added an experimental optional solver manifest schema/model package under

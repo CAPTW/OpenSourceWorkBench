@@ -1791,3 +1791,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   remain separate gates. Issues `#6` through `#11` remain open, and no release,
   asset, tag, issue, dependency, solver, ProjectSchema, VLM, bundled solver,
   certification, or version state changes occur in this schema/model gate.
+
+## ADR-0091: Optional Solver Discovery Service Starts As Design
+
+- Status: Accepted for experimental design
+- Date: 2026-06-23
+- Context: OSW-EXP-056 added declarative optional solver manifest models and
+  built-in stack records, but discovery, CLI, GUI, and health-check behavior
+  remain out of scope. The next slice needs a service contract before source
+  implementation so passive discovery, active validation, privacy, and plugin
+  trust boundaries are explicit.
+- Decision: Define the optional solver discovery service as design-only first.
+  The design consumes `OptionalSolverManifest` records, separates passive
+  metadata and future presence checks from active validation gates, defines
+  result and diagnostic concepts, maps health states, redacts local environment
+  details, and hands off to future CLI/GUI surfaces without implementing
+  discovery source.
+- Consequences: Future discovery implementation, CLI doctor preview, and GUI
+  health panel work remain separate gates. Issues `#6` through `#11` remain
+  open, skipped-missing evidence remains neither pass nor failure, and no
+  release, asset, tag, issue, dependency, solver, ProjectSchema, VLM, bundled
+  solver, certification, or version state changes occur in this design gate.

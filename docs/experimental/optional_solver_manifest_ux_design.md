@@ -178,7 +178,9 @@ evidence.
 - `OSW-EXP-056_OPTIONAL_SOLVER_MANIFEST_SCHEMA_MODEL` - completed as the
   experimental schema/model layer in
   [Optional solver manifest schema model](optional_solver_manifest_schema_model.md).
-- `OSW-EXP-057_OPTIONAL_SOLVER_DISCOVERY_SERVICE_DESIGN`
+- `OSW-EXP-057_OPTIONAL_SOLVER_DISCOVERY_SERVICE_DESIGN` - completed as the
+  design-only service contract in
+  [Optional solver discovery service design](optional_solver_discovery_service_design.md).
 - `OSW-EXP-058_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW`
 - `OSW-EXP-059_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
 
@@ -189,3 +191,12 @@ JSON I/O helpers, and built-in declarative manifest fixtures. It does not add
 discovery, CLI commands, GUI panels, solver execution, dependency installation,
 issue mutation, release mutation, bundled-solver claims, or certification
 claims.
+
+## Discovery service design follow-up
+
+The discovery service design defines passive metadata inspection, future
+presence-check boundaries, active validation-gate separation, privacy
+redaction, diagnostics, cache freshness, CLI/GUI handoff, and plugin manifest
+trust boundaries. It still adds no discovery implementation, CLI command, GUI
+panel, solver execution, external command execution, dependency installation,
+issue mutation, release mutation, bundled-solver claim, or certification claim.

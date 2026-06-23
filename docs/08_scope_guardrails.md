@@ -19,6 +19,11 @@ request should stop, park, or defer.
   declarative: typed manifest fields, JSON I/O helpers, structural diagnostics,
   and built-in stack records without discovery, health-check execution, CLI or
   GUI surfaces, dependency installation, or solver execution.
+- Design-only optional solver discovery service contracts that define passive
+  metadata inspection, future presence-check boundaries, active validation-gate
+  separation, diagnostics, privacy redaction, cache freshness, CLI/GUI handoff,
+  and plugin trust boundaries without implementing discovery or executing
+  commands.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.

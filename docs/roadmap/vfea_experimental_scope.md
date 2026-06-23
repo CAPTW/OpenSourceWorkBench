@@ -605,5 +605,12 @@ that optional-stack guidance. It does not add solver discovery, CLI or GUI
 surfaces, health-check execution, VFEA provider behavior, ProjectSchema
 mutation, issue closure evidence, bundled-solver support, or certification.
 
+[Optional solver discovery service design](../experimental/optional_solver_discovery_service_design.md)
+adds only the design contract for future manifest-consuming discovery. It may
+later help VFEA and FEASpec workflows explain missing CalculiX, Gmsh, PyVista,
+or meshio components, but it does not implement discovery source, execute
+commands, import optional solver packages, run health checks, mutate issues, or
+provide validation success evidence.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

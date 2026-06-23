@@ -101,6 +101,15 @@ structural diagnostics, and built-in manifest records. It still does not
 implement discovery, CLI commands, GUI panels, health-check execution, solver
 execution, dependency installation, issue mutation, or release mutation.
 
+The discovery design follow-up
+[optional solver discovery service design](../experimental/optional_solver_discovery_service_design.md)
+defines how a future service can consume declarative manifests, separate
+passive discovery from active validation, map health states, redact environment
+details, hand off to CLI/GUI surfaces, and preserve plugin trust boundaries.
+It remains design-only and does not implement discovery, execute external
+commands, import optional solver packages, mutate issues, or claim validation
+success.
+
 ## Guardrails
 
 - External solvers are not bundled.
