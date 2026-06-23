@@ -132,6 +132,7 @@ a separate gate.
 | Post-v0.1.5-rc1 next worktrack selection | [Post-v0.1.5-rc1 next worktrack selection](roadmap/post_v0_1_5_rc1_next_worktrack_selection.md) and `tests/unit/test_post_v0_1_5_rc1_next_worktrack_selection_docs.py` | Selects maintenance hardening for GUI aggregate timeout behavior and release-monitoring notes after the completed release flow and corrected release body. It performs no release edit, asset mutation, issue mutation, source mutation, solver execution, or version bump. | planning |
 | GUI aggregate timeout fallback policy | [GUI aggregate timeout hardening](maintenance/gui_aggregate_timeout_hardening.md), `tools/qa/run_gui_per_file_fallback.py`, and focused unit tests | Aggregate GUI pass is sufficient, aggregate GUI failure is blocking, and aggregate GUI timeout is warning-only only when the complete deterministic per-file fallback passes every GUI test file. The fallback invokes pytest only for test orchestration and does not execute solvers or mutate release, issue, source, tag, or asset state. | automated maintenance |
 | v0.1.5-rc1 post-release monitoring | [v0.1.5-rc1 post-release monitoring](release/v0_1_5_rc1_post_release_monitoring.md) and focused docs tests | Records the public prerelease state, corrected release body note, five expected assets, retained public download smoke evidence, open issues `#6`-`#11`, issue `#8` skipped-missing state, unsigned portable ZIP, no MSI/code signing, no bundled solvers, and no certification claim. | documented monitoring |
+| v0.1.5-rc1 live optional validation matrix | [Live optional validation matrix for v0.1.5-rc1](validation/live_optional_validation_matrix_v0_1_5rc1.md) and ignored artifacts under `artifacts/validation/live_optional/OSW-VALID-005/` | Prepared-machine discovery classified issues `#6` through `#11` as `skipped-missing` on this machine because the required optional tools or packages were absent. No dependency install, solver install, solver execution, release mutation, issue closure, bundled solver claim, or certification claim occurred. | completed with warnings |
 | Public release wording | GitHub Release notes body audit | Notes say public prerelease, assets attached, unsigned portable ZIP, no MSI, no code signing, and no bundled solvers. | completed for `v0.1.3-rc1` |
 | Roadmap triage | GitHub issues and milestones | Maintenance tasks are assigned or deferred before feature work starts. | planned |
 
@@ -178,6 +179,12 @@ The
 records that the release body note is corrected and selects maintenance
 hardening for GUI aggregate timeout behavior and release-monitoring notes. It
 does not perform live validation or claim issue closure.
+
+The
+[Live optional validation matrix for v0.1.5-rc1](validation/live_optional_validation_matrix_v0_1_5rc1.md)
+records the OSW-VALID-005 prepared-machine discovery rerun. The current machine
+still lacks the required optional solver and science stacks, so issues `#6`
+through `#11` remain `skipped-missing` and open.
 
 This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory

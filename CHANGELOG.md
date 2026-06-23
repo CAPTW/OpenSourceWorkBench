@@ -6,6 +6,20 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Prepared-Machine Live Optional Validation Matrix
+
+- Reran the live optional validation matrix for public `v0.1.5-rc1` and
+  recorded installed-only discovery evidence for issues `#6` through `#11`.
+- Classified Gmsh, GNU Octave, CalculiX `ccx`, OpenFOAM, CoolProp/Cantera, and
+  PyVista/meshio as `skipped-missing` on this machine because the required
+  executables or Python packages were not discovered.
+- Wrote ignored local validation evidence under
+  `artifacts/validation/live_optional/OSW-VALID-005/` and added the tracked
+  summary document `docs/validation/live_optional_validation_matrix_v0_1_5rc1.md`.
+- Kept issues `#6` through `#11` open. No dependency install, solver install,
+  solver execution, release edit, asset mutation, tag push, issue closure,
+  bundled-solver claim, or certification claim occurred.
+
 ### GUI Aggregate Timeout And Release Monitoring Hardening
 
 - Added a deterministic GUI per-file fallback helper for environments where

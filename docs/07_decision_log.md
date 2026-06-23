@@ -1721,3 +1721,20 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: Release and maintenance gates can record aggregate timeout
   warnings without weakening GUI test coverage. Missing fallback coverage,
   failed per-file tests, or collection errors remain blocking.
+
+## ADR-0087: Prepared-Machine Optional Validation Remains Installed-Only
+
+- Status: Accepted for validation evidence
+- Date: 2026-06-23
+- Context: `v0.1.5-rc1` is public, and issues `#6` through `#11` remain open
+  for live optional validation. OSW-VALID-005 reran discovery on the current
+  machine after the release flow and found no target optional solver or science
+  stack installed.
+- Decision: Record each target as `skipped-missing` when its required installed
+  executable or Python package is absent. Do not install dependencies or
+  solvers. Do not treat skipped discovery as a pass. Do not close issues in the
+  validation matrix gate; closure requires a later issue-specific review gate.
+- Consequences: The current machine contributes updated skipped-missing
+  evidence for `v0.1.5-rc1`, while prepared-machine validation remains open.
+  Release, asset, tag, issue, runtime source, dependency, and solver state stay
+  unchanged by this decision.
