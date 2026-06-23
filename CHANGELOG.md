@@ -6,6 +6,19 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver GUI Health Panel Design
+
+- Added a design-only optional solver GUI health panel contract over the
+  existing manifest, passive discovery, and CLI doctor preview concepts.
+- Defined future entry points, panel layout, stack cards, details,
+  diagnostics, guidance, validation history, redaction/privacy behavior, user
+  actions, accessibility, plugin trust labels, and a pure view-model boundary.
+- Kept the slice design-only: no GUI source, no view-model source, no CLI
+  behavior change, no plugin loading, no active smoke validation, no external
+  solver command execution, no solver execution, no dependency install, no
+  issue mutation, no release mutation, no validation-pass claim, no
+  issue-closure claim, no bundled-solver claim, and no certification claim.
+
 ### Optional Solver CLI Doctor Preview
 
 - Added experimental `optional-solver-list`, `optional-solver-doctor`, and

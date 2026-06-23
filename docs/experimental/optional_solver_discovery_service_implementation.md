@@ -167,7 +167,7 @@ stacks are installed, bundled, validated, or ready for issue closure.
 - No dependency installation.
 - No solver installation.
 - No CLI command source.
-- No GUI panel source.
+- No GUI source.
 - No issue mutation.
 - No release mutation.
 - No bundled solver claim.
@@ -193,7 +193,9 @@ validation and closure-review gates provide appropriate installed-only evidence.
 - `OSW-EXP-059_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW` - completed as the passive
   CLI preview in
   [Optional solver CLI doctor preview](optional_solver_cli_doctor_preview.md).
-- `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
+- `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN` - completed as the
+  design-only GUI health panel contract in
+  [Optional solver GUI health panel design](optional_solver_gui_health_panel_design.md).
 - `OSW-VALID` prepared-machine validation reuse
 
 ## CLI preview follow-up
@@ -203,6 +205,18 @@ The CLI preview follow-up exposes `optional-solver-list`,
 manifests and passive discovery reports. It supports text and JSON output,
 redacts paths by default, never exposes environment values, and treats missing
 optional stacks as valid setup evidence rather than validation success. It
-adds no GUI panel, plugin loading, active smoke validation, external solver
-command execution, solver execution, dependency installation, issue mutation,
-release mutation, bundled-solver claim, or certification claim.
+adds no GUI implementation, plugin loading, active smoke validation, external
+solver command execution, solver execution, dependency installation, issue
+mutation, release mutation, bundled-solver claim, or certification claim.
+
+## GUI health panel design follow-up
+
+The GUI health panel design follow-up defines how a future PySide-facing
+surface can consume passive discovery reports without letting widgets perform
+discovery directly. It covers summary counts, stack filters, per-stack cards,
+details, diagnostics, guidance, validation history, redaction, future user
+actions, and a pure view-model boundary. It adds no GUI source, view-model
+source, CLI behavior change, active smoke validation, external solver command
+execution, solver execution, dependency installation, issue mutation, release
+mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or
+certification claim.

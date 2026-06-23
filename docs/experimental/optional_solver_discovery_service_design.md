@@ -244,7 +244,7 @@ old or incomplete.
 - No issue mutation.
 - No release mutation.
 - No CLI command source.
-- No GUI panel source.
+- No GUI source.
 - No discovery service source.
 - No health probe execution.
 - No bundled solver claim.
@@ -258,7 +258,9 @@ old or incomplete.
 - `OSW-EXP-059_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW` - completed as a passive
   text/JSON CLI preview in
   [Optional solver CLI doctor preview](optional_solver_cli_doctor_preview.md).
-- `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
+- `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN` - completed as a
+  design-only GUI health panel contract in
+  [Optional solver GUI health panel design](optional_solver_gui_health_panel_design.md).
 - `OSW-VALID` prepared-machine validation reuse
 
 ## Implementation follow-up
@@ -279,3 +281,13 @@ manifest and discovery layers. It provides text and JSON output with default
 redaction, no environment-value exposure, no install command, no active smoke
 mode, no solver command execution, no issue mutation, no release mutation, and
 no validation-pass or issue-closure claim.
+
+## GUI health panel design follow-up
+
+The GUI health panel design follow-up keeps this service boundary intact for a
+future GUI surface. It defines entry points, layout, stack cards, details,
+diagnostics, privacy/redaction behavior, validation history, and pure
+view-model handoff over passive discovery reports. It does not implement GUI
+source, view-model source, CLI behavior, active validation, solver command
+execution, dependency installation, issue mutation, release mutation,
+validation-pass claims, bundled-solver claims, or certification claims.

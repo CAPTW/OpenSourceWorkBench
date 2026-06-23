@@ -139,6 +139,7 @@ a separate gate.
 | Optional solver discovery service design | [Optional solver discovery service design](experimental/optional_solver_discovery_service_design.md) and focused docs tests | Defines a future service contract for consuming declarative manifests, separating passive discovery from active validation, mapping health states, emitting diagnostics, redacting environment details, handling cache freshness, and handing off to CLI/GUI surfaces. It implements no discovery source, CLI/GUI behavior, optional package imports, external command execution, solver execution, dependency install, issue mutation, release mutation, bundled-solver claim, or certification claim. | design |
 | Optional solver passive discovery service | [Optional solver discovery service implementation](experimental/optional_solver_discovery_service_implementation.md), `src/osw/experimental/optional_solvers/`, and focused unit tests | Implements passive manifest-consuming discovery with injected resolvers, default passive resolvers, redacted report serialization, diagnostics, health-state mapping, and built-in manifest discovery. It implements no CLI/GUI behavior, plugin loading, active smoke validation, optional package imports, external command execution, solver execution, dependency install, issue mutation, release mutation, bundled-solver claim, or certification claim. | automated passive-discovery evidence |
 | Optional solver CLI doctor preview | [Optional solver CLI doctor preview](experimental/optional_solver_cli_doctor_preview.md), `src/osw/cli/main.py`, and focused CLI tests | Adds `optional-solver-list`, `optional-solver-doctor`, and `optional-solver-explain` text/JSON commands over built-in manifests and passive discovery reports. Paths are redacted by default, environment values are not exposed, and missing stacks remain setup evidence rather than validation success. It adds no GUI behavior, plugin loading, active smoke validation, external solver command execution, solver execution, dependency install, issue mutation, release mutation, bundled-solver claim, or certification claim. | automated CLI preview evidence |
+| Optional solver GUI health panel design | [Optional solver GUI health panel design](experimental/optional_solver_gui_health_panel_design.md) and focused docs tests | Defines the future GUI-facing health surface over optional solver manifests and passive discovery reports: entry points, summary layout, stack cards, details, diagnostics, guidance, validation history, redaction/privacy behavior, user actions, accessibility, plugin trust labels, and pure view-model boundary. It implements no GUI source, view-model source, CLI behavior change, plugin loading, active smoke validation, external solver command execution, solver execution, dependency install, issue mutation, release mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or certification claim. | design evidence |
 | Public release wording | GitHub Release notes body audit | Notes say public prerelease, assets attached, unsigned portable ZIP, no MSI, no code signing, and no bundled solvers. | completed for `v0.1.3-rc1` |
 | Roadmap triage | GitHub issues and milestones | Maintenance tasks are assigned or deferred before feature work starts. | planned |
 
@@ -233,6 +234,14 @@ adds read-only CLI display for that evidence through `optional-solver-list`,
 setup evidence only: no GUI behavior, no active smoke validation, no external
 solver command execution, no solver execution, no dependency installation, no
 environment-value exposure, and no issue-closure claim.
+
+[Optional solver GUI health panel design](experimental/optional_solver_gui_health_panel_design.md)
+defines the future GUI display contract for optional stack setup evidence. It
+keeps the health panel design-only, aligns with CLI doctor semantics, redacts
+paths and environment values by default, and adds no GUI source, view-model
+source, active smoke validation, external solver command execution, solver
+execution, dependency installation, issue mutation, validation-pass claim, or
+issue-closure claim.
 
 This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory

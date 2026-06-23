@@ -178,7 +178,9 @@ Skipped-missing evidence is not a pass and not a failure.
 - `OSW-EXP-059_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW` - completed as the passive
   CLI preview in
   [Optional solver CLI doctor preview](optional_solver_cli_doctor_preview.md).
-- `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
+- `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN` - completed as a
+  design-only GUI health panel contract in
+  [Optional solver GUI health panel design](optional_solver_gui_health_panel_design.md).
 
 ## Discovery service design follow-up
 
@@ -207,3 +209,13 @@ text or JSON. It keeps paths redacted by default, keeps environment values out
 of output, and does not add GUI behavior, active smoke validation, solver
 execution, dependency installation, issue mutation, release mutation,
 bundled-solver claims, or certification claims.
+
+## GUI health panel design follow-up
+
+The GUI health panel design follow-up uses these declarative manifests as the
+future source of stack identity, requirement lists, issue references, safety
+notes, and non-bundled disclaimers. It defines only the future GUI contract and
+view-model boundary; it does not implement GUI source, view-model source,
+discovery source, CLI behavior, active smoke validation, solver execution,
+dependency installation, issue mutation, release mutation, validation-pass
+claims, issue-closure claims, bundled-solver claims, or certification claims.

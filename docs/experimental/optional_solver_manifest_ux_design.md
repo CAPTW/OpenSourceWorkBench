@@ -187,7 +187,9 @@ evidence.
 - `OSW-EXP-059_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW` - completed as the passive
   CLI preview in
   [Optional solver CLI doctor preview](optional_solver_cli_doctor_preview.md).
-- `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
+- `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN` - completed as a
+  design-only GUI health panel contract in
+  [Optional solver GUI health panel design](optional_solver_gui_health_panel_design.md).
 
 ## Schema model follow-up
 
@@ -223,3 +225,15 @@ surfaces for the manifest and discovery layers. The commands provide text and
 JSON output, redacted paths by default, no environment-value exposure, and no
 install, active smoke, solver execution, issue mutation, release mutation,
 bundled-solver, validation-pass, or certification claim.
+
+## GUI health panel design follow-up
+
+The GUI health panel design follow-up defines the future optional solver health
+surface promised by this UX line. It covers entry points, summary and stack
+card layout, details, diagnostics, guidance, validation history,
+privacy/redaction, passive refresh, user actions, accessibility, plugin trust
+labels, and a pure view-model boundary. It remains design-only and adds no GUI
+source, view-model source, CLI behavior change, plugin loading, active smoke
+validation, external solver command execution, solver execution, dependency
+installation, issue mutation, release mutation, validation-pass claim,
+issue-closure claim, bundled-solver claim, or certification claim.

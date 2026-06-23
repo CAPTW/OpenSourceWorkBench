@@ -628,5 +628,14 @@ prepared validation, but it does not add GUI behavior, active smoke validation,
 external solver command execution, solver execution, dependency installation,
 issue mutation, validation success evidence, or bundled-solver claims.
 
+[Optional solver GUI health panel design](../experimental/optional_solver_gui_health_panel_design.md)
+defines the future GUI health surface for the same optional-stack evidence. It
+may later help VFEA and FEASpec workflows present CalculiX, Gmsh, PyVista, or
+meshio setup state, diagnostics, guidance, and validation history in a redacted
+panel, but this design adds no GUI source, view-model source, CLI behavior
+change, active smoke validation, external solver command execution, solver
+execution, dependency installation, issue mutation, validation success
+evidence, issue closure evidence, or bundled-solver claims.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

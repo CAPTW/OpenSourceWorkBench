@@ -128,6 +128,18 @@ add GUI behavior, plugin loading, active smoke validation, solver execution,
 dependency installation, issue mutation, release mutation, or issue-closure
 claims.
 
+The GUI health panel design follow-up
+[optional solver GUI health panel design](../experimental/optional_solver_gui_health_panel_design.md)
+defines the future GUI-facing health surface over the same manifest and
+passive discovery concepts. It covers entry points, summary layout, stack
+cards, details, diagnostics, guidance, validation history, privacy/redaction,
+user actions, accessibility, plugin trust labels, and a pure view-model
+boundary. It remains design-only and adds no GUI source, view-model source, CLI
+behavior change, plugin loading, active smoke validation, external solver
+command execution, solver execution, dependency installation, issue mutation,
+release mutation, validation-pass claim, issue-closure claim, bundled-solver
+claim, or certification claim.
+
 ## Guardrails
 
 - External solvers are not bundled.

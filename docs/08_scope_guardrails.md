@@ -35,6 +35,13 @@ request should stop, park, or defer.
   JSON while redacting paths by default, never exposing environment values,
   and not installing dependencies, running smoke checks, executing solver
   commands, mutating issues, or claiming validation success.
+- Design-only optional solver GUI health panel contracts that define future
+  entry points, panel layout, stack cards, details, diagnostics, guidance,
+  validation history, redaction/privacy behavior, user actions, accessibility,
+  plugin trust labels, and pure view-model boundaries without implementing GUI
+  source, view-model source, CLI behavior changes, plugin loading, active
+  smoke validation, solver command execution, dependency installation, issue
+  mutation, release mutation, or validation success claims.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.

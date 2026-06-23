@@ -1855,3 +1855,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   validation, solver execution, dependency installation, release edits, issue
   mutation, bundled-solver claims, certification claims, and version changes
   remain out of scope.
+
+## ADR-0094: Optional Solver GUI Health Panel Starts Design-Only
+
+- Status: Accepted for experimental GUI design
+- Date: 2026-06-24
+- Context: OSW-EXP-059 added passive optional solver CLI preview commands over
+  the manifest and discovery layers. The next slice needs a GUI-facing health
+  panel contract before any PySide/view-model source work so passive discovery
+  semantics, redaction, validation history, user actions, plugin trust labels,
+  and issue boundaries are explicit.
+- Decision: Define the optional solver GUI health panel as design-only. The
+  design covers future entry points, summary layout, stack cards, details,
+  diagnostics, guidance, validation history, redaction/privacy behavior, user
+  actions, accessibility, plugin trust labels, and a pure view-model boundary
+  over passive discovery report objects.
+- Consequences: Future view-model and GUI implementation remain separate
+  gates. Issues `#6` through `#11` remain open, skipped-missing evidence remains
+  neither pass nor failure, and no GUI source, view-model source, CLI behavior
+  change, plugin loading, active smoke validation, solver execution, dependency
+  installation, release edit, issue mutation, bundled-solver claim,
+  certification claim, or version change occurs in this design gate.

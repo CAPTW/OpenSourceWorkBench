@@ -11,7 +11,7 @@ This gate is passive discovery only:
 - no active smoke validation
 - no dependency installation
 - no solver installation
-- no GUI panel
+- no GUI implementation
 - no plugin loading
 - no issue mutation
 - no release mutation
@@ -124,5 +124,19 @@ not replace prepared-machine validation.
 
 ## Future gates
 
-- `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
+- `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN` - completed as a
+  design-only GUI health panel contract in
+  [Optional solver GUI health panel design](optional_solver_gui_health_panel_design.md).
 - `OSW-VALID` prepared-machine validation reuse
+
+## GUI health panel design follow-up
+
+The GUI health panel design follow-up defines future entry points, stack cards,
+details and diagnostics panels, guidance, validation history, privacy/redaction
+behavior, user actions, a view-model boundary, accessibility expectations, and
+plugin trust labels for the optional solver health surface. It consumes the
+same manifest and passive discovery semantics as the CLI preview, but it adds
+no GUI source, view-model source, CLI behavior change, plugin loading, active
+smoke validation, external solver command execution, solver execution,
+dependency installation, issue mutation, release mutation, validation-pass
+claim, issue-closure claim, bundled-solver claim, or certification claim.
