@@ -86,3 +86,18 @@ timeout fallback policy, add release-monitoring notes for public prerelease
 checks, and avoid release mutation, issue mutation, solver execution, runtime
 source changes, or dependency installation unless a later prompt explicitly
 allows them.
+
+## Maintenance follow-up
+
+OSW-MAINT-018 implements the selected maintenance hardening path with docs,
+focused tests, and a pytest-only GUI per-file fallback helper. The selected
+policy keeps aggregate GUI failures blocking and allows aggregate GUI timeouts
+as warning-only only when the complete deterministic fallback passes every GUI
+test file.
+
+The maintenance follow-up also adds `v0.1.5-rc1` release-monitoring notes for
+public prerelease state, duplicate-free asset checks, retained public download
+smoke evidence, open issues `#6` through `#11`, unsigned portable ZIP status,
+no MSI/code signing, no bundled external solvers, and no certification claim.
+It does not edit the release, mutate assets or issues, execute solvers, bump
+versions, install dependencies, or mutate runtime source.

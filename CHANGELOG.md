@@ -6,6 +6,21 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### GUI Aggregate Timeout And Release Monitoring Hardening
+
+- Added a deterministic GUI per-file fallback helper for environments where
+  aggregate `pytest tests/gui -q` times out.
+- Documented that aggregate GUI failures remain blocking, while aggregate GUI
+  timeouts are warning-only only when every GUI test file passes or has expected
+  skips under a complete per-file fallback.
+- Added post-`v0.1.5-rc1` release monitoring notes covering public prerelease
+  state, expected assets, retained public download smoke evidence, open live
+  optional validation issues, unsigned portable ZIP status, no MSI/code signing,
+  and no bundled external solvers.
+- No release edit, asset mutation, issue mutation, solver execution, runtime
+  source mutation, version bump, dependency install, bundled-solver claim, or
+  certification claim occurred in this maintenance gate.
+
 ### Post-v0.1.5-rc1 Public Prerelease Follow-Up Planning
 
 - Recorded that `v0.1.5-rc1` is now a public prerelease with the expected

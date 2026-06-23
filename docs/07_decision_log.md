@@ -1703,3 +1703,21 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   execution, source mutation, version bump, or dependency installation occurs
   in this planning gate. The next recommended gate is
   `OSW-MAINT-018_GUI_AGGREGATE_TIMEOUT_AND_RELEASE_MONITORING_HARDENING`.
+
+## ADR-0086: GUI Aggregate Timeout Uses Complete Per-File Fallback
+
+- Status: Accepted for maintenance QA
+- Date: 2026-06-23
+- Context: The aggregate GUI pytest command can time out in the local release
+  environment after `v0.1.5-rc1`, while deterministic per-file GUI execution has
+  passed in prior gates. The project needs a repeatable way to classify this
+  condition without hiding actual GUI test failures.
+- Decision: Treat aggregate GUI pass as sufficient and aggregate GUI failure as
+  blocking. Treat aggregate GUI timeout as warning-only only when a complete
+  deterministic per-file fallback covers every `tests/gui/test_*.py` file and
+  every file passes or has expected skips. The fallback helper may invoke pytest
+  subprocesses only for test orchestration and must not run solvers or mutate
+  release, issue, source, tag, or asset state.
+- Consequences: Release and maintenance gates can record aggregate timeout
+  warnings without weakening GUI test coverage. Missing fallback coverage,
+  failed per-file tests, or collection errors remain blocking.
