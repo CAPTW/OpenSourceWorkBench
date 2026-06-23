@@ -15,6 +15,10 @@ request should stop, park, or defer.
   health states, future CLI/GUI surfaces, plugin-provided manifest trust
   boundaries, and validation relationships without implementing schemas,
   discovery services, CLI commands, GUI panels, or solver execution.
+- Experimental optional solver manifest schema/model records that stay
+  declarative: typed manifest fields, JSON I/O helpers, structural diagnostics,
+  and built-in stack records without discovery, health-check execution, CLI or
+  GUI surfaces, dependency installation, or solver execution.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.

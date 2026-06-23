@@ -175,7 +175,17 @@ evidence.
 
 ## Future implementation slices
 
-- `OSW-EXP-056_OPTIONAL_SOLVER_MANIFEST_SCHEMA_MODEL`
+- `OSW-EXP-056_OPTIONAL_SOLVER_MANIFEST_SCHEMA_MODEL` - completed as the
+  experimental schema/model layer in
+  [Optional solver manifest schema model](optional_solver_manifest_schema_model.md).
 - `OSW-EXP-057_OPTIONAL_SOLVER_DISCOVERY_SERVICE_DESIGN`
 - `OSW-EXP-058_OPTIONAL_SOLVER_CLI_DOCTOR_PREVIEW`
 - `OSW-EXP-059_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN`
+
+## Schema model follow-up
+
+The schema/model follow-up adds typed Python records, structural diagnostics,
+JSON I/O helpers, and built-in declarative manifest fixtures. It does not add
+discovery, CLI commands, GUI panels, solver execution, dependency installation,
+issue mutation, release mutation, bundled-solver claims, or certification
+claims.

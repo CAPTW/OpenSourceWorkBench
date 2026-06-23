@@ -6,6 +6,21 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Manifest Schema Model
+
+- Added an experimental optional solver manifest schema/model package under
+  `src/osw/experimental/optional_solvers/`.
+- Added typed manifest, requirement, capability, probe, health-state,
+  support-status, diagnostic, validation-report, JSON I/O, explanation, and
+  built-in manifest APIs.
+- Added built-in declarative manifests for Gmsh, GNU Octave, CalculiX,
+  OpenFOAM, CoolProp/Cantera, and PyVista/meshio, mapped to issues `#6`
+  through `#11`.
+- Kept the schema declarative: no discovery implementation, no CLI/GUI
+  implementation, no optional package imports, no health-check execution, no
+  solver execution, no dependency install, no issue mutation, no release
+  mutation, no bundled-solver claim, and no certification claim.
+
 ### Optional Solver Manifest UX Design
 
 - Added a design-only optional solver manifest UX contract for Gmsh, GNU

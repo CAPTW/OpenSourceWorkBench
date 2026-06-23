@@ -1,3 +1,3 @@
 """Experimental OSW features that are not part of the stable core contract."""
 
-__all__ = ["feaspec"]
+__all__ = ["feaspec", "optional_solvers"]

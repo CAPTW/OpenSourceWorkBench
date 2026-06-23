@@ -599,5 +599,11 @@ meshio availability diagnostics, but this roadmap does not treat manifest UX as
 solver installation, solver execution, validation success, issue closure
 evidence, a bundled-solver promise, or certification.
 
+[Optional solver manifest schema model](../experimental/optional_solver_manifest_schema_model.md)
+adds only typed declarative manifest records and structural diagnostics for
+that optional-stack guidance. It does not add solver discovery, CLI or GUI
+surfaces, health-check execution, VFEA provider behavior, ProjectSchema
+mutation, issue closure evidence, bundled-solver support, or certification.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

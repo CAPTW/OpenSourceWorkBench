@@ -94,6 +94,13 @@ relationships, and safety/privacy limits. It keeps implementation split into
 later gates for manifest schema models, discovery service design, CLI doctor
 preview, and GUI health panel design.
 
+The next follow-up
+[optional solver manifest schema model](../experimental/optional_solver_manifest_schema_model.md)
+implements only the typed declarative schema/model layer, JSON helpers,
+structural diagnostics, and built-in manifest records. It still does not
+implement discovery, CLI commands, GUI panels, health-check execution, solver
+execution, dependency installation, issue mutation, or release mutation.
+
 ## Guardrails
 
 - External solvers are not bundled.

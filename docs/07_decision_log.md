@@ -1775,3 +1775,19 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   evidence remains neither pass nor failure. No release, asset, tag, issue,
   runtime source, dependency, solver, version, ProjectSchema, VLM, bundled
   solver, or certification state changes in this design gate.
+
+## ADR-0090: Optional Solver Manifest Schema Is Declarative Only
+
+- Status: Accepted for experimental schema/model implementation
+- Date: 2026-06-23
+- Context: OSW-EXP-055 defined optional solver manifest UX as design-only.
+  The next narrow slice needs typed records and built-in manifest data without
+  crossing into discovery, CLI, GUI, or solver-health behavior.
+- Decision: Add an experimental `osw.experimental.optional_solvers` package
+  with typed manifest models, health/support enums, JSON helpers, structural
+  diagnostics, and built-in declarative manifests for issues `#6` through
+  `#11`. Keep probes as command-token declarations only.
+- Consequences: Future discovery, CLI doctor preview, and GUI health surfaces
+  remain separate gates. Issues `#6` through `#11` remain open, and no release,
+  asset, tag, issue, dependency, solver, ProjectSchema, VLM, bundled solver,
+  certification, or version state changes occur in this schema/model gate.

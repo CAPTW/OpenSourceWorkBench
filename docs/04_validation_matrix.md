@@ -135,6 +135,7 @@ a separate gate.
 | v0.1.5-rc1 live optional validation matrix | [Live optional validation matrix for v0.1.5-rc1](validation/live_optional_validation_matrix_v0_1_5rc1.md) and ignored artifacts under `artifacts/validation/live_optional/OSW-VALID-005/` | Prepared-machine discovery classified issues `#6` through `#11` as `skipped-missing` on this machine because the required optional tools or packages were absent. No dependency install, solver install, solver execution, release mutation, issue closure, bundled solver claim, or certification claim occurred. | completed with warnings |
 | Next experimental line selection | [Next experimental line selection](roadmap/next_experimental_line_selection.md) and focused docs tests | Selects Plugin ecosystem / optional solver manifest UX after the closed `v0.1.5-rc1` release flow, fresh post-public audit, maintenance hardening, and OSW-VALID-005 skipped-missing evidence. It performs no source implementation, solver execution, dependency install, release edit, issue mutation, bundled-solver claim, or certification claim. | planning |
 | Optional solver manifest UX design | [Optional solver manifest UX design](experimental/optional_solver_manifest_ux_design.md) and focused docs tests | Defines future optional stack manifest fields, health states, CLI/GUI surfaces, plugin-manifest trust boundaries, validation relationships, and safety/privacy limits for Gmsh, GNU Octave, CalculiX, OpenFOAM, CoolProp/Cantera, and PyVista/meshio. It implements no manifest schema, discovery service, CLI command, GUI panel, solver execution, dependency install, issue mutation, release mutation, bundled-solver claim, or certification claim. | design |
+| Optional solver manifest schema model | [Optional solver manifest schema model](experimental/optional_solver_manifest_schema_model.md), `src/osw/experimental/optional_solvers/`, and focused unit tests | Implements typed declarative manifest models, JSON helpers, structural diagnostics, and built-in manifest records for issues `#6` through `#11`. It performs no discovery, CLI/GUI implementation, health-check execution, optional package import probes, solver execution, dependency install, issue mutation, release mutation, bundled-solver claim, or certification claim. | automated schema/model evidence |
 | Public release wording | GitHub Release notes body audit | Notes say public prerelease, assets attached, unsigned portable ZIP, no MSI, no code signing, and no bundled solvers. | completed for `v0.1.3-rc1` |
 | Roadmap triage | GitHub issues and milestones | Maintenance tasks are assigned or deferred before feature work starts. | planned |
 
@@ -202,6 +203,13 @@ turns that selection into a design-only contract for manifest fields, health
 states, future CLI/GUI surfaces, plugin trust boundaries, and validation
 relationships. It keeps skipped-missing evidence separate from validation pass
 evidence and keeps issues `#6` through `#11` open.
+
+The
+[Optional solver manifest schema model](experimental/optional_solver_manifest_schema_model.md)
+adds the first source slice for that line as declarative schema/model evidence.
+It validates manifest structure and built-in records without discovering tools,
+executing probes, importing optional solver packages, or changing validation
+issue state.
 
 This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory
