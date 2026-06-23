@@ -128,6 +128,7 @@ a separate gate.
 | Post-experimental ResultDataset scope review | [Post-experimental ResultDataset scope review](roadmap/post_exp_resultdataset_scope_review.md) and `tests/unit/test_post_exp_resultdataset_scope_review_docs.py` | Records the completed FEASpec/CalculiX ResultDataset write GUI and parser/import/write line, keeps OSW-VALID-004 as `skipped-missing`, keeps issues `#6`-`#11` open, and requires a future release-boundary decision before new assets. No solver execution, issue mutation, release mutation, or version bump occurs. | completed with open validation |
 | Post-experimental release-boundary decision | [Post-experimental release-boundary decision](release/post_exp_release_boundary_decision.md) and `tests/unit/test_post_exp_release_boundary_decision_docs.py` | Selects `v0.1.5-rc1` as the next boundary because post-`v0.1.4-rc1` develop contains substantial FEASpec/CalculiX ResultDataset capability. It performs no metadata alignment, tag creation, release edit, asset build/upload, issue mutation, solver execution, or validation claim. | decision |
 | v0.1.5-rc1 candidate metadata | [OpenSolver Workbench v0.1.5-rc1 candidate](release/v0_1_5_rc1_candidate.md), package metadata, CLI version, release metadata QA, and target tag/release absence checks | Package and CLI metadata are aligned to `0.1.5rc1`; the `v0.1.5-rc1` tag, GitHub Release, and assets remain absent until later gates. Issues `#6` through `#11` remain open and live CalculiX issue `#8` remains skipped-missing. | metadata aligned |
+| v0.1.5-rc1 public release and post-public audit | [Post-v0.1.5-rc1 next scope decision](roadmap/post_v0_1_5_rc1_next_scope_decision.md) and public release audit evidence | `v0.1.5-rc1` is a public prerelease with five expected assets, and the post-public download audit passed with checksum, manifest, wheel, sdist, and portable ZIP smoke evidence. Issues `#6` through `#11` remain open, and issue `#8` remains `skipped-missing` because `ccx` was absent. | public prerelease audit |
 | Public release wording | GitHub Release notes body audit | Notes say public prerelease, assets attached, unsigned portable ZIP, no MSI, no code signing, and no bundled solvers. | completed for `v0.1.3-rc1` |
 | Roadmap triage | GitHub issues and milestones | Maintenance tasks are assigned or deferred before feature work starts. | planned |
 
@@ -161,6 +162,13 @@ connects the completed ResultDataset write GUI scope to that skipped-missing
 validation evidence. It keeps issues `#6` through `#11` open for prepared
 machines and records that new release assets require a later release-boundary
 decision.
+
+The
+[Post-v0.1.5-rc1 next scope decision](roadmap/post_v0_1_5_rc1_next_scope_decision.md)
+records that `v0.1.5-rc1` is now public and that the post-public download
+audit passed. It keeps issues `#6` through `#11` open, preserves issue `#8` as
+`skipped-missing` because `ccx` was absent, and selects only a narrow release
+body note update as the next path.
 
 This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory

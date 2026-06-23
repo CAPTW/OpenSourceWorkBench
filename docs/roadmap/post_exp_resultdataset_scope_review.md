@@ -140,3 +140,11 @@ Follow-up metadata alignment:
 aligns package metadata to `0.1.5rc1` for the selected candidate while keeping
 the `v0.1.5-rc1` tag, GitHub Release, and assets absent until later release
 gates.
+
+Follow-up public prerelease and next-scope decision:
+`v0.1.5-rc1` is now a public prerelease with the expected five assets, and its
+post-public download audit passed. The
+[post-v0.1.5-rc1 next scope decision](post_v0_1_5_rc1_next_scope_decision.md)
+keeps issues `#6` through `#11` open, keeps issue `#8` as `skipped-missing`
+because `ccx` was absent, and selects a narrow release-body note update as the
+next path before prepared-machine validation or a new experimental line.

@@ -1668,3 +1668,21 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: `develop` is prepared as a `v0.1.5-rc1` candidate branch, but
   the `v0.1.5-rc1` tag, GitHub Release, release assets, asset upload, issue
   closure, and live optional validation completion remain separate later gates.
+
+## ADR-0084: Post-v0.1.5-rc1 Next Scope Is Release Body Note Cleanup
+
+- Status: Accepted for post-public planning
+- Date: 2026-06-23
+- Context: `v0.1.5-rc1` is now a public prerelease with five expected assets,
+  and the post-public download audit passed. Issues `#6` through `#11` remain
+  open for prepared-machine live optional validation, with issue `#8`
+  `skipped-missing` because `ccx` was absent. The release body may still contain
+  stale wording that says the post-public audit is pending.
+- Decision: Select a narrow release-body note update as the next work path,
+  limited to replacing stale "post-public audit pending" wording. This
+  planning gate does not edit the release, mutate issues, run solvers, bump
+  versions, or change runtime source.
+- Consequences: Prepared-machine validation and future experimental work remain
+  important follow-ups, but public-facing release text should be corrected
+  first through a separate release-body update gate. No issue closure or live
+  validation pass is claimed.

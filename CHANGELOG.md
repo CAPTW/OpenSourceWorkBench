@@ -6,6 +6,24 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Post-v0.1.5-rc1 Public Prerelease Follow-Up Planning
+
+- Recorded that `v0.1.5-rc1` is now a public prerelease with the expected
+  wheel, sdist, Windows portable ZIP, `SHA256SUMS.txt`, and
+  `release_asset_manifest.json` assets present.
+- Recorded that the post-public asset download audit passed for public
+  `v0.1.5-rc1` assets, including checksum, manifest, wheel, sdist, and
+  portable ZIP smoke evidence.
+- Selected the next path as a narrow public release body note update to replace
+  stale "post-public audit pending" wording only. This planning gate does not
+  edit the release body.
+- Kept issues `#6` through `#11` open for prepared-machine live optional
+  validation. Issue `#8` remains `skipped-missing` because `ccx` was absent in
+  the installed-only local audit.
+- No release edit, issue mutation, solver execution, version bump, dependency
+  install, branch/tag mutation, asset mutation, runtime source mutation,
+  bundled-solver claim, or certification claim occurred in this planning gate.
+
 ### v0.1.5rc1 Candidate Metadata Aligned
 
 Candidate package version: `0.1.5rc1`
