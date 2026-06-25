@@ -652,5 +652,14 @@ GUI-initiated discovery, active smoke validation, external solver command
 execution, solver execution, dependency installation, issue mutation,
 validation success evidence, issue closure evidence, or bundled-solver claims.
 
+[Optional solver GUI export summary design](../experimental/optional_solver_gui_export_summary_design.md)
+defines only the future redacted summary export workflow for that health
+surface. It can later help VFEA and FEASpec support/debugging share setup
+state without full paths or environment values by default, but it does not add
+export source, file dialogs, clipboard integration, shell/browser actions,
+discovery execution, solver execution, dependency installation, issue
+mutation, validation success evidence, issue closure evidence, or
+bundled-solver claims.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

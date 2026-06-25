@@ -1919,3 +1919,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   execution, active smoke validation, solver execution, dependency
   installation, release edit, issue mutation, bundled-solver claim,
   certification claim, or version change occurs in this GUI gate.
+
+## ADR-0097: Optional Solver GUI Summary Export Starts Design-Only
+
+- Status: Accepted for experimental GUI export design
+- Date: 2026-06-25
+- Context: OSW-EXP-062 added a display-only optional solver GUI health panel
+  with disabled future copy/open-docs placeholders. The next slice needs a
+  privacy-preserving export contract before any payload builder, file dialog,
+  clipboard, or write behavior exists.
+- Decision: Define the optional solver GUI summary export workflow as
+  design-only. The design covers redacted payload scope, supported future
+  JSON/Markdown/plain-text formats, explicit save-path and overwrite policy,
+  privacy opt-in for full paths, action states, a pure view-model-derived
+  payload boundary, failure handling, and future implementation tests.
+- Consequences: Future export view-model and implementation gates remain
+  separate. Issues `#6` through `#11` remain open, skipped-missing evidence
+  remains neither pass nor failure, and no runtime source, GUI source, CLI
+  behavior change, export implementation, file dialog, clipboard integration,
+  shell/browser action, discovery execution, solver execution, dependency
+  installation, release edit, issue mutation, bundled-solver claim,
+  certification claim, or version change occurs in this design gate.

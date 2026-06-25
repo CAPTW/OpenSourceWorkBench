@@ -142,6 +142,7 @@ a separate gate.
 | Optional solver GUI health panel design | [Optional solver GUI health panel design](experimental/optional_solver_gui_health_panel_design.md) and focused docs tests | Defines the future GUI-facing health surface over optional solver manifests and passive discovery reports: entry points, summary layout, stack cards, details, diagnostics, guidance, validation history, redaction/privacy behavior, user actions, accessibility, plugin trust labels, and pure view-model boundary. It implements no GUI source, view-model source, CLI behavior change, plugin loading, active smoke validation, external solver command execution, solver execution, dependency install, issue mutation, release mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or certification claim. | design evidence |
 | Optional solver GUI health panel view-model | [Optional solver GUI health panel view-model](experimental/optional_solver_gui_health_panel_viewmodel.md), `src/osw/experimental/optional_solvers/gui_health_viewmodel.py`, and focused view-model tests | Implements pure UI-agnostic dataclass records and builders for summary counts, stack cards, details rows, diagnostics, guidance, validation history, filters, and action states from supplied manifests and passive discovery reports. It adds no PySide/Qt imports, GUI widgets, CLI behavior change, discovery execution, active smoke validation, external solver command execution, solver execution, dependency install, issue mutation, release mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or certification claim. | automated view-model evidence |
 | Optional solver GUI health panel implementation | [Optional solver GUI health panel implementation](experimental/optional_solver_gui_health_panel_implementation.md), `src/osw/gui/dialogs/optional_solver_health_panel.py`, and focused GUI tests | Implements a PySide display-only panel over an already-built `OptionalSolverHealthPanelViewModel`. It renders summary, stack cards, details, diagnostics, guidance, validation history, safety, and action-state sections while adding no discovery execution, active smoke validation, external solver command execution, solver execution, dependency install, solver install, clipboard/browser action, issue mutation, release mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or certification claim. | automated GUI evidence |
+| Optional solver GUI export summary design | [Optional solver GUI export summary design](experimental/optional_solver_gui_export_summary_design.md) and focused docs tests | Defines a future redacted export workflow for optional solver health-panel summaries, including payload scope, JSON/Markdown/plain-text formats, privacy defaults, explicit save-path and overwrite policy, action states, payload-builder boundary, failure handling, and future tests. It adds no export source, file dialog, clipboard integration, shell/browser action, discovery execution, solver execution, dependency install, issue mutation, release mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or certification claim. | design evidence |
 | Public release wording | GitHub Release notes body audit | Notes say public prerelease, assets attached, unsigned portable ZIP, no MSI, no code signing, and no bundled solvers. | completed for `v0.1.3-rc1` |
 | Roadmap triage | GitHub issues and milestones | Maintenance tasks are assigned or deferred before feature work starts. | planned |
 
@@ -260,6 +261,15 @@ read-only rendering surface with disabled/display-only action placeholders; it
 does not perform discovery, execute solvers, run external commands, install
 dependencies, access clipboard/browser APIs, mutate issues, edit releases, or
 turn skipped-missing evidence into validation success.
+
+[Optional solver GUI export summary design](experimental/optional_solver_gui_export_summary_design.md)
+defines the next display-adjacent workflow as design-only. It limits future
+exports to redacted, reviewable health summaries with JSON, Markdown, or plain
+text formats, explicit save paths, overwrite confirmation, and a pure
+view-model-derived payload boundary. It adds no exporter source, file dialog,
+clipboard integration, shell/browser action, discovery execution, solver
+execution, dependency installation, issue mutation, release mutation, or
+validation-pass evidence.
 
 This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory

@@ -160,6 +160,17 @@ smoke validation, external solver command execution, solver execution,
 dependency installation, issue mutation, release mutation, validation-pass
 claim, issue-closure claim, bundled-solver claim, or certification claim.
 
+The GUI export summary design follow-up
+[optional solver GUI export summary design](../experimental/optional_solver_gui_export_summary_design.md)
+defines a future redacted export workflow for the health panel. It remains
+design-only and covers payload scope, JSON/Markdown/plain-text formats,
+privacy defaults, explicit save-path and overwrite policy, action-state
+behavior, payload-builder boundaries, failure handling, and future tests
+without adding exporter source, file dialogs, clipboard integration,
+shell/browser actions, discovery execution, solver execution, dependency
+installation, issue mutation, release mutation, validation-pass claims,
+issue-closure claims, bundled-solver claims, or certification claims.
+
 ## Guardrails
 
 - External solvers are not bundled.

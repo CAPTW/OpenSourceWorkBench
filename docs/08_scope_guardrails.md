@@ -652,6 +652,11 @@ Scope drift is any change that:
   command invocation, live `ccx` validation, ProjectSchema mutation, VLM API
   integration, credential handling, dependency install, issue closure, or
   solver execution without a separate gate;
+- turns the optional solver GUI export summary design into export source,
+  file dialogs, clipboard integration, shell/browser actions, discovery
+  execution, solver execution, dependency installation, issue mutation, release
+  mutation, validation-pass evidence, issue-closure evidence, bundled-solver
+  claims, or certification claims without a separate implementation gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is

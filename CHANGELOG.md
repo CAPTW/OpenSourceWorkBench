@@ -6,6 +6,18 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver GUI Export Summary Design
+
+- Added a design-only optional solver GUI export summary workflow contract.
+- Defined future redacted export payload scope, JSON/Markdown/plain-text
+  formats, privacy defaults, explicit save-path and overwrite policy, action
+  states, payload-builder boundary, failure handling, and future tests.
+- Kept the slice docs/tests-only: no export source, no file dialog, no
+  clipboard integration, no shell/browser action, no discovery execution, no
+  solver execution, no dependency install, no issue mutation, no release
+  mutation, no validation-pass claim, no issue-closure claim, no bundled-solver
+  claim, and no certification claim.
+
 ### Optional Solver GUI Health Panel Implementation
 
 - Added a PySide display-only optional solver health panel under

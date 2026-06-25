@@ -134,6 +134,16 @@ buttons:
 
 The GUI does not execute any action from this panel.
 
+## Export summary design follow-up
+
+[Optional solver GUI export summary design](optional_solver_gui_export_summary_design.md)
+defines the future redacted summary export workflow for this panel. It covers
+export scope, supported text-oriented formats, privacy defaults, explicit path
+selection, overwrite confirmation, action-state behavior, and a pure payload
+builder boundary without adding exporter source, file dialogs, clipboard
+integration, shell/browser actions, discovery execution, solver execution,
+dependency installation, issue mutation, or release mutation.
+
 ## Privacy and redaction
 
 - Redacted paths remain redacted.
@@ -172,6 +182,15 @@ pass evidence, and issue closure remains outside this panel.
 
 ## Future gates
 
-- `OSW-EXP-063_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_DESIGN`
-- `OSW-EXP-064_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
+- `OSW-EXP-063_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_DESIGN` - completed as a
+  design-only export workflow contract in
+  [Optional solver GUI export summary design](optional_solver_gui_export_summary_design.md).
+- `OSW-EXP-064_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_VIEWMODEL`
+- `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION`
+- `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse
+
+Earlier planning named the discovery refresh placeholder
+`OSW-EXP-064_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`. The export-summary
+sequence now reserves `OSW-EXP-064` and `OSW-EXP-065` for export view-model and
+implementation gates before discovery refresh design.

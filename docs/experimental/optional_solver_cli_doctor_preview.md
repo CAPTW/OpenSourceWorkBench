@@ -133,6 +133,9 @@ not replace prepared-machine validation.
 - `OSW-EXP-062_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_IMPLEMENTATION` - completed
   as a PySide display-only panel in
   [Optional solver GUI health panel implementation](optional_solver_gui_health_panel_implementation.md).
+- `OSW-EXP-063_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_DESIGN` - completed as a
+  design-only GUI export workflow contract in
+  [Optional solver GUI export summary design](optional_solver_gui_export_summary_design.md).
 - `OSW-VALID` prepared-machine validation reuse
 
 ## GUI health panel design follow-up
@@ -165,3 +168,12 @@ view-model in PySide. It does not call the CLI, perform discovery refresh,
 execute active smoke validation, run external solver commands, install
 dependencies, mutate issues, edit releases, claim validation success, claim
 issue closure readiness, bundle solvers, or claim certification.
+
+## GUI export summary design follow-up
+
+The GUI export summary design follow-up defines a future redacted export
+workflow for health-panel data that remains aligned with CLI doctor semantics.
+It is design-only and adds no export source, file dialog, clipboard access,
+shell/browser action, discovery execution, solver execution, dependency
+installation, issue mutation, release mutation, validation-pass claim,
+issue-closure claim, bundled-solver claim, or certification claim.

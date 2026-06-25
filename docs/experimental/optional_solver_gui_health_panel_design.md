@@ -203,8 +203,12 @@ usage.
 - `OSW-EXP-062_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_IMPLEMENTATION` - completed
   as a PySide display-only component in
   [Optional solver GUI health panel implementation](optional_solver_gui_health_panel_implementation.md).
-- `OSW-EXP-063_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_DESIGN`
-- `OSW-EXP-064_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
+- `OSW-EXP-063_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_DESIGN` - completed as a
+  design-only export workflow contract in
+  [Optional solver GUI export summary design](optional_solver_gui_export_summary_design.md).
+- `OSW-EXP-064_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_VIEWMODEL`
+- `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION`
+- `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse
 
 ## View-model follow-up
@@ -226,3 +230,14 @@ It does not implement discovery refresh, active smoke validation, solver
 execution, external command execution, dependency installation, issue mutation,
 release mutation, validation-pass claims, issue-closure claims,
 bundled-solver claims, or certification claims.
+
+## Export summary design follow-up
+
+The export summary design follow-up defines how a future GUI action can prepare
+and save a redacted optional-solver health summary. It keeps the workflow
+design-only and covers payload fields, JSON/Markdown/plain-text formats,
+privacy defaults, explicit path and overwrite policy, future action states,
+failure handling, and implementation tests without adding exporter source, file
+dialogs, clipboard integration, shell/browser actions, discovery execution,
+solver execution, dependency installation, issue mutation, release mutation, or
+validation-pass claims.
