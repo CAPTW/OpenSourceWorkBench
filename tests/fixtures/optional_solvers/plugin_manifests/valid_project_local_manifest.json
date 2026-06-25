@@ -1,0 +1,43 @@
+{
+  "schema_version": "1",
+  "source": {
+    "type": "project_local",
+    "label": "Project optional solver fixtures",
+    "reference": "project:.osw/optional_solvers/project_stack.json",
+    "trust_label": "reviewed_project"
+  },
+  "manifest": {
+    "stack_id": "project_local_stack",
+    "display_name": "Project Local Stack",
+    "related_issue": 6,
+    "capabilities": [
+      {
+        "capability_id": "project_guidance",
+        "description": "Project-local optional stack guidance."
+      }
+    ],
+    "executable_requirements": [
+      {
+        "identifier": "project-tool",
+        "display_name": "Project tool"
+      }
+    ],
+    "python_package_requirements": [],
+    "environment_variable_hints": [],
+    "smoke_test_description": "Prepared-machine check only.",
+    "prepared_machine_notes": [
+      "Use only where project-tool is already available."
+    ],
+    "platform_notes": [],
+    "documentation_refs": [
+      "docs/experimental/optional_solver_plugin_manifest_loading_design.md"
+    ],
+    "support_status": "experimental",
+    "non_bundled_disclaimer": "External solvers are not bundled.",
+    "safety_notes": [
+      "No install workflow.",
+      "No dependency install.",
+      "No bundled solver."
+    ]
+  }
+}

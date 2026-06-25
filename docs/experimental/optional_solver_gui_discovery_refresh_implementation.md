@@ -188,3 +188,11 @@ no plugin loader, filesystem scan, network fetch, marketplace integration,
 active smoke validation, solver execution, dependency installation, issue
 mutation, release mutation, validation-pass claim, issue-closure claim,
 bundled-solver claim, or certification claim.
+
+## Plugin manifest loader model follow-up
+
+[Optional solver plugin manifest loader model](optional_solver_plugin_manifest_loader_model.md)
+implements a data-only loader for explicit manifest documents. The current GUI
+refresh action still refreshes only over its configured manifest set and does
+not scan plugin directories, import plugin packages, fetch network manifests,
+or treat plugin manifest loading as validation evidence.

@@ -714,5 +714,13 @@ directories, fetch network manifests, execute plugin code, execute solvers,
 install dependencies, mutate issues, create validation success evidence, create
 issue closure evidence, bundle solvers, or provide certification.
 
+[Optional solver plugin manifest loader model](../experimental/optional_solver_plugin_manifest_loader_model.md)
+adds the data-only explicit dict/JSON loader for those future manifests. It can
+help future VFEA and FEASpec plugin ecosystems validate manifest metadata before
+display, but it does not scan plugin directories, import plugin packages, fetch
+network manifests, execute plugin code, execute solvers, install dependencies,
+mutate issues, create validation success evidence, create issue closure
+evidence, bundle solvers, or provide certification.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

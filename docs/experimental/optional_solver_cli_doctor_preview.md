@@ -187,3 +187,11 @@ and show invalid manifests separately, but this design adds no CLI source,
 plugin loading, plugin code execution, network marketplace, solver execution,
 dependency installation, issue mutation, release mutation, validation-pass
 claim, issue-closure claim, bundled-solver claim, or certification claim.
+
+## Plugin manifest loader model follow-up
+
+[Optional solver plugin manifest loader model](optional_solver_plugin_manifest_loader_model.md)
+implements the data-only accepted/rejected manifest model for explicit dict and
+JSON inputs. This CLI preview still lists and explains the existing built-in
+optional solver manifests only; no CLI plugin-manifest preview command or
+plugin package discovery is added in this gate.

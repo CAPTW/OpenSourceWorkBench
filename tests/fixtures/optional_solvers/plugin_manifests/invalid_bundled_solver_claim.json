@@ -1,0 +1,43 @@
+{
+  "schema_version": "1",
+  "source": {
+    "type": "plugin_package",
+    "label": "Third-party bundled-claim fixture",
+    "reference": "plugin:example.bundled_claim",
+    "trust_label": "third_party_plugin"
+  },
+  "manifest": {
+    "stack_id": "bundled_claim_stack",
+    "display_name": "Bundled Claim Stack",
+    "related_issue": 6,
+    "capabilities": [
+      {
+        "capability_id": "bundled_claim_guardrail",
+        "description": "Fixture for bundled-solver claim diagnostics."
+      }
+    ],
+    "executable_requirements": [
+      {
+        "identifier": "bundled-claim-tool",
+        "display_name": "Bundled claim tool"
+      }
+    ],
+    "python_package_requirements": [],
+    "environment_variable_hints": [],
+    "smoke_test_description": "Prepared-machine check only.",
+    "prepared_machine_notes": [
+      "Use only where bundled-claim-tool is already available."
+    ],
+    "platform_notes": [],
+    "documentation_refs": [
+      "docs/experimental/optional_solver_plugin_manifest_loading_design.md"
+    ],
+    "support_status": "experimental",
+    "non_bundled_disclaimer": "This manifest says it includes solver binary artifacts.",
+    "safety_notes": [
+      "No install workflow.",
+      "No dependency install.",
+      "No bundled solver."
+    ]
+  }
+}

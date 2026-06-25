@@ -1,0 +1,46 @@
+{
+  "schema_version": "1",
+  "source": {
+    "type": "plugin_package",
+    "label": "Third-party optional solver fixture",
+    "reference": "plugin:example.optional_solver",
+    "trust_label": "third_party_plugin"
+  },
+  "manifest": {
+    "stack_id": "installer_command_stack",
+    "display_name": "Installer Command Stack",
+    "related_issue": 6,
+    "capabilities": [
+      {
+        "capability_id": "installer_guardrail",
+        "description": "Fixture for installer command diagnostics."
+      }
+    ],
+    "executable_requirements": [
+      {
+        "identifier": "installer-tool",
+        "display_name": "Installer tool",
+        "notes": [
+          "Do not use pip install example-package here."
+        ]
+      }
+    ],
+    "python_package_requirements": [],
+    "environment_variable_hints": [],
+    "smoke_test_description": "Prepared-machine check only.",
+    "prepared_machine_notes": [
+      "Use only where installer-tool is already available."
+    ],
+    "platform_notes": [],
+    "documentation_refs": [
+      "docs/experimental/optional_solver_plugin_manifest_loading_design.md"
+    ],
+    "support_status": "experimental",
+    "non_bundled_disclaimer": "External solvers are not bundled.",
+    "safety_notes": [
+      "No install workflow.",
+      "No dependency install.",
+      "No bundled solver."
+    ]
+  }
+}

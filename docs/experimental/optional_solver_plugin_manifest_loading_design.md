@@ -235,9 +235,24 @@ separate explicit issue-closure gate provide sufficient evidence.
 - no CLI source mutation
 - no GUI source mutation
 
+## Loader model follow-up
+
+`OSW-EXP-070_OPTIONAL_SOLVER_PLUGIN_MANIFEST_LOADER_MODEL` implements the first
+data-only follow-up in
+[Optional solver plugin manifest loader model](optional_solver_plugin_manifest_loader_model.md).
+That model accepts only explicit dict input and explicit JSON files, reuses the
+declarative optional solver manifest validation path, attaches source/trust
+labels, detects duplicate stack conflicts, and quarantines unsafe or invalid
+records as diagnostics. It adds no CLI/GUI behavior change, package import,
+directory scan, network fetch, solver execution, dependency installation,
+issue mutation, release mutation, validation-pass claim, issue-closure claim,
+bundled-solver claim, or certification claim.
+
 ## Future gates
 
-- `OSW-EXP-070_OPTIONAL_SOLVER_PLUGIN_MANIFEST_LOADER_MODEL`
+- `OSW-EXP-070_OPTIONAL_SOLVER_PLUGIN_MANIFEST_LOADER_MODEL` - completed as a
+  data-only explicit dict/JSON loader model in
+  [Optional solver plugin manifest loader model](optional_solver_plugin_manifest_loader_model.md).
 - `OSW-EXP-071_OPTIONAL_SOLVER_PLUGIN_MANIFEST_CLI_PREVIEW`
 - `OSW-EXP-072_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse

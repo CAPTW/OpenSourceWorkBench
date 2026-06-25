@@ -177,3 +177,11 @@ adds no export source changes, plugin loading, network marketplace, plugin code
 execution, solver execution, dependency installation, issue mutation, release
 mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or
 certification claim.
+
+## Plugin manifest loader model follow-up
+
+[Optional solver plugin manifest loader model](optional_solver_plugin_manifest_loader_model.md)
+provides future accepted/rejected manifest source records. The current export
+action does not call the loader and does not add plugin package discovery; it
+exports only the currently accepted health-panel view-model and continues to
+state that exported summaries are not validation evidence.

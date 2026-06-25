@@ -6,6 +6,16 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Loader Model
+
+- Added a data-only optional solver plugin manifest loader model for explicit
+  dict and JSON manifest documents.
+- Added source/trust labels, accepted/rejected records, duplicate-stack
+  conflict diagnostics, and safety-policy diagnostics while keeping CLI/GUI
+  behavior, plugin package discovery, directory scanning, network fetching,
+  solver execution, dependency installation, issue mutation, and release
+  mutation out of scope.
+
 ### Optional Solver Plugin Manifest Loading Design
 
 - Added a design-only optional solver plugin manifest loading contract.

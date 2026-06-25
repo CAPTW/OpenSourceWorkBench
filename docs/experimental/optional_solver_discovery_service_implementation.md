@@ -260,3 +260,12 @@ diagnostics. This design adds no plugin loading implementation, filesystem
 plugin scan, network fetch, active smoke validation, solver execution,
 dependency installation, issue mutation, release mutation, validation-pass
 claim, issue-closure claim, bundled-solver claim, or certification claim.
+
+## Plugin manifest loader model follow-up
+
+[Optional solver plugin manifest loader model](optional_solver_plugin_manifest_loader_model.md)
+provides accepted/rejected manifest records that a future discovery gate can
+consume only after an explicit handoff. The current passive discovery service
+continues to use its existing caller-supplied manifest inputs and does not
+scan plugin locations, import plugin packages, fetch network manifests, or
+treat loaded manifests as validation evidence.

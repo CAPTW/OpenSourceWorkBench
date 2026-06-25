@@ -215,6 +215,17 @@ execution, dependency installation, issue mutation, release mutation,
 validation-pass claim, issue-closure claim, bundled-solver claim, or
 certification claim.
 
+## Plugin manifest loader model follow-up
+
+[Optional solver plugin manifest loader model](optional_solver_plugin_manifest_loader_model.md)
+reuses this schema and validation layer for explicit dict and explicit JSON
+manifest documents. It attaches source/trust metadata, rejects invalid or
+unsafe documents as diagnostics, and preserves the rule that plugin manifest
+presence is not validation evidence. It adds no CLI/GUI behavior change,
+package import, directory scan, network fetch, solver execution, dependency
+installation, issue mutation, release mutation, validation-pass claim,
+issue-closure claim, bundled-solver claim, or certification claim.
+
 ## CLI preview follow-up
 
 The CLI preview follow-up uses the declarative manifests and passive discovery

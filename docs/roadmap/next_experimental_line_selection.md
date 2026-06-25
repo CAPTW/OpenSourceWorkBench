@@ -230,6 +230,15 @@ execution, dependency installation, issue mutation, release mutation,
 validation-pass claims, issue-closure claims, bundled-solver claims, or
 certification claims.
 
+The plugin manifest loader model follow-up
+[optional solver plugin manifest loader model](../experimental/optional_solver_plugin_manifest_loader_model.md)
+implements explicit dict and explicit JSON loading for declarative manifest
+data only. It returns accepted/rejected records, source/trust labels,
+conflicts, and safety diagnostics while adding no CLI/GUI behavior change,
+package import, directory scan, network fetch, solver execution, dependency
+installation, issue mutation, release mutation, validation-pass claims,
+issue-closure claims, bundled-solver claims, or certification claims.
+
 ## Guardrails
 
 - External solvers are not bundled.

@@ -2070,3 +2070,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   execution, solver execution, dependency installation, release edit, issue
   mutation, bundled-solver claim, certification claim, or version change occurs
   in this design gate.
+
+## ADR-0104: Optional Solver Plugin Manifest Loader Is Data-Only
+
+- Status: Accepted for experimental plugin manifest loader model
+- Date: 2026-06-25
+- Context: OSW-EXP-069 defined source/trust labels and conflict policy for
+  future plugin-provided optional solver manifests. The next slice needs a
+  reusable model that can validate explicit manifest data without discovering
+  plugins, importing packages, scanning directories, fetching network data, or
+  changing CLI/GUI behavior.
+- Decision: Implement a data-only loader under
+  `src/osw/experimental/optional_solvers/` that accepts explicit dictionaries
+  and explicit JSON files, reuses declarative optional solver manifest parsing
+  and validation, records source/trust metadata, reports accepted and rejected
+  manifests separately, detects duplicate stack ids, and blocks unsafe wording
+  such as installer commands, executable code references, bundled-solver
+  claims, and certification claims.
+- Consequences: Future CLI preview and GUI display remain separate gates.
+  Issues `#6` through `#11` remain open, skipped-missing evidence remains
+  neither pass nor failure, and no CLI source, GUI source, plugin package
+  import, directory scan, network fetch, discovery execution, solver execution,
+  dependency installation, release edit, issue mutation, bundled-solver claim,
+  certification claim, or version change occurs in this loader-model gate.

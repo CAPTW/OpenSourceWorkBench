@@ -268,3 +268,11 @@ instead of discovery inputs. This design adds no GUI source mutation, plugin
 loader, plugin code execution, install or run buttons, solver execution,
 dependency installation, issue mutation, release mutation, validation-pass
 claim, issue-closure claim, bundled-solver claim, or certification claim.
+
+## Plugin manifest loader model follow-up
+
+[Optional solver plugin manifest loader model](optional_solver_plugin_manifest_loader_model.md)
+adds data-only accepted/rejected manifest records with source/trust labels for
+future GUI display. The current panel has no plugin manifest display surface
+and no loader invocation; it continues to render only the view-model supplied
+by its caller.

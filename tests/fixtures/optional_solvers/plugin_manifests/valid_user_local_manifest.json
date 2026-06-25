@@ -1,0 +1,45 @@
+{
+  "schema_version": "1",
+  "source": {
+    "type": "user_local",
+    "label": "User optional solver fixtures",
+    "reference": "user:optional_solvers/user_stack.json",
+    "trust_label": "user_provided"
+  },
+  "manifest": {
+    "stack_id": "user_local_stack",
+    "display_name": "User Local Stack",
+    "related_issue": 7,
+    "capabilities": [
+      {
+        "capability_id": "user_guidance",
+        "description": "User-local optional stack guidance."
+      }
+    ],
+    "executable_requirements": [],
+    "python_package_requirements": [
+      {
+        "identifier": "user_package",
+        "display_name": "User package"
+      }
+    ],
+    "environment_variable_hints": [
+      "USER_STACK_HOME"
+    ],
+    "smoke_test_description": "Prepared-machine import check only.",
+    "prepared_machine_notes": [
+      "Use only where the optional user package is already available."
+    ],
+    "platform_notes": [],
+    "documentation_refs": [
+      "docs/experimental/optional_solver_plugin_manifest_loading_design.md"
+    ],
+    "support_status": "experimental",
+    "non_bundled_disclaimer": "External solvers are not bundled.",
+    "safety_notes": [
+      "No install workflow.",
+      "No dependency install.",
+      "No bundled solver."
+    ]
+  }
+}
