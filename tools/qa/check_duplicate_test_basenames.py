@@ -9,6 +9,10 @@ from pathlib import Path
 from _common import repo_root
 
 ALLOWED_DUPLICATE_TEST_BASENAMES = {
+    "test_optional_solver_gui_discovery_refresh_guardrails.py": {
+        "tests/gui/test_optional_solver_gui_discovery_refresh_guardrails.py",
+        "tests/unit/test_optional_solver_gui_discovery_refresh_guardrails.py",
+    },
     "test_optional_solver_gui_export_summary_guardrails.py": {
         "tests/gui/test_optional_solver_gui_export_summary_guardrails.py",
         "tests/unit/test_optional_solver_gui_export_summary_guardrails.py",

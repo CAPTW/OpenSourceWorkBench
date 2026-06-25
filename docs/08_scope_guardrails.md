@@ -78,6 +78,14 @@ request should stop, park, or defer.
   preservation over supplied passive reports without GUI source, worker source,
   discovery execution, solver command execution, dependency installation,
   issue mutation, release mutation, or validation success claims.
+- Experimental optional solver GUI passive refresh action wiring that runs only
+  after explicit user action, uses an injected runner or built-in passive
+  discovery service, swaps the accepted health panel view-model atomically on
+  success, preserves the prior view-model on failed/canceled/stale results, and
+  keeps export bound to the accepted view-model without automatic startup
+  refresh, background workers, active smoke validation, solver command
+  execution, dependency installation, issue mutation, release mutation, or
+  validation success claims.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.
@@ -707,6 +715,12 @@ Scope drift is any change that:
   issue mutation, release mutation, environment-value display, validation-pass
   evidence, issue-closure evidence, bundled-solver claims, or certification
   claims without a separate implementation gate;
+- turns the optional solver GUI discovery refresh implementation into automatic
+  startup refresh, background workers, threading, active smoke validation,
+  solver execution, external solver command execution, dependency installation,
+  plugin loading, issue mutation, release mutation, environment-value display,
+  validation-pass evidence, issue-closure evidence, bundled-solver claims, or
+  certification claims without a separate gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is

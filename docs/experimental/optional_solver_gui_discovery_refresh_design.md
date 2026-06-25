@@ -202,6 +202,19 @@ execution, solver execution, dependency installation, issue mutation, release
 mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or
 certification claim.
 
+## GUI wiring follow-up
+
+[Optional solver GUI discovery refresh implementation](optional_solver_gui_discovery_refresh_implementation.md)
+adds explicit GUI passive refresh wiring for the optional solver health panel.
+It uses an injected runner or the built-in passive discovery service, runs only
+after user action, applies successful results through the pure refresh
+view-model helper, preserves the previous view-model on failure/cancel/stale
+results, keeps export bound to the currently accepted view-model, and still
+adds no automatic startup refresh, background worker, active smoke validation,
+solver execution, dependency installation, issue mutation, release mutation,
+validation-pass claim, issue-closure claim, bundled-solver claim, or
+certification claim.
+
 ## Non-goals
 
 - no implementation in this gate
@@ -218,5 +231,7 @@ certification claim.
 - `OSW-EXP-067_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_VIEWMODEL` - completed as
   a pure refresh state/apply layer in
   [Optional solver GUI discovery refresh view-model](optional_solver_gui_discovery_refresh_viewmodel.md).
-- `OSW-EXP-068_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_IMPLEMENTATION`
+- `OSW-EXP-068_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_IMPLEMENTATION` -
+  completed as explicit GUI passive refresh wiring in
+  [Optional solver GUI discovery refresh implementation](optional_solver_gui_discovery_refresh_implementation.md).
 - `OSW-VALID` prepared-machine validation reuse

@@ -186,6 +186,15 @@ refresh continues to use the current accepted view-model.
 
 Exported summaries remain not validation evidence.
 
+## GUI wiring follow-up
+
+[Optional solver GUI discovery refresh implementation](optional_solver_gui_discovery_refresh_implementation.md)
+uses this pure layer from the PySide health panel. It creates explicit refresh
+requests, consumes injected or default passive runner results, applies success
+through `apply_optional_solver_refresh_success`, preserves the previous panel
+on failure/cancel/stale results, and keeps refresh output separate from
+validation evidence.
+
 ## Relationship to #6~#11
 
 The refresh view-model can carry issue references for optional solver setup
@@ -196,5 +205,7 @@ Skipped-missing remains not pass evidence.
 
 ## Future gates
 
-- `OSW-EXP-068_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_IMPLEMENTATION`
+- `OSW-EXP-068_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_IMPLEMENTATION` -
+  completed as explicit GUI passive refresh wiring in
+  [Optional solver GUI discovery refresh implementation](optional_solver_gui_discovery_refresh_implementation.md).
 - `OSW-VALID` prepared-machine validation reuse

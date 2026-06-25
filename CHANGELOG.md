@@ -6,6 +6,20 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver GUI Discovery Refresh Implementation
+
+- Wired `Refresh Passive Discovery` in the optional solver GUI health panel as
+  an explicit user action.
+- Added injected runner support, a default built-in passive discovery runner,
+  refresh status/error text, deterministic test accessors, atomic accepted
+  view-model replacement on success, failed/canceled/stale preservation, and
+  export-after-refresh consistency.
+- Kept the implementation passive and bounded: no automatic startup refresh,
+  no background worker, no active smoke validation, no solver execution, no
+  dependency install, no issue mutation, no release mutation, no
+  validation-pass claim, no issue-closure claim, no bundled-solver claim, and
+  no certification claim.
+
 ### Optional Solver GUI Discovery Refresh View-Model
 
 - Added a pure optional solver GUI passive refresh state/apply layer under

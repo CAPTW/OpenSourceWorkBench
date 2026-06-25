@@ -696,5 +696,14 @@ background workers, threading, discovery execution, solver execution,
 dependency installation, issue mutation, validation success evidence, issue
 closure evidence, bundled-solver claims, or certification.
 
+[Optional solver GUI discovery refresh implementation](../experimental/optional_solver_gui_discovery_refresh_implementation.md)
+wires explicit passive refresh into that health surface. It can help VFEA and
+FEASpec users refresh optional-stack setup state in the GUI through an injected
+runner or built-in passive discovery service, then export the accepted
+refreshed view-model, but it does not add automatic startup refresh,
+background workers, active validation, solver execution, dependency
+installation, issue mutation, validation success evidence, issue closure
+evidence, bundled-solver claims, or certification.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

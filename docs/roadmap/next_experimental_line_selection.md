@@ -209,6 +209,17 @@ worker, threading, discovery execution, solver execution, dependency
 installation, issue mutation, release mutation, validation-pass claims,
 issue-closure claims, bundled-solver claims, or certification claims.
 
+The GUI discovery refresh implementation follow-up
+[optional solver GUI discovery refresh implementation](../experimental/optional_solver_gui_discovery_refresh_implementation.md)
+wires that pure layer into the PySide health panel as an explicit passive
+refresh action. It supports injected runners for tests, a default built-in
+passive discovery runner, status/error display, atomic accepted view-model
+replacement, and export-after-refresh behavior, while still adding no
+automatic startup refresh, background worker, active validation, solver
+execution, dependency installation, issue mutation, release mutation,
+validation-pass claims, issue-closure claims, bundled-solver claims, or
+certification claims.
+
 ## Guardrails
 
 - External solvers are not bundled.

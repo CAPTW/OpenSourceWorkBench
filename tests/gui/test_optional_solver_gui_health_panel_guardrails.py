@@ -72,7 +72,7 @@ def test_future_placeholders_do_not_expose_clipboard_or_browser_actions(
     assert "open_docs" in panel.available_action_names()
     assert "does not access the clipboard" in reasons["copy_summary"]
     assert "does not open shells or browsers" in reasons["open_docs"]
-    assert "does not run discovery" in reasons["refresh_passive_discovery"]
+    assert "passive discovery only" in reasons["refresh_passive_discovery"]
 
 
 def test_widget_construction_does_not_call_discovery(monkeypatch, app: object) -> None:
@@ -117,8 +117,8 @@ def test_panel_source_uses_no_subprocess_solver_or_external_actions() -> None:
     assert "subprocess." not in text
     assert "os.system" not in text
     assert "QProcess" not in text
-    assert "discover_optional_solver" not in text
-    assert "discover_builtin_optional_solvers" not in text
+    assert "discover_optional_solver_manifests" not in text
+    assert "discover_builtin_optional_solvers" in text
     assert "QDesktopServices" not in text
     assert "webbrowser" not in text
     assert ".clipboard(" not in text
@@ -132,7 +132,10 @@ def test_safety_text_states_non_goal_boundaries(app: object) -> None:
     panel = OptionalSolverHealthPanel(sample_optional_solver_health_view_model())
     text = panel.safety_text()
 
-    assert "No discovery execution from this panel." in text
+    assert "No automatic startup refresh." in text
+    assert "passive presence checks only after an explicit user action" in text
+    assert "Refresh output is not validation evidence." in text
+    assert "No active smoke validation." in text
     assert "No solver execution." in text
     assert "No subprocess usage." in text
     assert "No solver or dependency installation." in text

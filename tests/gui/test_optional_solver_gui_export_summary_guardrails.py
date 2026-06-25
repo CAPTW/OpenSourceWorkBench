@@ -69,11 +69,11 @@ def test_export_source_has_no_clipboard_shell_browser_or_solver_execution() -> N
         "open_output",
         "open output folder",
         "discover_optional_solver",
-        "discover_builtin_optional_solvers",
         "gh issue",
         "gh release",
     ):
         assert forbidden not in text
+    assert "discover_builtin_optional_solvers" in text
     assert ".mkdir(" not in text
     assert ".write_text(" in text
 

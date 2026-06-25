@@ -2026,3 +2026,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   active validation, solver execution, dependency installation, release edit,
   issue mutation, bundled-solver claim, certification claim, or version change
   occurs in this view-model gate.
+
+## ADR-0102: Optional Solver GUI Discovery Refresh Is Explicit And Passive
+
+- Status: Accepted for experimental GUI refresh implementation
+- Date: 2026-06-25
+- Context: OSW-EXP-067 added a pure refresh state/apply layer. The health
+  panel still needed a user-visible way to request passive discovery without
+  adding startup scans, active validation, workers, solver execution, installs,
+  issue mutation, or release mutation.
+- Decision: Wire `Refresh Passive Discovery` in the PySide health panel as an
+  explicit user action. The panel supports injected runners for deterministic
+  tests and a default built-in passive discovery runner. Successful results
+  replace the accepted health panel view-model through the pure apply helper;
+  failed, canceled, and stale results preserve the prior view-model. Export
+  summary continues to render the currently accepted view-model.
+- Consequences: Refresh output is setup/health UX evidence only and is not
+  validation evidence. Issues `#6` through `#11` remain open, skipped-missing
+  evidence remains neither pass nor failure, and no automatic startup refresh,
+  background worker, threading implementation, active smoke validation, solver
+  execution, dependency installation, issue mutation, release edit,
+  bundled-solver claim, certification claim, or version change occurs in this
+  implementation gate.

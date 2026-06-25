@@ -2,23 +2,38 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 
 from osw.experimental.optional_solvers import (
     OptionalSolverDiagnosticRowViewModel,
+    OptionalSolverDiscoveryOptions,
+    OptionalSolverDiscoveryReport,
     OptionalSolverExportSummaryFormat,
     OptionalSolverExportSummaryOptions,
     OptionalSolverExportSummaryRenderResult,
     OptionalSolverHealthPanelAction,
     OptionalSolverHealthPanelActionState,
     OptionalSolverHealthPanelViewModel,
+    OptionalSolverManifest,
+    OptionalSolverRefreshApplyResult,
+    OptionalSolverRefreshDiagnostic,
+    OptionalSolverRefreshRequest,
+    OptionalSolverRefreshResult,
+    OptionalSolverRefreshState,
     OptionalSolverRequirementRowViewModel,
     OptionalSolverStackCardViewModel,
     OptionalSolverStackDetailsViewModel,
     OptionalSolverValidationHistoryRowViewModel,
+    apply_optional_solver_refresh_canceled,
+    apply_optional_solver_refresh_failure,
+    apply_optional_solver_refresh_success,
     build_optional_solver_export_summary_payload,
+    build_optional_solver_refresh_plan,
+    builtin_optional_solver_manifests,
+    discovery_service,
+    ignore_optional_solver_stale_refresh_result,
     plan_optional_solver_export_summary_save,
     render_optional_solver_export_summary_json,
     render_optional_solver_export_summary_markdown,
@@ -38,6 +53,8 @@ _EXPORT_ACTION_NAME = "export_summary"
 _SavePathSelection = str | Path | tuple[str | Path, str] | None
 _SavePathChooser = Callable[[object], _SavePathSelection]
 _OverwriteConfirmer = Callable[[str], bool]
+_RefreshRunnerResult = OptionalSolverRefreshResult | OptionalSolverDiscoveryReport | None
+_RefreshRunner = Callable[[OptionalSolverRefreshRequest], _RefreshRunnerResult]
 
 
 class OptionalSolverHealthPanel(_BaseDialog):
@@ -54,6 +71,11 @@ class OptionalSolverHealthPanel(_BaseDialog):
         export_generated_at: str = "",
         export_source_context: str = "optional_solver_gui_health_panel",
         export_package_version: str = "",
+        refresh_runner: _RefreshRunner | None = None,
+        allow_default_refresh_runner: bool = True,
+        refresh_generated_at: str = "",
+        refresh_source: str = "optional_solver_gui_passive_refresh",
+        refresh_manifests: Sequence[OptionalSolverManifest] | None = None,
     ) -> None:
         if QtCore is None or QtWidgets is None:
             raise PySide6UnavailableError(pyside6_missing_message())
@@ -68,6 +90,13 @@ class OptionalSolverHealthPanel(_BaseDialog):
         self._export_generated_at = export_generated_at
         self._export_source_context = export_source_context
         self._export_package_version = export_package_version
+        self._refresh_runner = refresh_runner
+        self._allow_default_refresh_runner = allow_default_refresh_runner
+        self._refresh_generated_at = refresh_generated_at
+        self._refresh_source = refresh_source
+        self._refresh_manifests = (
+            tuple(refresh_manifests) if refresh_manifests is not None else None
+        )
         self._action_buttons: dict[OptionalSolverHealthPanelAction, Any] = {}
         self._disabled_action_reasons: dict[str, str] = {}
         self._export_action_available = False
@@ -77,6 +106,12 @@ class OptionalSolverHealthPanel(_BaseDialog):
         self._last_export_path = ""
         self._last_export_format = ""
         self._exported_file_summary_text = ""
+        self._refresh_action_reason = "Refresh action has not been initialized."
+        self._refresh_status_text = "Refresh idle."
+        self._refresh_error_text = ""
+        self._refresh_active_request_id = ""
+        self._refresh_result_summary_text = "No refresh attempted."
+        self._refresh_runner_call_count = 0
 
         root = QtWidgets.QVBoxLayout(self)
         root.setContentsMargins(10, 10, 10, 10)
@@ -216,6 +251,41 @@ class OptionalSolverHealthPanel(_BaseDialog):
     def export_action_reason(self) -> str:
         return self._export_action_reason
 
+    def refresh_action_enabled(self) -> bool:
+        return bool(self.refresh_passive_discovery_button.isEnabled())
+
+    def refresh_action_reason(self) -> str:
+        return self._refresh_action_reason
+
+    def refresh_status_text(self) -> str:
+        return self._refresh_status_text
+
+    def refresh_error_text(self) -> str:
+        return self._refresh_error_text
+
+    def refresh_request_id(self) -> str:
+        return self._refresh_active_request_id
+
+    def refresh_result_summary_text(self) -> str:
+        return self._refresh_result_summary_text
+
+    def refresh_runner_call_count(self) -> int:
+        return self._refresh_runner_call_count
+
+    def current_stack_card_texts(self) -> tuple[str, ...]:
+        return self.stack_card_texts()
+
+    def current_summary_text(self) -> str:
+        return self.summary_text()
+
+    def set_refresh_runner_for_test(self, runner: _RefreshRunner | None) -> None:
+        self._refresh_runner = runner
+        self._refresh_action_reason = self._compute_refresh_action_reason()
+        self._populate_action_state()
+
+    def trigger_refresh_for_test(self) -> None:
+        self._trigger_refresh()
+
     def set_theme_tokens(self, tokens: ThemeTokens) -> None:
         self._tokens = tokens
         self.setStyleSheet(
@@ -231,6 +301,12 @@ class OptionalSolverHealthPanel(_BaseDialog):
             f"color: {tokens.text_primary};"
             "}"
             "QLabel#oswOptionalSolverHealthExportError {"
+            f"color: {tokens.danger};"
+            "}"
+            "QLabel#oswOptionalSolverHealthRefreshStatus {"
+            f"color: {tokens.text_primary};"
+            "}"
+            "QLabel#oswOptionalSolverHealthRefreshError {"
             f"color: {tokens.danger};"
             "}"
             "QPlainTextEdit, QListWidget {"
@@ -262,6 +338,10 @@ class OptionalSolverHealthPanel(_BaseDialog):
             button.setEnabled(False)
             self._action_buttons[action] = button
             button_grid.addWidget(button, index // 2, index % 2)
+        self.refresh_passive_discovery_button = self._action_buttons[
+            OptionalSolverHealthPanelAction.REFRESH_PASSIVE_DISCOVERY
+        ]
+        self.refresh_passive_discovery_button.clicked.connect(self._trigger_refresh)
         export_row = len(tuple(OptionalSolverHealthPanelAction)) // 2
         self.export_summary_button = QtWidgets.QPushButton(
             "Export Summary",
@@ -273,6 +353,14 @@ class OptionalSolverHealthPanel(_BaseDialog):
         self.export_summary_button.clicked.connect(self._export_summary)
         button_grid.addWidget(self.export_summary_button, export_row, 0, 1, 2)
         layout.addLayout(button_grid)
+        self.refresh_status_label = QtWidgets.QLabel(self._refresh_status_text, self)
+        self.refresh_status_label.setObjectName("oswOptionalSolverHealthRefreshStatus")
+        self.refresh_status_label.setWordWrap(True)
+        layout.addWidget(self.refresh_status_label)
+        self.refresh_error_label = QtWidgets.QLabel(self._refresh_error_text, self)
+        self.refresh_error_label.setObjectName("oswOptionalSolverHealthRefreshError")
+        self.refresh_error_label.setWordWrap(True)
+        layout.addWidget(self.refresh_error_label)
         self.export_status_label = QtWidgets.QLabel(self._export_status_text, self)
         self.export_status_label.setObjectName("oswOptionalSolverHealthExportStatus")
         self.export_status_label.setWordWrap(True)
@@ -296,6 +384,25 @@ class OptionalSolverHealthPanel(_BaseDialog):
         lines: list[str] = []
         for action_state in self._view_model.actions:
             action_name = action_state.action.value
+            if (
+                action_state.action
+                == OptionalSolverHealthPanelAction.REFRESH_PASSIVE_DISCOVERY
+            ):
+                refresh_enabled = self._refresh_action_enabled()
+                self._refresh_action_reason = self._compute_refresh_action_reason()
+                state_text = (
+                    "available; enabled; current; passive-only"
+                    if refresh_enabled
+                    else "unavailable; disabled; current; passive-only"
+                )
+                lines.append(f"{action_name}: {state_text}")
+                lines.append(f"  {self._refresh_action_reason}")
+                self._disabled_action_reasons[action_name] = self._refresh_action_reason
+                button = self._action_buttons.get(action_state.action)
+                if button is not None:
+                    button.setEnabled(refresh_enabled)
+                    button.setToolTip(self._refresh_action_reason)
+                continue
             state_text = _action_state_status(action_state)
             reason = _gui_disabled_reason(action_state)
             lines.append(f"{action_name}: {state_text}")
@@ -338,6 +445,177 @@ class OptionalSolverHealthPanel(_BaseDialog):
             )
         self.export_summary_button.setEnabled(self._export_action_available)
         self.export_summary_button.setToolTip(self._export_action_reason)
+
+    def _refresh_action_enabled(self) -> bool:
+        if self._refresh_runner is None and not self._allow_default_refresh_runner:
+            return False
+        return not self._refresh_status_text.endswith("running.")
+
+    def _compute_refresh_action_reason(self) -> str:
+        if self._refresh_runner is None and not self._allow_default_refresh_runner:
+            return (
+                "Passive refresh runner is not configured and the default built-in "
+                "passive discovery runner is disabled."
+            )
+        if not self._refresh_action_enabled():
+            return "Passive discovery refresh is already running."
+        runner_kind = (
+            "injected runner"
+            if self._refresh_runner is not None
+            else "default built-in passive runner"
+        )
+        return (
+            f"Refresh Passive Discovery uses the {runner_kind} only after an "
+            "explicit user action; it is passive discovery only and is not "
+            "validation evidence."
+        )
+
+    def _trigger_refresh(self) -> None:
+        if not self._refresh_action_enabled():
+            self._set_refresh_result(
+                status="Passive discovery refresh unavailable.",
+                error=self._compute_refresh_action_reason(),
+                summary="No refresh was run.",
+            )
+            return
+
+        plan = build_optional_solver_refresh_plan(
+            self._view_model,
+            state=OptionalSolverRefreshState.RUNNING,
+            selected_stack_id=self._view_model.selected_stack_id,
+            filter_text=self._view_model.filter_text,
+            health_state_filters=self._view_model.health_state_filters,
+            requested_at=self._refresh_generated_at,
+            source=self._refresh_source,
+        )
+        if plan.request is None:
+            self._set_refresh_result(
+                status="Passive discovery refresh unavailable.",
+                error="Refresh request could not be created.",
+                summary="No refresh was run.",
+            )
+            return
+        request = plan.request
+        self._refresh_active_request_id = request.request_id
+        self._set_refresh_result(
+            status=plan.status.status_text,
+            error="",
+            summary=(
+                f"refresh_state={plan.state.value}; request_id={request.request_id}; "
+                "not_validation_evidence=true"
+            ),
+        )
+
+        try:
+            self._refresh_runner_call_count += 1
+            raw_result = self._active_refresh_runner()(request)
+            result = _normalize_refresh_runner_result(raw_result, request)
+            applied = self._apply_refresh_runner_result(request, result)
+        except Exception as exc:
+            failure = OptionalSolverRefreshResult(
+                request_id=request.request_id,
+                state=OptionalSolverRefreshState.FAILED,
+                generated_at=self._refresh_generated_at,
+                source=self._refresh_source,
+                error_text=f"{type(exc).__name__}: {exc}",
+                diagnostics=(
+                    OptionalSolverRefreshDiagnostic(
+                        severity="error",
+                        code="OSR_REFRESH_RUNNER_ERROR",
+                        message="Passive refresh runner raised an exception.",
+                        field="refresh_runner",
+                        suggested_fix=(
+                            "Inspect the injected runner or passive discovery service."
+                        ),
+                    ),
+                ),
+            )
+            applied = apply_optional_solver_refresh_failure(
+                self._view_model,
+                result=failure,
+                active_request_id=request.request_id,
+            )
+        self._apply_refresh_result(applied)
+
+    def _active_refresh_runner(self) -> _RefreshRunner:
+        return self._refresh_runner or self._default_passive_refresh_runner
+
+    def _default_passive_refresh_runner(
+        self,
+        request: OptionalSolverRefreshRequest,
+    ) -> OptionalSolverRefreshResult:
+        options = OptionalSolverDiscoveryOptions(
+            generated_at=self._refresh_generated_at,
+            source=self._refresh_source,
+        )
+        report = discovery_service.discover_builtin_optional_solvers(options=options)
+        return OptionalSolverRefreshResult(
+            request_id=request.request_id,
+            state=OptionalSolverRefreshState.COMPLETED,
+            discovery_reports=report,
+            generated_at=report.generated_at,
+            source=report.source,
+            status_text="Default passive discovery completed.",
+        )
+
+    def _apply_refresh_runner_result(
+        self,
+        request: OptionalSolverRefreshRequest,
+        result: OptionalSolverRefreshResult,
+    ) -> OptionalSolverRefreshApplyResult:
+        if result.state == OptionalSolverRefreshState.FAILED:
+            return apply_optional_solver_refresh_failure(
+                self._view_model,
+                request=request,
+                result=result,
+                active_request_id=request.request_id,
+            )
+        if result.state == OptionalSolverRefreshState.CANCELED:
+            return apply_optional_solver_refresh_canceled(
+                self._view_model,
+                request=request,
+                result=result,
+                active_request_id=request.request_id,
+            )
+        if result.state == OptionalSolverRefreshState.STALE_IGNORED:
+            return ignore_optional_solver_stale_refresh_result(
+                self._view_model,
+                active_request_id=request.request_id,
+                result_request_id=result.request_id,
+                timestamp=result.generated_at,
+                source=result.source,
+            )
+        return apply_optional_solver_refresh_success(
+            self._view_model,
+            manifests=self._refresh_manifests or builtin_optional_solver_manifests(),
+            result=result,
+            active_request_id=request.request_id,
+        )
+
+    def _apply_refresh_result(
+        self,
+        result: OptionalSolverRefreshApplyResult,
+    ) -> None:
+        self._refresh_active_request_id = result.active_request_id
+        self._refresh_status_text = result.status_text
+        self._refresh_error_text = result.error_text
+        self._refresh_result_summary_text = _refresh_apply_summary_text(result)
+        if result.applied:
+            self.set_view_model(result.panel)
+        else:
+            self._populate_action_state()
+        self._sync_refresh_labels()
+
+    def _set_refresh_result(self, *, status: str, error: str, summary: str) -> None:
+        self._refresh_status_text = status
+        self._refresh_error_text = error
+        self._refresh_result_summary_text = summary
+        self._sync_refresh_labels()
+        self._populate_action_state()
+
+    def _sync_refresh_labels(self) -> None:
+        self.refresh_status_label.setText(self._refresh_status_text)
+        self.refresh_error_label.setText(self._refresh_error_text)
 
     def _export_summary(self) -> None:
         if not self._export_action_available:
@@ -438,6 +716,39 @@ class OptionalSolverHealthPanel(_BaseDialog):
         self.export_status_label.setText(status)
         self.export_error_label.setText(error)
         self._populate_action_state()
+
+
+def _normalize_refresh_runner_result(
+    result: _RefreshRunnerResult,
+    request: OptionalSolverRefreshRequest,
+) -> OptionalSolverRefreshResult:
+    if isinstance(result, OptionalSolverRefreshResult):
+        return result
+    if isinstance(result, OptionalSolverDiscoveryReport):
+        return OptionalSolverRefreshResult(
+            request_id=request.request_id,
+            state=OptionalSolverRefreshState.COMPLETED,
+            discovery_reports=result,
+            generated_at=result.generated_at,
+            source=result.source,
+        )
+    return OptionalSolverRefreshResult(
+        request_id=request.request_id,
+        state=OptionalSolverRefreshState.CANCELED,
+        generated_at=request.requested_at,
+        source=request.source,
+        status_text="Passive discovery refresh canceled.",
+    )
+
+
+def _refresh_apply_summary_text(result: OptionalSolverRefreshApplyResult) -> str:
+    return (
+        f"refresh_state={result.state.value}; applied={result.applied}; "
+        f"ignored={result.ignored}; request_id={result.result_request_id}; "
+        f"source={result.source or 'not supplied'}; "
+        f"timestamp={result.last_refresh_timestamp or 'not supplied'}; "
+        "not_validation_evidence=true"
+    )
 
 
 def _readonly_plain_text(object_name: str, parent: object) -> object:
@@ -649,8 +960,8 @@ def _gui_disabled_reason(action_state: OptionalSolverHealthPanelActionState) -> 
     action = action_state.action
     if action == OptionalSolverHealthPanelAction.REFRESH_PASSIVE_DISCOVERY:
         return (
-            "Display-only placeholder: GUI refresh wiring is a future gate and "
-            "this panel does not run discovery."
+            "Refresh is explicit passive discovery only and is not validation "
+            "evidence."
         )
     if action == OptionalSolverHealthPanelAction.COPY_SUMMARY:
         return (
@@ -667,7 +978,11 @@ def _safety_text(view_model: OptionalSolverHealthPanelViewModel) -> str:
     return "\n".join(
         [
             "Optional solver GUI health panel safety boundary.",
-            "No discovery execution from this panel.",
+            "No automatic startup refresh.",
+            "Refresh Passive Discovery runs passive presence checks only after "
+            "an explicit user action.",
+            "Refresh output is not validation evidence.",
+            "No active smoke validation.",
             "No solver execution.",
             "No external command execution.",
             "No subprocess usage.",

@@ -53,7 +53,9 @@ def test_doc_records_rendered_sections_and_viewmodel_relationship() -> None:
 def test_doc_records_action_privacy_and_safety_boundaries() -> None:
     text = _normalized()
 
-    assert "refresh passive discovery: display-only future placeholder" in text
+    assert "refresh passive discovery: explicit passive discovery action" in text
+    assert "no automatic startup refresh" in text
+    assert "no active smoke validation" in text
     assert "run validation: disabled" in text
     assert "install solver: unavailable" in text
     assert "close issue: unavailable" in text
@@ -61,7 +63,7 @@ def test_doc_records_action_privacy_and_safety_boundaries() -> None:
     assert "no shell or browser action" in text
     assert "redacted paths remain redacted" in text
     assert "environment values are not displayed" in text
-    assert "no discovery execution" in text
+    assert "passive discovery refresh only after explicit user action" in text
     assert "no solver execution" in text
     assert "no subprocess usage" in text
     assert "no install action" in text
@@ -76,7 +78,7 @@ def test_doc_records_issue_relationship_and_future_gates() -> None:
     assert "Issues `#6` through `#11` remain open." in text
     assert "skipped-missing" in _normalized()
     assert "OSW-EXP-063_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_DESIGN" in text
-    assert "OSW-EXP-064_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN" in text
+    assert "OSW-EXP-068_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_IMPLEMENTATION" in text
     assert "OSW-VALID" in text
 
 

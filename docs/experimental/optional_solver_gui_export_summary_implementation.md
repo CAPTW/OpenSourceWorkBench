@@ -146,6 +146,12 @@ view-model. The layer adds no GUI wiring, background worker, discovery
 execution, solver execution, dependency installation, issue mutation, or
 release mutation.
 
+[Optional solver GUI discovery refresh implementation](optional_solver_gui_discovery_refresh_implementation.md)
+wires explicit passive refresh into the panel. Export summary now renders the
+currently accepted view-model: a successful refresh updates later exports,
+while failed, canceled, or stale refresh leaves export bound to the previous
+view-model. Export remains redacted by default and not validation evidence.
+
 ## Future gates
 
 - `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN` - completed as a
@@ -154,5 +160,8 @@ release mutation.
 - `OSW-EXP-067_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_VIEWMODEL` - completed as
   a pure refresh state/apply layer in
   [Optional solver GUI discovery refresh view-model](optional_solver_gui_discovery_refresh_viewmodel.md).
+- `OSW-EXP-068_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_IMPLEMENTATION` -
+  completed as explicit GUI passive refresh wiring in
+  [Optional solver GUI discovery refresh implementation](optional_solver_gui_discovery_refresh_implementation.md).
 - `OSW-EXP-067_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_POLISH`
 - `OSW-VALID` prepared-machine validation reuse

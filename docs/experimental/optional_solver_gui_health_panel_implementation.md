@@ -125,7 +125,8 @@ non-bundled-solver boundaries.
 The action-state panel renders view-model action rows and disabled placeholder
 buttons:
 
-- refresh passive discovery: display-only future placeholder; no discovery call
+- refresh passive discovery: explicit passive discovery action; no startup
+  refresh, no active smoke validation, no solver execution
 - run validation: disabled; explicit OSW-VALID gate required
 - install solver: unavailable
 - close issue: unavailable
@@ -135,8 +136,10 @@ buttons:
   one explicitly selected `.json`, `.md`, or `.txt` file after path and
   overwrite checks
 
-The GUI does not execute discovery, validation, install, issue-closure,
-clipboard, shell, or browser actions from this panel.
+The GUI does not execute active validation, install, issue-closure, clipboard,
+shell, or browser actions from this panel. Passive discovery refresh is
+available only through the explicit refresh action and remains not validation
+evidence.
 
 ## Export summary design follow-up
 
@@ -180,6 +183,16 @@ accepted health panel view-model atomically; this gate adds no GUI refresh
 wiring, background worker, discovery execution, solver execution, dependency
 installation, issue mutation, or release mutation.
 
+[Optional solver GUI discovery refresh implementation](optional_solver_gui_discovery_refresh_implementation.md)
+adds that GUI wiring. The panel now supports an injected refresh runner for
+tests and a default built-in passive discovery runner. It runs only after an
+explicit user action, swaps the health panel view-model only after successful
+apply, preserves the prior view-model on failed/canceled/stale results, keeps
+export bound to the accepted view-model, and still adds no automatic startup
+refresh, background worker, active smoke validation, solver execution,
+dependency installation, issue mutation, release mutation, validation-pass
+claim, issue-closure claim, bundled-solver claim, or certification claim.
+
 ## Privacy and redaction
 
 - Redacted paths remain redacted.
@@ -191,7 +204,9 @@ installation, issue mutation, or release mutation.
 
 ## Safety boundary
 
-- no discovery execution
+- no automatic startup refresh
+- passive discovery refresh only after explicit user action
+- no active smoke validation
 - no solver execution
 - no external solver command execution
 - no subprocess usage
@@ -233,6 +248,9 @@ pass evidence, and issue closure remains outside this panel.
 - `OSW-EXP-067_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_VIEWMODEL` - completed as
   a pure refresh state/apply layer in
   [Optional solver GUI discovery refresh view-model](optional_solver_gui_discovery_refresh_viewmodel.md).
+- `OSW-EXP-068_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_IMPLEMENTATION` -
+  completed as explicit GUI passive refresh wiring in
+  [Optional solver GUI discovery refresh implementation](optional_solver_gui_discovery_refresh_implementation.md).
 - `OSW-VALID` prepared-machine validation reuse
 
 Earlier planning named the discovery refresh placeholder
