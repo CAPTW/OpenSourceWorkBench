@@ -767,6 +767,13 @@ Scope drift is any change that:
   issue mutation, release mutation, environment-value display, validation-pass
   evidence, issue-closure evidence, bundled-solver claims, or certification
   claims without a separate gate;
+- turns the optional solver plugin manifest explicit import GUI design into
+  implemented file dialogs, QFileDialog behavior, GUI file loading, JSON parsing
+  from GUI source, plugin activation, plugin package import, directory scanning,
+  network fetching, trusted-by-default third-party manifests, discovery
+  execution, validation-pass evidence, solver execution, dependency
+  installation, issue closure, release mutation, bundled-solver claims, or
+  certification claims without a separate implementation and activation gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is

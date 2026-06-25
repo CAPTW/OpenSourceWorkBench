@@ -2179,3 +2179,34 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   execution, solver execution, dependency installation, release edit, issue
   mutation, bundled-solver claim, certification claim, validation-pass claim,
   issue-closure claim, or version change.
+
+## ADR-0109: Optional Solver Plugin Manifest Explicit Import GUI Starts As Design-Only
+
+- Status: Accepted for experimental GUI design
+- Date: 2026-06-25
+- Context: OSW-EXP-074 added a display-only PySide panel
+  (`OptionalSolverPluginManifestPanel`) over already-built
+  `OptionalSolverPluginManifestGuiViewModel` records. The next UX step is to
+  design explicit user-selected JSON manifest preview without implementing it,
+  while preserving the display-only boundary and keeping preview distinct from
+  activation, validation, discovery, installation, issue closure, and
+  certification.
+- Decision: Define explicit plugin manifest JSON import/preview GUI behavior as
+  design-only. Specify future entry points, a user-initiated JSON-only file
+  chooser, file safety and failure states, design-only `OSPMG_IMPORT_*`
+  diagnostic code reservations, source/trust labels with user-selected files
+  untrusted by default, built-ins-win conflict policy, and relationships to the
+  CLI preview, health panel, and export summary. Preserve no file dialog
+  implementation, no file loading implementation, no JSON parsing from GUI
+  source, no plugin activation, no plugin package import, no directory scan, no
+  network fetch, no discovery execution, no solver execution, no dependency
+  installation, and no issue/release mutation.
+- Consequences: Future implementation has a safety contract and test plan.
+  Runtime behavior remains unchanged in this gate, and user-selected manifests
+  remain untrusted preview data only. Issues `#6` through `#11` remain open,
+  skipped-missing evidence remains neither pass nor failure, and no runtime
+  source, GUI source, view-model source, CLI source, loader source, file dialog,
+  plugin activation, plugin package import, directory scan, network fetch,
+  discovery execution, solver execution, dependency installation, release edit,
+  issue mutation, bundled-solver claim, certification claim, validation-pass
+  claim, issue-closure claim, or version change occurs in this design gate.

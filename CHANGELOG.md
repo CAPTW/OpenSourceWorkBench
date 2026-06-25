@@ -6,6 +6,21 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Explicit Import GUI Design
+
+- Designed explicit plugin manifest JSON import/preview GUI behavior as a future
+  gate while preserving display-only/no-activation/no-execution boundaries.
+- Defined future entry points, a user-initiated JSON-only file chooser, file
+  safety/failure states, design-only `OSPMG_IMPORT_*` diagnostic reservations,
+  source/trust labels with user-selected files untrusted by default,
+  built-ins-win conflict policy, and CLI/health/export relationships.
+- Kept the slice docs/tests-only: no file dialog, no QFileDialog, no file
+  loading, no JSON parsing from GUI source, no plugin activation, no plugin
+  package import, no directory scan, no network fetch, no discovery execution,
+  no solver execution, no dependency install, no issue mutation, no release
+  mutation, no validation-pass claim, no issue-closure claim, no bundled-solver
+  claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest GUI Implementation
 
 - Added a PySide optional solver plugin manifest preview panel under
