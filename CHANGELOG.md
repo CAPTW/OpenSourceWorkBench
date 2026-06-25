@@ -6,6 +6,20 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver GUI Discovery Refresh View-Model
+
+- Added a pure optional solver GUI passive refresh state/apply layer under
+  `src/osw/experimental/optional_solvers/`.
+- Modeled refresh lifecycle states, request/result metadata, action states,
+  stale-result handling, success/failure/cancel apply behavior, atomic health
+  panel view-model replacement, selected-stack/filter preservation, and
+  status/error text.
+- Kept the layer side-effect-free: no GUI wiring, no background worker, no
+  threading implementation, no discovery execution, no solver execution, no
+  dependency install, no issue mutation, no release mutation, no
+  validation-pass claim, no issue-closure claim, no bundled-solver claim, and
+  no certification claim.
+
 ### Optional Solver GUI Discovery Refresh Design
 
 - Added a design-only optional solver GUI passive discovery refresh workflow.

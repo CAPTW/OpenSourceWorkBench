@@ -56,6 +56,11 @@ view-model; export after refresh uses the refreshed accepted view-model. The
 refresh design adds no source behavior in this gate and keeps exported
 summaries out of validation evidence.
 
+[Optional solver GUI discovery refresh view-model](optional_solver_gui_discovery_refresh_viewmodel.md)
+implements the pure refresh state/apply layer. Export payloads should be built
+from the apply result's accepted panel only when success reports `applied=true`;
+otherwise export remains bound to the prior accepted panel.
+
 ## Package path and public API
 
 Package path:
@@ -194,3 +199,6 @@ and exported summaries cannot close issues.
 - `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN` - completed as a
   design-only passive refresh workflow contract in
   [Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md).
+- `OSW-EXP-067_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_VIEWMODEL` - completed as
+  a pure refresh state/apply layer in
+  [Optional solver GUI discovery refresh view-model](optional_solver_gui_discovery_refresh_viewmodel.md).

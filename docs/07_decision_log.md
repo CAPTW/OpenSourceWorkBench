@@ -2003,3 +2003,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   discovery refresh source, active validation, solver execution, dependency
   installation, release edit, issue mutation, bundled-solver claim,
   certification claim, or version change occurs in this design gate.
+
+## ADR-0101: Optional Solver GUI Discovery Refresh State Is Pure
+
+- Status: Accepted for experimental refresh view-model implementation
+- Date: 2026-06-25
+- Context: OSW-EXP-066 defined the future explicit passive refresh workflow,
+  but kept GUI wiring, workers, threading, and discovery execution out of
+  scope. The next slice needs deterministic state and apply behavior that can
+  be tested without Qt, workers, discovery calls, solver commands, or file
+  system side effects.
+- Decision: Implement a pure refresh view-model under
+  `src/osw/experimental/optional_solvers/` that records refresh states,
+  request/result metadata, action states, stale-result handling,
+  success/failure/cancel apply helpers, atomic health panel view-model
+  replacement from supplied reports, selected-stack/filter preservation, and
+  status/error text.
+- Consequences: Future GUI refresh wiring and worker orchestration remain
+  separate gates. Issues `#6` through `#11` remain open, skipped-missing
+  evidence remains neither pass nor failure, and no GUI source, CLI behavior
+  change, discovery execution, background worker, threading implementation,
+  active validation, solver execution, dependency installation, release edit,
+  issue mutation, bundled-solver claim, certification claim, or version change
+  occurs in this view-model gate.

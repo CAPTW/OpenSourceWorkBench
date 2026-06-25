@@ -199,6 +199,16 @@ installation, issue mutation, release mutation, validation-pass claims,
 issue-closure claims, bundled-solver claims, or certification claims out of
 scope.
 
+The GUI discovery refresh view-model follow-up
+[optional solver GUI discovery refresh view-model](../experimental/optional_solver_gui_discovery_refresh_viewmodel.md)
+implements the pure state/apply layer for that workflow. It models request and
+result metadata, action states, success/failure/cancel/stale handling,
+selection/filter preservation, status/error text, and atomic replacement plans
+over supplied passive reports, while still adding no GUI wiring, background
+worker, threading, discovery execution, solver execution, dependency
+installation, issue mutation, release mutation, validation-pass claims,
+issue-closure claims, bundled-solver claims, or certification claims.
+
 ## Guardrails
 
 - External solvers are not bundled.

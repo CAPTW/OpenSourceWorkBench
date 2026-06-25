@@ -190,6 +190,18 @@ Future implementation tests should cover:
 - issue mutation absent
 - release mutation absent
 
+## Refresh view-model follow-up
+
+[Optional solver GUI discovery refresh view-model](optional_solver_gui_discovery_refresh_viewmodel.md)
+implements the pure state and apply layer for this design. It records refresh
+states, request/result metadata, action states, stale-result handling,
+success/failure/cancel apply helpers, atomic health panel view-model
+replacement planning, selection/filter preservation, and status/error text. It
+adds no GUI wiring, background worker, threading implementation, discovery
+execution, solver execution, dependency installation, issue mutation, release
+mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or
+certification claim.
+
 ## Non-goals
 
 - no implementation in this gate
@@ -203,6 +215,8 @@ Future implementation tests should cover:
 
 ## Future gates
 
-- `OSW-EXP-067_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_VIEWMODEL`
+- `OSW-EXP-067_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_VIEWMODEL` - completed as
+  a pure refresh state/apply layer in
+  [Optional solver GUI discovery refresh view-model](optional_solver_gui_discovery_refresh_viewmodel.md).
 - `OSW-EXP-068_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_IMPLEMENTATION`
 - `OSW-VALID` prepared-machine validation reuse

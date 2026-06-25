@@ -173,6 +173,13 @@ behavior in this gate and keeps active validation, solver execution,
 dependency installation, issue mutation, and release mutation out of the
 panel.
 
+[Optional solver GUI discovery refresh view-model](optional_solver_gui_discovery_refresh_viewmodel.md)
+implements the pure request/result, state, and apply helpers for that future
+workflow. Future GUI wiring should consume those helpers and swap the returned
+accepted health panel view-model atomically; this gate adds no GUI refresh
+wiring, background worker, discovery execution, solver execution, dependency
+installation, issue mutation, or release mutation.
+
 ## Privacy and redaction
 
 - Redacted paths remain redacted.
@@ -223,6 +230,9 @@ pass evidence, and issue closure remains outside this panel.
 - `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN` - completed as a
   design-only passive refresh workflow contract in
   [Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md).
+- `OSW-EXP-067_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_VIEWMODEL` - completed as
+  a pure refresh state/apply layer in
+  [Optional solver GUI discovery refresh view-model](optional_solver_gui_discovery_refresh_viewmodel.md).
 - `OSW-VALID` prepared-machine validation reuse
 
 Earlier planning named the discovery refresh placeholder

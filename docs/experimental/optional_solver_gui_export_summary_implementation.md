@@ -138,10 +138,21 @@ passive-only, redacted by default, and separate from active validation,
 solver execution, dependency installation, issue mutation, and release
 mutation.
 
+[Optional solver GUI discovery refresh view-model](optional_solver_gui_discovery_refresh_viewmodel.md)
+implements the pure state and apply layer for that future refresh workflow.
+Export after a successful apply should use the returned accepted view-model;
+failed, canceled, or stale refresh keeps export bound to the previous accepted
+view-model. The layer adds no GUI wiring, background worker, discovery
+execution, solver execution, dependency installation, issue mutation, or
+release mutation.
+
 ## Future gates
 
 - `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN` - completed as a
   design-only passive refresh workflow contract in
   [Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md).
+- `OSW-EXP-067_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_VIEWMODEL` - completed as
+  a pure refresh state/apply layer in
+  [Optional solver GUI discovery refresh view-model](optional_solver_gui_discovery_refresh_viewmodel.md).
 - `OSW-EXP-067_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_POLISH`
 - `OSW-VALID` prepared-machine validation reuse

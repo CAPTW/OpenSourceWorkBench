@@ -228,6 +228,11 @@ panel view-model from new passive reports. The design preserves the pure
 builder boundary: widgets request refresh through a future injected runner,
 then swap an already-built view-model rather than mutating cards in place.
 
+[Optional solver GUI discovery refresh view-model](optional_solver_gui_discovery_refresh_viewmodel.md)
+implements the pure state and apply layer for that future refresh flow. It
+uses this health panel builder only with caller-supplied passive reports and
+preserves selected stack id and filters where safe.
+
 ## Future gates
 
 - `OSW-EXP-062_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_IMPLEMENTATION` - completed as
@@ -245,4 +250,7 @@ then swap an already-built view-model rather than mutating cards in place.
 - `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN` - completed as a
   design-only passive refresh workflow contract in
   [Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md).
+- `OSW-EXP-067_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_VIEWMODEL` - completed as
+  a pure refresh state/apply layer in
+  [Optional solver GUI discovery refresh view-model](optional_solver_gui_discovery_refresh_viewmodel.md).
 - `OSW-VALID` prepared-machine validation reuse

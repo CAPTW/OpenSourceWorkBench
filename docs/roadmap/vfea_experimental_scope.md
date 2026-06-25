@@ -688,5 +688,13 @@ active validation, solver execution, dependency installation, issue mutation,
 validation success evidence, issue closure evidence, bundled-solver claims, or
 certification.
 
+[Optional solver GUI discovery refresh view-model](../experimental/optional_solver_gui_discovery_refresh_viewmodel.md)
+adds only the pure refresh state/apply layer for that future health surface.
+It can later help VFEA and FEASpec GUI code apply supplied passive reports
+without losing selection/filter state, but it does not add GUI wiring,
+background workers, threading, discovery execution, solver execution,
+dependency installation, issue mutation, validation success evidence, issue
+closure evidence, bundled-solver claims, or certification.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.
