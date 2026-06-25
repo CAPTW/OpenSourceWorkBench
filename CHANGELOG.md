@@ -6,6 +6,18 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver GUI Health Panel Implementation
+
+- Added a PySide display-only optional solver health panel under
+  `src/osw/gui/dialogs/`.
+- Rendered supplied view-model summary, stack cards, details, diagnostics,
+  guidance, validation-history, safety, and action-state sections.
+- Kept unsafe actions as disabled/display-only placeholders: no discovery
+  execution, no solver execution, no external command execution, no subprocess
+  usage, no dependency install, no solver install, no clipboard/browser action,
+  no issue mutation, no release mutation, no validation-pass claim, no
+  issue-closure claim, no bundled-solver claim, and no certification claim.
+
 ### Optional Solver GUI Health Panel View-Model
 
 - Added a pure optional solver GUI health panel view-model under

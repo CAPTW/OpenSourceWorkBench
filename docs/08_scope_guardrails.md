@@ -48,6 +48,12 @@ request should stop, park, or defer.
   supplied manifests and passive discovery reports, without PySide/Qt imports,
   GUI widgets, discovery execution, solver command execution, dependency
   installation, issue mutation, release mutation, or validation success claims.
+- Experimental optional solver GUI health panel display source that consumes an
+  already-built view-model and renders read-only PySide summary, card, details,
+  diagnostics, guidance, validation-history, safety, and action-state sections,
+  without GUI-initiated discovery, solver command execution, subprocess usage,
+  install actions, issue closure actions, release mutation, or validation
+  success claims.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.

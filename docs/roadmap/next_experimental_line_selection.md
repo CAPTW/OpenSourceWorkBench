@@ -151,6 +151,15 @@ solver command execution, solver execution, dependency installation, issue
 mutation, release mutation, validation-pass claim, issue-closure claim,
 bundled-solver claim, or certification claim.
 
+The GUI health panel implementation follow-up
+[optional solver GUI health panel implementation](../experimental/optional_solver_gui_health_panel_implementation.md)
+adds the PySide display component over that already-built view-model. It keeps
+refresh, validation, install, close-issue, copy, and open-docs actions as
+disabled/display-only placeholders and adds no GUI-initiated discovery, active
+smoke validation, external solver command execution, solver execution,
+dependency installation, issue mutation, release mutation, validation-pass
+claim, issue-closure claim, bundled-solver claim, or certification claim.
+
 ## Guardrails
 
 - External solvers are not bundled.

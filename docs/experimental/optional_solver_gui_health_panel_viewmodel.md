@@ -187,8 +187,19 @@ The view-model uses the same health-state semantics as
 It only turns those passive records into GUI-friendly rendering data. It does
 not replace prepared-machine validation and does not change issue state.
 
+## GUI implementation follow-up
+
+[Optional solver GUI health panel implementation](optional_solver_gui_health_panel_implementation.md)
+consumes this view-model from PySide display code. The widget renders the
+existing records and keeps action states disabled/display-only; it does not
+perform discovery, execute solvers, install dependencies, access clipboard or
+browser APIs, mutate issues, or edit releases.
+
 ## Future gates
 
-- `OSW-EXP-062_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_IMPLEMENTATION`
+- `OSW-EXP-062_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_IMPLEMENTATION` - completed as
+  a display-only PySide panel in
+  [Optional solver GUI health panel implementation](optional_solver_gui_health_panel_implementation.md).
 - `OSW-EXP-063_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_DESIGN`
+- `OSW-EXP-064_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse

@@ -645,5 +645,12 @@ execution, active smoke validation, external solver command execution, solver
 execution, dependency installation, issue mutation, validation success
 evidence, issue closure evidence, or bundled-solver claims.
 
+[Optional solver GUI health panel implementation](../experimental/optional_solver_gui_health_panel_implementation.md)
+adds only the PySide display surface over that supplied view-model. It can help
+future workflows show optional-stack setup state, but it does not add
+GUI-initiated discovery, active smoke validation, external solver command
+execution, solver execution, dependency installation, issue mutation,
+validation success evidence, issue closure evidence, or bundled-solver claims.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

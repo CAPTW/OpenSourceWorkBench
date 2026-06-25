@@ -130,6 +130,9 @@ not replace prepared-machine validation.
 - `OSW-EXP-061_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_VIEWMODEL` - completed as a
   pure UI-agnostic view-model in
   [Optional solver GUI health panel view-model](optional_solver_gui_health_panel_viewmodel.md).
+- `OSW-EXP-062_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_IMPLEMENTATION` - completed
+  as a PySide display-only panel in
+  [Optional solver GUI health panel implementation](optional_solver_gui_health_panel_implementation.md).
 - `OSW-VALID` prepared-machine validation reuse
 
 ## GUI health panel design follow-up
@@ -154,3 +157,11 @@ CLI behavior change, discovery execution, active smoke validation, external
 solver command execution, solver execution, dependency installation, issue
 mutation, release mutation, validation-pass claim, issue-closure claim,
 bundled-solver claim, or certification claim.
+
+## GUI health panel implementation follow-up
+
+The GUI health panel implementation follow-up renders an already-built
+view-model in PySide. It does not call the CLI, perform discovery refresh,
+execute active smoke validation, run external solver commands, install
+dependencies, mutate issues, edit releases, claim validation success, claim
+issue closure readiness, bundle solvers, or claim certification.

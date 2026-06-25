@@ -1897,3 +1897,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   active smoke validation, solver execution, dependency installation, release
   edit, issue mutation, bundled-solver claim, certification claim, or version
   change occurs in this view-model gate.
+
+## ADR-0096: Optional Solver GUI Health Panel Is Display-Only
+
+- Status: Accepted for experimental GUI implementation
+- Date: 2026-06-25
+- Context: OSW-EXP-061S produced a pure optional solver health panel
+  view-model. The next slice needs a PySide surface that renders the supplied
+  view-model while preserving the no-discovery and no-solver-execution
+  boundary.
+- Decision: Implement `OptionalSolverHealthPanel` as a PySide dialog under
+  `src/osw/gui/dialogs/` that accepts an already-built
+  `OptionalSolverHealthPanelViewModel` and renders summary, stack cards,
+  details, diagnostics, guidance, validation history, safety, and action-state
+  sections. All future or unsafe actions remain disabled/display-only in this
+  gate.
+- Consequences: Future GUI entry points can embed or open the panel without
+  duplicating rendering logic, but discovery refresh, validation execution,
+  installation, clipboard export, browser opening, and issue closure remain
+  separate explicit gates. No CLI behavior change, plugin loading, discovery
+  execution, active smoke validation, solver execution, dependency
+  installation, release edit, issue mutation, bundled-solver claim,
+  certification claim, or version change occurs in this GUI gate.

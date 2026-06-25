@@ -13,6 +13,7 @@ __all__ = [
     "GmshMeshDialog",
     "MatPreviewDialog",
     "OpenFOAMTemplateDialog",
+    "OptionalSolverHealthPanel",
     "PluginManagerDialog",
     "ReportExportDialog",
     "ScriptPreviewDialog",
@@ -62,6 +63,12 @@ def __getattr__(name: str) -> object:
         from osw.gui.dialogs.openfoam_template_dialog import OpenFOAMTemplateDialog
 
         return OpenFOAMTemplateDialog
+    if name == "OptionalSolverHealthPanel":
+        from osw.gui.dialogs.optional_solver_health_panel import (
+            OptionalSolverHealthPanel,
+        )
+
+        return OptionalSolverHealthPanel
     if name == "FEASpecHumanReviewDialog":
         from osw.gui.dialogs.feaspec_human_review_dialog import FEASpecHumanReviewDialog
 
