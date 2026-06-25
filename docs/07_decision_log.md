@@ -2093,3 +2093,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   import, directory scan, network fetch, discovery execution, solver execution,
   dependency installation, release edit, issue mutation, bundled-solver claim,
   certification claim, or version change occurs in this loader-model gate.
+
+## ADR-0105: Optional Solver Plugin Manifest CLI Preview Uses Explicit Files Only
+
+- Status: Accepted for experimental plugin manifest CLI preview
+- Date: 2026-06-25
+- Context: OSW-EXP-070 added a data-only plugin manifest loader model. The next
+  slice needs a user-facing preview command that can inspect explicit JSON
+  files without turning plugin manifests into package discovery, directory
+  scanning, network fetching, solver checks, or validation evidence.
+- Decision: Add `optional-solver-plugin-manifest-preview` with repeatable
+  `--manifest`, text/JSON output, optional built-in conflict context, strict
+  mode, and diagnostics/policy display. The command delegates to the loader
+  model and reports accepted manifests, rejected manifests, conflicts, source
+  types, trust labels, and diagnostics.
+- Consequences: Future GUI display and explicit import flows remain separate
+  gates. Issues `#6` through `#11` remain open, skipped-missing evidence remains
+  neither pass nor failure, and no GUI source, plugin package import, directory
+  scan, network fetch, discovery execution, solver execution, dependency
+  installation, release edit, issue mutation, bundled-solver claim,
+  certification claim, or version change occurs in this CLI preview gate.

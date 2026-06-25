@@ -24,6 +24,10 @@ Commands:
 - `optional-solver-doctor`
 - `optional-solver-explain`
 
+Related plugin manifest preview command:
+
+- `optional-solver-plugin-manifest-preview`
+
 Examples:
 
 ```powershell
@@ -34,6 +38,7 @@ python -m osw.cli optional-solver-doctor --stack calculix --format json
 python -m osw.cli optional-solver-doctor --all --show-full-paths
 python -m osw.cli optional-solver-explain --stack calculix
 python -m osw.cli optional-solver-explain --stack calculix --format json
+python -m osw.cli optional-solver-plugin-manifest-preview --manifest project_stack.json
 ```
 
 ## Relationship to manifest schema and discovery service
@@ -107,6 +112,16 @@ It does not report active validation states such as `smoke_passed` or
 
 The CLI does not provide `--install`, `--run-smoke`, or `--execute` options for
 optional solver stacks.
+
+## Plugin manifest CLI preview follow-up
+
+The plugin manifest CLI preview follow-up adds
+`optional-solver-plugin-manifest-preview` for explicit JSON plugin manifest
+files only. It reports accepted/rejected records, conflicts, diagnostics,
+source types, and trust labels through text or JSON output. The command remains
+data-only and does not scan directories, load plugin packages, fetch manifests
+from a network, execute solvers, install dependencies, mutate issues, edit
+releases, or turn plugin manifest presence into validation evidence.
 
 ## Relationship to #6~#11
 

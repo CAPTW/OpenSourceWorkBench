@@ -239,6 +239,15 @@ package import, directory scan, network fetch, solver execution, dependency
 installation, issue mutation, release mutation, validation-pass claims,
 issue-closure claims, bundled-solver claims, or certification claims.
 
+The plugin manifest CLI preview follow-up
+[optional solver plugin manifest CLI preview](../experimental/optional_solver_plugin_manifest_cli_preview.md)
+adds `optional-solver-plugin-manifest-preview` over that data-only model for
+explicit JSON files. It can display accepted/rejected records, conflicts,
+diagnostics, source types, and trust labels in text or JSON while still adding
+no plugin package loading, directory scanning, network fetch, solver execution,
+dependency installation, issue mutation, release mutation, validation-pass
+claims, issue-closure claims, bundled-solver claims, or certification claims.
+
 ## Guardrails
 
 - External solvers are not bundled.

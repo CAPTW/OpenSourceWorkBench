@@ -722,5 +722,14 @@ network manifests, execute plugin code, execute solvers, install dependencies,
 mutate issues, create validation success evidence, create issue closure
 evidence, bundle solvers, or provide certification.
 
+[Optional solver plugin manifest CLI preview](../experimental/optional_solver_plugin_manifest_cli_preview.md)
+adds an explicit-file command for previewing those data-only load reports. It
+can help future VFEA and FEASpec plugin ecosystems inspect accepted/rejected
+manifest metadata, conflicts, diagnostics, source types, and trust labels, but
+it does not scan plugin directories, load plugin packages, fetch network
+manifests, execute plugin code, execute solvers, install dependencies, mutate
+issues, create validation success evidence, create issue closure evidence,
+bundle solvers, or provide certification.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

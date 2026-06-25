@@ -19,9 +19,14 @@ from osw.experimental.optional_solvers import (
     OptionalSolverDiscoveryReport,
     OptionalSolverManifest,
     OptionalSolverPathRedactionMode,
+    OptionalSolverPluginManifestDocument,
+    OptionalSolverPluginManifestLoaderOptions,
+    OptionalSolverPluginManifestLoadReport,
     builtin_optional_solver_manifests,
     discover_optional_solver_manifests,
     get_builtin_optional_solver_manifest,
+    load_optional_solver_plugin_manifest_documents,
+    load_optional_solver_plugin_manifest_json,
     optional_solver_discovery_report_to_dict,
 )
 from osw.plugins.discovery import discover_local_plugin_manifests
@@ -45,6 +50,17 @@ OPTIONAL_MODULES = {
 }
 
 DEFAULT_PLUGIN_INSTALL_ROOT = Path.home() / ".osw" / "plugins"
+OPTIONAL_SOLVER_PLUGIN_MANIFEST_PREVIEW_COMMAND = (
+    "optional-solver-plugin-manifest-preview"
+)
+OPTIONAL_SOLVER_PLUGIN_MANIFEST_LOAD_FAILURE_CODES = {
+    "OSPL_NETWORK_SOURCE_UNSUPPORTED",
+    "OSPL_DIRECTORY_SCAN_FORBIDDEN",
+    "OSPL_JSON_EXTENSION_REQUIRED",
+    "OSPL_JSON_READ_FAILED",
+    "OSPL_JSON_INVALID",
+    "OSPL_JSON_OBJECT_REQUIRED",
+}
 
 
 def _module_available(module_name: str) -> bool:
@@ -229,6 +245,191 @@ def _optional_solver_explain_payload(manifest: OptionalSolverManifest) -> dict[s
     }
 
 
+def _optional_solver_plugin_manifest_preview_options(
+    *,
+    include_builtins: bool,
+) -> OptionalSolverPluginManifestLoaderOptions:
+    builtin_stack_ids = (
+        tuple(manifest.stack_id for manifest in builtin_optional_solver_manifests())
+        if include_builtins
+        else ()
+    )
+    return OptionalSolverPluginManifestLoaderOptions(builtin_stack_ids=builtin_stack_ids)
+
+
+def _optional_solver_plugin_manifest_preview_report(
+    manifest_paths: Sequence[str],
+    *,
+    include_builtins: bool,
+) -> OptionalSolverPluginManifestLoadReport:
+    options = _optional_solver_plugin_manifest_preview_options(
+        include_builtins=include_builtins,
+    )
+    reports = [
+        load_optional_solver_plugin_manifest_json(path, options=options)
+        for path in manifest_paths
+    ]
+    accepted_documents = tuple(
+        OptionalSolverPluginManifestDocument(
+            manifest_data=loaded.manifest.to_dict(),
+            source=loaded.source,
+            schema_version=loaded.schema_version,
+            document_ref=loaded.source.reference,
+        )
+        for report in reports
+        for loaded in report.accepted_manifests
+    )
+    accepted_report = (
+        load_optional_solver_plugin_manifest_documents(
+            accepted_documents,
+            options=options,
+        )
+        if accepted_documents
+        else OptionalSolverPluginManifestLoadReport()
+    )
+    rejected_reports = tuple(report for report in reports if report.rejected_manifests)
+    return OptionalSolverPluginManifestLoadReport(
+        accepted_manifests=accepted_report.accepted_manifests,
+        rejected_manifests=tuple(
+            rejected
+            for report in rejected_reports
+            for rejected in report.rejected_manifests
+        )
+        + accepted_report.rejected_manifests,
+        conflicts=tuple(conflict for report in rejected_reports for conflict in report.conflicts)
+        + accepted_report.conflicts,
+        diagnostics=tuple(
+            diagnostic for report in rejected_reports for diagnostic in report.diagnostics
+        )
+        + accepted_report.diagnostics,
+    )
+
+
+def _optional_solver_plugin_manifest_policy_payload(
+    *,
+    include_builtins: bool,
+) -> dict[str, object]:
+    return {
+        "data_only_loading": True,
+        "explicit_json_files_only": True,
+        "plugin_package_loading": False,
+        "directory_scan": False,
+        "network_fetch": False,
+        "solver_execution": False,
+        "dependency_installation": False,
+        "issue_mutation": False,
+        "release_mutation": False,
+        "include_builtins": include_builtins,
+        "plugin_manifest_presence_is_validation_evidence": False,
+        "third_party_plugin_manifests_trusted_by_default": False,
+        "trust_label_is_certification": False,
+    }
+
+
+def _optional_solver_plugin_manifest_preview_payload(
+    report: OptionalSolverPluginManifestLoadReport,
+    *,
+    include_builtins: bool,
+) -> dict[str, object]:
+    payload = report.to_dict()
+    payload["command"] = OPTIONAL_SOLVER_PLUGIN_MANIFEST_PREVIEW_COMMAND
+    payload["accepted"] = payload["accepted_manifests"]
+    payload["rejected"] = payload["rejected_manifests"]
+    payload["policy"] = _optional_solver_plugin_manifest_policy_payload(
+        include_builtins=include_builtins,
+    )
+    return payload
+
+
+def _format_optional_solver_plugin_manifest_preview_text(
+    report: OptionalSolverPluginManifestLoadReport,
+    *,
+    include_builtins: bool,
+    include_diagnostics: bool,
+    show_policy: bool,
+) -> str:
+    lines = [
+        "OSW optional solver plugin manifest preview",
+        "Data-only preview for explicitly supplied JSON manifest files.",
+        f"accepted count: {len(report.accepted_manifests)}",
+        f"rejected count: {len(report.rejected_manifests)}",
+        f"conflict count: {len(report.conflicts)}",
+        (
+            "built-in conflict context: enabled"
+            if include_builtins
+            else "built-in conflict context: disabled"
+        ),
+        "Plugin manifest presence is not validation evidence.",
+        "Third-party/plugin manifests are not trusted by default.",
+    ]
+    if show_policy:
+        lines.extend(
+            (
+                "policy: explicit JSON files only",
+                "policy: no plugin package loading, directory scan, or network fetch",
+                "policy: no solver execution, dependency installation, or issue mutation",
+            )
+        )
+
+    lines.append("accepted manifests:")
+    if report.accepted_manifests:
+        for loaded in report.accepted_manifests:
+            lines.append(
+                f"  - {loaded.stack_id}: {loaded.manifest.display_name} "
+                f"(source {loaded.source.source_type.value}, "
+                f"trust {loaded.source.trust_label.value})"
+            )
+    else:
+        lines.append("  - none")
+
+    lines.append("rejected manifests:")
+    if report.rejected_manifests:
+        for rejected in report.rejected_manifests:
+            stack_id = rejected.stack_id or "(unknown)"
+            lines.append(
+                f"  - {stack_id}: source {rejected.source.source_type.value}, "
+                f"trust {rejected.source.trust_label.value}"
+            )
+    else:
+        lines.append("  - none")
+
+    lines.append("conflicts:")
+    if report.conflicts:
+        for conflict in report.conflicts:
+            lines.append(f"  - {conflict.stack_id}: {conflict.message}")
+    else:
+        lines.append("  - none")
+
+    diagnostics = report.diagnostics if include_diagnostics else tuple(report.diagnostics)
+    lines.append("diagnostics:")
+    if diagnostics:
+        for diagnostic in diagnostics:
+            stack_id = f", stack {diagnostic.stack_id}" if diagnostic.stack_id else ""
+            source = f", source {diagnostic.source_ref}" if diagnostic.source_ref else ""
+            lines.append(
+                f"  - {diagnostic.severity.value}/{diagnostic.category.value}: "
+                f"{diagnostic.code}{stack_id}{source}: {diagnostic.message}"
+            )
+    else:
+        lines.append("  - none")
+    return "\n".join(lines)
+
+
+def _optional_solver_plugin_manifest_preview_failed(
+    report: OptionalSolverPluginManifestLoadReport,
+) -> bool:
+    return any(
+        diagnostic.code in OPTIONAL_SOLVER_PLUGIN_MANIFEST_LOAD_FAILURE_CODES
+        for diagnostic in report.diagnostics
+    )
+
+
+def _optional_solver_plugin_manifest_preview_has_strict_failures(
+    report: OptionalSolverPluginManifestLoadReport,
+) -> bool:
+    return bool(report.rejected_manifests or report.conflicts)
+
+
 def _found_text(found: bool) -> str:
     return "found" if found else "missing"
 
@@ -322,6 +523,47 @@ def build_parser() -> argparse.ArgumentParser:
         default="text",
         choices=("text", "json"),
         help="Output format.",
+    )
+    optional_solver_plugin_manifest_preview_parser = subparsers.add_parser(
+        OPTIONAL_SOLVER_PLUGIN_MANIFEST_PREVIEW_COMMAND,
+        help="Preview explicit optional solver plugin manifest JSON files.",
+        description=(
+            "Preview data-only optional solver plugin manifest loading for explicit "
+            "JSON files. This command does not load plugin packages, scan directories, "
+            "fetch network manifests, execute solvers, or install dependencies."
+        ),
+    )
+    optional_solver_plugin_manifest_preview_parser.add_argument(
+        "--manifest",
+        action="append",
+        default=[],
+        help="Explicit optional solver plugin manifest JSON file. May be repeated.",
+    )
+    optional_solver_plugin_manifest_preview_parser.add_argument(
+        "--format",
+        default="text",
+        choices=("text", "json"),
+        help="Output format.",
+    )
+    optional_solver_plugin_manifest_preview_parser.add_argument(
+        "--include-builtins",
+        action="store_true",
+        help="Use built-in optional solver stack ids as trusted conflict context.",
+    )
+    optional_solver_plugin_manifest_preview_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Return exit code 2 when manifests are rejected or conflicts are present.",
+    )
+    optional_solver_plugin_manifest_preview_parser.add_argument(
+        "--include-diagnostics",
+        action="store_true",
+        help="Include loader diagnostics in text output.",
+    )
+    optional_solver_plugin_manifest_preview_parser.add_argument(
+        "--show-policy",
+        action="store_true",
+        help="Include detailed safety policy disclaimers in text output.",
     )
     plugin_health_parser = subparsers.add_parser(
         "plugin-health",
@@ -1417,6 +1659,45 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(json.dumps(_optional_solver_explain_payload(manifest), indent=2, sort_keys=True))
         else:
             print(_format_optional_solver_explain_text(manifest))
+        return 0
+
+    if args.command == OPTIONAL_SOLVER_PLUGIN_MANIFEST_PREVIEW_COMMAND:
+        if not args.manifest:
+            print(
+                "At least one --manifest explicit JSON file is required.",
+                file=sys.stderr,
+            )
+            return 1
+        report = _optional_solver_plugin_manifest_preview_report(
+            tuple(args.manifest),
+            include_builtins=args.include_builtins,
+        )
+        if args.format == "json":
+            print(
+                json.dumps(
+                    _optional_solver_plugin_manifest_preview_payload(
+                        report,
+                        include_builtins=args.include_builtins,
+                    ),
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print(
+                _format_optional_solver_plugin_manifest_preview_text(
+                    report,
+                    include_builtins=args.include_builtins,
+                    include_diagnostics=args.include_diagnostics,
+                    show_policy=args.show_policy,
+                )
+            )
+        if _optional_solver_plugin_manifest_preview_failed(report):
+            return 1
+        if args.strict and _optional_solver_plugin_manifest_preview_has_strict_failures(
+            report
+        ):
+            return 2
         return 0
 
     if args.command == "plugin-health":

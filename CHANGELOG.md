@@ -6,6 +6,16 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest CLI Preview
+
+- Added `optional-solver-plugin-manifest-preview` for explicit JSON plugin
+  manifest loading previews.
+- Added text/JSON output for accepted manifests, rejected manifests,
+  conflicts, diagnostics, source types, and trust labels.
+- Kept the command bounded to data-only explicit files: no plugin package
+  loading, no directory scan, no network fetch, no solver execution, no
+  dependency installation, no issue mutation, and no release mutation.
+
 ### Optional Solver Plugin Manifest Loader Model
 
 - Added a data-only optional solver plugin manifest loader model for explicit

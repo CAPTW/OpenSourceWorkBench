@@ -121,6 +121,15 @@ Plugin overrides are forbidden by default.
 Future CLI and GUI preview gates can display accepted and rejected manifests
 from this model. There is no current CLI/GUI behavior change in this gate.
 
+## CLI preview follow-up
+
+`OSW-EXP-071_OPTIONAL_SOLVER_PLUGIN_MANIFEST_CLI_PREVIEW` adds
+`optional-solver-plugin-manifest-preview` as the first CLI consumer of this
+model. The command loads explicit JSON files only and reports accepted records,
+rejected records, conflicts, diagnostics, source types, and trust labels without
+adding plugin package loading, directory scanning, network fetch, solver
+execution, dependency installation, issue mutation, or release mutation.
+
 ## Relationship to #6~#11
 
 Manifest loading is not validation evidence. Issues `#6` through `#11` remain

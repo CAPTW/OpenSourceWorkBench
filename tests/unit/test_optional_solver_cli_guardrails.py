@@ -39,6 +39,7 @@ def test_optional_solver_commands_have_no_install_or_smoke_options() -> None:
         "optional-solver-list",
         "optional-solver-doctor",
         "optional-solver-explain",
+        "optional-solver-plugin-manifest-preview",
     ):
         options = _optional_solver_command_options(command)
         assert "--install" not in options

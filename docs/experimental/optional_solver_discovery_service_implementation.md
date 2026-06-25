@@ -269,3 +269,12 @@ consume only after an explicit handoff. The current passive discovery service
 continues to use its existing caller-supplied manifest inputs and does not
 scan plugin locations, import plugin packages, fetch network manifests, or
 treat loaded manifests as validation evidence.
+
+## Plugin manifest CLI preview follow-up
+
+[Optional solver plugin manifest CLI preview](optional_solver_plugin_manifest_cli_preview.md)
+previews explicit JSON plugin manifest files before any discovery handoff. The
+command reports source/trust labels, accepted/rejected records, conflicts, and
+diagnostics, but it does not run discovery, scan plugin locations, import
+plugin packages, fetch network manifests, execute solvers, install
+dependencies, mutate issues, or create validation evidence.

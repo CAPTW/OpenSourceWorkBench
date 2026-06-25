@@ -196,3 +196,12 @@ implements a data-only loader for explicit manifest documents. The current GUI
 refresh action still refreshes only over its configured manifest set and does
 not scan plugin directories, import plugin packages, fetch network manifests,
 or treat plugin manifest loading as validation evidence.
+
+## Plugin manifest CLI preview follow-up
+
+[Optional solver plugin manifest CLI preview](optional_solver_plugin_manifest_cli_preview.md)
+adds an explicit JSON command for previewing plugin manifest loader reports.
+The current GUI refresh action still does not consume those files, scan plugin
+directories, import plugin packages, fetch network manifests, execute solvers,
+install dependencies, mutate issues, or turn manifest presence into validation
+evidence.

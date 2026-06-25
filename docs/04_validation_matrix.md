@@ -293,6 +293,14 @@ shell/browser action, output-folder opening, discovery refresh, solver
 execution, dependency installation, issue mutation, release mutation, or
 validation-pass evidence.
 
+[Optional solver plugin manifest CLI preview](experimental/optional_solver_plugin_manifest_cli_preview.md)
+adds a data-only CLI preview over explicit plugin manifest JSON files. It
+reports accepted/rejected manifest records, conflicts, diagnostics, source
+types, and trust labels, but it is not validation evidence and adds no plugin
+package loading, directory scanning, network fetch, solver execution,
+dependency installation, issue mutation, release mutation, or issue-closure
+claim.
+
 This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory
 for base import, CLI smoke, or unit tests.

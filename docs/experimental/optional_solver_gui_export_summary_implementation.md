@@ -185,3 +185,11 @@ provides future accepted/rejected manifest source records. The current export
 action does not call the loader and does not add plugin package discovery; it
 exports only the currently accepted health-panel view-model and continues to
 state that exported summaries are not validation evidence.
+
+## Plugin manifest CLI preview follow-up
+
+[Optional solver plugin manifest CLI preview](optional_solver_plugin_manifest_cli_preview.md)
+adds an explicit-file CLI view of loader reports. Export summaries still do not
+call the plugin manifest loader, scan plugin directories, load plugin packages,
+fetch network manifests, execute solvers, install dependencies, mutate issues,
+or become validation evidence.

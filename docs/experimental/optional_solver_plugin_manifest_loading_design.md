@@ -191,6 +191,16 @@ Plugin manifest source and trust labels should appear near stack identity,
 diagnostics, and export summaries so users can tell whether a row came from
 OSW core metadata or third-party metadata.
 
+## CLI preview follow-up
+
+`OSW-EXP-071_OPTIONAL_SOLVER_PLUGIN_MANIFEST_CLI_PREVIEW` implements the
+design's CLI preview slice for explicit JSON files. It displays source type,
+trust label, accepted/rejected status, diagnostics, and conflicts while keeping
+plugin package loading, directory scanning, network fetch, solver execution,
+dependency installation, issue mutation, release mutation, validation-pass
+claims, issue-closure claims, bundled-solver claims, and certification claims
+out of scope.
+
 ## Privacy/security
 
 The model must preserve the current optional solver privacy boundary:

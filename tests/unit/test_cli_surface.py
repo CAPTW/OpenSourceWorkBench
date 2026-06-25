@@ -24,6 +24,7 @@ EXPECTED_COMMANDS = {
     "optional-solver-doctor",
     "optional-solver-explain",
     "optional-solver-list",
+    "optional-solver-plugin-manifest-preview",
     "mat-info",
     "report-export",
     "report-summary",

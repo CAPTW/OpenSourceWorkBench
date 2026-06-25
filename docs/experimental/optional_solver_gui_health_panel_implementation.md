@@ -276,3 +276,11 @@ adds data-only accepted/rejected manifest records with source/trust labels for
 future GUI display. The current panel has no plugin manifest display surface
 and no loader invocation; it continues to render only the view-model supplied
 by its caller.
+
+## Plugin manifest CLI preview follow-up
+
+[Optional solver plugin manifest CLI preview](optional_solver_plugin_manifest_cli_preview.md)
+adds the text/JSON command-line preview for explicit JSON plugin manifests.
+The current panel still has no plugin manifest display surface, no plugin
+package loading, no directory scanning, no network fetch, no solver execution,
+no dependency installation, no issue mutation, and no validation-pass claim.

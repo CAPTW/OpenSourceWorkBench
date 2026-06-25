@@ -226,6 +226,15 @@ package import, directory scan, network fetch, solver execution, dependency
 installation, issue mutation, release mutation, validation-pass claim,
 issue-closure claim, bundled-solver claim, or certification claim.
 
+## Plugin manifest CLI preview follow-up
+
+[Optional solver plugin manifest CLI preview](optional_solver_plugin_manifest_cli_preview.md)
+uses this schema indirectly through the loader model to preview explicit JSON
+manifest files. It reports accepted/rejected records, conflicts, diagnostics,
+source types, and trust labels without scanning directories, loading plugin
+packages, fetching network manifests, executing solvers, installing
+dependencies, mutating issues, or claiming validation success.
+
 ## CLI preview follow-up
 
 The CLI preview follow-up uses the declarative manifests and passive discovery
