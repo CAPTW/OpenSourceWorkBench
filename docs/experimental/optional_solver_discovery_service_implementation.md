@@ -199,6 +199,9 @@ validation and closure-review gates provide appropriate installed-only evidence.
 - `OSW-EXP-061_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_VIEWMODEL` - completed as a
   pure UI-agnostic view-model in
   [Optional solver GUI health panel view-model](optional_solver_gui_health_panel_viewmodel.md).
+- `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN` - completed as a
+  design-only passive refresh workflow contract in
+  [Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md).
 - `OSW-VALID` prepared-machine validation reuse
 
 ## CLI preview follow-up
@@ -235,3 +238,14 @@ change, active smoke validation, external solver command execution, solver
 execution, dependency installation, issue mutation, release mutation,
 validation-pass claim, issue-closure claim, bundled-solver claim, or
 certification claim.
+
+## GUI discovery refresh design follow-up
+
+[Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md)
+defines how a later health-panel action may explicitly request passive
+discovery through an injected runner. The design keeps widgets from invoking
+discovery directly, keeps startup refresh out of initial scope, preserves
+redaction, routes new reports through the pure health-panel builder, and keeps
+active validation, solver execution, dependency installation, issue mutation,
+release mutation, validation-pass claims, issue-closure claims, bundled-solver
+claims, and certification claims outside the refresh workflow.

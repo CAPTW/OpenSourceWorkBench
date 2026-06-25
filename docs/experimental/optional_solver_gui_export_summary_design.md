@@ -189,6 +189,15 @@ execution, dependency installation, issue mutation, release mutation,
 validation-pass claim, issue-closure claim, bundled-solver claim, or
 certification claim.
 
+## Discovery refresh design follow-up
+
+[Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md)
+records how a later explicit passive refresh should interact with export
+summaries. Exports before refresh use the current accepted view-model; exports
+after refresh use the refreshed accepted view-model. The design adds no refresh
+source behavior, background worker, active validation, solver execution,
+dependency installation, issue mutation, or release mutation.
+
 ## Validation relationship
 
 An exported summary is not validation evidence. It is a portable rendering of
@@ -250,4 +259,6 @@ optional solver packages.
 - `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION` - completed
   as redacted GUI export wiring in
   [Optional solver GUI export summary implementation](optional_solver_gui_export_summary_implementation.md).
-- `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
+- `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN` - completed as a
+  design-only passive refresh workflow contract in
+  [Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md).

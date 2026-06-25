@@ -6,6 +6,19 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver GUI Discovery Refresh Design
+
+- Added a design-only optional solver GUI passive discovery refresh workflow.
+- Defined explicit user action, passive refresh boundaries, future injected
+  runner and worker policy, atomic view-model replacement, status/error states,
+  privacy/redaction behavior, export interaction, validation-gate separation,
+  failure handling, and future implementation tests.
+- Kept the slice docs/tests-only: no refresh implementation, no background
+  worker implementation, no GUI/source mutation, no active validation, no
+  solver execution, no dependency install, no issue mutation, no release
+  mutation, no validation-pass claim, no issue-closure claim, no bundled-solver
+  claim, and no certification claim.
+
 ### Optional Solver GUI Export Summary Implementation
 
 - Added a GUI health-panel export action for redacted optional solver health

@@ -679,5 +679,14 @@ discovery refresh, solver execution, dependency installation, issue mutation,
 validation success evidence, issue closure evidence, bundled-solver claims, or
 certification.
 
+[Optional solver GUI discovery refresh design](../experimental/optional_solver_gui_discovery_refresh_design.md)
+defines only the future explicit passive refresh workflow for that health
+surface. It can later help VFEA and FEASpec users update optional-stack setup
+state from the GUI through an injected runner and pure view-model rebuild, but
+it does not add refresh source, background worker source, GUI source mutation,
+active validation, solver execution, dependency installation, issue mutation,
+validation success evidence, issue closure evidence, bundled-solver claims, or
+certification.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

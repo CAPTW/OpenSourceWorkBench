@@ -65,6 +65,12 @@ request should stop, park, or defer.
   does not add clipboard integration, shell/browser actions, output-folder
   opening, discovery refresh, solver command execution, dependency
   installation, issue mutation, release mutation, or validation success claims.
+- Design-only experimental optional solver GUI passive refresh planning that
+  defines explicit user flow, injected runner boundaries, worker/threading
+  policy, atomic view-model replacement, status/error display, privacy,
+  export interaction, validation-gate separation, and future tests without
+  mutating runtime source, GUI source, view-model source, CLI source, issues,
+  releases, tags, assets, or validation status.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.
@@ -681,6 +687,13 @@ Scope drift is any change that:
   issue mutation, release mutation, validation-pass evidence, issue-closure
   evidence, bundled-solver claims, or certification claims without a separate
   gate;
+- turns the optional solver GUI discovery refresh design into runtime source,
+  GUI source, view-model source, CLI source, startup refresh, widget-owned
+  discovery calls, background worker source, active validation, solver
+  execution, dependency installation, issue mutation, release mutation,
+  environment-value display, validation-pass evidence, issue-closure evidence,
+  bundled-solver claims, or certification claims without a separate
+  implementation gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is

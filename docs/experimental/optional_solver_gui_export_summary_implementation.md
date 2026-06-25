@@ -128,8 +128,20 @@ The export can include issue references for optional solver validation issues:
 Issues `#6` through `#11` remain open. `skipped-missing` remains not pass
 evidence, and exported summaries cannot close issues.
 
+## Discovery refresh design follow-up
+
+[Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md)
+records the future passive refresh workflow for this panel. A refresh after
+export should not alter the saved file; a later export should render the
+currently accepted view-model. The design keeps refresh user-initiated,
+passive-only, redacted by default, and separate from active validation,
+solver execution, dependency installation, issue mutation, and release
+mutation.
+
 ## Future gates
 
-- `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
+- `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN` - completed as a
+  design-only passive refresh workflow contract in
+  [Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md).
 - `OSW-EXP-067_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_POLISH`
 - `OSW-VALID` prepared-machine validation reuse

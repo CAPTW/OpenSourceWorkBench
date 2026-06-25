@@ -1981,3 +1981,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   folder actions, shell/browser opening, discovery refresh, solver execution,
   dependency installation, release edits, issue mutation, bundled-solver
   claims, certification claims, and version changes remain out of scope.
+
+## ADR-0100: Optional Solver GUI Discovery Refresh Starts Design-Only
+
+- Status: Accepted for experimental GUI refresh design
+- Date: 2026-06-25
+- Context: OSW-EXP-065 added a redacted single-file export action to the
+  optional solver health panel, while refresh passive discovery remained a
+  disabled/display-only action. The next slice needs the refresh contract
+  before any GUI source, worker source, or view-model source is changed.
+- Decision: Define the future GUI discovery refresh workflow as design-only.
+  The design requires explicit user action, passive discovery only, a future
+  injected runner rather than widget-owned discovery calls, worker request ids,
+  stale-result rejection, atomic view-model replacement, selected-stack and
+  filter preservation where safe, redaction, export interaction rules, and
+  validation-gate separation.
+- Consequences: Future refresh view-model and GUI implementation gates remain
+  separate. Issues `#6` through `#11` remain open, skipped-missing evidence
+  remains neither pass nor failure, and no runtime source, GUI source,
+  view-model source, CLI behavior change, background worker implementation,
+  discovery refresh source, active validation, solver execution, dependency
+  installation, release edit, issue mutation, bundled-solver claim,
+  certification claim, or version change occurs in this design gate.

@@ -212,7 +212,9 @@ usage.
 - `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION` - completed
   as redacted GUI export wiring in
   [Optional solver GUI export summary implementation](optional_solver_gui_export_summary_implementation.md).
-- `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
+- `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN` - completed as a
+  design-only passive refresh workflow contract in
+  [Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md).
 - `OSW-VALID` prepared-machine validation reuse
 
 ## View-model follow-up
@@ -265,3 +267,15 @@ confirmation. It still does not add clipboard access, shell/browser actions,
 output-folder opening, discovery refresh, solver execution, dependency
 installation, issue mutation, release mutation, validation-pass claims,
 issue-closure claims, bundled-solver claims, or certification claims.
+
+## Discovery refresh design follow-up
+
+[Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md)
+records the future explicit passive refresh workflow for the panel. It keeps
+refresh user-initiated, routes work through a future injected runner, builds a
+new pure view-model from passive reports, swaps view-models atomically, and
+keeps export summaries tied to the current accepted view-model. It adds no
+refresh source behavior, background worker implementation, active validation,
+solver execution, dependency installation, issue mutation, release mutation,
+validation-pass claim, issue-closure claim, bundled-solver claim, or
+certification claim.

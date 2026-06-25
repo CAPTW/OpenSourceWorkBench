@@ -47,6 +47,15 @@ shell/browser action, discovery execution, solver execution, dependency
 installation, issue mutation, release mutation, validation-pass claim,
 issue-closure claim, bundled-solver claim, or certification claim.
 
+## Discovery refresh design follow-up
+
+[Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md)
+defines how a later explicit passive refresh should replace the health panel
+view-model before export. Export before refresh uses the current accepted
+view-model; export after refresh uses the refreshed accepted view-model. The
+refresh design adds no source behavior in this gate and keeps exported
+summaries out of validation evidence.
+
 ## Package path and public API
 
 Package path:
@@ -182,4 +191,6 @@ and exported summaries cannot close issues.
 - `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION` - completed
   as redacted GUI export wiring in
   [Optional solver GUI export summary implementation](optional_solver_gui_export_summary_implementation.md).
-- `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
+- `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN` - completed as a
+  design-only passive refresh workflow contract in
+  [Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md).

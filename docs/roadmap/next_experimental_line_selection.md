@@ -189,6 +189,16 @@ actions, output-folder opening, discovery refresh, solver execution,
 dependency installation, issue mutation, release mutation, validation-pass
 claims, issue-closure claims, bundled-solver claims, or certification claims.
 
+The GUI discovery refresh design follow-up
+[optional solver GUI discovery refresh design](../experimental/optional_solver_gui_discovery_refresh_design.md)
+defines the future explicit passive refresh workflow for the health panel. It
+keeps refresh user-initiated, routes work through a future injected runner,
+requires atomic view-model replacement, preserves redaction, defines export
+interaction, and keeps active validation, solver execution, dependency
+installation, issue mutation, release mutation, validation-pass claims,
+issue-closure claims, bundled-solver claims, or certification claims out of
+scope.
+
 ## Guardrails
 
 - External solvers are not bundled.

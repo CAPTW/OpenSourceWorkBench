@@ -220,6 +220,14 @@ perform discovery, execute solvers, install dependencies, mutate issues, edit
 releases, claim validation success, claim issues are closure-ready, bundle
 solvers, or claim certification.
 
+## Discovery refresh design follow-up
+
+[Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md)
+defines a future explicit passive refresh flow that would build a new health
+panel view-model from new passive reports. The design preserves the pure
+builder boundary: widgets request refresh through a future injected runner,
+then swap an already-built view-model rather than mutating cards in place.
+
 ## Future gates
 
 - `OSW-EXP-062_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_IMPLEMENTATION` - completed as
@@ -234,5 +242,7 @@ solvers, or claim certification.
 - `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION` - completed
   as redacted GUI export wiring in
   [Optional solver GUI export summary implementation](optional_solver_gui_export_summary_implementation.md).
-- `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
+- `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN` - completed as a
+  design-only passive refresh workflow contract in
+  [Optional solver GUI discovery refresh design](optional_solver_gui_discovery_refresh_design.md).
 - `OSW-VALID` prepared-machine validation reuse
