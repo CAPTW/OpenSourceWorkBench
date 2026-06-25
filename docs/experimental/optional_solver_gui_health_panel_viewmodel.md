@@ -205,6 +205,13 @@ by default, and keeps file dialogs, clipboard access, shell/browser actions,
 discovery execution, solver execution, dependency installation, issue mutation,
 and release mutation out of this design gate.
 
+[Optional solver GUI export summary view-model](optional_solver_gui_export_summary_viewmodel.md)
+implements that pure export payload layer over this health panel view-model. It
+renders JSON, Markdown, and plain text in memory and analyzes save paths without
+adding GUI widgets, file dialogs, file writes, clipboard access, shell/browser
+actions, discovery execution, solver execution, issue mutation, or release
+mutation.
+
 ## Future gates
 
 - `OSW-EXP-062_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_IMPLEMENTATION` - completed as
@@ -213,7 +220,9 @@ and release mutation out of this design gate.
 - `OSW-EXP-063_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_DESIGN` - completed as a
   design-only export workflow contract in
   [Optional solver GUI export summary design](optional_solver_gui_export_summary_design.md).
-- `OSW-EXP-064_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_VIEWMODEL`
+- `OSW-EXP-064_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_VIEWMODEL` - completed as a
+  pure payload/view-model layer in
+  [Optional solver GUI export summary view-model](optional_solver_gui_export_summary_viewmodel.md).
 - `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION`
 - `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse

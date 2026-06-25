@@ -241,3 +241,13 @@ failure handling, and implementation tests without adding exporter source, file
 dialogs, clipboard integration, shell/browser actions, discovery execution,
 solver execution, dependency installation, issue mutation, release mutation, or
 validation-pass claims.
+
+## Export summary view-model follow-up
+
+The export summary view-model follow-up implements the pure payload/rendering
+layer for that workflow. It consumes the already-built health panel view-model,
+renders JSON, Markdown, and plain text in memory, and analyzes future save
+paths without changing GUI source, implementing file dialogs, writing files,
+using clipboards, opening shells or browsers, executing discovery, executing
+solvers, installing dependencies, mutating issues, editing releases, or
+claiming validation success.

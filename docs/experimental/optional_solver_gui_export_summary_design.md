@@ -164,6 +164,18 @@ Serialization should be owned by a small pure export layer so tests can verify
 redaction, field inclusion, deterministic ordering, and error handling without
 opening GUI file dialogs.
 
+## Export view-model follow-up
+
+[Optional solver GUI export summary view-model](optional_solver_gui_export_summary_viewmodel.md)
+implements that pure payload layer. It consumes an already-built
+`OptionalSolverHealthPanelViewModel`, returns redacted payload records,
+renders JSON, Markdown, and plain text in memory, and analyzes save paths
+without writing files. It still adds no GUI export action, file dialog,
+clipboard integration, shell/browser action, discovery execution, solver
+execution, dependency installation, issue mutation, release mutation,
+validation-pass claim, issue-closure claim, bundled-solver claim, or
+certification claim.
+
 ## Validation relationship
 
 An exported summary is not validation evidence. It is a portable rendering of
@@ -219,6 +231,8 @@ optional solver packages.
 
 ## Future gates
 
-- `OSW-EXP-064_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_VIEWMODEL`
+- `OSW-EXP-064_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_VIEWMODEL` - completed as a
+  pure payload/view-model layer in
+  [Optional solver GUI export summary view-model](optional_solver_gui_export_summary_viewmodel.md).
 - `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION`
 - `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`

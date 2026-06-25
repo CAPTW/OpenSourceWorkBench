@@ -1940,3 +1940,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   shell/browser action, discovery execution, solver execution, dependency
   installation, release edit, issue mutation, bundled-solver claim,
   certification claim, or version change occurs in this design gate.
+
+## ADR-0098: Optional Solver GUI Summary Export Uses A Pure Payload Boundary
+
+- Status: Accepted for experimental export view-model implementation
+- Date: 2026-06-25
+- Context: OSW-EXP-063 defined the future export summary workflow but kept all
+  runtime export behavior out of scope. The next slice needs deterministic
+  payload and renderer behavior that can be tested without GUI dialogs,
+  clipboard access, shell/browser actions, discovery, solvers, or file writes.
+- Decision: Implement the export summary as a pure
+  `OptionalSolverHealthPanelViewModel` consumer under
+  `src/osw/experimental/optional_solvers/`. It builds redacted payload records,
+  renders JSON, Markdown, and plain text in memory, and analyzes future save
+  paths while reporting diagnostics and privacy warnings.
+- Consequences: GUI export wiring and actual writing remain separate future
+  gates. Issues `#6` through `#11` remain open, skipped-missing evidence remains
+  neither pass nor failure, and no GUI source, CLI behavior change, file
+  dialog, file write, clipboard integration, shell/browser action, discovery
+  execution, solver execution, dependency installation, release edit, issue
+  mutation, bundled-solver claim, certification claim, or version change occurs
+  in this payload/view-model gate.

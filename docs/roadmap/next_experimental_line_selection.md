@@ -171,6 +171,15 @@ shell/browser actions, discovery execution, solver execution, dependency
 installation, issue mutation, release mutation, validation-pass claims,
 issue-closure claims, bundled-solver claims, or certification claims.
 
+The GUI export summary view-model follow-up
+[optional solver GUI export summary view-model](../experimental/optional_solver_gui_export_summary_viewmodel.md)
+implements the pure payload/rendering layer for that future workflow. It
+renders redacted JSON, Markdown, and plain text in memory and analyzes save
+paths without GUI source changes, file dialogs, file writes, clipboard
+integration, shell/browser actions, discovery execution, solver execution,
+dependency installation, issue mutation, release mutation, validation-pass
+claims, issue-closure claims, bundled-solver claims, or certification claims.
+
 ## Guardrails
 
 - External solvers are not bundled.

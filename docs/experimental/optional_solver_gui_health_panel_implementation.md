@@ -144,6 +144,11 @@ builder boundary without adding exporter source, file dialogs, clipboard
 integration, shell/browser actions, discovery execution, solver execution,
 dependency installation, issue mutation, or release mutation.
 
+[Optional solver GUI export summary view-model](optional_solver_gui_export_summary_viewmodel.md)
+implements the pure payload/rendering/save-plan layer for that future workflow.
+The GUI health panel still does not expose an active export action, file
+dialog, clipboard behavior, shell/browser opening, or file writing.
+
 ## Privacy and redaction
 
 - Redacted paths remain redacted.
@@ -185,7 +190,9 @@ pass evidence, and issue closure remains outside this panel.
 - `OSW-EXP-063_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_DESIGN` - completed as a
   design-only export workflow contract in
   [Optional solver GUI export summary design](optional_solver_gui_export_summary_design.md).
-- `OSW-EXP-064_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_VIEWMODEL`
+- `OSW-EXP-064_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_VIEWMODEL` - completed as a
+  pure payload/view-model layer in
+  [Optional solver GUI export summary view-model](optional_solver_gui_export_summary_viewmodel.md).
 - `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION`
 - `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse

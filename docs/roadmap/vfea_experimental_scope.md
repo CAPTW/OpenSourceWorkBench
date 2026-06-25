@@ -661,5 +661,14 @@ discovery execution, solver execution, dependency installation, issue
 mutation, validation success evidence, issue closure evidence, or
 bundled-solver claims.
 
+[Optional solver GUI export summary view-model](../experimental/optional_solver_gui_export_summary_viewmodel.md)
+adds only the pure payload and rendering layer for those future summaries. It
+can help future VFEA and FEASpec support/debugging generate redacted JSON,
+Markdown, or text strings from an already-built health view-model, but it does
+not add GUI export actions, file dialogs, file writes, clipboard integration,
+shell/browser actions, discovery execution, solver execution, dependency
+installation, issue mutation, validation success evidence, issue closure
+evidence, or bundled-solver claims.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

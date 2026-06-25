@@ -6,6 +6,18 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver GUI Export Summary View-Model
+
+- Added a pure optional solver GUI export summary payload/view-model layer
+  under `src/osw/experimental/optional_solvers/`.
+- Added redacted JSON, Markdown, and plain-text renderers plus save-plan
+  analysis for explicit `.json`, `.md`, and `.txt` paths.
+- Kept the layer side-effect-free: no GUI source, no CLI behavior change, no
+  file dialog, no file write, no clipboard integration, no shell/browser
+  action, no discovery execution, no solver execution, no dependency install,
+  no issue mutation, no release mutation, no validation-pass claim, no
+  issue-closure claim, no bundled-solver claim, and no certification claim.
+
 ### Optional Solver GUI Export Summary Design
 
 - Added a design-only optional solver GUI export summary workflow contract.
