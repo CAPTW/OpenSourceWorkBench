@@ -177,3 +177,13 @@ It is design-only and adds no export source, file dialog, clipboard access,
 shell/browser action, discovery execution, solver execution, dependency
 installation, issue mutation, release mutation, validation-pass claim,
 issue-closure claim, bundled-solver claim, or certification claim.
+
+## Plugin manifest loading design follow-up
+
+[Optional solver plugin manifest loading design](optional_solver_plugin_manifest_loading_design.md)
+defines future source and trust labels for plugin-provided optional solver
+manifests. A later CLI preview can list accepted built-in and plugin metadata
+and show invalid manifests separately, but this design adds no CLI source,
+plugin loading, plugin code execution, network marketplace, solver execution,
+dependency installation, issue mutation, release mutation, validation-pass
+claim, issue-closure claim, bundled-solver claim, or certification claim.

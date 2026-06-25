@@ -220,6 +220,16 @@ execution, dependency installation, issue mutation, release mutation,
 validation-pass claims, issue-closure claims, bundled-solver claims, or
 certification claims.
 
+The plugin manifest loading design follow-up
+[optional solver plugin manifest loading design](../experimental/optional_solver_plugin_manifest_loading_design.md)
+defines how future plugin-provided optional solver manifest metadata can be
+sourced, labeled, validated, diagnosed, and displayed without executing plugin
+code or trusting third-party manifests by default. It keeps this step
+docs/tests-only and adds no loader, plugin scan, network marketplace, solver
+execution, dependency installation, issue mutation, release mutation,
+validation-pass claims, issue-closure claims, bundled-solver claims, or
+certification claims.
+
 ## Guardrails
 
 - External solvers are not bundled.

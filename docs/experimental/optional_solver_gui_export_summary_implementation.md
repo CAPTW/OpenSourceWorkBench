@@ -165,3 +165,15 @@ view-model. Export remains redacted by default and not validation evidence.
   [Optional solver GUI discovery refresh implementation](optional_solver_gui_discovery_refresh_implementation.md).
 - `OSW-EXP-067_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_POLISH`
 - `OSW-VALID` prepared-machine validation reuse
+
+## Plugin manifest loading design follow-up
+
+[Optional solver plugin manifest loading design](optional_solver_plugin_manifest_loading_design.md)
+defines future manifest source and trust labels that exported health summaries
+may include after a later accepted-manifest loader gate. Exported summaries
+should preserve those labels, mark third-party metadata clearly, and continue
+to state that plugin manifest presence is not validation evidence. This design
+adds no export source changes, plugin loading, network marketplace, plugin code
+execution, solver execution, dependency installation, issue mutation, release
+mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or
+certification claim.

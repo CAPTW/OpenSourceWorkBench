@@ -257,3 +257,14 @@ Earlier planning named the discovery refresh placeholder
 `OSW-EXP-064_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`. The export-summary
 sequence now reserves `OSW-EXP-064` and `OSW-EXP-065` for export view-model and
 implementation gates before discovery refresh design.
+
+## Plugin manifest loading design follow-up
+
+[Optional solver plugin manifest loading design](optional_solver_plugin_manifest_loading_design.md)
+defines future source and trust labels for manifest rows that this panel may
+display after a later loader gate. Plugin-provided manifests remain metadata
+only and third-party by default; invalid records should appear as diagnostics
+instead of discovery inputs. This design adds no GUI source mutation, plugin
+loader, plugin code execution, install or run buttons, solver execution,
+dependency installation, issue mutation, release mutation, validation-pass
+claim, issue-closure claim, bundled-solver claim, or certification claim.

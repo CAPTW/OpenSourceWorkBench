@@ -173,5 +173,18 @@ Skipped-missing remains not pass evidence.
 
 ## Future gates
 
-- `OSW-EXP-069_OPTIONAL_SOLVER_PLUGIN_MANIFEST_LOADING_DESIGN`
+- `OSW-EXP-069_OPTIONAL_SOLVER_PLUGIN_MANIFEST_LOADING_DESIGN` - completed as
+  a design-only source/trust contract in
+  [Optional solver plugin manifest loading design](optional_solver_plugin_manifest_loading_design.md).
 - `OSW-VALID` prepared-machine validation reuse
+
+## Plugin manifest loading design follow-up
+
+[Optional solver plugin manifest loading design](optional_solver_plugin_manifest_loading_design.md)
+defines how future accepted plugin-provided manifests can be labeled and
+handed to passive discovery without executing plugin code. A later refresh
+implementation may refresh over accepted manifest sets, but this design adds
+no plugin loader, filesystem scan, network fetch, marketplace integration,
+active smoke validation, solver execution, dependency installation, issue
+mutation, release mutation, validation-pass claim, issue-closure claim,
+bundled-solver claim, or certification claim.

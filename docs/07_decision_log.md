@@ -2048,3 +2048,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   execution, dependency installation, issue mutation, release edit,
   bundled-solver claim, certification claim, or version change occurs in this
   implementation gate.
+
+## ADR-0103: Optional Solver Plugin Manifests Require Source And Trust Labels
+
+- Status: Accepted for experimental plugin manifest loading design
+- Date: 2026-06-25
+- Context: OSW-EXP-068 completed explicit passive refresh for built-in
+  manifests. The plugin ecosystem line now needs a design boundary for future
+  plugin-contributed optional solver manifest metadata before any loader,
+  scanner, CLI, or GUI source is changed.
+- Decision: Define future optional solver manifest source categories and trust
+  labels for built-in core, project-local, user-local, plugin-package, and
+  organization-managed manifests. Built-ins win by default, plugin overrides
+  are forbidden by default, plugin-provided manifests are third-party metadata,
+  invalid records are quarantined as diagnostics, and CLI/GUI surfaces must
+  display source and trust labels.
+- Consequences: Future plugin manifest work remains data-only until a separate
+  loader model gate. Issues `#6` through `#11` remain open, skipped-missing
+  evidence remains neither pass nor failure, and no plugin loading
+  implementation, filesystem plugin scan, network marketplace, plugin code
+  execution, solver execution, dependency installation, release edit, issue
+  mutation, bundled-solver claim, certification claim, or version change occurs
+  in this design gate.

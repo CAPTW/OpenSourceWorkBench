@@ -204,6 +204,17 @@ execution, optional solver package imports, dependency installation, solver
 execution, issue mutation, release mutation, bundled-solver claims, or
 certification claims.
 
+## Plugin manifest loading design follow-up
+
+[Optional solver plugin manifest loading design](optional_solver_plugin_manifest_loading_design.md)
+keeps future plugin-contributed manifests schema-compatible with this model
+while adding source categories, trust labels, quarantine diagnostics, and
+conflict policy as a design contract only. It does not implement a loader,
+parser, filesystem scan, network fetch, plugin code execution, solver
+execution, dependency installation, issue mutation, release mutation,
+validation-pass claim, issue-closure claim, bundled-solver claim, or
+certification claim.
+
 ## CLI preview follow-up
 
 The CLI preview follow-up uses the declarative manifests and passive discovery

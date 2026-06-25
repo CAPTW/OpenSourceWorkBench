@@ -721,6 +721,12 @@ Scope drift is any change that:
   plugin loading, issue mutation, release mutation, environment-value display,
   validation-pass evidence, issue-closure evidence, bundled-solver claims, or
   certification claims without a separate gate;
+- turns the optional solver plugin manifest loading design into runtime loader
+  source, filesystem plugin scanning, network marketplace behavior, plugin code
+  execution, trusted-by-default third-party manifests, solver execution,
+  dependency installation, issue mutation, release mutation, environment-value
+  display, validation-pass evidence, issue-closure evidence, bundled-solver
+  claims, or certification claims without a separate implementation gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is

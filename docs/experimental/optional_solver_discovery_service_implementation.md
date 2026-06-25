@@ -249,3 +249,14 @@ redaction, routes new reports through the pure health-panel builder, and keeps
 active validation, solver execution, dependency installation, issue mutation,
 release mutation, validation-pass claims, issue-closure claims, bundled-solver
 claims, and certification claims outside the refresh workflow.
+
+## Plugin manifest loading design follow-up
+
+[Optional solver plugin manifest loading design](optional_solver_plugin_manifest_loading_design.md)
+defines how a later discovery gate may receive accepted plugin-provided
+manifest data without executing plugin code. It keeps discovery inputs limited
+to schema-validated manifest records with visible source/trust labels and
+diagnostics. This design adds no plugin loading implementation, filesystem
+plugin scan, network fetch, active smoke validation, solver execution,
+dependency installation, issue mutation, release mutation, validation-pass
+claim, issue-closure claim, bundled-solver claim, or certification claim.

@@ -6,6 +6,19 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Loading Design
+
+- Added a design-only optional solver plugin manifest loading contract.
+- Defined future manifest source categories, trust labels, loading boundaries,
+  JSON-first format policy, candidate locations, conflict handling,
+  validation diagnostics, CLI/GUI display implications, privacy/security
+  rules, and validation relationship.
+- Kept the slice docs/tests-only: no plugin loading implementation, no plugin
+  code execution, no filesystem plugin scan, no network marketplace, no solver
+  execution, no dependency install, no issue mutation, no release mutation, no
+  validation-pass claim, no issue-closure claim, no bundled-solver claim, and
+  no certification claim.
+
 ### Optional Solver GUI Discovery Refresh Implementation
 
 - Wired `Refresh Passive Discovery` in the optional solver GUI health panel as

@@ -252,3 +252,15 @@ execution, active smoke validation, external solver command execution, solver
 execution, dependency installation, issue mutation, release mutation,
 validation-pass claim, issue-closure claim, bundled-solver claim, or
 certification claim.
+
+## Plugin manifest loading design follow-up
+
+[Optional solver plugin manifest loading design](optional_solver_plugin_manifest_loading_design.md)
+extends the plugin ecosystem relationship for this UX line. It defines future
+built-in, project-local, user-local, plugin-package, and organization-managed
+manifest source categories; trust labels; conflict handling; diagnostics; and
+CLI/GUI display implications while keeping the gate design-only. It adds no
+plugin loader, plugin scan, network marketplace, plugin code execution, solver
+execution, dependency installation, issue mutation, release mutation,
+validation-pass claim, issue-closure claim, bundled-solver claim, or
+certification claim.

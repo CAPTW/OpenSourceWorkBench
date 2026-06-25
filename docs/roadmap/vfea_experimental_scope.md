@@ -705,5 +705,14 @@ background workers, active validation, solver execution, dependency
 installation, issue mutation, validation success evidence, issue closure
 evidence, bundled-solver claims, or certification.
 
+[Optional solver plugin manifest loading design](../experimental/optional_solver_plugin_manifest_loading_design.md)
+defines future manifest source categories, trust labels, invalid-manifest
+diagnostics, and CLI/GUI display rules for plugin-contributed optional solver
+metadata. It can help future VFEA and FEASpec plugin ecosystems expose optional
+stack guidance, but it does not implement plugin loading, scan plugin
+directories, fetch network manifests, execute plugin code, execute solvers,
+install dependencies, mutate issues, create validation success evidence, create
+issue closure evidence, bundle solvers, or provide certification.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.
