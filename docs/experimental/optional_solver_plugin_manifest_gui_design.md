@@ -23,6 +23,7 @@ Status boundaries:
 - `v0.1.5-rc1 public prerelease` is the current public release.
 - Plugin manifest loader model exists.
 - Plugin manifest CLI preview exists.
+- Plugin manifest GUI view-model exists.
 - Optional solver health/export/refresh GUI exists.
 - `#6~#11 open/skipped-missing`.
 - External solvers not bundled.
@@ -219,6 +220,23 @@ The view-model should compute summary counts, table rows, selected-row details,
 diagnostic rows, safety copy, action availability, and disabled reasons without
 touching the filesystem or importing plugin packages.
 
+## View-model implementation follow-up
+
+`OSW-EXP-073_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_VIEWMODEL` implements the
+pure view-model slice.
+
+[Optional solver plugin manifest GUI view-model](optional_solver_plugin_manifest_gui_viewmodel.md)
+implements the pure report-to-display layer for this design. It consumes
+already-built loader reports and produces summary counts, accepted/rejected
+rows, conflict rows, diagnostic rows, trust badges, guidance text, filters, and
+disabled action states.
+
+The view-model adds no GUI source, file dialog, plugin activation, plugin
+package loading, directory scanning, network fetch, discovery execution, solver
+execution, dependency installation, issue mutation, release mutation,
+validation-pass claim, issue-closure claim, external-solver bundling claim, or
+certification claim.
+
 ## Failure handling
 
 The future GUI should handle:
@@ -248,7 +266,6 @@ state.
 
 ## Future gates
 
-- `OSW-EXP-073_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_VIEWMODEL`
 - `OSW-EXP-074_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_IMPLEMENTATION`
 - `OSW-EXP-075_OPTIONAL_SOLVER_PLUGIN_MANIFEST_ACTIVATION_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse

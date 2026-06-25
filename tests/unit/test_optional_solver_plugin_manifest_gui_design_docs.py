@@ -44,6 +44,7 @@ def test_doc_records_current_baseline() -> None:
     assert "v0.1.5-rc1 public prerelease" in text
     assert "plugin manifest loader model exists" in text
     assert "plugin manifest cli preview exists" in text
+    assert "plugin manifest gui view-model exists" in text
     assert "Optional solver health/export/refresh GUI exists." in raw
     assert "#6~#11 open/skipped-missing" in raw
     assert "external solvers not bundled" in text
@@ -152,6 +153,8 @@ def test_doc_defines_viewmodel_failure_non_goals_and_future_gates() -> None:
     assert "gui widgets do not parse json directly" in text
     assert "file dialog passes explicit paths to a future runner" in text
     assert "no solver/discovery side effects from view-model" in text
+    assert "view-model implementation follow-up" in text
+    assert "optional solver plugin manifest gui view-model" in text
     assert "failure handling" in text
     for failure in (
         "invalid json",

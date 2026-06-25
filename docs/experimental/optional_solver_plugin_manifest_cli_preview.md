@@ -146,3 +146,13 @@ plugin package loading, network fetch, solver execution, dependency
 installation, issue mutation, release mutation, validation-pass claims,
 issue-closure claims, external-solver bundling claims, and certification
 claims.
+
+## GUI view-model follow-up
+
+[Optional solver plugin manifest GUI view-model](optional_solver_plugin_manifest_gui_viewmodel.md)
+implements a pure display model over the same load reports surfaced by this CLI
+preview. It adds no GUI source, file dialog, plugin activation, directory
+scanning, plugin package loading, network fetch, discovery execution, solver
+execution, dependency installation, issue mutation, release mutation,
+validation-pass claim, issue-closure claim, external-solver bundling claim, or
+certification claim.

@@ -140,6 +140,16 @@ network fetch, solver execution, dependency installation, issue mutation,
 release mutation, validation-pass claim, issue-closure claim, external-solver
 bundling claim, or certification claim.
 
+## GUI view-model follow-up
+
+[Optional solver plugin manifest GUI view-model](optional_solver_plugin_manifest_gui_viewmodel.md)
+implements the pure load-report display layer for future GUI use. It turns
+accepted/rejected records, conflicts, diagnostics, and trust/source labels into
+deterministic rows without loading files, parsing JSON, importing plugin
+packages, scanning directories, fetching network manifests, running discovery,
+executing solvers, installing dependencies, mutating issues, or mutating
+releases.
+
 ## Relationship to #6~#11
 
 Manifest loading is not validation evidence. Issues `#6` through `#11` remain
@@ -151,5 +161,5 @@ Issues `#6` through `#11` remain open.
 
 - `OSW-EXP-071_OPTIONAL_SOLVER_PLUGIN_MANIFEST_CLI_PREVIEW`
 - `OSW-EXP-072_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_DESIGN`
-- `OSW-EXP-073_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_VIEWMODEL`
+- `OSW-EXP-074_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_IMPLEMENTATION`
 - `OSW-VALID` prepared-machine validation reuse

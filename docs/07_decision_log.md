@@ -2134,3 +2134,27 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   network fetch, discovery execution, solver execution, dependency
   installation, release edit, issue mutation, bundled-solver claim,
   certification claim, or version change occurs in this design gate.
+
+## ADR-0107: Optional Solver Plugin Manifest GUI View-Model Is Pure
+
+- Status: Accepted for experimental plugin manifest GUI view-model
+- Date: 2026-06-25
+- Context: OSW-EXP-072 defined a future GUI review surface for plugin manifest
+  loader reports. The next implementation slice needs reusable GUI-ready data
+  without adding PySide widgets, file dialogs, file loading, plugin package
+  imports, directory scans, network fetches, discovery, solver execution, or
+  validation evidence.
+- Decision: Implement a pure view-model under
+  `src/osw/experimental/optional_solvers/` that consumes
+  `OptionalSolverPluginManifestLoadReport` and returns deterministic summary,
+  accepted/rejected rows, conflict rows, diagnostic rows, trust badges,
+  guidance, filters, and action-state placeholders. Activation, discovery with
+  plugin manifests, validation, solver install, and issue closure remain
+  unavailable.
+- Consequences: Future PySide binding and activation remain separate gates.
+  Issues `#6` through `#11` remain open, skipped-missing evidence remains
+  neither pass nor failure, and no GUI source, CLI source, file dialog, plugin
+  activation, plugin package import, directory scan, network fetch, discovery
+  execution, solver execution, dependency installation, release edit, issue
+  mutation, bundled-solver claim, certification claim, or version change occurs
+  in this view-model gate.

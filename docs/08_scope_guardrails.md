@@ -746,6 +746,13 @@ Scope drift is any change that:
   installation, issue mutation, release mutation, environment-value display,
   validation-pass evidence, issue-closure evidence, bundled-solver claims, or
   certification claims without a separate gate;
+- turns the optional solver plugin manifest GUI view-model into PySide/Qt
+  source, file dialogs, file loading, JSON parsing, plugin activation, plugin
+  package loading, directory scanning, network fetching, trusted-by-default
+  third-party manifests, discovery execution, solver execution, dependency
+  installation, issue mutation, release mutation, environment-value display,
+  validation-pass evidence, issue-closure evidence, bundled-solver claims, or
+  certification claims without a separate gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is

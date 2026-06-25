@@ -211,6 +211,14 @@ solver execution, dependency installation, issue mutation, release mutation,
 validation-pass claim, issue-closure claim, external-solver bundling claim, or
 certification claim.
 
+The GUI view-model follow-up
+[Optional solver plugin manifest GUI view-model](optional_solver_plugin_manifest_gui_viewmodel.md)
+implements the pure display layer for those load reports. It adds no GUI
+source, file dialog, plugin activation, directory scan, plugin package loading,
+network fetch, discovery execution, solver execution, dependency installation,
+issue mutation, release mutation, validation-pass claim, issue-closure claim,
+external-solver bundling claim, or certification claim.
+
 ## Privacy/security
 
 The model must preserve the current optional solver privacy boundary:
@@ -277,5 +285,5 @@ bundled-solver claim, or certification claim.
   explicit JSON CLI preview in
   [Optional solver plugin manifest CLI preview](optional_solver_plugin_manifest_cli_preview.md).
 - `OSW-EXP-072_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_DESIGN`
-- `OSW-EXP-073_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_VIEWMODEL`
+- `OSW-EXP-074_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_IMPLEMENTATION`
 - `OSW-VALID` prepared-machine validation reuse

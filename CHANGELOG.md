@@ -6,6 +6,20 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest GUI View-Model
+
+- Added a pure optional solver plugin manifest GUI preview view-model under
+  `src/osw/experimental/optional_solvers/`.
+- Modeled summary counts, accepted/rejected/conflict rows, diagnostic rows,
+  trust badges, guidance text, filters, and unavailable/future action states
+  from already-built loader reports.
+- Kept the slice side-effect-free: no GUI source, no CLI source, no file
+  dialog, no file loading, no JSON parsing in the view-model, no plugin
+  activation, no plugin package loading, no directory scan, no network fetch,
+  no discovery execution, no solver execution, no dependency install, no issue
+  mutation, no release mutation, no validation-pass claim, no issue-closure
+  claim, no bundled-solver claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest GUI Design
 
 - Added a design-only optional solver plugin manifest GUI workflow contract.

@@ -740,5 +740,15 @@ plugin package loading, network fetching, solver execution, dependency
 installation, issue mutation, validation success evidence, issue closure
 evidence, bundle solvers, or provide certification.
 
+[Optional solver plugin manifest GUI view-model](../experimental/optional_solver_plugin_manifest_gui_viewmodel.md)
+adds the pure report-to-display layer for that future review surface. It can
+help future VFEA and FEASpec GUI work show accepted/rejected manifests,
+conflicts, diagnostics, source/trust labels, and unavailable action states from
+already-built load reports, but it does not implement GUI source, file dialogs,
+file loading, JSON parsing, plugin activation, directory scanning, plugin
+package loading, network fetching, discovery execution, solver execution,
+dependency installation, issue mutation, validation success evidence, issue
+closure evidence, bundle solvers, or provide certification.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

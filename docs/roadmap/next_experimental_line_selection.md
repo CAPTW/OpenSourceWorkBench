@@ -259,6 +259,17 @@ scanning, network fetch, solver execution, dependency installation, issue
 mutation, release mutation, validation-pass claims, issue-closure claims,
 bundled-solver claims, or certification claims.
 
+The plugin manifest GUI view-model follow-up
+[optional solver plugin manifest GUI view-model](../experimental/optional_solver_plugin_manifest_gui_viewmodel.md)
+implements that pure display boundary over already-built loader reports. It
+produces summary counts, accepted/rejected/conflict rows, diagnostic rows,
+trust badges, guidance text, filters, and unavailable/future action states
+while still adding no GUI source, file dialog, file loading, JSON parsing,
+plugin activation, plugin package loading, directory scanning, network fetch,
+discovery execution, solver execution, dependency installation, issue
+mutation, release mutation, validation-pass claims, issue-closure claims,
+bundled-solver claims, or certification claims.
+
 ## Guardrails
 
 - External solvers are not bundled.
