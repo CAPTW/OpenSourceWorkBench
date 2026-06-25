@@ -196,6 +196,9 @@ validation and closure-review gates provide appropriate installed-only evidence.
 - `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN` - completed as the
   design-only GUI health panel contract in
   [Optional solver GUI health panel design](optional_solver_gui_health_panel_design.md).
+- `OSW-EXP-061_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_VIEWMODEL` - completed as a
+  pure UI-agnostic view-model in
+  [Optional solver GUI health panel view-model](optional_solver_gui_health_panel_viewmodel.md).
 - `OSW-VALID` prepared-machine validation reuse
 
 ## CLI preview follow-up
@@ -219,4 +222,16 @@ actions, and a pure view-model boundary. It adds no GUI source, view-model
 source, CLI behavior change, active smoke validation, external solver command
 execution, solver execution, dependency installation, issue mutation, release
 mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or
+certification claim.
+
+## GUI health view-model follow-up
+
+The GUI health view-model follow-up consumes passive discovery reports already
+supplied by callers and never invokes the discovery service itself. It prepares
+summary, card, details, diagnostic, guidance, validation-history, and
+action-state records for future widgets while preserving path and environment
+redaction. It adds no PySide import, Qt import, GUI widget, CLI behavior
+change, active smoke validation, external solver command execution, solver
+execution, dependency installation, issue mutation, release mutation,
+validation-pass claim, issue-closure claim, bundled-solver claim, or
 certification claim.

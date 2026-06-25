@@ -6,6 +6,20 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver GUI Health Panel View-Model
+
+- Added a pure optional solver GUI health panel view-model under
+  `src/osw/experimental/optional_solvers/`.
+- Built deterministic summary, stack card, details, diagnostics, guidance,
+  validation-history, and action-state records from supplied manifests and
+  passive discovery reports.
+- Preserved privacy and safety boundaries: no PySide/Qt imports, no GUI
+  widgets, no CLI behavior change, no discovery execution, no active smoke
+  validation, no external solver command execution, no solver execution, no
+  dependency install, no issue mutation, no release mutation, no validation-pass
+  claim, no issue-closure claim, no bundled-solver claim, and no certification
+  claim.
+
 ### Optional Solver GUI Health Panel Design
 
 - Added a design-only optional solver GUI health panel contract over the

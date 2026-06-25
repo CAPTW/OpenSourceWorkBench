@@ -127,6 +127,9 @@ not replace prepared-machine validation.
 - `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN` - completed as a
   design-only GUI health panel contract in
   [Optional solver GUI health panel design](optional_solver_gui_health_panel_design.md).
+- `OSW-EXP-061_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_VIEWMODEL` - completed as a
+  pure UI-agnostic view-model in
+  [Optional solver GUI health panel view-model](optional_solver_gui_health_panel_viewmodel.md).
 - `OSW-VALID` prepared-machine validation reuse
 
 ## GUI health panel design follow-up
@@ -140,3 +143,14 @@ no GUI source, view-model source, CLI behavior change, plugin loading, active
 smoke validation, external solver command execution, solver execution,
 dependency installation, issue mutation, release mutation, validation-pass
 claim, issue-closure claim, bundled-solver claim, or certification claim.
+
+## GUI health view-model follow-up
+
+The GUI health view-model follow-up consumes the same manifest and supplied
+passive discovery report records as the CLI preview and produces deterministic
+GUI-ready summary, card, details, diagnostics, guidance, validation-history,
+and action-state records. It adds no PySide import, Qt import, GUI widget,
+CLI behavior change, discovery execution, active smoke validation, external
+solver command execution, solver execution, dependency installation, issue
+mutation, release mutation, validation-pass claim, issue-closure claim,
+bundled-solver claim, or certification claim.

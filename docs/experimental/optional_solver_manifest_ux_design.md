@@ -190,6 +190,9 @@ evidence.
 - `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN` - completed as a
   design-only GUI health panel contract in
   [Optional solver GUI health panel design](optional_solver_gui_health_panel_design.md).
+- `OSW-EXP-061_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_VIEWMODEL` - completed as a
+  pure UI-agnostic view-model in
+  [Optional solver GUI health panel view-model](optional_solver_gui_health_panel_viewmodel.md).
 
 ## Schema model follow-up
 
@@ -237,3 +240,15 @@ source, view-model source, CLI behavior change, plugin loading, active smoke
 validation, external solver command execution, solver execution, dependency
 installation, issue mutation, release mutation, validation-pass claim,
 issue-closure claim, bundled-solver claim, or certification claim.
+
+## GUI health view-model follow-up
+
+The GUI health view-model follow-up implements the pure data layer for the
+future panel. It transforms supplied manifests and passive discovery reports
+into deterministic summary, stack card, details, diagnostics, guidance,
+validation-history, and action-state records. It remains UI-agnostic and adds
+no PySide import, Qt import, GUI widget, CLI behavior change, discovery
+execution, active smoke validation, external solver command execution, solver
+execution, dependency installation, issue mutation, release mutation,
+validation-pass claim, issue-closure claim, bundled-solver claim, or
+certification claim.

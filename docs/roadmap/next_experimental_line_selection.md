@@ -140,6 +140,17 @@ command execution, solver execution, dependency installation, issue mutation,
 release mutation, validation-pass claim, issue-closure claim, bundled-solver
 claim, or certification claim.
 
+The GUI health panel view-model follow-up
+[optional solver GUI health panel view-model](../experimental/optional_solver_gui_health_panel_viewmodel.md)
+implements only the pure UI-agnostic data layer for that future surface. It
+builds deterministic summary, card, details, diagnostics, guidance,
+validation-history, and action-state records from supplied manifests and
+passive discovery reports. It adds no PySide import, Qt import, GUI widget,
+CLI behavior change, discovery execution, active smoke validation, external
+solver command execution, solver execution, dependency installation, issue
+mutation, release mutation, validation-pass claim, issue-closure claim,
+bundled-solver claim, or certification claim.
+
 ## Guardrails
 
 - External solvers are not bundled.

@@ -637,5 +637,13 @@ change, active smoke validation, external solver command execution, solver
 execution, dependency installation, issue mutation, validation success
 evidence, issue closure evidence, or bundled-solver claims.
 
+[Optional solver GUI health panel view-model](../experimental/optional_solver_gui_health_panel_viewmodel.md)
+adds only the pure data layer for that future optional-stack panel. It can help
+future VFEA and FEASpec widgets render setup state consistently, but it does
+not add PySide/Qt imports, GUI widgets, CLI behavior changes, discovery
+execution, active smoke validation, external solver command execution, solver
+execution, dependency installation, issue mutation, validation success
+evidence, issue closure evidence, or bundled-solver claims.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

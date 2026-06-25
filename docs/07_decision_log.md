@@ -1876,3 +1876,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   change, plugin loading, active smoke validation, solver execution, dependency
   installation, release edit, issue mutation, bundled-solver claim,
   certification claim, or version change occurs in this design gate.
+
+## ADR-0095: Optional Solver GUI Health Panel View-Model Is Pure
+
+- Status: Accepted for experimental view-model implementation
+- Date: 2026-06-24
+- Context: OSW-EXP-060 defined the future optional solver GUI health panel and
+  separated widgets from passive discovery and validation behavior. The next
+  narrow slice needs deterministic GUI-ready data records without importing
+  PySide/Qt or performing discovery from GUI code.
+- Decision: Implement a pure UI-agnostic view-model under
+  `src/osw/experimental/optional_solvers/` that consumes supplied manifests and
+  passive discovery reports and returns summary, stack card, details,
+  diagnostics, guidance, validation-history, and action-state records. Action
+  states are display data only; install, validation-run, issue-closure,
+  clipboard, and docs-opening behavior stay in later explicit gates.
+- Consequences: Future GUI widgets remain separate. Issues `#6` through `#11`
+  remain open, skipped-missing evidence remains neither pass nor failure, and
+  no PySide/Qt import, GUI widget, CLI behavior change, discovery execution,
+  active smoke validation, solver execution, dependency installation, release
+  edit, issue mutation, bundled-solver claim, certification claim, or version
+  change occurs in this view-model gate.

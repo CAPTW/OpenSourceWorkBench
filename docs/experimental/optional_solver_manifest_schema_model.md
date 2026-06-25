@@ -181,6 +181,9 @@ Skipped-missing evidence is not a pass and not a failure.
 - `OSW-EXP-060_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_DESIGN` - completed as a
   design-only GUI health panel contract in
   [Optional solver GUI health panel design](optional_solver_gui_health_panel_design.md).
+- `OSW-EXP-061_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_VIEWMODEL` - completed as a
+  pure UI-agnostic view-model in
+  [Optional solver GUI health panel view-model](optional_solver_gui_health_panel_viewmodel.md).
 
 ## Discovery service design follow-up
 
@@ -219,3 +222,13 @@ view-model boundary; it does not implement GUI source, view-model source,
 discovery source, CLI behavior, active smoke validation, solver execution,
 dependency installation, issue mutation, release mutation, validation-pass
 claims, issue-closure claims, bundled-solver claims, or certification claims.
+
+## GUI health view-model follow-up
+
+The GUI health view-model follow-up uses manifest fields for stack cards,
+details, requirement rows, safety text, documentation references, and
+non-bundled disclaimers. It adds only pure dataclass view-model records and
+builders; it does not add PySide or Qt imports, GUI widgets, discovery
+execution, CLI behavior, active smoke validation, solver execution, dependency
+installation, issue mutation, release mutation, validation-pass claims,
+issue-closure claims, bundled-solver claims, or certification claims.

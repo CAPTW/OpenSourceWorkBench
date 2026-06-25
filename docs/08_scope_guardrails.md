@@ -42,6 +42,12 @@ request should stop, park, or defer.
   source, view-model source, CLI behavior changes, plugin loading, active
   smoke validation, solver command execution, dependency installation, issue
   mutation, release mutation, or validation success claims.
+- Experimental optional solver GUI health panel view-model records that remain
+  pure Python and UI-agnostic: summary counts, stack cards, details,
+  diagnostics, guidance, validation history, filters, and action states from
+  supplied manifests and passive discovery reports, without PySide/Qt imports,
+  GUI widgets, discovery execution, solver command execution, dependency
+  installation, issue mutation, release mutation, or validation success claims.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.

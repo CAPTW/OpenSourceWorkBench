@@ -140,6 +140,7 @@ a separate gate.
 | Optional solver passive discovery service | [Optional solver discovery service implementation](experimental/optional_solver_discovery_service_implementation.md), `src/osw/experimental/optional_solvers/`, and focused unit tests | Implements passive manifest-consuming discovery with injected resolvers, default passive resolvers, redacted report serialization, diagnostics, health-state mapping, and built-in manifest discovery. It implements no CLI/GUI behavior, plugin loading, active smoke validation, optional package imports, external command execution, solver execution, dependency install, issue mutation, release mutation, bundled-solver claim, or certification claim. | automated passive-discovery evidence |
 | Optional solver CLI doctor preview | [Optional solver CLI doctor preview](experimental/optional_solver_cli_doctor_preview.md), `src/osw/cli/main.py`, and focused CLI tests | Adds `optional-solver-list`, `optional-solver-doctor`, and `optional-solver-explain` text/JSON commands over built-in manifests and passive discovery reports. Paths are redacted by default, environment values are not exposed, and missing stacks remain setup evidence rather than validation success. It adds no GUI behavior, plugin loading, active smoke validation, external solver command execution, solver execution, dependency install, issue mutation, release mutation, bundled-solver claim, or certification claim. | automated CLI preview evidence |
 | Optional solver GUI health panel design | [Optional solver GUI health panel design](experimental/optional_solver_gui_health_panel_design.md) and focused docs tests | Defines the future GUI-facing health surface over optional solver manifests and passive discovery reports: entry points, summary layout, stack cards, details, diagnostics, guidance, validation history, redaction/privacy behavior, user actions, accessibility, plugin trust labels, and pure view-model boundary. It implements no GUI source, view-model source, CLI behavior change, plugin loading, active smoke validation, external solver command execution, solver execution, dependency install, issue mutation, release mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or certification claim. | design evidence |
+| Optional solver GUI health panel view-model | [Optional solver GUI health panel view-model](experimental/optional_solver_gui_health_panel_viewmodel.md), `src/osw/experimental/optional_solvers/gui_health_viewmodel.py`, and focused view-model tests | Implements pure UI-agnostic dataclass records and builders for summary counts, stack cards, details rows, diagnostics, guidance, validation history, filters, and action states from supplied manifests and passive discovery reports. It adds no PySide/Qt imports, GUI widgets, CLI behavior change, discovery execution, active smoke validation, external solver command execution, solver execution, dependency install, issue mutation, release mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or certification claim. | automated view-model evidence |
 | Public release wording | GitHub Release notes body audit | Notes say public prerelease, assets attached, unsigned portable ZIP, no MSI, no code signing, and no bundled solvers. | completed for `v0.1.3-rc1` |
 | Roadmap triage | GitHub issues and milestones | Maintenance tasks are assigned or deferred before feature work starts. | planned |
 
@@ -242,6 +243,15 @@ paths and environment values by default, and adds no GUI source, view-model
 source, active smoke validation, external solver command execution, solver
 execution, dependency installation, issue mutation, validation-pass claim, or
 issue-closure claim.
+
+[Optional solver GUI health panel view-model](experimental/optional_solver_gui_health_panel_viewmodel.md)
+adds the pure UI-agnostic data layer for that future display. It consumes
+supplied manifests and passive discovery reports, preserves redaction, and
+produces deterministic summary, card, details, diagnostics, guidance,
+validation-history, and action-state records without importing PySide/Qt,
+implementing widgets, running discovery, executing solvers, installing
+dependencies, mutating issues, or making validation-pass or issue-closure
+claims.
 
 This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory

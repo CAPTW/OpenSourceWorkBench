@@ -197,7 +197,19 @@ usage.
 
 ## Future implementation slices
 
-- `OSW-EXP-061_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_VIEWMODEL`
+- `OSW-EXP-061_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_VIEWMODEL` - completed as a
+  pure UI-agnostic view-model in
+  [Optional solver GUI health panel view-model](optional_solver_gui_health_panel_viewmodel.md).
 - `OSW-EXP-062_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_IMPLEMENTATION`
 - `OSW-EXP-063_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse
+
+## View-model follow-up
+
+The view-model follow-up implements frozen dataclass records and builders that
+turn supplied manifests and passive discovery reports into GUI-ready summary,
+card, details, diagnostics, guidance, validation-history, and action-state
+data. It does not import PySide, import Qt, implement widgets, run discovery,
+execute solvers, run external commands, import optional solver packages, install
+dependencies, mutate issues, edit releases, claim validation success, claim
+closure readiness, bundle solvers, or claim certification.
