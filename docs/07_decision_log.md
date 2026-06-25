@@ -2113,3 +2113,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   scan, network fetch, discovery execution, solver execution, dependency
   installation, release edit, issue mutation, bundled-solver claim,
   certification claim, or version change occurs in this CLI preview gate.
+
+## ADR-0106: Optional Solver Plugin Manifest GUI Starts As Review Design
+
+- Status: Accepted for experimental plugin manifest GUI design
+- Date: 2026-06-25
+- Context: OSW-EXP-071 exposed explicit JSON plugin manifest loader reports in
+  the CLI. A future GUI needs a review contract before any view-model, file
+  dialog, activation, plugin package loading, directory scanning, network
+  fetching, or discovery integration is implemented.
+- Decision: Define a design-only future GUI workflow with health-panel,
+  preview-dialog, and project-settings entry points; explicit-file preview
+  flow; accepted/rejected/conflict panels; source/trust labels; diagnostics;
+  safety/privacy messaging; health/export/refresh relationships; failure
+  handling; and a future pure view-model boundary.
+- Consequences: Future view-model and GUI implementation remain separate gates.
+  Issues `#6` through `#11` remain open, skipped-missing evidence remains
+  neither pass nor failure, and no runtime source, GUI source, CLI source,
+  file-dialog source, plugin activation, plugin package import, directory scan,
+  network fetch, discovery execution, solver execution, dependency
+  installation, release edit, issue mutation, bundled-solver claim,
+  certification claim, or version change occurs in this design gate.

@@ -731,5 +731,14 @@ manifests, execute plugin code, execute solvers, install dependencies, mutate
 issues, create validation success evidence, create issue closure evidence,
 bundle solvers, or provide certification.
 
+[Optional solver plugin manifest GUI design](../experimental/optional_solver_plugin_manifest_gui_design.md)
+defines a future GUI review surface for the same load reports. It can help
+future VFEA and FEASpec plugin ecosystems inspect explicit manifest files
+before any activation model, but it does not implement GUI source,
+view-model source, file dialogs, plugin activation, directory scanning,
+plugin package loading, network fetching, solver execution, dependency
+installation, issue mutation, validation success evidence, issue closure
+evidence, bundle solvers, or provide certification.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

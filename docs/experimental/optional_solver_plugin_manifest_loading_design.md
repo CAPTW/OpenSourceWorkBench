@@ -201,6 +201,16 @@ dependency installation, issue mutation, release mutation, validation-pass
 claims, issue-closure claims, bundled-solver claims, and certification claims
 out of scope.
 
+## GUI design follow-up
+
+[Optional solver plugin manifest GUI design](optional_solver_plugin_manifest_gui_design.md)
+defines the future GUI review workflow for those same accepted/rejected and
+conflict records. The design adds no GUI source, view-model source, file dialog,
+plugin activation, plugin package loading, directory scanning, network fetch,
+solver execution, dependency installation, issue mutation, release mutation,
+validation-pass claim, issue-closure claim, external-solver bundling claim, or
+certification claim.
+
 ## Privacy/security
 
 The model must preserve the current optional solver privacy boundary:
@@ -263,6 +273,9 @@ bundled-solver claim, or certification claim.
 - `OSW-EXP-070_OPTIONAL_SOLVER_PLUGIN_MANIFEST_LOADER_MODEL` - completed as a
   data-only explicit dict/JSON loader model in
   [Optional solver plugin manifest loader model](optional_solver_plugin_manifest_loader_model.md).
-- `OSW-EXP-071_OPTIONAL_SOLVER_PLUGIN_MANIFEST_CLI_PREVIEW`
+- `OSW-EXP-071_OPTIONAL_SOLVER_PLUGIN_MANIFEST_CLI_PREVIEW` - completed as the
+  explicit JSON CLI preview in
+  [Optional solver plugin manifest CLI preview](optional_solver_plugin_manifest_cli_preview.md).
 - `OSW-EXP-072_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_DESIGN`
+- `OSW-EXP-073_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_VIEWMODEL`
 - `OSW-VALID` prepared-machine validation reuse

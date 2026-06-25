@@ -193,3 +193,12 @@ adds an explicit-file CLI view of loader reports. Export summaries still do not
 call the plugin manifest loader, scan plugin directories, load plugin packages,
 fetch network manifests, execute solvers, install dependencies, mutate issues,
 or become validation evidence.
+
+## Plugin manifest GUI design follow-up
+
+[Optional solver plugin manifest GUI design](optional_solver_plugin_manifest_gui_design.md)
+defines a future review surface for plugin manifest loader reports. Export
+summary remains unchanged in this gate: it does not include plugin preview data,
+does not activate manifests, does not scan directories, does not load plugin
+packages, does not fetch network manifests, does not execute solvers, does not
+install dependencies, and does not become validation evidence.

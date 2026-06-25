@@ -130,4 +130,19 @@ validation.
 
 - `OSW-EXP-072_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_DESIGN`
 - `OSW-EXP-073_OPTIONAL_SOLVER_PLUGIN_MANIFEST_EXPLICIT_IMPORT_GUI`
+  remains the earlier explicit-import GUI follow-up name; the GUI work is now
+  split into the view-model, implementation, and activation-design gates below.
+- `OSW-EXP-073_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_VIEWMODEL`
+- `OSW-EXP-074_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_IMPLEMENTATION`
+- `OSW-EXP-075_OPTIONAL_SOLVER_PLUGIN_MANIFEST_ACTIVATION_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse
+
+## GUI design follow-up
+
+[Optional solver plugin manifest GUI design](optional_solver_plugin_manifest_gui_design.md)
+defines the future review-focused GUI workflow for the same loader reports.
+The design keeps GUI preview separate from activation, directory scanning,
+plugin package loading, network fetch, solver execution, dependency
+installation, issue mutation, release mutation, validation-pass claims,
+issue-closure claims, external-solver bundling claims, and certification
+claims.

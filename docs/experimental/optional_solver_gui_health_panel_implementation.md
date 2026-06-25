@@ -284,3 +284,12 @@ adds the text/JSON command-line preview for explicit JSON plugin manifests.
 The current panel still has no plugin manifest display surface, no plugin
 package loading, no directory scanning, no network fetch, no solver execution,
 no dependency installation, no issue mutation, and no validation-pass claim.
+
+## Plugin manifest GUI design follow-up
+
+[Optional solver plugin manifest GUI design](optional_solver_plugin_manifest_gui_design.md)
+defines how a future health-panel action or separate dialog can review plugin
+manifest loader reports. The current panel remains unchanged: no GUI source
+mutation, no view-model source mutation, no file dialog, no plugin activation,
+no directory scanning, no network fetch, no solver execution, no dependency
+installation, no issue mutation, and no validation-pass claim.

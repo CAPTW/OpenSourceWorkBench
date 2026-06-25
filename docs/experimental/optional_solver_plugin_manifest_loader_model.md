@@ -130,6 +130,16 @@ rejected records, conflicts, diagnostics, source types, and trust labels without
 adding plugin package loading, directory scanning, network fetch, solver
 execution, dependency installation, issue mutation, or release mutation.
 
+## GUI design follow-up
+
+[Optional solver plugin manifest GUI design](optional_solver_plugin_manifest_gui_design.md)
+defines a future review-focused GUI over this load-report model. It keeps
+widgets from parsing JSON directly, leaves file dialogs and view-model source
+for later gates, and adds no plugin package loading, directory scanning,
+network fetch, solver execution, dependency installation, issue mutation,
+release mutation, validation-pass claim, issue-closure claim, external-solver
+bundling claim, or certification claim.
+
 ## Relationship to #6~#11
 
 Manifest loading is not validation evidence. Issues `#6` through `#11` remain
@@ -141,4 +151,5 @@ Issues `#6` through `#11` remain open.
 
 - `OSW-EXP-071_OPTIONAL_SOLVER_PLUGIN_MANIFEST_CLI_PREVIEW`
 - `OSW-EXP-072_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_DESIGN`
+- `OSW-EXP-073_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_VIEWMODEL`
 - `OSW-VALID` prepared-machine validation reuse

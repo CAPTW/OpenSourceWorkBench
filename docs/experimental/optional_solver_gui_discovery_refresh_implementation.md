@@ -205,3 +205,13 @@ The current GUI refresh action still does not consume those files, scan plugin
 directories, import plugin packages, fetch network manifests, execute solvers,
 install dependencies, mutate issues, or turn manifest presence into validation
 evidence.
+
+## Plugin manifest GUI design follow-up
+
+[Optional solver plugin manifest GUI design](optional_solver_plugin_manifest_gui_design.md)
+defines future GUI review of plugin manifest loader reports before any accepted
+manifest activation model exists. The current refresh action remains built-in
+or caller-supplied only and does not auto-refresh from plugin preview files,
+scan plugin directories, import plugin packages, fetch network manifests,
+execute solvers, install dependencies, mutate issues, or create validation
+evidence.

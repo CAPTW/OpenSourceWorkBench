@@ -248,6 +248,17 @@ no plugin package loading, directory scanning, network fetch, solver execution,
 dependency installation, issue mutation, release mutation, validation-pass
 claims, issue-closure claims, bundled-solver claims, or certification claims.
 
+The plugin manifest GUI design follow-up
+[optional solver plugin manifest GUI design](../experimental/optional_solver_plugin_manifest_gui_design.md)
+defines a future review-focused GUI for those loader reports. It covers entry
+points, explicit-file preview flow, accepted/rejected/conflict panels, trust
+labels, diagnostics, privacy, health-panel/export/refresh relationships, and a
+future pure view-model boundary while still adding no GUI source, view-model
+source, file dialog, plugin activation, plugin package loading, directory
+scanning, network fetch, solver execution, dependency installation, issue
+mutation, release mutation, validation-pass claims, issue-closure claims,
+bundled-solver claims, or certification claims.
+
 ## Guardrails
 
 - External solvers are not bundled.

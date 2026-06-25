@@ -6,6 +6,19 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest GUI Design
+
+- Added a design-only optional solver plugin manifest GUI workflow contract.
+- Defined future entry points, explicit-file preview flow,
+  accepted/rejected/conflict panels, source/trust labels, diagnostics,
+  safety/privacy messaging, health/export/refresh relationships, failure
+  handling, and future view-model boundaries.
+- Kept the slice docs/tests-only: no GUI source, no view-model source, no file
+  dialog, no plugin activation, no plugin package loading, no directory scan,
+  no network fetch, no solver execution, no dependency install, no issue
+  mutation, no release mutation, no validation-pass claim, no issue-closure
+  claim, no bundled-solver claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest CLI Preview
 
 - Added `optional-solver-plugin-manifest-preview` for explicit JSON plugin
