@@ -54,6 +54,17 @@ request should stop, park, or defer.
   without GUI-initiated discovery, solver command execution, subprocess usage,
   install actions, issue closure actions, release mutation, or validation
   success claims.
+- Experimental optional solver GUI export summary payloads that consume an
+  already-built health panel view-model, render redacted JSON, Markdown, and
+  plain text in memory, and analyze save paths without GUI widgets, file
+  writes, clipboard integration, shell/browser actions, discovery execution,
+  solver command execution, issue mutation, or validation success claims.
+- Experimental optional solver GUI export summary action wiring that uses that
+  payload layer, writes exactly one explicit `.json`, `.md`, or `.txt`
+  redacted summary after path validation and overwrite confirmation, and still
+  does not add clipboard integration, shell/browser actions, output-folder
+  opening, discovery refresh, solver command execution, dependency
+  installation, issue mutation, release mutation, or validation success claims.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.
@@ -663,6 +674,13 @@ Scope drift is any change that:
   issue mutation, release mutation, validation-pass evidence, issue-closure
   evidence, bundled-solver claims, or certification claims without a separate
   implementation gate;
+- turns the optional solver GUI export summary implementation into clipboard
+  integration, open-output-folder or shell/browser actions, discovery refresh,
+  solver execution, dependency installation, implicit parent-directory
+  creation, multi-file or sidecar export, environment-value export by default,
+  issue mutation, release mutation, validation-pass evidence, issue-closure
+  evidence, bundled-solver claims, or certification claims without a separate
+  gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is

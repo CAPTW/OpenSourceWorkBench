@@ -6,6 +6,19 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver GUI Export Summary Implementation
+
+- Added a GUI health-panel export action for redacted optional solver health
+  summaries.
+- Supported explicit `.json`, `.md`, and `.txt` exports through the existing
+  pure payload/save-plan layer, with missing-parent rejection and overwrite
+  confirmation.
+- Kept the action side-effect-limited: exactly one selected file write on
+  success, no clipboard integration, no shell/browser action, no output-folder
+  opening, no discovery refresh, no solver execution, no dependency install,
+  no issue mutation, no release mutation, no validation-pass claim, no
+  issue-closure claim, no bundled-solver claim, and no certification claim.
+
 ### Optional Solver GUI Export Summary View-Model
 
 - Added a pure optional solver GUI export summary payload/view-model layer

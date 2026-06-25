@@ -8,6 +8,13 @@ from pathlib import Path
 
 from _common import repo_root
 
+ALLOWED_DUPLICATE_TEST_BASENAMES = {
+    "test_optional_solver_gui_export_summary_guardrails.py": {
+        "tests/gui/test_optional_solver_gui_export_summary_guardrails.py",
+        "tests/unit/test_optional_solver_gui_export_summary_guardrails.py",
+    },
+}
+
 
 def find_duplicate_test_basenames(tests_root: Path) -> dict[str, list[Path]]:
     """Return duplicate non-__init__.py basenames under the tests tree."""
@@ -21,11 +28,17 @@ def find_duplicate_test_basenames(tests_root: Path) -> dict[str, list[Path]]:
             continue
         paths_by_name[path.name].append(path)
 
-    return {
-        name: paths
-        for name, paths in sorted(paths_by_name.items())
-        if len(paths) > 1
-    }
+    root = tests_root.parent
+    duplicates: dict[str, list[Path]] = {}
+    for name, paths in sorted(paths_by_name.items()):
+        if len(paths) <= 1:
+            continue
+        allowed_paths = ALLOWED_DUPLICATE_TEST_BASENAMES.get(name)
+        relative_paths = {path.relative_to(root).as_posix() for path in paths}
+        if allowed_paths == relative_paths:
+            continue
+        duplicates[name] = paths
+    return duplicates
 
 
 def format_duplicate_report(duplicates: dict[str, list[Path]], *, root: Path) -> str:

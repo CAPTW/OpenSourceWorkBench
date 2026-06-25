@@ -131,8 +131,12 @@ buttons:
 - close issue: unavailable
 - copy summary: display-only future placeholder; no clipboard access
 - open docs: display-only future placeholder; no shell or browser action
+- export summary: enabled when a redacted payload can be rendered; writes only
+  one explicitly selected `.json`, `.md`, or `.txt` file after path and
+  overwrite checks
 
-The GUI does not execute any action from this panel.
+The GUI does not execute discovery, validation, install, issue-closure,
+clipboard, shell, or browser actions from this panel.
 
 ## Export summary design follow-up
 
@@ -146,8 +150,16 @@ dependency installation, issue mutation, or release mutation.
 
 [Optional solver GUI export summary view-model](optional_solver_gui_export_summary_viewmodel.md)
 implements the pure payload/rendering/save-plan layer for that future workflow.
-The GUI health panel still does not expose an active export action, file
-dialog, clipboard behavior, shell/browser opening, or file writing.
+
+[Optional solver GUI export summary implementation](optional_solver_gui_export_summary_implementation.md)
+adds the redacted export action to this panel. The action uses the pure export
+payload layer, requires an explicit `.json`, `.md`, or `.txt` destination,
+rejects missing parent directories, requires overwrite confirmation, writes
+exactly one selected file on success, and still adds no clipboard behavior,
+shell/browser opening, output-folder opening, discovery refresh, solver
+execution, dependency installation, issue mutation, release mutation,
+validation-pass claim, issue-closure claim, bundled-solver claim, or
+certification claim.
 
 ## Privacy and redaction
 
@@ -193,7 +205,9 @@ pass evidence, and issue closure remains outside this panel.
 - `OSW-EXP-064_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_VIEWMODEL` - completed as a
   pure payload/view-model layer in
   [Optional solver GUI export summary view-model](optional_solver_gui_export_summary_viewmodel.md).
-- `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION`
+- `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION` - completed
+  as redacted GUI export wiring in
+  [Optional solver GUI export summary implementation](optional_solver_gui_export_summary_implementation.md).
 - `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse
 

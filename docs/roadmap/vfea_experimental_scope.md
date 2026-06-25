@@ -670,5 +670,14 @@ shell/browser actions, discovery execution, solver execution, dependency
 installation, issue mutation, validation success evidence, issue closure
 evidence, or bundled-solver claims.
 
+[Optional solver GUI export summary implementation](../experimental/optional_solver_gui_export_summary_implementation.md)
+adds the health-panel action for writing one redacted `.json`, `.md`, or
+`.txt` setup summary to an explicit user-selected path. It can help future VFEA
+and FEASpec support/debugging share optional-stack setup state, but it does not
+add clipboard integration, shell/browser actions, output-folder opening,
+discovery refresh, solver execution, dependency installation, issue mutation,
+validation success evidence, issue closure evidence, bundled-solver claims, or
+certification.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

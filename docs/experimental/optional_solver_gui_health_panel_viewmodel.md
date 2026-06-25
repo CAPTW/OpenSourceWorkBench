@@ -212,6 +212,14 @@ adding GUI widgets, file dialogs, file writes, clipboard access, shell/browser
 actions, discovery execution, solver execution, issue mutation, or release
 mutation.
 
+[Optional solver GUI export summary implementation](optional_solver_gui_export_summary_implementation.md)
+adds the GUI wiring that consumes this view-model through the export payload
+layer. The action writes only a redacted `.json`, `.md`, or `.txt` summary to
+one explicit selected file and still does not make this pure health view-model
+perform discovery, execute solvers, install dependencies, mutate issues, edit
+releases, claim validation success, claim issues are closure-ready, bundle
+solvers, or claim certification.
+
 ## Future gates
 
 - `OSW-EXP-062_OPTIONAL_SOLVER_GUI_HEALTH_PANEL_IMPLEMENTATION` - completed as
@@ -223,6 +231,8 @@ mutation.
 - `OSW-EXP-064_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_VIEWMODEL` - completed as a
   pure payload/view-model layer in
   [Optional solver GUI export summary view-model](optional_solver_gui_export_summary_viewmodel.md).
-- `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION`
+- `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION` - completed
+  as redacted GUI export wiring in
+  [Optional solver GUI export summary implementation](optional_solver_gui_export_summary_implementation.md).
 - `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse

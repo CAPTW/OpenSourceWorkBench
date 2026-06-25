@@ -144,6 +144,7 @@ a separate gate.
 | Optional solver GUI health panel implementation | [Optional solver GUI health panel implementation](experimental/optional_solver_gui_health_panel_implementation.md), `src/osw/gui/dialogs/optional_solver_health_panel.py`, and focused GUI tests | Implements a PySide display-only panel over an already-built `OptionalSolverHealthPanelViewModel`. It renders summary, stack cards, details, diagnostics, guidance, validation history, safety, and action-state sections while adding no discovery execution, active smoke validation, external solver command execution, solver execution, dependency install, solver install, clipboard/browser action, issue mutation, release mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or certification claim. | automated GUI evidence |
 | Optional solver GUI export summary design | [Optional solver GUI export summary design](experimental/optional_solver_gui_export_summary_design.md) and focused docs tests | Defines a future redacted export workflow for optional solver health-panel summaries, including payload scope, JSON/Markdown/plain-text formats, privacy defaults, explicit save-path and overwrite policy, action states, payload-builder boundary, failure handling, and future tests. It adds no export source, file dialog, clipboard integration, shell/browser action, discovery execution, solver execution, dependency install, issue mutation, release mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or certification claim. | design evidence |
 | Optional solver GUI export summary view-model | [Optional solver GUI export summary view-model](experimental/optional_solver_gui_export_summary_viewmodel.md), `src/osw/experimental/optional_solvers/gui_export_summary_viewmodel.py`, and focused unit tests | Implements a pure payload/view-model layer over an already-built optional solver health panel view-model. It renders redacted JSON, Markdown, and plain text in memory and analyzes future save paths for `.json`, `.md`, and `.txt` outputs while adding no GUI source, CLI behavior change, file dialog, file write, clipboard integration, shell/browser action, discovery execution, solver execution, dependency install, issue mutation, release mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or certification claim. | automated export view-model evidence |
+| Optional solver GUI export summary implementation | [Optional solver GUI export summary implementation](experimental/optional_solver_gui_export_summary_implementation.md), `src/osw/gui/dialogs/optional_solver_health_panel.py`, and focused GUI tests | Adds a redacted GUI export action to the optional solver health panel. It uses the pure payload/save-plan layer, supports `.json`, `.md`, and `.txt`, requires an explicit selected path, rejects missing parents and unsupported extensions, confirms overwrite, and writes exactly one selected file while adding no clipboard integration, shell/browser action, output-folder opening, discovery refresh, solver execution, dependency install, issue mutation, release mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or certification claim. | automated GUI export evidence |
 | Public release wording | GitHub Release notes body audit | Notes say public prerelease, assets attached, unsigned portable ZIP, no MSI, no code signing, and no bundled solvers. | completed for `v0.1.3-rc1` |
 | Roadmap triage | GitHub issues and milestones | Maintenance tasks are assigned or deferred before feature work starts. | planned |
 
@@ -278,6 +279,14 @@ view-model, renders JSON, Markdown, and plain text strings in memory, and
 analyzes save paths without creating directories or writing files. It keeps
 environment values out of exports and treats full paths as an explicit
 warning/acknowledgement option, not default output.
+
+[Optional solver GUI export summary implementation](experimental/optional_solver_gui_export_summary_implementation.md)
+adds the GUI action that uses that payload boundary. It writes one redacted
+`.json`, `.md`, or `.txt` summary to an explicit selected path only after path
+validation and overwrite confirmation, while adding no clipboard integration,
+shell/browser action, output-folder opening, discovery refresh, solver
+execution, dependency installation, issue mutation, release mutation, or
+validation-pass evidence.
 
 This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory

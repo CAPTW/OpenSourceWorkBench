@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from osw.experimental.optional_solvers import (
     OptionalSolverDiagnosticRowViewModel,
+    OptionalSolverExportSummaryFormat,
+    OptionalSolverExportSummaryOptions,
+    OptionalSolverExportSummaryRenderResult,
     OptionalSolverHealthPanelAction,
     OptionalSolverHealthPanelActionState,
     OptionalSolverHealthPanelViewModel,
@@ -13,6 +18,11 @@ from osw.experimental.optional_solvers import (
     OptionalSolverStackCardViewModel,
     OptionalSolverStackDetailsViewModel,
     OptionalSolverValidationHistoryRowViewModel,
+    build_optional_solver_export_summary_payload,
+    plan_optional_solver_export_summary_save,
+    render_optional_solver_export_summary_json,
+    render_optional_solver_export_summary_markdown,
+    render_optional_solver_export_summary_text,
 )
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
 from osw.gui.theme_tokens import DARK_TOKENS, ThemeTokens
@@ -24,6 +34,10 @@ except ModuleNotFoundError:
     QtWidgets = None
 
 _BaseDialog: Any = QtWidgets.QDialog if QtWidgets is not None else object
+_EXPORT_ACTION_NAME = "export_summary"
+_SavePathSelection = str | Path | tuple[str | Path, str] | None
+_SavePathChooser = Callable[[object], _SavePathSelection]
+_OverwriteConfirmer = Callable[[str], bool]
 
 
 class OptionalSolverHealthPanel(_BaseDialog):
@@ -35,6 +49,11 @@ class OptionalSolverHealthPanel(_BaseDialog):
         parent: object | None = None,
         *,
         theme_tokens: ThemeTokens | None = None,
+        save_path_chooser: _SavePathChooser | None = None,
+        overwrite_confirmer: _OverwriteConfirmer | None = None,
+        export_generated_at: str = "",
+        export_source_context: str = "optional_solver_gui_health_panel",
+        export_package_version: str = "",
     ) -> None:
         if QtCore is None or QtWidgets is None:
             raise PySide6UnavailableError(pyside6_missing_message())
@@ -44,8 +63,20 @@ class OptionalSolverHealthPanel(_BaseDialog):
         self.resize(1120, 760)
         self._tokens = theme_tokens or DARK_TOKENS
         self._view_model = view_model
+        self._save_path_chooser = save_path_chooser
+        self._overwrite_confirmer = overwrite_confirmer
+        self._export_generated_at = export_generated_at
+        self._export_source_context = export_source_context
+        self._export_package_version = export_package_version
         self._action_buttons: dict[OptionalSolverHealthPanelAction, Any] = {}
         self._disabled_action_reasons: dict[str, str] = {}
+        self._export_action_available = False
+        self._export_action_reason = "Export summary has not been initialized."
+        self._export_status_text = "No export attempted."
+        self._export_error_text = ""
+        self._last_export_path = ""
+        self._last_export_format = ""
+        self._exported_file_summary_text = ""
 
         root = QtWidgets.QVBoxLayout(self)
         root.setContentsMargins(10, 10, 10, 10)
@@ -120,6 +151,7 @@ class OptionalSolverHealthPanel(_BaseDialog):
         self.validation_history_panel.setPlainText(
             _validation_history_text(view_model.validation_history)
         )
+        self._refresh_export_action_state()
         self._populate_action_state()
         self.safety_panel.setPlainText(_safety_text(view_model))
 
@@ -151,14 +183,38 @@ class OptionalSolverHealthPanel(_BaseDialog):
         return self.safety_panel.toPlainText()
 
     def available_action_names(self) -> tuple[str, ...]:
-        return tuple(
+        names = [
             action.action.value
             for action in self._view_model.actions
             if action.available
-        )
+        ]
+        if self.export_action_enabled():
+            names.append(_EXPORT_ACTION_NAME)
+        return tuple(names)
 
     def disabled_action_reasons(self) -> dict[str, str]:
         return dict(self._disabled_action_reasons)
+
+    def export_status_text(self) -> str:
+        return self._export_status_text
+
+    def export_error_text(self) -> str:
+        return self._export_error_text
+
+    def last_export_path(self) -> str:
+        return self._last_export_path
+
+    def last_export_format(self) -> str:
+        return self._last_export_format
+
+    def exported_file_summary_text(self) -> str:
+        return self._exported_file_summary_text
+
+    def export_action_enabled(self) -> bool:
+        return bool(self.export_summary_button.isEnabled())
+
+    def export_action_reason(self) -> str:
+        return self._export_action_reason
 
     def set_theme_tokens(self, tokens: ThemeTokens) -> None:
         self._tokens = tokens
@@ -170,6 +226,12 @@ class OptionalSolverHealthPanel(_BaseDialog):
             "QLabel#oswOptionalSolverHealthSummary {"
             f"color: {tokens.accent};"
             "font-weight: 700;"
+            "}"
+            "QLabel#oswOptionalSolverHealthExportStatus {"
+            f"color: {tokens.text_primary};"
+            "}"
+            "QLabel#oswOptionalSolverHealthExportError {"
+            f"color: {tokens.danger};"
             "}"
             "QPlainTextEdit, QListWidget {"
             f"background-color: {tokens.bg_viewport};"
@@ -200,7 +262,25 @@ class OptionalSolverHealthPanel(_BaseDialog):
             button.setEnabled(False)
             self._action_buttons[action] = button
             button_grid.addWidget(button, index // 2, index % 2)
+        export_row = len(tuple(OptionalSolverHealthPanelAction)) // 2
+        self.export_summary_button = QtWidgets.QPushButton(
+            "Export Summary",
+            self.actions_panel,
+        )
+        self.export_summary_button.setObjectName(
+            "oswOptionalSolverHealthExportSummaryButton"
+        )
+        self.export_summary_button.clicked.connect(self._export_summary)
+        button_grid.addWidget(self.export_summary_button, export_row, 0, 1, 2)
         layout.addLayout(button_grid)
+        self.export_status_label = QtWidgets.QLabel(self._export_status_text, self)
+        self.export_status_label.setObjectName("oswOptionalSolverHealthExportStatus")
+        self.export_status_label.setWordWrap(True)
+        layout.addWidget(self.export_status_label)
+        self.export_error_label = QtWidgets.QLabel(self._export_error_text, self)
+        self.export_error_label.setObjectName("oswOptionalSolverHealthExportError")
+        self.export_error_label.setWordWrap(True)
+        layout.addWidget(self.export_error_label)
 
     def _populate_stack_cards(self) -> None:
         self.stack_list.clear()
@@ -225,7 +305,139 @@ class OptionalSolverHealthPanel(_BaseDialog):
             if button is not None:
                 button.setEnabled(False)
                 button.setToolTip(reason)
+        export_state = (
+            "available; enabled; current"
+            if self._export_action_available
+            else "unavailable; disabled; current"
+        )
+        lines.append(f"{_EXPORT_ACTION_NAME}: {export_state}; gui write-limited")
+        lines.append(f"  {self._export_action_reason}")
+        self._disabled_action_reasons[_EXPORT_ACTION_NAME] = self._export_action_reason
         self.action_state_panel.setPlainText("\n".join(lines))
+
+    def _refresh_export_action_state(self) -> None:
+        try:
+            options = OptionalSolverExportSummaryOptions(
+                export_format=OptionalSolverExportSummaryFormat.JSON,
+                package_version=self._export_package_version,
+                generated_at=self._export_generated_at,
+                source_context=self._export_source_context,
+            )
+            build_optional_solver_export_summary_payload(self._view_model, options)
+        except Exception as exc:
+            self._export_action_available = False
+            self._export_action_reason = (
+                "Export unavailable: payload rendering failed with "
+                f"{type(exc).__name__}."
+            )
+        else:
+            self._export_action_available = True
+            self._export_action_reason = (
+                "Redacted JSON, Markdown, or plain-text summary export writes "
+                "exactly one explicitly selected file."
+            )
+        self.export_summary_button.setEnabled(self._export_action_available)
+        self.export_summary_button.setToolTip(self._export_action_reason)
+
+    def _export_summary(self) -> None:
+        if not self._export_action_available:
+            self._set_export_result(
+                status="Export unavailable.",
+                error=self._export_action_reason,
+            )
+            return
+
+        selected_path, selected_filter = self._choose_export_path()
+        if not selected_path.strip():
+            self._set_export_result(status="Export cancelled.", error="")
+            return
+
+        format_hint = _format_hint_from_filter(selected_filter)
+        plan = plan_optional_solver_export_summary_save(
+            selected_path,
+            export_format=format_hint,
+            allow_overwrite=False,
+        )
+        if _only_overwrite_blocked(plan.diagnostics):
+            if not self._confirm_overwrite(plan.normalized_path):
+                self._set_export_result(
+                    status="Export not written.",
+                    error="OSE_OVERWRITE_BLOCKED: overwrite was not confirmed.",
+                )
+                return
+            plan = plan_optional_solver_export_summary_save(
+                selected_path,
+                export_format=format_hint,
+                allow_overwrite=True,
+            )
+        if not plan.can_save or plan.export_format is None:
+            self._set_export_result(
+                status="Export not written.",
+                error=_export_diagnostics_text(plan.diagnostics),
+            )
+            return
+
+        try:
+            render_result = _render_export_summary(
+                self._view_model,
+                plan.export_format,
+                generated_at=self._export_generated_at,
+                source_context=self._export_source_context,
+                package_version=self._export_package_version,
+            )
+            target = Path(plan.normalized_path)
+            target.write_text(render_result.content, encoding="utf-8", newline="\n")
+        except Exception as exc:
+            self._set_export_result(
+                status="Export failed.",
+                error=f"{type(exc).__name__}: {exc}",
+            )
+            return
+
+        self._last_export_path = plan.normalized_path
+        self._last_export_format = render_result.export_format.value
+        byte_count = len(render_result.content.encode("utf-8"))
+        self._exported_file_summary_text = (
+            f"{render_result.export_format.value} export wrote {byte_count} bytes "
+            f"to {plan.normalized_path}; redacted_by_default=true; "
+            "not_validation_evidence=true"
+        )
+        self._set_export_result(
+            status="Exported redacted optional solver summary.",
+            error="",
+        )
+
+    def _choose_export_path(self) -> tuple[str, str]:
+        if self._save_path_chooser is not None:
+            selection = self._save_path_chooser(self)
+        else:
+            selection = QtWidgets.QFileDialog.getSaveFileName(
+                self,
+                "Export Optional Solver Summary",
+                "",
+                "JSON (*.json);;Markdown (*.md);;Plain text (*.txt)",
+            )
+        return _normalize_save_path_selection(selection)
+
+    def _confirm_overwrite(self, normalized_path: str) -> bool:
+        if self._overwrite_confirmer is not None:
+            return self._overwrite_confirmer(normalized_path)
+        result = QtWidgets.QMessageBox.question(
+            self,
+            "Overwrite export?",
+            f"The export target already exists:\n{normalized_path}\n\nReplace it?",
+            QtWidgets.QMessageBox.StandardButton.Yes
+            | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.No,
+        )
+        return result == QtWidgets.QMessageBox.StandardButton.Yes
+
+    def _set_export_result(self, *, status: str, error: str) -> None:
+        self._export_status_text = status
+        self._export_error_text = error
+        self.export_status_label.setText(status)
+        self.export_error_label.setText(error)
+        self._populate_action_state()
 
 
 def _readonly_plain_text(object_name: str, parent: object) -> object:
@@ -233,6 +445,70 @@ def _readonly_plain_text(object_name: str, parent: object) -> object:
     widget.setObjectName(object_name)
     widget.setReadOnly(True)
     return widget
+
+
+def _normalize_save_path_selection(selection: _SavePathSelection) -> tuple[str, str]:
+    if selection is None:
+        return "", ""
+    if isinstance(selection, tuple):
+        selected_path = selection[0] if selection else ""
+        selected_filter = selection[1] if len(selection) > 1 else ""
+        return str(selected_path or ""), str(selected_filter or "")
+    return str(selection or ""), ""
+
+
+def _format_hint_from_filter(
+    selected_filter: str,
+) -> OptionalSolverExportSummaryFormat | None:
+    normalized = selected_filter.lower()
+    if ".json" in normalized or "json" in normalized:
+        return OptionalSolverExportSummaryFormat.JSON
+    if ".md" in normalized or "markdown" in normalized:
+        return OptionalSolverExportSummaryFormat.MARKDOWN
+    if ".txt" in normalized or "plain text" in normalized:
+        return OptionalSolverExportSummaryFormat.TEXT
+    return None
+
+
+def _only_overwrite_blocked(
+    diagnostics: tuple[Any, ...],
+) -> bool:
+    codes = {
+        getattr(diagnostic, "code", "")
+        for diagnostic in diagnostics
+        if getattr(diagnostic, "severity", "") == "error"
+    }
+    return codes == {"OSE_OVERWRITE_BLOCKED"}
+
+
+def _export_diagnostics_text(diagnostics: tuple[Any, ...]) -> str:
+    if not diagnostics:
+        return "Export path or payload is not valid."
+    return "; ".join(
+        f"{diagnostic.code}: {diagnostic.message}" for diagnostic in diagnostics
+    )
+
+
+def _render_export_summary(
+    view_model: OptionalSolverHealthPanelViewModel,
+    export_format: OptionalSolverExportSummaryFormat,
+    *,
+    generated_at: str,
+    source_context: str,
+    package_version: str,
+) -> OptionalSolverExportSummaryRenderResult:
+    options = OptionalSolverExportSummaryOptions(
+        export_format=export_format,
+        package_version=package_version,
+        generated_at=generated_at,
+        source_context=source_context,
+    )
+    payload = build_optional_solver_export_summary_payload(view_model, options)
+    if export_format == OptionalSolverExportSummaryFormat.JSON:
+        return render_optional_solver_export_summary_json(payload)
+    if export_format == OptionalSolverExportSummaryFormat.MARKDOWN:
+        return render_optional_solver_export_summary_markdown(payload)
+    return render_optional_solver_export_summary_text(payload)
 
 
 def _summary_text(view_model: OptionalSolverHealthPanelViewModel) -> str:

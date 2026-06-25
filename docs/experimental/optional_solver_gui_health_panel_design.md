@@ -206,8 +206,12 @@ usage.
 - `OSW-EXP-063_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_DESIGN` - completed as a
   design-only export workflow contract in
   [Optional solver GUI export summary design](optional_solver_gui_export_summary_design.md).
-- `OSW-EXP-064_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_VIEWMODEL`
-- `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION`
+- `OSW-EXP-064_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_VIEWMODEL` - completed as a
+  pure export payload layer in
+  [Optional solver GUI export summary view-model](optional_solver_gui_export_summary_viewmodel.md).
+- `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION` - completed
+  as redacted GUI export wiring in
+  [Optional solver GUI export summary implementation](optional_solver_gui_export_summary_implementation.md).
 - `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`
 - `OSW-VALID` prepared-machine validation reuse
 
@@ -251,3 +255,13 @@ paths without changing GUI source, implementing file dialogs, writing files,
 using clipboards, opening shells or browsers, executing discovery, executing
 solvers, installing dependencies, mutating issues, editing releases, or
 claiming validation success.
+
+## Export summary implementation follow-up
+
+The export summary implementation follow-up wires the panel to the pure export
+payload layer. It adds an explicit user-selected `.json`, `.md`, or `.txt`
+redacted summary write path with missing-parent rejection and overwrite
+confirmation. It still does not add clipboard access, shell/browser actions,
+output-folder opening, discovery refresh, solver execution, dependency
+installation, issue mutation, release mutation, validation-pass claims,
+issue-closure claims, bundled-solver claims, or certification claims.

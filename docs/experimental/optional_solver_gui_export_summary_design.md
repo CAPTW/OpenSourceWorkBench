@@ -176,6 +176,19 @@ execution, dependency installation, issue mutation, release mutation,
 validation-pass claim, issue-closure claim, bundled-solver claim, or
 certification claim.
 
+## Export implementation follow-up
+
+[Optional solver GUI export summary implementation](optional_solver_gui_export_summary_implementation.md)
+adds the PySide health-panel action for writing a redacted summary to an
+explicit user-selected `.json`, `.md`, or `.txt` target. The implementation
+uses the pure payload/save-plan layer, rejects unsupported or unsafe paths,
+requires existing parent directories, requires overwrite confirmation, writes
+one selected file on success, and still adds no clipboard integration,
+shell/browser action, open-output-folder action, discovery refresh, solver
+execution, dependency installation, issue mutation, release mutation,
+validation-pass claim, issue-closure claim, bundled-solver claim, or
+certification claim.
+
 ## Validation relationship
 
 An exported summary is not validation evidence. It is a portable rendering of
@@ -234,5 +247,7 @@ optional solver packages.
 - `OSW-EXP-064_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_VIEWMODEL` - completed as a
   pure payload/view-model layer in
   [Optional solver GUI export summary view-model](optional_solver_gui_export_summary_viewmodel.md).
-- `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION`
+- `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION` - completed
+  as redacted GUI export wiring in
+  [Optional solver GUI export summary implementation](optional_solver_gui_export_summary_implementation.md).
 - `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`

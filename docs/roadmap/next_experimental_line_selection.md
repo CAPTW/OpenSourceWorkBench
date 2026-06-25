@@ -180,6 +180,15 @@ integration, shell/browser actions, discovery execution, solver execution,
 dependency installation, issue mutation, release mutation, validation-pass
 claims, issue-closure claims, bundled-solver claims, or certification claims.
 
+The GUI export summary implementation follow-up
+[optional solver GUI export summary implementation](../experimental/optional_solver_gui_export_summary_implementation.md)
+adds the redacted GUI export action over that payload layer. It writes exactly
+one explicitly selected `.json`, `.md`, or `.txt` file only after save-plan and
+overwrite checks, while still avoiding clipboard integration, shell/browser
+actions, output-folder opening, discovery refresh, solver execution,
+dependency installation, issue mutation, release mutation, validation-pass
+claims, issue-closure claims, bundled-solver claims, or certification claims.
+
 ## Guardrails
 
 - External solvers are not bundled.

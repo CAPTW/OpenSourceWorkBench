@@ -36,6 +36,17 @@ It provides the pure payload and rendering layer for a future GUI export
 workflow while keeping file dialogs, file writes, clipboard behavior,
 shell/browser opening, and GUI action wiring in later gates.
 
+## GUI implementation follow-up
+
+[Optional solver GUI export summary implementation](optional_solver_gui_export_summary_implementation.md)
+adds the PySide health-panel wiring that uses this pure payload layer. The GUI
+action remains redacted by default, requires an explicit `.json`, `.md`, or
+`.txt` target, rejects missing parent directories, requires overwrite
+confirmation, and writes exactly one selected file. It adds no clipboard,
+shell/browser action, discovery execution, solver execution, dependency
+installation, issue mutation, release mutation, validation-pass claim,
+issue-closure claim, bundled-solver claim, or certification claim.
+
 ## Package path and public API
 
 Package path:
@@ -168,5 +179,7 @@ and exported summaries cannot close issues.
 
 ## Future gates
 
-- `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION`
+- `OSW-EXP-065_OPTIONAL_SOLVER_GUI_EXPORT_SUMMARY_IMPLEMENTATION` - completed
+  as redacted GUI export wiring in
+  [Optional solver GUI export summary implementation](optional_solver_gui_export_summary_implementation.md).
 - `OSW-EXP-066_OPTIONAL_SOLVER_GUI_DISCOVERY_REFRESH_DESIGN`

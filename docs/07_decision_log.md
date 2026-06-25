@@ -1961,3 +1961,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   execution, solver execution, dependency installation, release edit, issue
   mutation, bundled-solver claim, certification claim, or version change occurs
   in this payload/view-model gate.
+
+## ADR-0099: Optional Solver GUI Summary Export Writes One Redacted File
+
+- Status: Accepted for experimental GUI export implementation
+- Date: 2026-06-25
+- Context: OSW-EXP-064 produced a pure export payload, renderer, and save-plan
+  layer for optional solver health summaries. The next slice needs user-visible
+  GUI wiring while preserving redaction and avoiding clipboard, shell/browser,
+  discovery, validation, install, issue, and release side effects.
+- Decision: Add an `OptionalSolverHealthPanel` export action that renders a
+  redacted summary through the pure export layer and writes exactly one
+  explicitly selected `.json`, `.md`, or `.txt` file after save-plan checks and
+  overwrite confirmation. Parent directories must already exist, unsupported
+  extensions are rejected, and cancel writes nothing.
+- Consequences: Users can save a portable setup summary for support or
+  prepared-machine planning, but the summary is not validation evidence and
+  cannot close issues `#6` through `#11`. Clipboard integration, open-output
+  folder actions, shell/browser opening, discovery refresh, solver execution,
+  dependency installation, release edits, issue mutation, bundled-solver
+  claims, certification claims, and version changes remain out of scope.
