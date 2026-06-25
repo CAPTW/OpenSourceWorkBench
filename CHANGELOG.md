@@ -6,6 +6,22 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Explicit Import GUI View-Model
+
+- Added a pure explicit plugin manifest import GUI view-model for supplied
+  loader reports while preserving no-file-loading, no-activation, and
+  no-execution boundaries.
+- Modeled summary counts, selected-source rows with redacted references,
+  accepted/rejected/conflict rows, loader diagnostics, `OSPMG_IMPORT_*` import
+  diagnostics, trust badges, guidance, and disabled/future action states, plus
+  an in-memory redacted summary helper.
+- Kept the slice side-effect-free: no GUI widget, no PySide/Qt import, no file
+  dialog, no file loading, no JSON parsing from paths, no plugin activation, no
+  plugin package import, no directory scan, no network fetch, no discovery
+  execution, no solver execution, no dependency install, no issue mutation, no
+  release mutation, no validation-pass claim, no issue-closure claim, no
+  bundled-solver claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Explicit Import GUI Design
 
 - Designed explicit plugin manifest JSON import/preview GUI behavior as a future

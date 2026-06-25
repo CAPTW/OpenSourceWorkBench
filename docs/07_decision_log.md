@@ -2210,3 +2210,34 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   discovery execution, solver execution, dependency installation, release edit,
   issue mutation, bundled-solver claim, certification claim, validation-pass
   claim, issue-closure claim, or version change occurs in this design gate.
+
+## ADR-0110: Optional Solver Plugin Manifest Explicit Import ViewModel Is Pure And Side-Effect-Free
+
+- Status: Accepted for experimental view-model implementation
+- Date: 2026-06-26
+- Context: OSW-EXP-075 defined explicit plugin manifest JSON import/preview GUI
+  behavior as design-only. The next safe slice is a pure view-model that
+  consumes already-produced loader/report data without adding file dialogs, file
+  loading, JSON parsing from paths, plugin activation, discovery, validation,
+  solver execution, or dependency installation.
+- Decision: Implement a pure view-model under
+  `src/osw/experimental/optional_solvers/plugin_manifest_explicit_import_gui_viewmodel.py`.
+  It consumes an `OptionalSolverPluginManifestLoadReport` (or caller-supplied
+  import diagnostics / cancel state) and produces summary, selected-source,
+  accepted/rejected/conflict, loader-diagnostic, `OSPMG_IMPORT_*` import
+  diagnostic, trust-badge, guidance, and action-state records, with redacted
+  source references and honesty flags. It reuses the OSW-EXP-074 GUI view-model
+  row semantics and performs no file IO, GUI widget behavior, activation,
+  discovery, validation, solver execution, dependency installation, issue
+  mutation, release mutation, or version change.
+- Consequences: A future GUI implementation can bind to a deterministic state
+  model. File dialog and file loading remain future-gated (OSW-EXP-077), and
+  activation remains a later gate (OSW-EXP-078). User-selected and
+  plugin-provided manifests remain untrusted preview data only. Issues `#6`
+  through `#11` remain open, skipped-missing evidence remains neither pass nor
+  failure, and no GUI source, CLI source, file dialog, file loading, JSON
+  parsing from paths, plugin activation, plugin package import, directory scan,
+  network fetch, discovery execution, solver execution, dependency installation,
+  release edit, issue mutation, bundled-solver claim, certification claim,
+  validation-pass claim, issue-closure claim, or version change occurs in this
+  view-model gate.

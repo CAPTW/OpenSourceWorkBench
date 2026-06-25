@@ -295,6 +295,21 @@ bundled-solver claim, and no certification claim. A previewed manifest is
 untrusted preview data only; skipped-missing optional validation remains neither
 pass nor failure, and issues `#6` through `#11` stay open.
 
+## View-model implementation follow-up
+
+[Optional solver plugin manifest explicit import GUI view-model](optional_solver_plugin_manifest_explicit_import_gui_viewmodel.md)
+implements the pure view-model layer for this design (OSW-EXP-076). It consumes
+already-built loader reports or caller-supplied import diagnostics and produces
+summary, selected-source, accepted/rejected/conflict, diagnostic,
+`OSPMG_IMPORT_*`, trust-badge, guidance, and action-state records with redacted
+source references. OSW-EXP-076 implements the pure view-model layer only;
+file-dialog implementation and file loading remain future-gated. The view-model
+adds no GUI widget, file dialog, file loading, JSON parsing from paths, plugin
+activation, plugin package import, directory scan, network fetch, discovery
+execution, solver execution, dependency installation, issue mutation, release
+mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or
+certification claim.
+
 ## Future gates
 
 Proposed follow-up candidates, not implemented here:
