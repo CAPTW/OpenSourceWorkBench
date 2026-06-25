@@ -270,6 +270,16 @@ discovery execution, solver execution, dependency installation, issue
 mutation, release mutation, validation-pass claims, issue-closure claims,
 bundled-solver claims, or certification claims.
 
+The plugin manifest GUI implementation follow-up
+[optional solver plugin manifest GUI implementation](../experimental/optional_solver_plugin_manifest_gui_implementation.md)
+adds the PySide display component for those already-built view-model records.
+It renders the preview tables, diagnostics, trust/source labels, safety
+guidance, and disabled/future actions while still adding no file dialog, file
+loading, plugin activation, plugin package loading, directory scanning,
+network fetch, discovery execution, solver execution, dependency installation,
+issue mutation, release mutation, validation-pass claims, issue-closure
+claims, bundled-solver claims, or certification claims.
+
 ## Guardrails
 
 - External solvers are not bundled.

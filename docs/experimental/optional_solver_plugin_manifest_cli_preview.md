@@ -156,3 +156,13 @@ scanning, plugin package loading, network fetch, discovery execution, solver
 execution, dependency installation, issue mutation, release mutation,
 validation-pass claim, issue-closure claim, external-solver bundling claim, or
 certification claim.
+
+## GUI implementation follow-up
+
+[Optional solver plugin manifest GUI implementation](optional_solver_plugin_manifest_gui_implementation.md)
+adds a PySide display component over that pure view-model. It is a review
+surface for already-built load reports, not an import flow. It adds no file
+dialog, file loading, plugin activation, plugin package loading, directory
+scan, network fetch, discovery execution, solver execution, dependency
+installation, issue mutation, release mutation, validation-pass claim,
+issue-closure claim, external-solver bundling claim, or certification claim.

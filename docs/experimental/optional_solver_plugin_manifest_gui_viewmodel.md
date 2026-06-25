@@ -148,6 +148,19 @@ unless a future activation model explicitly accepts plugin manifests.
 Export summaries should not include plugin preview data until a separate future
 integration gate defines that behavior.
 
+## GUI implementation follow-up
+
+[Optional solver plugin manifest GUI implementation](optional_solver_plugin_manifest_gui_implementation.md)
+adds the PySide display component over this view-model. The component renders
+summary counts, accepted/rejected/conflict rows, diagnostics, trust badges,
+safety text, and disabled action states from already-built view-model records.
+
+The GUI implementation adds no file dialog, file loading, plugin loading,
+plugin activation, plugin package import, directory scan, network fetch,
+discovery execution, solver execution, dependency installation, issue mutation,
+release mutation, validation-pass claim, issue-closure claim, bundled-solver
+claim, or certification claim.
+
 ## Future gates
 
 - `OSW-EXP-074_OPTIONAL_SOLVER_PLUGIN_MANIFEST_GUI_IMPLEMENTATION`

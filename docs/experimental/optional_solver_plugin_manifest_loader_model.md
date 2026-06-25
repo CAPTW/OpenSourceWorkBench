@@ -150,6 +150,17 @@ packages, scanning directories, fetching network manifests, running discovery,
 executing solvers, installing dependencies, mutating issues, or mutating
 releases.
 
+## GUI implementation follow-up
+
+[Optional solver plugin manifest GUI implementation](optional_solver_plugin_manifest_gui_implementation.md)
+adds the PySide panel that consumes that GUI view-model. The panel renders
+accepted/rejected/conflict rows, diagnostics, trust badges, and disabled action
+states from already-built records. It does not call this loader, parse JSON,
+load files, activate plugin manifests, scan directories, fetch network
+manifests, execute plugin code, execute solvers, install dependencies, mutate
+issues, mutate releases, claim validation success, claim issue closure, claim
+bundled solvers, or claim certification.
+
 ## Relationship to #6~#11
 
 Manifest loading is not validation evidence. Issues `#6` through `#11` remain

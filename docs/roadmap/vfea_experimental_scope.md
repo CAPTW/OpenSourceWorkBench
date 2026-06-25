@@ -750,5 +750,14 @@ package loading, network fetching, discovery execution, solver execution,
 dependency installation, issue mutation, validation success evidence, issue
 closure evidence, bundle solvers, or provide certification.
 
+[Optional solver plugin manifest GUI implementation](../experimental/optional_solver_plugin_manifest_gui_implementation.md)
+adds the PySide display panel for those view-model records. It can help future
+VFEA and FEASpec GUI work review plugin manifest metadata before any activation
+model, but it does not add file dialogs, file loading, plugin activation,
+directory scanning, plugin package loading, network fetching, discovery
+execution, solver execution, dependency installation, issue mutation,
+validation success evidence, issue closure evidence, bundled-solver claims, or
+certification.
+
 Alternative if maintainers decide this scope definition is complete:
 `OSW-EXP-001A_VFEA_ISSUE_CLOSURE`.

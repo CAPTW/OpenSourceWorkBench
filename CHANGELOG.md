@@ -6,6 +6,19 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest GUI Implementation
+
+- Added a PySide optional solver plugin manifest preview panel under
+  `src/osw/gui/dialogs/`.
+- Rendered already-built plugin manifest GUI view-model records: summary
+  counts, accepted/rejected/conflict rows, diagnostics, trust/source labels,
+  safety guidance, and disabled/future action states.
+- Kept the panel display-only: no file dialog, no file loading, no plugin
+  activation, no plugin package loading, no directory scan, no network fetch,
+  no discovery execution, no solver execution, no dependency install, no issue
+  mutation, no release mutation, no validation-pass claim, no issue-closure
+  claim, no bundled-solver claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest GUI View-Model
 
 - Added a pure optional solver plugin manifest GUI preview view-model under

@@ -2158,3 +2158,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   execution, solver execution, dependency installation, release edit, issue
   mutation, bundled-solver claim, certification claim, or version change occurs
   in this view-model gate.
+
+## ADR-0108: Optional Solver Plugin Manifest GUI Is Display-Only
+
+- Status: Accepted for experimental plugin manifest GUI implementation
+- Date: 2026-06-25
+- Context: OSW-EXP-073 added a pure GUI view-model for plugin manifest loader
+  reports. Users now need a PySide review surface for those already-built
+  records, but file dialogs, explicit import, activation, plugin package
+  loading, discovery with plugin manifests, solver execution, and validation
+  evidence remain later or out of scope.
+- Decision: Implement `OptionalSolverPluginManifestPanel` as a PySide display
+  component under `src/osw/gui/dialogs/`. The panel accepts an already-built
+  `OptionalSolverPluginManifestGuiViewModel` and renders summary counts,
+  accepted/rejected/conflict rows, diagnostics, trust/source labels, safety
+  guidance, and disabled/future action states.
+- Consequences: The plugin manifest preview can be reviewed in GUI tests and
+  future entry points without adding file dialogs, file loading, plugin
+  activation, plugin package import, directory scan, network fetch, discovery
+  execution, solver execution, dependency installation, release edit, issue
+  mutation, bundled-solver claim, certification claim, validation-pass claim,
+  issue-closure claim, or version change.

@@ -237,6 +237,20 @@ execution, dependency installation, issue mutation, release mutation,
 validation-pass claim, issue-closure claim, external-solver bundling claim, or
 certification claim.
 
+## GUI implementation follow-up
+
+[Optional solver plugin manifest GUI implementation](optional_solver_plugin_manifest_gui_implementation.md)
+implements the first PySide display component for the supplied GUI view-model.
+It renders the preview records only: summary, accepted/rejected/conflict
+tables, diagnostics, trust/source labels, safety policy, and disabled/future
+action states.
+
+The implementation remains separate from explicit import and activation. It
+adds no file dialog, file loading, plugin activation, plugin package loading,
+directory scanning, network fetching, discovery execution, solver execution,
+dependency installation, issue mutation, release mutation, validation-pass
+claim, issue-closure claim, bundled-solver claim, or certification claim.
+
 ## Failure handling
 
 The future GUI should handle:

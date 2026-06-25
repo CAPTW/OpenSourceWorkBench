@@ -86,6 +86,13 @@ request should stop, park, or defer.
   refresh, background workers, active smoke validation, solver command
   execution, dependency installation, issue mutation, release mutation, or
   validation success claims.
+- Experimental optional solver plugin manifest GUI display source that consumes
+  an already-built plugin manifest GUI view-model and renders summary,
+  accepted/rejected/conflict rows, diagnostics, trust/source labels, safety
+  guidance, and disabled/future action states without file dialogs, file
+  loading, plugin activation, package import, directory scan, network fetch,
+  discovery execution, solver execution, dependency installation, issue
+  mutation, release mutation, or validation success claims.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.
@@ -753,6 +760,13 @@ Scope drift is any change that:
   installation, issue mutation, release mutation, environment-value display,
   validation-pass evidence, issue-closure evidence, bundled-solver claims, or
   certification claims without a separate gate;
+- turns the optional solver plugin manifest GUI implementation into file
+  dialogs, file loading from widgets, plugin activation, plugin package import,
+  directory scanning, network fetching, trusted-by-default third-party
+  manifests, discovery execution, solver execution, dependency installation,
+  issue mutation, release mutation, environment-value display, validation-pass
+  evidence, issue-closure evidence, bundled-solver claims, or certification
+  claims without a separate gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is
