@@ -159,6 +159,15 @@ User-selected and plugin-provided manifests remain untrusted; skipped-missing
 optional validation remains neither pass nor failure, and issues `#6` through
 `#11` stay open.
 
+## Deactivation design follow-up
+
+[Optional solver plugin manifest deactivation design](optional_solver_plugin_manifest_deactivation_design.md)
+(OSW-EXP-081) defines the future, design-only deactivation contract for active
+candidates. Deactivation is explicit, acknowledged, provenance-preserving, and
+non-deleting/non-uninstalling/non-executing; this GUI gate renders the
+`deactivated` state only when supplied by the view-model and adds no
+deactivation buttons, callbacks, persistence, or state mutation.
+
 ## Future gates
 
 - `OSW-EXP-081_OPTIONAL_SOLVER_PLUGIN_MANIFEST_DEACTIVATION_DESIGN`

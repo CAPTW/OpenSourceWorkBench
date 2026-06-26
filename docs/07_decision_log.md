@@ -2347,3 +2347,33 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   mutation, tag mutation, asset mutation, bundled-solver claim, certification
   claim, validation-pass claim, issue-closure claim, or version change occurs in
   this GUI gate.
+
+## ADR-0115: Optional Solver Plugin Manifest Deactivation Starts As Design-Only
+
+- Status: Accepted for experimental deactivation design
+- Date: 2026-06-26
+- Context: OSW-EXP-080 added a view-model-driven activation GUI surface.
+  Activation state now has GUI visibility, but deactivation semantics remain
+  undefined. Deactivation could be confused with file deletion, uninstall,
+  validation failure, issue closure, release mutation, or discovery changes
+  without a design gate.
+- Decision: Define deactivation semantics as design-only before implementation.
+  Deactivation remains explicit, acknowledged, provenance-preserving,
+  non-deleting, non-uninstalling, non-executing, non-validating, and separate
+  from discovery, issues, releases, tags, assets, and certification. Specify
+  deactivation preconditions, acknowledgements, a source/trust/provenance model,
+  a deactivation state machine, a conflict/shared-stack policy, a validation/
+  evidence-retention policy, and design-only `OSPMG_DEACTIVATION_*` diagnostic
+  reservations.
+- Consequences: Future discovery integration and any future deactivation
+  implementation have a safety contract. No runtime behavior changes in this
+  gate, and active/deactivated candidates remain non-validating and untrusted
+  unless separate evidence and trust gates exist. Issues `#6` through `#11`
+  remain open, skipped-missing evidence remains neither pass nor failure, and no
+  runtime source, GUI source, view-model source, CLI source, deactivation
+  implementation, deactivation persistence, file deletion, dependency uninstall,
+  solver uninstall, plugin package import, directory scan, network fetch,
+  discovery execution, validation execution, solver execution, dependency
+  installation, release edit, issue mutation, tag mutation, asset mutation,
+  bundled-solver claim, certification claim, validation-pass claim,
+  issue-closure claim, or version change occurs in this design gate.

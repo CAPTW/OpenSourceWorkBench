@@ -6,6 +6,23 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Deactivation Design
+
+- Designed optional solver plugin manifest deactivation semantics as a future
+  explicit, acknowledged, provenance-preserving, non-deleting, non-uninstalling,
+  non-validating, and non-executing workflow.
+- Defined deactivation definition and non-meaning, preconditions,
+  acknowledgements, source/trust/provenance labels, a deactivation state
+  machine, a conflict/shared-stack policy, a validation/evidence-retention
+  policy, and design-only `OSPMG_DEACTIVATION_*` diagnostic reservations.
+- Kept the slice docs/tests-only: no deactivation implementation, no
+  deactivation persistence, no GUI deactivation behavior, no CLI deactivation,
+  no file deletion, no dependency uninstall, no solver uninstall, no plugin
+  package import, no directory scan, no network fetch, no discovery execution,
+  no validation execution, no solver execution, no issue mutation, no release
+  mutation, no tag mutation, no asset mutation, no version bump, no
+  validation-pass claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Activation GUI
 
 - Added a view-model driven PySide activation GUI surface for optional solver
