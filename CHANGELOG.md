@@ -6,6 +6,20 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Activation Design
+
+- Designed optional solver plugin manifest activation semantics as a future
+  explicit, acknowledged, non-validating, non-executing workflow.
+- Defined activation definition and non-meaning, preconditions, acknowledgements,
+  source/trust/provenance labels, built-ins-win conflict policy, unsafe-claim
+  block policy, a future activation state machine, and design-only
+  `OSPMG_ACTIVATION_*` diagnostic reservations.
+- Kept the slice docs/tests-only: no activation implementation, no plugin
+  package import, no directory scan, no network fetch, no discovery execution,
+  no validation execution, no solver execution, no dependency install, no issue
+  mutation, no release mutation, no tag mutation, no asset mutation, no version
+  bump, no validation-pass claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Explicit Import GUI Implementation
 
 - Added a preview-only PySide explicit plugin manifest JSON import panel over

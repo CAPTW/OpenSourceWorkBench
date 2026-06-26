@@ -2260,3 +2260,31 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: Users can preview explicit local plugin manifest JSON files in
   the GUI. Activation and discovery with plugin manifests remain future-gated.
   User-selected manifests remain untrusted preview data only.
+
+## ADR-0112: Optional Solver Plugin Manifest Activation Starts As Design-Only
+
+- Status: Accepted for experimental activation design
+- Date: 2026-06-26
+- Context: OSW-EXP-077 added preview-only explicit plugin manifest JSON GUI
+  import. Users can preview manifests, but activation semantics remain
+  undefined. Activation could be confused with trust, validation, discovery,
+  installation, or solver execution without a design gate.
+- Decision: Define plugin manifest activation semantics as design-only before
+  implementation. Activation remains explicit, user-acknowledged, untrusted by
+  default, and separate from validation, discovery execution, dependency
+  installation, solver execution, issue closure, release mutation, and
+  certification. Specify activation preconditions, acknowledgements, a
+  source/trust/provenance model, a built-ins-win conflict policy, an
+  unsafe-claim block policy, a future activation state machine, and design-only
+  `OSPMG_ACTIVATION_*` diagnostic reservations.
+- Consequences: Future view-model and GUI implementation gates have a safety
+  contract. No runtime behavior changes in this gate, and user-selected and
+  plugin-provided manifests remain preview-only until a future activation
+  implementation gate. Issues `#6` through `#11` remain open, skipped-missing
+  evidence remains neither pass nor failure, and no runtime source, GUI source,
+  view-model source, CLI source, loader source, activation implementation,
+  plugin package import, directory scan, network fetch, discovery execution,
+  validation execution, solver execution, dependency installation, release edit,
+  issue mutation, tag mutation, asset mutation, bundled-solver claim,
+  certification claim, validation-pass claim, issue-closure claim, or version
+  change occurs in this design gate.

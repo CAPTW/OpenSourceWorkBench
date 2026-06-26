@@ -10,6 +10,10 @@ mutation.
 
 Boundary summary: preview-only; no activation; no discovery execution; no solver execution; no dependency installation; no issue mutation; no release mutation.
 
+Activation follow-up: [Optional solver plugin manifest activation design](optional_solver_plugin_manifest_activation_design.md)
+(OSW-EXP-078) defines the future, design-only activation contract. This panel
+remains preview-only; activation is a separate future gate.
+
 ## Purpose
 
 The panel lets a user explicitly choose one local plugin manifest JSON file and
