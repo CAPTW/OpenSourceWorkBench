@@ -6,6 +6,23 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Discovery Refresh Integration Design
+
+- Designed optional solver plugin manifest discovery-refresh integration
+  semantics as a future explicit, provenance-preserving, non-validating,
+  non-installing, non-executing, and issue/release-safe workflow.
+- Defined the integration definition and non-meaning, refresh modes,
+  preconditions, acknowledgements, source/trust/provenance labels, a built-in/
+  conflict policy, a deactivated-candidate policy, an unsafe-claim policy, a
+  refresh state machine, and design-only `OSPMG_DISCOVERY_REFRESH_*` diagnostic
+  reservations.
+- Kept the slice docs/tests-only: no discovery integration implementation, no
+  passive discovery behavior change, no activation/deactivation persistence, no
+  GUI/CLI behavior change, no plugin package import, no directory scan, no
+  network fetch, no discovery execution, no validation execution, no solver
+  execution, no dependency installation, no issue/release/tag/asset mutation, no
+  version bump, no validation-pass claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Deactivation Design
 
 - Designed optional solver plugin manifest deactivation semantics as a future

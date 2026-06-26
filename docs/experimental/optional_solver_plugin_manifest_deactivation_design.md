@@ -332,6 +332,15 @@ and no certification claim. User-selected and plugin-provided manifests remain
 untrusted; skipped-missing optional validation remains neither pass nor failure,
 and issues `#6` through `#11` stay open.
 
+## Discovery-refresh integration follow-up
+
+[Optional solver plugin manifest discovery refresh integration design](optional_solver_plugin_manifest_discovery_refresh_integration_design.md)
+(OSW-EXP-082) defines the future, design-only contract for letting
+activated/deactivated candidates affect optional solver discovery refresh.
+Deactivated candidates are excluded or shown inactive; the integration remains
+explicit, provenance-preserving, non-validating, non-installing, and
+non-executing, and adds no runtime discovery behavior.
+
 ## Future gates
 
 Proposed follow-up candidates, not implemented here:

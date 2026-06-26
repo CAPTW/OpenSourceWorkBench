@@ -2377,3 +2377,34 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   installation, release edit, issue mutation, tag mutation, asset mutation,
   bundled-solver claim, certification claim, validation-pass claim,
   issue-closure claim, or version change occurs in this design gate.
+
+## ADR-0116: Optional Solver Plugin Manifest Discovery Refresh Integration Starts As Design-Only
+
+- Status: Accepted for experimental discovery-refresh integration design
+- Date: 2026-06-27
+- Context: OSW-EXP-080 added activation GUI review state and OSW-EXP-081 defined
+  deactivation semantics. Activated/deactivated plugin manifest state could later
+  affect optional solver discovery, but doing so without a design gate could be
+  confused with validation, installation, solver execution, issue closure, or
+  trusted plugin integration.
+- Decision: Define discovery-refresh integration semantics as design-only before
+  implementation. Discovery refresh integration remains explicit,
+  provenance-preserving, non-validating, non-installing, non-executing, and
+  separate from issue/release/tag/asset mutation. Built-ins remain authoritative
+  by default; activated user/plugin manifest candidates remain untrusted unless
+  later gates define trust behavior; deactivated candidates are excluded or shown
+  inactive. Specify refresh modes, preconditions, acknowledgements, a
+  source/trust/provenance model, a built-in/conflict policy, a deactivated
+  candidate policy, an unsafe-claim policy, a refresh state machine, and
+  design-only `OSPMG_DISCOVERY_REFRESH_*` diagnostic reservations.
+- Consequences: Future view-model and GUI/source implementation gates have a
+  safety contract. No runtime discovery behavior changes in this gate, and live
+  optional validation issues `#6` through `#11` remain open and separate.
+  Skipped-missing evidence remains neither pass nor failure, and no runtime
+  source, GUI source, view-model source, CLI source, discovery integration,
+  passive discovery behavior change, activation/deactivation persistence, plugin
+  package import, directory scan, network fetch, discovery execution, validation
+  execution, solver execution, dependency installation, release edit, issue
+  mutation, tag mutation, asset mutation, bundled-solver claim, certification
+  claim, validation-pass claim, issue-closure claim, or version change occurs in
+  this design gate.
