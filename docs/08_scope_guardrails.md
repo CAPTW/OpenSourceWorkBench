@@ -93,6 +93,13 @@ request should stop, park, or defer.
   loading, plugin activation, package import, directory scan, network fetch,
   discovery execution, solver execution, dependency installation, issue
   mutation, release mutation, or validation success claims.
+- Experimental optional solver plugin manifest explicit import GUI
+  implementation that runs only after explicit user action, accepts one local
+  `.json` file, delegates loading to the existing data-only loader, renders the
+  OSW-EXP-076 explicit-import view-model, and keeps activation, plugin package
+  import, directory scanning, network fetching, discovery execution, validation
+  execution, solver execution, dependency installation, issue mutation, release
+  mutation, bundled-solver claims, and certification claims out of scope.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.
@@ -781,6 +788,12 @@ Scope drift is any change that:
   discovery execution, validation-pass evidence, solver execution, dependency
   installation, issue closure, release mutation, bundled-solver claims, or
   certification claims without a separate implementation and activation gate;
+- turns the optional solver plugin manifest explicit import GUI implementation
+  into plugin activation, plugin package import, directory scanning, network
+  fetching, trusted-by-default third-party manifests, automatic discovery
+  execution, validation-pass evidence, solver execution, dependency
+  installation, issue closure, release mutation, bundled-solver claims, or
+  certification claims without a separate gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is

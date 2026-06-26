@@ -2241,3 +2241,22 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   release edit, issue mutation, bundled-solver claim, certification claim,
   validation-pass claim, issue-closure claim, or version change occurs in this
   view-model gate.
+
+## ADR-0111: Optional Solver Plugin Manifest Explicit Import GUI Is Preview-Only
+
+- Status: Accepted for experimental GUI implementation
+- Date: 2026-06-26
+- Context: OSW-EXP-075 defined explicit plugin manifest JSON import/preview GUI
+  behavior as design-only. OSW-EXP-076 added a pure side-effect-free
+  view-model. The next safe slice is a PySide GUI surface for explicit local
+  JSON preview.
+- Decision: Implement a PySide explicit import preview panel under
+  `src/osw/gui/dialogs/`. It supports user-initiated local JSON selection,
+  loader/report preview, view-model display, cancellation/no-op, diagnostics,
+  trust/source labels, and disabled/future-only unsafe actions. It does not
+  activate manifests, import plugin packages, scan directories, fetch network
+  manifests, run discovery, run validation, install dependencies, execute
+  solvers, mutate issues/releases/tags/assets, or bump versions.
+- Consequences: Users can preview explicit local plugin manifest JSON files in
+  the GUI. Activation and discovery with plugin manifests remain future-gated.
+  User-selected manifests remain untrusted preview data only.

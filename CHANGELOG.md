@@ -6,6 +6,20 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Explicit Import GUI Implementation
+
+- Added a preview-only PySide explicit plugin manifest JSON import panel over
+  the existing loader/report and explicit-import view-model boundaries.
+- Supported injected file chooser and loader seams, local `.json` path checks,
+  cancel/no-op behavior, and rendering for selected sources, accepted/rejected/
+  conflict rows, diagnostics, trust/source labels, safety guidance, and disabled
+  unsafe actions.
+- Kept the slice bounded: no plugin activation, no plugin package import, no
+  directory scan, no network fetch, no discovery execution, no solver execution,
+  no dependency install, no issue mutation, no release mutation, no
+  validation-pass claim, no issue-closure claim, no bundled-solver claim, and no
+  certification claim.
+
 ### Optional Solver Plugin Manifest Explicit Import GUI View-Model
 
 - Added a pure explicit plugin manifest import GUI view-model for supplied

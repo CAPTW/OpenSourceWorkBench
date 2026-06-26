@@ -310,6 +310,18 @@ execution, solver execution, dependency installation, issue mutation, release
 mutation, validation-pass claim, issue-closure claim, bundled-solver claim, or
 certification claim.
 
+## GUI implementation follow-up
+
+[Optional solver plugin manifest explicit import GUI implementation](optional_solver_plugin_manifest_explicit_import_gui_implementation.md)
+implements the PySide preview panel for this design (OSW-EXP-077). The panel
+opens an injected chooser or `QFileDialog` only after explicit user action,
+accepts one local `.json` file, delegates report construction to the existing
+loader, and renders OSW-EXP-076 view-model state. It remains preview-only: no
+activation, plugin package import, directory scan, network fetch, discovery
+execution, validation execution, solver execution, dependency installation,
+issue mutation, release mutation, validation-pass claim, issue-closure claim,
+bundled-solver claim, or certification claim.
+
 ## Future gates
 
 Proposed follow-up candidates, not implemented here:

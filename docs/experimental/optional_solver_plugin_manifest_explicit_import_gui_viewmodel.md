@@ -164,6 +164,16 @@ The view-model preserves the same accepted/rejected/conflict/diagnostic/source/
 trust semantics as the loader model and the
 `optional-solver-plugin-manifest-preview` CLI. It changes no CLI behavior.
 
+## GUI implementation follow-up
+
+[Optional solver plugin manifest explicit import GUI implementation](optional_solver_plugin_manifest_explicit_import_gui_implementation.md)
+adds the PySide panel that binds this pure view-model to an explicit
+user-initiated local JSON chooser and the existing loader/report semantics. The
+implementation keeps this view-model pure: no PySide/Qt import, no file IO, no
+JSON parsing from paths, no activation, no discovery execution, no validation
+execution, no solver execution, no dependency installation, and no issue or
+release mutation is added to this module.
+
 ## Relationship to health panel and export summary
 
 Previewing a user-selected manifest is not health validation and does not alter
