@@ -2288,3 +2288,32 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   issue mutation, tag mutation, asset mutation, bundled-solver claim,
   certification claim, validation-pass claim, issue-closure claim, or version
   change occurs in this design gate.
+
+## ADR-0113: Optional Solver Plugin Manifest Activation ViewModel Is Pure And Non-Executing
+
+- Status: Accepted for experimental activation view-model implementation
+- Date: 2026-06-26
+- Context: OSW-EXP-078 defined activation semantics as design-only. The next safe
+  slice is a pure view-model that models activation state, readiness,
+  acknowledgements, diagnostics, and action availability without runtime side
+  effects.
+- Decision: Implement a pure activation view-model under
+  `src/osw/experimental/optional_solvers/plugin_manifest_activation_viewmodel.py`.
+  It consumes supplied preview/import/loader data or caller-supplied activation
+  candidates plus acknowledgement/lifecycle state, and produces deterministic
+  summary, candidate, acknowledgement, diagnostic, conflict, trust-badge, and
+  action-state records over the OSW-EXP-078 state machine and `OSPMG_ACTIVATION_*`
+  vocabulary, with redacted source references and honesty flags. It performs no
+  file IO, GUI behavior, activation persistence, plugin import, discovery
+  execution, validation, dependency installation, solver execution, issue
+  mutation, release mutation, tag mutation, asset mutation, or version change.
+- Consequences: Future GUI implementation can bind to a deterministic activation
+  state model. Activation remains non-persistent and non-executing in this gate,
+  and user-selected/plugin-provided manifests remain untrusted and non-validating
+  until later explicit gates. Issues `#6` through `#11` remain open,
+  skipped-missing evidence remains neither pass nor failure, and no GUI source,
+  CLI source, activation persistence, plugin package import, directory scan,
+  network fetch, discovery execution, validation execution, solver execution,
+  dependency installation, release edit, issue mutation, tag mutation, asset
+  mutation, bundled-solver claim, certification claim, validation-pass claim,
+  issue-closure claim, or version change occurs in this view-model gate.

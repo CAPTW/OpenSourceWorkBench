@@ -6,6 +6,22 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Activation View-Model
+
+- Added a pure optional solver plugin manifest activation view-model for
+  activation readiness, acknowledgements, diagnostics, conflicts, trust badges,
+  and disabled/future action states without persistence, discovery, validation,
+  installation, or solver execution.
+- Modeled the OSW-EXP-078 state machine and `OSPMG_ACTIVATION_*` vocabulary over
+  supplied preview/import data or caller-supplied candidates plus
+  acknowledgement/lifecycle state, with redacted source references and honesty
+  flags.
+- Kept the slice side-effect-free: no activation persistence, no GUI behavior,
+  no CLI activation, no PySide/Qt import, no plugin package import, no directory
+  scan, no network fetch, no discovery execution, no validation execution, no
+  solver execution, no dependency install, no issue mutation, no release
+  mutation, no validation-pass claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Activation Design
 
 - Designed optional solver plugin manifest activation semantics as a future

@@ -312,6 +312,17 @@ and no certification claim. User-selected and plugin-provided manifests remain
 untrusted preview data only; skipped-missing optional validation remains neither
 pass nor failure, and issues `#6` through `#11` stay open.
 
+## View-model implementation follow-up
+
+[Optional solver plugin manifest activation view-model](optional_solver_plugin_manifest_activation_viewmodel.md)
+implements the pure activation view-model layer for this design (OSW-EXP-079). It
+consumes supplied preview/import data or caller-supplied candidates plus
+acknowledgement/lifecycle state and produces deterministic activation-readiness,
+acknowledgement, diagnostic, conflict, trust, and action-state records over this
+state machine and `OSPMG_ACTIVATION_*` vocabulary. OSW-EXP-079 implements the
+pure view-model only; GUI activation, persistence, discovery integration,
+validation, install, and execution remain future-gated.
+
 ## Future gates
 
 Proposed follow-up candidates, not implemented here:
