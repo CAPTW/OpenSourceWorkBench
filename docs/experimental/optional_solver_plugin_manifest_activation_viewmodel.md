@@ -224,6 +224,15 @@ User-selected and plugin-provided manifests remain untrusted; skipped-missing
 optional validation remains neither pass nor failure, and issues `#6` through
 `#11` stay open.
 
+## GUI implementation follow-up
+
+[Optional solver plugin manifest activation GUI implementation](optional_solver_plugin_manifest_activation_gui_implementation.md)
+(OSW-EXP-080) binds a view-model-driven, non-persistent PySide activation review
+panel to this view-model. The panel renders the records described here and keeps
+acknowledgement interaction widget-local via an injected callback; activation
+persistence, discovery integration, validation, install, and execution remain
+future-gated.
+
 ## Future gates
 
 - `OSW-EXP-080_OPTIONAL_SOLVER_PLUGIN_MANIFEST_ACTIVATION_GUI_IMPLEMENTATION`

@@ -323,6 +323,12 @@ state machine and `OSPMG_ACTIVATION_*` vocabulary. OSW-EXP-079 implements the
 pure view-model only; GUI activation, persistence, discovery integration,
 validation, install, and execution remain future-gated.
 
+[Optional solver plugin manifest activation GUI implementation](optional_solver_plugin_manifest_activation_gui_implementation.md)
+(OSW-EXP-080) adds a view-model-driven, non-persistent PySide activation review
+panel over that view-model. It renders readiness, acknowledgements, diagnostics,
+conflicts, trust/provenance, and disabled/future action states without
+persisting activation or executing discovery/validation/install/solver actions.
+
 ## Future gates
 
 Proposed follow-up candidates, not implemented here:

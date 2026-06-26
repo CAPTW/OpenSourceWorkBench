@@ -14,6 +14,7 @@ __all__ = [
     "MatPreviewDialog",
     "OpenFOAMTemplateDialog",
     "OptionalSolverHealthPanel",
+    "OptionalSolverPluginManifestActivationPanel",
     "OptionalSolverPluginManifestExplicitImportPanel",
     "OptionalSolverPluginManifestPanel",
     "PluginManagerDialog",
@@ -77,6 +78,12 @@ def __getattr__(name: str) -> object:
         )
 
         return OptionalSolverPluginManifestPanel
+    if name == "OptionalSolverPluginManifestActivationPanel":
+        from osw.gui.dialogs.optional_solver_plugin_manifest_activation_panel import (
+            OptionalSolverPluginManifestActivationPanel,
+        )
+
+        return OptionalSolverPluginManifestActivationPanel
     if name == "OptionalSolverPluginManifestExplicitImportPanel":
         from osw.gui.dialogs.optional_solver_plugin_manifest_explicit_import_panel import (
             OptionalSolverPluginManifestExplicitImportPanel,

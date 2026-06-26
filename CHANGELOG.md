@@ -6,6 +6,21 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Activation GUI
+
+- Added a view-model driven PySide activation GUI surface for optional solver
+  plugin manifests, preserving non-persistence, no-discovery, no-validation,
+  no-install, and no-execution boundaries.
+- Rendered activation summary, candidates, acknowledgements, diagnostics,
+  conflicts, trust/provenance badges, safety guidance, and disabled/future
+  action states from the OSW-EXP-079 activation view-model, with widget-local
+  non-persistent acknowledgement interaction via an injected pure callback.
+- Kept the slice safe: no activation persistence, no CLI activation, no plugin
+  package import, no directory scan, no network fetch, no discovery execution,
+  no validation execution, no solver execution, no dependency install, no issue
+  mutation, no release mutation, no validation-pass claim, and no certification
+  claim.
+
 ### Optional Solver Plugin Manifest Activation View-Model
 
 - Added a pure optional solver plugin manifest activation view-model for

@@ -2317,3 +2317,33 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   dependency installation, release edit, issue mutation, tag mutation, asset
   mutation, bundled-solver claim, certification claim, validation-pass claim,
   issue-closure claim, or version change occurs in this view-model gate.
+
+## ADR-0114: Optional Solver Plugin Manifest Activation GUI Is ViewModel-Driven And Non-Persistent
+
+- Status: Accepted for experimental activation GUI implementation
+- Date: 2026-06-26
+- Context: OSW-EXP-078 defined activation semantics as design-only and
+  OSW-EXP-079 added a pure activation view-model. The next safe slice is a
+  PySide GUI surface that renders activation readiness and acknowledgements
+  without persisting activation or executing discovery/validation/install/solver
+  actions.
+- Decision: Implement a PySide activation panel under `src/osw/gui/dialogs/`
+  (`OptionalSolverPluginManifestActivationPanel`). The panel consumes
+  `OptionalSolverPluginManifestActivationViewModel` records and renders summary,
+  candidates, acknowledgements, diagnostics, conflicts, trust/provenance badges,
+  safety guidance, and disabled/future action states. Acknowledgement
+  interaction is widget-local and non-persistent via an injected pure callback
+  that rebuilds a supplied view-model. The panel performs no activation
+  persistence, plugin package import, directory scan, network fetch, discovery
+  execution, validation, dependency installation, solver execution, issue
+  mutation, release mutation, tag mutation, asset mutation, or version change.
+- Consequences: Users can inspect activation readiness and safety requirements
+  in the GUI. Activation persistence and discovery integration remain
+  future-gated, and user/plugin manifests remain untrusted and non-validating.
+  Issues `#6` through `#11` remain open, skipped-missing evidence remains neither
+  pass nor failure, and no activation persistence, CLI activation, plugin
+  package import, directory scan, network fetch, discovery execution, validation
+  execution, solver execution, dependency installation, release edit, issue
+  mutation, tag mutation, asset mutation, bundled-solver claim, certification
+  claim, validation-pass claim, issue-closure claim, or version change occurs in
+  this GUI gate.
