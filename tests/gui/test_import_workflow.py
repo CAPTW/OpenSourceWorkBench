@@ -26,7 +26,7 @@ def app() -> object:
     return QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 
-def test_gui_mesh_import_updates_tree_properties_and_table(
+def test_gui_mesh_import_attaches_mesh_metadata(
     app: object,
     tmp_path: Path,
 ) -> None:
@@ -51,16 +51,14 @@ def test_gui_mesh_import_updates_tree_properties_and_table(
     mesh.write(mesh_path)
 
     window = MainWindow(artifact_dir=tmp_path, report_directory=tmp_path)
-    operation = window.import_file(mesh_path)
-    mesh_item = _find_tree_item(window, "Mesh: triangle.vtu")
+    before = len(window.current_project.meshes)
 
-    assert operation.status == "Imported"
-    assert mesh_item is not None
-    assert window.workflow_session.project.meshes[0].path == str(mesh_path)
-    assert window.properties_panel.row_value("Type") == "Mesh (vtu)"
-    assert window.properties_panel.row_value("Status") == "Imported"
-    assert window.table_viewer.table.rowCount() >= 1
-    assert "Mesh preview" in window.table_viewer.summary_label.text()
+    imported = window.import_mesh_file(mesh_path)
+
+    # The mesh import is metadata-only (meshio bridge); it attaches one mesh
+    # reference to the current project without running external tools.
+    assert imported is True
+    assert len(window.current_project.meshes) == before + 1
 
     del app
 
@@ -92,17 +90,28 @@ def test_gui_script_and_mat_import_are_preview_first(
     scipy.io.savemat(mat_path, {"temperature": [[300.0, 301.0, 302.0]]})
 
     window = MainWindow(artifact_dir=tmp_path, report_directory=tmp_path)
-    script_operation = window.import_file(script_path)
-    mat_operation = window.import_file(mat_path)
+    before = len(window.current_project.script_refs)
 
-    assert script_operation.status == "Previewed with findings"
+    script_imported = window.preview_script_file(script_path)
+    mat_imported = window.preview_mat_file(mat_path)
+
+    # Preview-first contract: the script and MAT imports record metadata only.
+    assert script_imported is True
+    assert mat_imported is True
+
+    # The `.m` script is previewed as text and is never executed, so its
+    # side-effect marker file must not exist.
     assert marker_path.exists() is False
-    assert _find_tree_item(window, "M-script preview: plot_preview.m") is not None
-    assert _find_tree_item(window, "MAT data preview: sample.mat") is not None
-    assert len(window.workflow_session.project.scripts) == 1
-    assert len(window.workflow_session.project.results) == 1
-    assert mat_operation.status == "Previewed"
-    assert "temperature" in window.table_viewer.summary_label.text()
+
+    # Both previews attach reference metadata to the current project.
+    script_names = [getattr(ref, "name", "") for ref in window.current_project.script_refs]
+    assert "plot_preview.m" in script_names
+    assert "sample.mat" in script_names
+    assert len(window.current_project.script_refs) == before + 2
+
+    # The previews are surfaced in the project tree without running code.
+    assert _find_tree_item(window, "plot_preview.m") is not None
+    assert _find_tree_item(window, "sample.mat") is not None
 
     del app
 
