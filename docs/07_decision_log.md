@@ -2564,3 +2564,36 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   tag mutation, asset mutation, bundled-solver claim, certification claim,
   validation-pass claim, validation-fail claim, issue-closure claim, or version
   change occurs in this design gate.
+
+## ADR-0122: Optional Solver Plugin Manifest Reactivation ViewModel Is Pure And Non-Mutating
+
+- Status: Accepted for experimental reactivation view-model implementation
+- Date: 2026-06-27
+- Context: OSW-EXP-087 defined reactivation semantics as design-only, and
+  OSW-EXP-085 added a pure deactivation view-model extension. The next safe slice
+  is a pure view-model extension that models reactivation readiness,
+  acknowledgements, stale-source/re-preview state, deactivation-history retention,
+  evidence retention, diagnostics, shared-stack warnings, and action availability
+  without runtime side effects.
+- Decision: Implement a pure reactivation view-model
+  (`OptionalSolverPluginManifestReactivationViewModel`) under
+  `src/osw/experimental/optional_solvers/`. The view-model consumes supplied
+  deactivation/activation/reactivation candidate data and produces deterministic
+  reactivation-readiness, acknowledgement, diagnostic, shared-stack,
+  stale-source/re-preview, deactivation-history, evidence-retention, trust, and
+  action-state records over the OSW-EXP-087 reactivation state machine and
+  `OSPMG_REACTIVATION_*` vocabulary, with redacted source references and honesty
+  flags that remain false. Reactivation routes a deactivated candidate back toward
+  future activation review; it performs no file IO, file restore/rewrite/delete,
+  GUI behavior, CLI behavior, automatic activation, trust restoration,
+  activation/deactivation/reactivation persistence, plugin import, directory scan,
+  network fetch, discovery execution, validation, dependency install/uninstall,
+  solver uninstall/execution, issue mutation, release mutation, tag mutation, asset
+  mutation, or version change.
+- Consequences: Future reactivation GUI or source-integration gates can bind to a
+  deterministic state model. Reactivation remains non-persistent and non-mutating
+  in this gate. User/plugin manifests remain untrusted, non-validating,
+  provenance-preserving, and deactivation-history-retaining; built-ins remain
+  authoritative; a stale/missing source requires re-preview; and live optional
+  validation issues `#6` through `#11` remain open and separate with
+  skipped-missing evidence still neither pass nor failure.

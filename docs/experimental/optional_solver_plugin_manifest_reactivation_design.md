@@ -452,3 +452,16 @@ gated steps. If the repo later re-reserves a different sequence, follow the
 repo's latest convention and update this mapping. Persistence, discovery
 integration, validation, install/uninstall, solver execution, and any live
 validation remain separate, later gates regardless of numbering.
+
+## View-model extension follow-up
+
+OSW-EXP-088 implements the pure reactivation view-model extension only:
+[Optional solver plugin manifest reactivation view-model](optional_solver_plugin_manifest_reactivation_viewmodel.md)
+(`src/osw/experimental/optional_solvers/plugin_manifest_reactivation_viewmodel.py`).
+It realizes the classification/record layer of this design — reactivation
+readiness, acknowledgements, diagnostics, shared-stack warnings,
+stale-source/re-preview rows, deactivation-history and evidence retention, trust
+badges, and disabled/future action states — and stays pure and non-mutating.
+Reactivation persistence, GUI button behavior, CLI behavior, source mutation,
+discovery integration, validation, install/uninstall, solver execution, issue
+closure, and release mutation remain future-gated.

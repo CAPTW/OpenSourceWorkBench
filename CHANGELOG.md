@@ -6,6 +6,25 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reactivation View-Model Extension
+
+- Added a pure optional solver plugin manifest reactivation view-model extension
+  for readiness, acknowledgements, stale-source/re-preview diagnostics,
+  deactivation-history retention, evidence retention, shared-stack warnings,
+  provenance, and disabled/future action states without persistence, automatic
+  activation, trust restoration, file mutation, discovery, validation, solver
+  execution, or issue/release mutation.
+- Modeled the OSW-EXP-087 reactivation state machine and `OSPMG_REACTIVATION_*`
+  vocabulary over supplied deactivation candidate data (or caller-supplied
+  reactivation candidates) plus acknowledgement/stale-source state, with redacted
+  source references and honesty flags that remain false.
+- Kept the slice side-effect-free: no reactivation persistence, no automatic
+  activation, no trust restoration, no GUI behavior, no CLI behavior, no file
+  restore/rewrite/delete, no dependency install/uninstall, no solver uninstall, no
+  plugin package import, no directory scan, no network fetch, no discovery
+  execution, no validation execution, no solver execution, no issue mutation, no
+  release mutation, no validation-pass/fail claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Reactivation Design
 
 - Designed optional solver plugin manifest reactivation semantics as a future
