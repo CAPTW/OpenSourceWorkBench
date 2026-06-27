@@ -2408,3 +2408,35 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   mutation, tag mutation, asset mutation, bundled-solver claim, certification
   claim, validation-pass claim, issue-closure claim, or version change occurs in
   this design gate.
+
+## ADR-0117: Optional Solver Plugin Manifest Discovery Refresh ViewModel Is Pure And Non-Executing
+
+- Status: Accepted for experimental discovery-refresh view-model
+- Date: 2026-06-27
+- Context: OSW-EXP-082 defined the discovery-refresh integration contract as
+  design-only. A view-model layer is needed before any GUI/source integration so
+  that activated/deactivated candidate state can be translated into deterministic
+  refresh readiness, source inclusion/exclusion, acknowledgement, diagnostic,
+  conflict, unsafe-claim, trust, and action-state records without being confused
+  with discovery execution, validation, installation, solver execution, issue
+  closure, or trusted plugin integration.
+- Decision: Implement the discovery-refresh view-model as pure and
+  side-effect-free. It consumes a supplied activation view-model or
+  caller-supplied discovery source records plus acknowledgement and refresh
+  lifecycle inputs and produces deterministic records over the OSW-EXP-082
+  refresh modes, refresh state machine, readiness rules, required
+  acknowledgements, and `OSPMG_DISCOVERY_REFRESH_*` diagnostic vocabulary, with
+  redacted source references and honesty flags that remain false. Built-ins stay
+  authoritative; user/plugin candidates stay untrusted and are not validation
+  evidence; deactivated candidates are excluded or inactive; refresh readiness is
+  not discovery execution and not validation.
+- Consequences: A future GUI/source discovery-refresh integration gate has a
+  pure, testable contract. No runtime discovery integration, passive discovery
+  behavior change, activation/deactivation persistence, GUI behavior, CLI
+  behavior, PySide/Qt import, plugin package import, directory scan, network
+  fetch, discovery execution, validation execution, solver execution, dependency
+  installation, release edit, issue mutation, tag mutation, asset mutation,
+  bundled-solver claim, certification claim, validation-pass claim, issue-closure
+  claim, or version change occurs in this view-model gate, and live optional
+  validation issues `#6` through `#11` remain open and separate with
+  skipped-missing evidence still neither pass nor failure.

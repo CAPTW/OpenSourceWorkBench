@@ -6,6 +6,24 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Discovery Refresh View-Model
+
+- Added a pure, side-effect-free optional solver plugin manifest discovery-refresh
+  view-model over supplied activation/deactivation candidate state or
+  caller-supplied discovery source records plus acknowledgement and refresh
+  lifecycle inputs.
+- Modeled the OSW-EXP-082 refresh modes, refresh state machine, readiness rules,
+  required acknowledgements, source/trust/provenance and built-in/conflict
+  policies, unsafe-claim handling, and the `OSPMG_DISCOVERY_REFRESH_*` diagnostic
+  vocabulary, with redacted source references and honesty flags that remain false.
+- Kept the slice side-effect-free: no runtime discovery integration, no passive
+  discovery behavior change, no activation/deactivation persistence, no GUI
+  behavior, no CLI behavior, no PySide/Qt import, no plugin package import, no
+  directory scan, no network fetch, no discovery execution, no validation
+  execution, no solver execution, no dependency install, no issue/release/tag/
+  asset mutation, no version bump, no validation-pass claim, and no certification
+  claim.
+
 ### Optional Solver Plugin Manifest Discovery Refresh Integration Design
 
 - Designed optional solver plugin manifest discovery-refresh integration

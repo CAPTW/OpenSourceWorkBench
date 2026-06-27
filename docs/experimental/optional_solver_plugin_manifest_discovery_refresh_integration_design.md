@@ -380,3 +380,18 @@ later re-reserves a different sequence, follow the repo's latest convention and
 update this mapping. Discovery execution, persistence, validation,
 install/uninstall, solver execution, and any live validation remain separate,
 later gates regardless of numbering.
+
+## Implementation status
+
+The pure view-model layer for this design is implemented in OSW-EXP-083:
+[Optional solver plugin manifest discovery refresh view-model](optional_solver_plugin_manifest_discovery_refresh_viewmodel.md)
+(`src/osw/experimental/optional_solvers/plugin_manifest_discovery_refresh_viewmodel.py`).
+It is pure and side-effect-free and realizes only the classification/record layer
+of this contract: refresh modes, refresh state machine, readiness rules, required
+acknowledgements, source/trust/provenance and built-in/conflict policies,
+unsafe-claim handling, and the `OSPMG_DISCOVERY_REFRESH_*` diagnostic vocabulary.
+Runtime discovery integration, passive discovery behavior change, GUI behavior,
+CLI behavior, activation/deactivation persistence, plugin package import,
+directory scan, network fetch, discovery execution, validation execution, solver
+execution, dependency installation, and issue/release/tag/asset mutation remain
+future, separate gates.
