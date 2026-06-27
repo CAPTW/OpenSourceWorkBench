@@ -465,3 +465,15 @@ badges, and disabled/future action states — and stays pure and non-mutating.
 Reactivation persistence, GUI button behavior, CLI behavior, source mutation,
 discovery integration, validation, install/uninstall, solver execution, issue
 closure, and release mutation remain future-gated.
+
+OSW-EXP-089 implements a view-model-driven PySide GUI surface over that
+view-model:
+[Optional solver plugin manifest reactivation GUI implementation](optional_solver_plugin_manifest_reactivation_gui_implementation.md)
+(`src/osw/gui/dialogs/optional_solver_plugin_manifest_reactivation_panel.py`). The
+panel renders reactivation readiness, candidates, acknowledgements, diagnostics,
+shared-stack warnings, stale-source/re-preview rows, deactivation-history and
+evidence retention, trust/provenance, and disabled/future actions only; it
+implements no runtime reactivation, persistence, automatic activation, trust
+restoration, file mutation, install/uninstall, discovery, validation, or solver
+execution. Reactivation persistence and source mutation remain future, separate
+gates.

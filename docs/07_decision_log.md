@@ -2597,3 +2597,37 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   authoritative; a stale/missing source requires re-preview; and live optional
   validation issues `#6` through `#11` remain open and separate with
   skipped-missing evidence still neither pass nor failure.
+
+## ADR-0123: Optional Solver Plugin Manifest Reactivation GUI Is ViewModel-Driven And Non-Mutating
+
+- Status: Accepted for experimental reactivation GUI implementation
+- Date: 2026-06-27
+- Context: OSW-EXP-087 defined reactivation semantics as design-only and
+  OSW-EXP-088 added a pure reactivation view-model extension. The next safe slice
+  is a PySide GUI surface that renders reactivation readiness, acknowledgements,
+  stale-source/re-preview state, evidence/deactivation-history retention,
+  shared-stack warnings, diagnostics, and action availability without runtime
+  mutation.
+- Decision: Implement a PySide reactivation panel
+  (`OptionalSolverPluginManifestReactivationPanel`) under `src/osw/gui/dialogs/`.
+  The panel consumes `OptionalSolverPluginManifestReactivationViewModel` records
+  and renders summary, candidates, acknowledgements, diagnostics,
+  shared-stack/conflict rows, stale-source/re-preview rows,
+  evidence/deactivation-history retention, trust/provenance badges, safety
+  guidance, and disabled/future action states. Acknowledgement interaction is
+  widget-local and non-persistent via an injected pure callback; unsafe actions
+  (run discovery, run validation, install/uninstall dependency, uninstall solver,
+  execute solver, close issue) stay disabled/future-only, and reactivate/route
+  actions remain future-only. The panel performs no runtime reactivation behavior,
+  reactivation persistence, automatic activation, trust restoration, file
+  restore/rewrite/delete, dependency install/uninstall, solver uninstall, plugin
+  package import, directory scan, network fetch, discovery execution, validation,
+  solver execution, issue mutation, release mutation, tag mutation, asset
+  mutation, or version change.
+- Consequences: Users can inspect future reactivation readiness and safety
+  requirements in the GUI. Reactivation persistence and source mutation remain
+  future-gated. User/plugin manifests remain untrusted, non-validating,
+  provenance-preserving, and deactivation-history-retaining; built-ins remain
+  authoritative; a stale/missing source requires re-preview; and live optional
+  validation issues `#6` through `#11` remain open and separate with
+  skipped-missing evidence still neither pass nor failure.

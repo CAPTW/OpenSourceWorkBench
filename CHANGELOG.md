@@ -6,6 +6,26 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reactivation GUI
+
+- Added a view-model driven PySide reactivation GUI surface for optional solver
+  plugin manifests, preserving non-persistence, no automatic activation, no trust
+  restoration, no file mutation, no install/uninstall, no discovery, no
+  validation, no execution, and issue/release-safe boundaries.
+- Rendered reactivation summary, candidates, acknowledgements, blockers,
+  diagnostics, shared-stack/conflict warnings, stale-source/re-preview warnings,
+  deactivation-history and evidence retention, trust/provenance badges, safety
+  guidance, and disabled/future action states from the OSW-EXP-088 reactivation
+  view-model, with widget-local non-persistent acknowledgement interaction via an
+  injected pure callback.
+- Kept the slice safe: no runtime reactivation behavior, no reactivation
+  persistence, no automatic activation, no trust restoration, no file
+  restore/rewrite/delete, no dependency install/uninstall, no solver uninstall, no
+  CLI behavior, no plugin package import, no directory scan, no network fetch, no
+  discovery execution, no validation execution, no solver execution, no issue
+  mutation, no release mutation, no validation-pass/fail claim, and no
+  certification claim.
+
 ### Optional Solver Plugin Manifest Reactivation View-Model Extension
 
 - Added a pure optional solver plugin manifest reactivation view-model extension
