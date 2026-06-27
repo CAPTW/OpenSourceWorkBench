@@ -6,6 +6,23 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Deactivation GUI
+
+- Added a view-model driven PySide deactivation GUI surface for optional solver
+  plugin manifests, preserving non-persistence, no-file-deletion, no-uninstall,
+  no-discovery, no-validation, no-execution, and issue/release-safe boundaries.
+- Rendered deactivation summary, candidates, acknowledgements, blockers,
+  diagnostics, shared-stack/conflict warnings, evidence retention,
+  trust/provenance badges, safety guidance, and disabled/future action states
+  from the OSW-EXP-085 deactivation view-model, with widget-local non-persistent
+  acknowledgement interaction via an injected pure callback.
+- Kept the slice safe: no runtime deactivation behavior, no deactivation
+  persistence, no file deletion, no dependency uninstall, no solver uninstall, no
+  CLI behavior, no plugin package import, no directory scan, no network fetch, no
+  discovery execution, no validation execution, no solver execution, no dependency
+  install, no issue mutation, no release mutation, no validation-pass/fail claim,
+  and no certification claim.
+
 ### Optional Solver Plugin Manifest Deactivation View-Model Extension
 
 - Added a pure optional solver plugin manifest deactivation view-model extension

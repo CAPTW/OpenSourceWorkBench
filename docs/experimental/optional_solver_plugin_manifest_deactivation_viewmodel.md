@@ -218,9 +218,17 @@ built-ins remain authoritative; historical validation evidence is retained;
 skipped-missing optional validation remains neither pass nor failure, and issues
 `#6` through `#11` stay open.
 
+## GUI implementation status
+
+A PySide GUI surface for this view-model is implemented in OSW-EXP-086:
+[Optional solver plugin manifest deactivation GUI implementation](optional_solver_plugin_manifest_deactivation_gui_implementation.md)
+(`src/osw/gui/dialogs/optional_solver_plugin_manifest_deactivation_panel.py`).
+The panel renders this view-model's records only and stays view-model driven and
+non-mutating; the view-model itself remains pure and gains no PySide/Qt imports.
+
 ## Future gates
 
-- `OSW-EXP-086_OPTIONAL_SOLVER_PLUGIN_MANIFEST_DEACTIVATION_GUI_IMPLEMENTATION`
+- `OSW-EXP-087_OPTIONAL_SOLVER_PLUGIN_MANIFEST_REACTIVATION_DESIGN`
 - A future deactivation persistence gate (out of scope here).
-- A future reactivation design/implementation gate.
+- A future deactivation source/discovery-integration gate.
 - `OSW-VALID` prepared-machine validation reuse.

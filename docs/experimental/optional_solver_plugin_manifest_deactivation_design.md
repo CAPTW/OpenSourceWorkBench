@@ -344,6 +344,16 @@ non-mutating. Deactivation persistence, GUI button behavior, CLI behavior,
 discovery integration, validation, install/uninstall, solver execution, issue
 closure, and release mutation remain future-gated.
 
+OSW-EXP-086 implements a view-model-driven PySide GUI surface over that
+view-model:
+[Optional solver plugin manifest deactivation GUI implementation](optional_solver_plugin_manifest_deactivation_gui_implementation.md)
+(`src/osw/gui/dialogs/optional_solver_plugin_manifest_deactivation_panel.py`). The
+panel renders deactivation readiness, candidates, acknowledgements, diagnostics,
+shared-stack warnings, evidence retention, trust/provenance, and disabled/future
+actions only; it implements no runtime deactivation, persistence, file deletion,
+uninstall, discovery, validation, or solver execution. Deactivation persistence
+and source mutation remain future, separate gates.
+
 ## Discovery-refresh integration follow-up
 
 [Optional solver plugin manifest discovery refresh integration design](optional_solver_plugin_manifest_discovery_refresh_integration_design.md)

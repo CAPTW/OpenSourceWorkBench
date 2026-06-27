@@ -2499,3 +2499,33 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   evidence is retained; a deactivated candidate is not a validation failure; and
   live optional validation issues `#6` through `#11` remain open and separate with
   skipped-missing evidence still neither pass nor failure.
+
+## ADR-0120: Optional Solver Plugin Manifest Deactivation GUI Is ViewModel-Driven And Non-Mutating
+
+- Status: Accepted for experimental deactivation GUI implementation
+- Date: 2026-06-27
+- Context: OSW-EXP-081 defined deactivation semantics as design-only and
+  OSW-EXP-085 added a pure deactivation view-model extension. The next safe slice
+  is a PySide GUI surface that renders deactivation readiness, acknowledgements,
+  diagnostics, evidence retention, shared-stack warnings, and action availability
+  without runtime mutation.
+- Decision: Implement a PySide deactivation panel
+  (`OptionalSolverPluginManifestDeactivationPanel`) under `src/osw/gui/dialogs/`.
+  The panel consumes `OptionalSolverPluginManifestDeactivationViewModel` records
+  and renders summary, candidates, acknowledgements, diagnostics,
+  shared-stack/conflict rows, evidence retention, trust/provenance badges, safety
+  guidance, and disabled/future action states. Acknowledgement interaction is
+  widget-local and non-persistent via an injected pure callback; unsafe actions
+  (run discovery, run validation, uninstall dependency/solver, execute solver,
+  close issue) stay disabled/future-only. The panel performs no runtime
+  deactivation behavior, deactivation persistence, file deletion, dependency
+  uninstall, solver uninstall, plugin package import, directory scan, network
+  fetch, discovery execution, validation, solver execution, issue mutation,
+  release mutation, tag mutation, asset mutation, or version change.
+- Consequences: Users can inspect future deactivation readiness and safety
+  requirements in the GUI. Deactivation persistence and source mutation remain
+  future-gated. User/plugin manifests remain untrusted, non-validating, and
+  provenance-preserving; built-ins remain authoritative; historical validation
+  evidence is retained; a deactivated state is not a validation failure; and live
+  optional validation issues `#6` through `#11` remain open and separate with
+  skipped-missing evidence still neither pass nor failure.
