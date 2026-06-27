@@ -6,6 +6,29 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Persistence Schema Model
+
+- Added a pure, in-memory optional solver plugin manifest persistence schema
+  model that defines versioned, JSON-compatible records (header, source,
+  candidate, acknowledgement, diagnostic, redaction-policy, migration, conflict,
+  unsafe-claim, evidence/history, non-action-flags, and validation-summary) with
+  deterministic construction, `to_mapping`/`from_mapping` conversion, mapping
+  validation diagnostics, redaction, and adaptation from the OSW-EXP-092
+  persistence view-model.
+- Reused the reserved `OSPMG_PERSISTENCE_*` diagnostic vocabulary, kept a
+  redaction-first policy that blocks raw absolute paths, supported the current
+  schema version plus the `osw-exp-092-preview` marker with migration treated as
+  a diagnostic, and kept every non-action flag false.
+- Kept the slice non-writing and side-effect-free: no persistence
+  implementation, no file writes, no schema file creation, no settings file
+  creation, no runtime state file creation, no ProjectSchema mutation, no
+  GUI/CLI persistence behavior, no reload behavior, no export behavior, no
+  automatic activation, no trust restoration, no file restore/rewrite/delete, no
+  dependency install/uninstall, no solver uninstall, no plugin package import, no
+  directory scan, no network fetch, no discovery execution, no validation
+  execution, no solver execution, no issue mutation, no release mutation, no
+  version bump, no validation-pass/fail claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Persistence View-Model
 
 - Added a pure optional solver plugin manifest persistence view-model for

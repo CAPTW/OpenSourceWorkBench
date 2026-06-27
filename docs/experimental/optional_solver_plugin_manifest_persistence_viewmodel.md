@@ -325,3 +325,11 @@ Future gates remain required for:
 - release/tag/asset/version mutation
 - trust elevation
 - certification or validation claims
+
+## Follow-up: schema model (OSW-EXP-093)
+
+OSW-EXP-093 adds the pure, in-memory persistence schema model. It can adapt an
+already-built persistence view-model with `from_persistence_viewmodel`, defines
+the versioned record shape, and validates supplied mappings. It still writes
+nothing and creates no schema file. See
+[optional_solver_plugin_manifest_persistence_schema_model.md](optional_solver_plugin_manifest_persistence_schema_model.md).

@@ -513,3 +513,12 @@ repo later re-reserves a different sequence, follow the repo's latest convention
 and update this mapping. Persistence implementation, schema files, discovery
 integration, validation, install/uninstall, solver execution, and any live
 validation remain separate, later gates regardless of numbering.
+
+## Follow-up: schema model (OSW-EXP-093)
+
+OSW-EXP-092 implemented the persistence view-model. OSW-EXP-093 implements the
+pure, in-memory persistence schema model that defines the versioned record shape a
+future writer would serialize. See
+[optional_solver_plugin_manifest_persistence_schema_model.md](optional_solver_plugin_manifest_persistence_schema_model.md).
+The schema model still creates no schema file and writes nothing; persistence
+implementation remains a separate, later gate.

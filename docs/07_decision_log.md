@@ -2741,3 +2741,41 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   historical evidence remain retained; skipped-missing evidence remains neither
   pass nor failure; and live optional validation issues `#6` through `#11` remain
   open and separate.
+
+## ADR-0127: Optional Solver Plugin Manifest Persistence Schema Model Is In-Memory And Non-Writing
+
+- Status: Accepted for experimental persistence schema model implementation
+- Date: 2026-06-27
+- Context: OSW-EXP-090 defined state persistence semantics as design-only and
+  OSW-EXP-092 implemented the pure persistence view-model. The next safe slice is
+  a pure, in-memory schema model that defines the versioned record shape a future
+  persistence writer would serialize, without writing state, creating a schema
+  file, or changing runtime behavior.
+- Decision: Implement a pure schema model
+  (`OptionalSolverPluginManifestPersistenceSchemaModel`) under
+  `src/osw/experimental/optional_solvers/`. It defines versioned, JSON-compatible,
+  frozen record types (header, source, candidate, acknowledgement, diagnostic,
+  redaction policy, migration, conflict, unsafe-claim, evidence/history,
+  non-action flags, validation summary) and deterministic helpers for
+  construction, `to_mapping`/`from_mapping` conversion, mapping validation,
+  redaction, and adaptation from the OSW-EXP-092 persistence view-model. It reuses
+  the reserved `OSPMG_PERSISTENCE_*` diagnostic vocabulary, keeps a redaction-first
+  policy with raw absolute paths blocked, supports a current schema version plus
+  the `osw-exp-092-preview` marker with migration treated as a diagnostic, and
+  keeps all non-action flags false. It performs no file IO, writes, schema-file
+  creation, settings-file creation, runtime state-file creation, ProjectSchema
+  mutation, GUI behavior, CLI behavior, reload, export, plugin package import,
+  directory scan, network fetch, discovery execution, validation, install/uninstall,
+  solver execution, issue mutation, release mutation, tag mutation, asset mutation,
+  version bump, validation-pass/fail claim, issue-closure claim, bundled-solver
+  claim, or certification claim.
+- Consequences: Future persistence writer, settings-file, runtime state-file,
+  ProjectSchema-integration, GUI, CLI, reload, schema-migration, export-summary,
+  source-integration, discovery-integration, validation, install/uninstall,
+  solver-execution, issue, and release gates have a stable record-shape contract.
+  User/plugin manifests remain untrusted and non-validating; built-ins remain
+  authoritative; local path redaction remains enforced; stale/missing sources
+  require re-preview; conflicts keep built-ins winning by default; unsafe claims
+  are never accepted; deactivation/reactivation history and historical evidence
+  remain retained; skipped-missing evidence remains neither pass nor failure; and
+  live optional validation issues `#6` through `#11` remain open and separate.
