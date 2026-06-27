@@ -6,6 +6,30 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest State Export Summary Design
+
+- Designed optional solver plugin manifest state export-summary semantics as a
+  future explicit, redaction-first, provenance-preserving, acknowledgement-aware,
+  history-retaining, non-validating, non-persistent, non-reloadable-by-default,
+  non-installing, non-executing, non-mutating, and issue/release-safe workflow.
+- Defined export-summary definition and forbidden content, the export-summary vs
+  persistence vs reloadable-bundle boundary, export preconditions, an
+  acknowledgement model, a redaction/privacy policy, a conceptual summary content
+  model, suggested text/future formats, source/trust/provenance labels, a state
+  coverage model with blocked interpretations, stale-source/re-preview and
+  conflict/unsafe-claim policies, a validation/evidence policy, a ProjectSchema
+  boundary, and design-only `OSPMG_EXPORT_SUMMARY_*` diagnostic reservations.
+- Kept the slice docs/tests-only: no export implementation, no file writes, no
+  export file creation, no reloadable bundle creation, no clipboard or
+  open-output-folder behavior, no persistence implementation, no settings file
+  creation, no project schema mutation, no GUI/CLI export behavior, no
+  activation/deactivation/reactivation/discovery-refresh source mutation, no
+  automatic activation, no trust restoration, no file restore/rewrite/delete, no
+  dependency install/uninstall, no solver uninstall, no plugin package import, no
+  directory scan, no network fetch, no discovery execution, no validation
+  execution, no solver execution, no issue/release/tag/asset mutation, no version
+  bump, no validation-pass/fail claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest State Persistence Design
 
 - Designed optional solver plugin manifest state persistence semantics as a future

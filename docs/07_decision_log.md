@@ -2669,3 +2669,42 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   release edit, issue mutation, tag mutation, asset mutation, bundled-solver claim,
   certification claim, validation-pass claim, validation-fail claim, issue-closure
   claim, or version change occurs in this design gate.
+
+## ADR-0125: Optional Solver Plugin Manifest State Export Summary Starts As Design-Only
+
+- Status: Accepted for experimental export-summary design
+- Date: 2026-06-27
+- Context: OSW-EXP-090 defined future state persistence semantics as design-only.
+  The next adjacent need is a safe human-readable export summary for review and
+  support, but export summaries could be confused with persistence, reloadable
+  bundles, validation evidence, trust restoration, issue closure, or release
+  mutation.
+- Decision: Define optional solver plugin manifest state export-summary semantics
+  as design-only before implementation. Export summaries remain explicit,
+  redaction-first, provenance-preserving, acknowledgement-aware, history-retaining,
+  non-validating, non-persistent, non-reloadable unless a future bundle gate says
+  otherwise, non-installing, non-executing, non-mutating, and separate from
+  discovery, issues, releases, tags, assets, and certification. Specify the
+  export-summary definition and forbidden content, the export-summary vs
+  persistence vs reloadable-bundle boundary, export preconditions, an
+  acknowledgement model, a redaction/privacy policy, a conceptual summary content
+  model, source/trust/provenance labels, a state coverage model with blocked
+  interpretations, a stale-source/re-preview policy, conflict/unsafe-claim
+  policies, a validation/evidence policy, a ProjectSchema boundary, and design-only
+  `OSPMG_EXPORT_SUMMARY_*` diagnostic reservations.
+- Consequences: Future export-summary view-model, GUI, CLI, report, and bundle
+  gates have a safety contract. No runtime behavior changes in this gate, and live
+  optional validation issues `#6` through `#11` remain open and separate.
+  User/plugin manifests remain untrusted and non-validating unless separate
+  evidence and trust gates exist; built-ins remain authoritative;
+  deactivation/reactivation history and historical evidence are retained; and
+  skipped-missing evidence remains neither pass nor failure. No runtime source, GUI
+  source, view-model source, CLI source, ProjectSchema source, export
+  implementation, file write, export file, reloadable bundle, clipboard behavior,
+  open-output-folder behavior, persistence implementation, settings file, schema
+  mutation, automatic activation, trust restoration, file restore/rewrite/delete,
+  dependency install/uninstall, solver uninstall, plugin package import, directory
+  scan, network fetch, discovery execution, validation execution, solver execution,
+  release edit, issue mutation, tag mutation, asset mutation, bundled-solver claim,
+  certification claim, validation-pass claim, validation-fail claim, issue-closure
+  claim, or version change occurs in this design gate.
