@@ -6,6 +6,29 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest State Persistence Design
+
+- Designed optional solver plugin manifest state persistence semantics as a future
+  explicit, versioned, redaction-first, provenance-preserving,
+  acknowledgement-aware, history-retaining, non-validating, non-installing,
+  non-executing, non-mutating, and issue/release-safe workflow.
+- Defined persisted-state definition and forbidden content, storage location
+  options, persistence preconditions, an acknowledgement persistence/invalidation
+  policy, source/trust/provenance labels, a redaction/privacy policy, a conceptual
+  state schema model, a state-machine interaction with blocked transitions, a
+  stale-source/re-preview policy, conflict/unsafe-claim policies, a
+  validation/evidence policy, and design-only `OSPMG_PERSISTENCE_*` diagnostic
+  reservations.
+- Kept the slice docs/tests-only: no persistence implementation, no file writes,
+  no settings file creation, no project schema mutation, no GUI/CLI persistence
+  behavior, no activation/deactivation/reactivation/discovery-refresh source
+  mutation, no automatic activation, no trust restoration, no file
+  restore/rewrite/delete, no dependency install/uninstall, no solver uninstall, no
+  plugin package import, no directory scan, no network fetch, no discovery
+  execution, no validation execution, no solver execution, no issue/release/tag/
+  asset mutation, no version bump, no validation-pass/fail claim, and no
+  certification claim.
+
 ### Optional Solver Plugin Manifest Reactivation GUI
 
 - Added a view-model driven PySide reactivation GUI surface for optional solver

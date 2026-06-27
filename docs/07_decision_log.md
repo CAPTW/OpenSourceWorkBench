@@ -2631,3 +2631,41 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   authoritative; a stale/missing source requires re-preview; and live optional
   validation issues `#6` through `#11` remain open and separate with
   skipped-missing evidence still neither pass nor failure.
+
+## ADR-0124: Optional Solver Plugin Manifest State Persistence Starts As Design-Only
+
+- Status: Accepted for experimental state persistence design
+- Date: 2026-06-27
+- Context: OSW-EXP-089 added a view-model-driven reactivation GUI surface.
+  Activation, deactivation, reactivation, and discovery-refresh UX state now has
+  review surfaces, but state persistence semantics remain undefined. Persistence
+  could be confused with automatic activation, trust restoration, validation
+  success, dependency installation, solver execution, issue closure, release
+  mutation, or certification without a design gate.
+- Decision: Define optional solver plugin manifest state persistence semantics as
+  design-only before implementation. Persistence remains explicit, versioned,
+  redaction-first, provenance-preserving, acknowledgement-aware, history-retaining,
+  non-validating, non-installing, non-executing, non-mutating, and separate from
+  discovery, issues, releases, tags, assets, and certification. Specify
+  persisted-state definition and forbidden content, storage location options,
+  preconditions, an acknowledgement persistence/invalidation policy, a
+  source/trust/provenance model, a redaction/privacy policy, a conceptual state
+  schema model, a state-machine interaction with blocked transitions, a
+  stale-source/re-preview policy, conflict/unsafe-claim policies, a
+  validation/evidence policy, a ProjectSchema boundary, and design-only
+  `OSPMG_PERSISTENCE_*` diagnostic reservations.
+- Consequences: Future persistence view-model, schema, GUI, CLI, and
+  export-summary gates have a safety contract. No runtime behavior changes in this
+  gate, and live optional validation issues `#6` through `#11` remain open and
+  separate. User/plugin manifests remain untrusted and non-validating unless
+  separate evidence and trust gates exist; built-ins remain authoritative;
+  deactivation/reactivation history and historical evidence are retained; and
+  skipped-missing evidence remains neither pass nor failure. No runtime source,
+  GUI source, view-model source, CLI source, ProjectSchema source, persistence
+  implementation, file write, settings file, schema mutation, automatic
+  activation, trust restoration, file restore/rewrite/delete, dependency
+  install/uninstall, solver uninstall, plugin package import, directory scan,
+  network fetch, discovery execution, validation execution, solver execution,
+  release edit, issue mutation, tag mutation, asset mutation, bundled-solver claim,
+  certification claim, validation-pass claim, validation-fail claim, issue-closure
+  claim, or version change occurs in this design gate.
