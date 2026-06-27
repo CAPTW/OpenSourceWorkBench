@@ -903,6 +903,17 @@ Scope drift is any change that:
   validation-pass or validation-fail evidence, solver execution, issue closure,
   release mutation, tag mutation, asset mutation, version bump, bundled-solver
   claims, or certification claims without a separate implementation gate;
+- turns the optional solver plugin manifest persistence view-model into runtime
+  persistence behavior, file writes, settings file creation, ProjectSchema
+  mutation, GUI persistence behavior, CLI persistence behavior, reload behavior,
+  export behavior, automatic activation, trust restoration, file
+  restore/rewrite/delete, dependency installation, dependency uninstall, solver
+  uninstall, activation/deactivation/reactivation/discovery-refresh source
+  mutation, trusted-by-default third-party manifests, plugin package import,
+  directory scanning, network fetching, automatic discovery execution,
+  validation-pass or validation-fail evidence, solver execution, issue closure,
+  release mutation, tag mutation, asset mutation, version bump, bundled-solver
+  claim, or certification claim without a separate gate;
 - turns the optional solver plugin manifest state export-summary design into
   export implementation, file writes, export file creation, reloadable bundle
   creation, clipboard behavior, open-output-folder behavior, persistence

@@ -45,6 +45,12 @@ Status boundaries:
 - no validation-fail claim
 - no certification claim
 
+OSW-EXP-092 implementation follow-up: OSW-EXP-092 implements the pure
+persistence view-model only, while file writes, settings files, ProjectSchema
+mutation, GUI persistence behavior, CLI persistence behavior, reload behavior,
+export summary behavior, discovery integration, validation, install/uninstall,
+solver execution, issue closure, and release mutation remain future-gated.
+
 ## Purpose
 
 Define future persistence semantics for optional solver plugin manifest UX state,

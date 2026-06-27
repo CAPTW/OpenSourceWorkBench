@@ -500,6 +500,23 @@ built-ins remain authoritative; user/plugin manifests remain untrusted;
 deactivation/reactivation history and historical evidence are retained;
 skipped-missing remains skipped-missing; and issues `#6`-`#11` remain open.
 
+[Optional solver plugin manifest persistence view-model](experimental/optional_solver_plugin_manifest_persistence_viewmodel.md)
+implements the pure persistence view-model for the OSW-EXP-090 design. It is
+automated view-model evidence only: the persistence view-model is pure and
+non-writing with no runtime persistence behavior, no file writes, no settings
+file creation, no ProjectSchema mutation, no GUI persistence behavior, no CLI
+persistence behavior, no reload behavior, no export behavior, no automatic
+activation, no trust restoration, no file restoration/rewrite/deletion, no
+dependency install/uninstall, no solver uninstall, no plugin package import, no
+directory scan, no network fetch, no discovery execution, no validation
+execution, no solver execution, no issue closure, no release mutation, no
+validation-pass/fail claim, and no certification claim. It preserves provenance,
+redaction, schema/migration state, stale-source re-preview state,
+conflict/unsafe-claim rows, deactivation/reactivation history, and historical
+evidence as supplied data only; built-ins remain authoritative, user/plugin
+manifests remain untrusted, skipped-missing remains skipped-missing, and issues
+`#6`-`#11` remain open.
+
 [Optional solver plugin manifest state export summary design](experimental/optional_solver_plugin_manifest_state_export_summary_design.md)
 defines the future contract for redacted, human-reviewable export summaries of
 optional solver plugin manifest UX state. It is design evidence only: the export

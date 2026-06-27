@@ -2708,3 +2708,36 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   release edit, issue mutation, tag mutation, asset mutation, bundled-solver claim,
   certification claim, validation-pass claim, validation-fail claim, issue-closure
   claim, or version change occurs in this design gate.
+
+## ADR-0126: Optional Solver Plugin Manifest Persistence ViewModel Is Pure And Non-Writing
+
+- Status: Accepted for experimental persistence view-model implementation
+- Date: 2026-06-27
+- Context: OSW-EXP-090 defined state persistence semantics as design-only, and
+  OSW-EXP-091 defined adjacent export-summary semantics as design-only. The next
+  safe slice is a pure view-model that can classify supplied optional solver
+  plugin manifest UX state for future persistence review without writing state or
+  changing runtime behavior.
+- Decision: Implement a pure persistence view-model
+  (`OptionalSolverPluginManifestPersistenceViewModel`) under
+  `src/osw/experimental/optional_solvers/`. The view-model consumes supplied
+  candidates, source/provenance data, acknowledgements, schema/migration
+  metadata, stale-source state, conflicts, unsafe claims, evidence, and history,
+  then produces deterministic summary, candidate, source, acknowledgement,
+  diagnostic, redaction, schema, stale-source, conflict, unsafe-claim,
+  evidence/history, trust, and action-state records. It performs no file IO,
+  writes, settings-file creation, ProjectSchema mutation, GUI behavior, CLI
+  behavior, reload, export, plugin package import, directory scan, network fetch,
+  discovery execution, validation, install/uninstall, solver execution, issue
+  mutation, release mutation, tag mutation, asset mutation, version bump,
+  validation-pass/fail claim, issue-closure claim, bundled-solver claim, or
+  certification claim.
+- Consequences: Future persistence schema, writer, GUI, CLI, reload,
+  export-summary, source-integration, discovery-integration, validation,
+  install/uninstall, solver-execution, issue, and release gates have a stable
+  data-only contract. User/plugin manifests remain untrusted and non-validating;
+  built-ins remain authoritative; local path redaction remains visible;
+  stale/missing sources require re-preview; deactivation/reactivation history and
+  historical evidence remain retained; skipped-missing evidence remains neither
+  pass nor failure; and live optional validation issues `#6` through `#11` remain
+  open and separate.

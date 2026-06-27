@@ -6,6 +6,23 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Persistence View-Model
+
+- Added a pure optional solver plugin manifest persistence view-model for
+  supplied UX state, including summary, candidates, sources, acknowledgements,
+  diagnostics, redaction/privacy, schema/migration, stale-source/re-preview,
+  conflict/shared-stack, unsafe-claim, evidence/history, trust/provenance, and
+  disabled/future action records.
+- Kept the slice non-writing and side-effect-free: no persistence
+  implementation, no file writes, no settings file creation, no ProjectSchema
+  mutation, no GUI/CLI persistence behavior, no reload behavior, no export
+  behavior, no automatic activation, no trust restoration, no file
+  restore/rewrite/delete, no dependency install/uninstall, no solver uninstall,
+  no plugin package import, no directory scan, no network fetch, no discovery
+  execution, no validation execution, no solver execution, no issue/release/tag/
+  asset mutation, no version bump, no validation-pass/fail claim, and no
+  certification claim.
+
 ### Optional Solver Plugin Manifest State Export Summary Design
 
 - Designed optional solver plugin manifest state export-summary semantics as a
