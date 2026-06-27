@@ -522,3 +522,14 @@ future writer would serialize. See
 [optional_solver_plugin_manifest_persistence_schema_model.md](optional_solver_plugin_manifest_persistence_schema_model.md).
 The schema model still creates no schema file and writes nothing; persistence
 implementation remains a separate, later gate.
+
+## Follow-up: persistence GUI design (OSW-EXP-094)
+
+OSW-EXP-094 designs the future PySide persistence GUI review surface over the
+OSW-EXP-092 persistence view-model and OSW-EXP-093 schema model. See
+[optional_solver_plugin_manifest_persistence_gui_design.md](optional_solver_plugin_manifest_persistence_gui_design.md).
+The GUI design remains docs/tests-only: no GUI implementation, no persistence
+implementation, no file writes, no settings file creation, no runtime state file
+creation, no schema file creation, no ProjectSchema mutation, no file/save
+dialog, no reload/export behavior, no automatic activation, no trust restoration,
+no discovery/validation/solver execution, and no issue/release/tag/asset mutation.

@@ -333,3 +333,14 @@ already-built persistence view-model with `from_persistence_viewmodel`, defines
 the versioned record shape, and validates supplied mappings. It still writes
 nothing and creates no schema file. See
 [optional_solver_plugin_manifest_persistence_schema_model.md](optional_solver_plugin_manifest_persistence_schema_model.md).
+
+## Follow-up: persistence GUI design (OSW-EXP-094)
+
+OSW-EXP-094 designs the future PySide persistence GUI surface that may render
+this view-model together with the OSW-EXP-093 schema model. See
+[optional_solver_plugin_manifest_persistence_gui_design.md](optional_solver_plugin_manifest_persistence_gui_design.md).
+The design adds no GUI implementation and no persistence implementation. It keeps
+the view-model pure and keeps file writes, settings files, runtime state files,
+schema files, ProjectSchema mutation, reload/export behavior, automatic
+activation, trust restoration, discovery/validation/solver execution,
+install/uninstall behavior, and issue/release/tag/asset mutation future-gated.

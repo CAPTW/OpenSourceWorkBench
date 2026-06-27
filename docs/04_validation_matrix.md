@@ -537,6 +537,24 @@ non-action flag false, and adapts the persistence view-model without mutating it
 built-ins remain authoritative, user/plugin manifests remain untrusted,
 skipped-missing remains skipped-missing, and issues `#6`-`#11` remain open.
 
+[Optional solver plugin manifest persistence GUI design](experimental/optional_solver_plugin_manifest_persistence_gui_design.md)
+defines future PySide persistence GUI semantics over the OSW-EXP-092 persistence
+view-model and OSW-EXP-093 schema model. It is docs/test design evidence only:
+the persistence GUI design is design-only with no runtime source change, no GUI
+implementation, no runtime persistence behavior, no file writes, no settings file
+creation, no runtime state files, no schema files, no ProjectSchema mutation, no
+file dialog, no save dialog, no reload behavior, no export behavior, no clipboard
+behavior, no open-output-folder behavior, no CLI behavior, no automatic
+activation, no trust restoration, no file restoration/rewrite/deletion, no
+dependency install/uninstall, no solver uninstall, no plugin package import, no
+directory scan, no network fetch, no discovery execution, no validation
+execution, no solver execution, no issue closure, no release/tag/asset mutation,
+no validation-pass/fail claim, and no certification claim. It defines summary,
+source/candidate, acknowledgement/expiry, redaction/privacy, schema/migration,
+stale-source/re-preview, conflict/shared-stack, unsafe-claim, evidence/history,
+trust/provenance, disabled action-state, non-action flag, and
+`OSPMG_PERSISTENCE_GUI_*` diagnostic design boundaries.
+
 [Optional solver plugin manifest state export summary design](experimental/optional_solver_plugin_manifest_state_export_summary_design.md)
 defines the future contract for redacted, human-reviewable export summaries of
 optional solver plugin manifest UX state. It is design evidence only: the export

@@ -2779,3 +2779,37 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   are never accepted; deactivation/reactivation history and historical evidence
   remain retained; skipped-missing evidence remains neither pass nor failure; and
   live optional validation issues `#6` through `#11` remain open and separate.
+
+## ADR-0128: Optional Solver Plugin Manifest Persistence GUI Starts As Design-Only
+
+- Status: Accepted for experimental persistence GUI design
+- Date: 2026-06-27
+- Context: OSW-EXP-092 added a pure persistence view-model, and OSW-EXP-093
+  added a pure in-memory persistence schema model. Future users need a GUI review
+  surface for that state, but a persistence GUI could be mistaken for file
+  writes, settings file creation, runtime state file creation, ProjectSchema
+  mutation, automatic activation, trust restoration, validation evidence, issue
+  closure, release mutation, tag mutation, asset mutation, or certification.
+- Decision: Define persistence GUI semantics as design-only before
+  implementation. The persistence GUI remains view-model/schema-model driven,
+  explicit, redaction-first, acknowledgement-aware, schema/migration-aware,
+  stale-source-aware, history-retaining, non-validating, non-writing,
+  non-installing, non-executing, non-mutating, and separate from discovery,
+  validation, issues, releases, tags, assets, reloads, exports, ProjectSchema,
+  file dialogs, save dialogs, clipboard behavior, open-output-folder behavior,
+  dependency install/uninstall, solver uninstall, solver execution, and
+  certification.
+- Consequences: Future persistence GUI implementation has a safety contract. No
+  runtime behavior changes in this gate. No GUI source, runtime source,
+  view-model source, schema-model source, CLI source, ProjectSchema source,
+  persistence writer, settings file, runtime state file, schema file, export file,
+  reloadable bundle, file dialog, save dialog, clipboard action,
+  open-output-folder action, dependency install/uninstall, solver uninstall,
+  plugin package import, directory scan, network fetch, discovery execution,
+  validation execution, solver execution, issue mutation, release mutation, tag
+  mutation, asset mutation, version bump, validation-pass claim, validation-fail
+  claim, issue-closure claim, bundled-solver claim, or certification claim is
+  added. User/plugin manifests remain untrusted and non-validating unless
+  separate evidence and trust gates exist; built-ins remain authoritative;
+  deactivation/reactivation history and historical evidence are retained; and
+  live optional validation issues `#6` through `#11` remain open and separate.

@@ -331,3 +331,16 @@ Future gates remain required for:
 - release/tag/asset/version mutation
 - trust elevation
 - certification or validation claims
+
+## Follow-up: persistence GUI design (OSW-EXP-094)
+
+OSW-EXP-094 designs the future PySide persistence GUI review surface over this
+schema model and the OSW-EXP-092 persistence view-model. See
+[optional_solver_plugin_manifest_persistence_gui_design.md](optional_solver_plugin_manifest_persistence_gui_design.md).
+The design does not serialize the schema model, create a schema file, create a
+runtime state file, create settings, mutate ProjectSchema, add reload/export
+behavior, add file/save dialogs, or implement GUI source. It keeps redaction,
+acknowledgement expiry, schema/migration review, stale-source/re-preview review,
+conflict/shared-stack review, unsafe-claim review, evidence/history retention,
+trust/provenance badges, disabled action states, and non-action flags as future
+display semantics only.
