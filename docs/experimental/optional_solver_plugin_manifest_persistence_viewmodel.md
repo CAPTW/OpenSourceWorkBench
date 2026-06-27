@@ -279,6 +279,11 @@ clipboard behavior, no open-output-folder behavior, and no reloadable bundle.
 An export summary is not persistence and not validation evidence unless a future
 gate explicitly changes that boundary.
 
+OSW-EXP-097 adds that pure export-summary view-model as a separate in-memory
+adapter over supplied persistence records. It writes no files, creates no export
+files, creates no reloadable bundles, adds no clipboard/report behavior, and
+does not mutate this persistence view-model or its source behavior.
+
 ## Relationship to live optional validation issues
 
 Issues `#6` through `#11` remain open unless a separate live optional validation

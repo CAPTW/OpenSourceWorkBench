@@ -6,6 +6,26 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Export-Summary View-Model
+
+- Added a pure optional solver plugin manifest export-summary view-model for
+  redacted, human-reviewable, non-authoritative summary sections, sources,
+  candidates, acknowledgements, diagnostics, limitations, redaction/privacy,
+  stale-source/re-preview, conflicts, unsafe claims, evidence/history,
+  non-action flags, and disabled/future action states.
+- Added in-memory adapters from the persistence view-model and in-memory
+  persistence schema model without mutating either source contract.
+- Kept the slice side-effect-free and non-writing: no file export, no file
+  writes, no export file creation, no clipboard behavior, no report attachment,
+  no reloadable bundle creation, no runtime persistence behavior, no settings
+  file creation, no runtime state file creation, no schema file creation, no
+  ProjectSchema mutation, no GUI/CLI behavior, no reload behavior, no automatic
+  activation, no trust restoration, no file mutation, no dependency
+  install/uninstall, no solver uninstall, no plugin package import, no directory
+  scan, no network fetch, no discovery execution, no validation execution, no
+  solver execution, no issue/release/tag/asset mutation, no version bump, no
+  validation-pass/fail claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Persistence CLI Design
 
 - Designed optional solver plugin manifest persistence CLI semantics as a future

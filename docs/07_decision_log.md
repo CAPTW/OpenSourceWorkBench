@@ -2886,3 +2886,47 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   evidence and trust gates exist; built-ins remain authoritative;
   deactivation/reactivation history and historical evidence are retained; and
   live optional validation issues `#6` through `#11` remain open and separate.
+
+## ADR-0131: Optional Solver Plugin Manifest Export Summary ViewModel Is Pure And Non-Writing
+
+- Status: Accepted for experimental export-summary view-model implementation
+- Date: 2026-06-27
+- Context: OSW-EXP-091 defined export-summary semantics as design-only, while
+  OSW-EXP-092 through OSW-EXP-096 added persistence view-model, schema model, GUI
+  review, and CLI design contracts. Future GUI, CLI, report, support-summary,
+  file-export, clipboard, and bundle gates need a deterministic in-memory summary
+  model, but that model could be mistaken for export, persistence, reloadability,
+  validation evidence, trust restoration, issue closure, release mutation, or
+  certification.
+- Decision: Implement a pure export-summary view-model
+  (`OptionalSolverPluginManifestExportSummaryViewModel`) under
+  `src/osw/experimental/optional_solvers/`. The view-model consumes supplied
+  sources, candidates, acknowledgements, diagnostics, redaction/privacy state,
+  stale-source/re-preview state, conflicts, unsafe claims, evidence, and history,
+  then produces deterministic header, section, source/provenance, candidate,
+  acknowledgement, diagnostic, redaction, stale-source, conflict, unsafe-claim,
+  evidence/history, limitation, non-action flag, and disabled/future action-state
+  records. It adapts supplied persistence view-model and schema-model records
+  without mutating them. It performs no file IO, writes, export file creation,
+  clipboard behavior, report attachment, reloadable bundle creation, runtime
+  persistence behavior, settings-file creation, runtime state-file creation,
+  schema-file creation, ProjectSchema mutation, GUI behavior, CLI behavior,
+  reload behavior, source behavior mutation, automatic activation, trust
+  restoration, file restore/rewrite/delete, dependency install/uninstall, solver
+  uninstall, plugin package import, directory scan, network fetch, discovery
+  execution, validation execution, solver execution, issue mutation, release
+  mutation, tag mutation, asset mutation, version bump, validation-pass/fail
+  claim, issue-closure claim, bundled-solver claim, or certification claim.
+- Consequences: Future export-summary GUI, CLI, report/support, file export,
+  clipboard, reloadable-bundle, persistence writer, source-integration,
+  discovery-integration, validation, install/uninstall, solver-execution, issue,
+  release, tag, and asset gates have a stable data-only contract. Export
+  summaries remain in-memory, non-writing, non-reloadable by default,
+  non-validating, and non-mutating in this gate. User/plugin manifests remain
+  untrusted by default; built-ins remain authoritative; local path redaction
+  remains enforced; stale sources require re-preview; conflicts keep built-ins
+  winning by default; unsafe claims are never accepted; deactivation/reactivation
+  history and historical evidence remain retained; skipped-missing evidence
+  remains neither pass nor failure; package metadata remains `0.1.5rc1`; public
+  prerelease remains `v0.1.5-rc1`; and live optional validation issues `#6`
+  through `#11` remain open and separate.

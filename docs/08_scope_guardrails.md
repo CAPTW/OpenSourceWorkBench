@@ -100,6 +100,18 @@ request should stop, park, or defer.
   import, directory scanning, network fetching, discovery execution, validation
   execution, solver execution, dependency installation, issue mutation, release
   mutation, bundled-solver claims, and certification claims out of scope.
+- Experimental optional solver plugin manifest export-summary view-model records
+  that remain pure Python and UI-agnostic: redacted header, section, source,
+  candidate, acknowledgement, diagnostic, redaction/privacy, stale-source,
+  conflict, unsafe-claim, evidence/history, limitation, non-action flag, and
+  disabled/future action states over supplied records, without file export, file
+  writes, export file creation, clipboard behavior, report attachment,
+  reloadable bundles, runtime persistence behavior, settings files, runtime state
+  files, schema files, ProjectSchema mutation, GUI behavior, CLI behavior, reload
+  behavior, source behavior mutation, discovery execution, validation execution,
+  solver execution, dependency installation, issue mutation, release mutation,
+  tag mutation, asset mutation, version bump, validation claims, or certification
+  claims.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.
@@ -979,6 +991,19 @@ Scope drift is any change that:
   validation-fail evidence, solver execution, issue closure, release mutation, tag
   mutation, asset mutation, version bump, bundled-solver claims, or certification
   claims without a separate implementation gate;
+- turns the optional solver plugin manifest export-summary view-model into file
+  export, file writes, export file creation, clipboard behavior, report
+  attachment, reloadable bundle creation, runtime persistence behavior, settings
+  file creation, runtime state file creation, schema file creation, ProjectSchema
+  mutation, GUI behavior, CLI behavior, reload behavior, automatic activation,
+  trust restoration, file restore/rewrite/delete, dependency installation,
+  dependency uninstall, solver uninstall,
+  activation/deactivation/reactivation/discovery-refresh/persistence source
+  mutation, trusted-by-default third-party manifests, plugin package import,
+  directory scanning, network fetching, automatic discovery execution,
+  validation-pass or validation-fail evidence, solver execution, issue closure,
+  release mutation, tag mutation, asset mutation, version bump, bundled-solver
+  claim, or certification claim without a separate gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is

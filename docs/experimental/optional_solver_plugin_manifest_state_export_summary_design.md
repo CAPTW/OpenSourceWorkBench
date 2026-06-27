@@ -50,6 +50,20 @@ Status boundaries:
 - no validation-fail claim
 - no certification claim
 
+## Implementation follow-up
+
+OSW-EXP-097 implements the pure export-summary view-model described by this
+design as
+`OptionalSolverPluginManifestExportSummaryViewModel` in
+`src/osw/experimental/optional_solvers/plugin_manifest_export_summary_viewmodel.py`.
+The implementation is in-memory, redacted by default, acknowledgement-aware,
+history-retaining, non-authoritative, non-writing, non-persistent, and
+non-reloadable by default. It does not add file export, clipboard behavior,
+report attachment, reloadable bundles, GUI behavior, CLI behavior, discovery
+execution, validation execution, solver execution, issue mutation, release
+mutation, tag mutation, asset mutation, version bump, validation-pass/fail
+claims, issue-closure claims, or certification claims.
+
 ## Purpose
 
 Define future export-summary semantics for optional solver plugin manifest UX
