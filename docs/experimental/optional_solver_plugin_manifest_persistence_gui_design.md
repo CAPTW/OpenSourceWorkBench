@@ -766,3 +766,16 @@ summaries, OSW-EXP-092 implemented the persistence view-model, OSW-EXP-093
 implemented the persistence schema model, and OSW-EXP-094 designs the future
 persistence GUI. If the repo later reserves different numbering, follow the
 latest repository convention while preserving these safety boundaries.
+
+## Follow-up: persistence GUI implementation (OSW-EXP-095)
+
+OSW-EXP-095 implements the PySide review panel designed here as
+`OptionalSolverPluginManifestPersistencePanel`. The implementation remains
+view-model/schema-model driven and non-writing: it renders supplied persistence
+view-model and schema-model records, keeps acknowledgement interaction
+widget-local and non-persistent, and adds no runtime persistence behavior, file
+writes, settings files, runtime state files, schema files, ProjectSchema
+mutation, file/save dialogs, reload/export/clipboard/open-output-folder behavior,
+CLI behavior, discovery execution, validation execution, solver execution,
+issue/release/tag/asset mutation, version bump, validation-pass/fail claim, or
+certification claim.

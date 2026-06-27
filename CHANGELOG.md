@@ -6,6 +6,27 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Persistence GUI
+
+- Added `OptionalSolverPluginManifestPersistencePanel`, a view-model/schema-model
+  driven PySide review panel for supplied optional solver plugin manifest
+  persistence readiness records.
+- Rendered summary, sources, candidates, acknowledgements and expiry policy,
+  diagnostics, redaction/privacy, schema/migration, stale-source/re-preview,
+  conflict/shared-stack, unsafe-claim, evidence/history, trust/provenance,
+  non-action flag, safety, and disabled/future action-state sections, with
+  widget-local non-persistent acknowledgement interaction through an injected
+  pure callback.
+- Kept the slice review-only and non-writing: no runtime persistence behavior, no
+  file writes, no settings file creation, no runtime state file creation, no
+  schema file creation, no ProjectSchema mutation, no file/save dialogs, no
+  reload/export/clipboard/open-output-folder behavior, no CLI behavior, no
+  automatic activation, no trust restoration, no file mutation, no dependency
+  install/uninstall, no solver uninstall, no plugin package import, no directory
+  scan, no network fetch, no discovery execution, no validation execution, no
+  solver execution, no issue/release/tag/asset mutation, no version bump, no
+  validation-pass/fail claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Persistence GUI Design
 
 - Designed optional solver plugin manifest persistence GUI semantics as a future

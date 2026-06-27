@@ -344,3 +344,13 @@ acknowledgement expiry, schema/migration review, stale-source/re-preview review,
 conflict/shared-stack review, unsafe-claim review, evidence/history retention,
 trust/provenance badges, disabled action states, and non-action flags as future
 display semantics only.
+
+## Follow-up: persistence GUI implementation (OSW-EXP-095)
+
+OSW-EXP-095 adds `OptionalSolverPluginManifestPersistencePanel`, which can render
+caller-supplied in-memory schema model records alongside the persistence
+view-model. The panel does not serialize this schema model, create a schema file,
+create a runtime state file, create settings, mutate ProjectSchema, perform
+migration behavior, reload persisted state, export summaries, or turn schema
+records into persistence. The schema model remains pure, in-memory, and
+non-writing.

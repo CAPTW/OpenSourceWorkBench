@@ -344,3 +344,16 @@ the view-model pure and keeps file writes, settings files, runtime state files,
 schema files, ProjectSchema mutation, reload/export behavior, automatic
 activation, trust restoration, discovery/validation/solver execution,
 install/uninstall behavior, and issue/release/tag/asset mutation future-gated.
+
+## Follow-up: persistence GUI implementation (OSW-EXP-095)
+
+OSW-EXP-095 adds `OptionalSolverPluginManifestPersistencePanel`, a PySide review
+surface that consumes this view-model without changing it. The panel renders
+summary, source, candidate, acknowledgement, diagnostic, redaction,
+schema/migration, stale-source, conflict, unsafe-claim, evidence/history,
+trust/provenance, non-action flag, and disabled action-state records. It keeps
+acknowledgement interaction widget-local and non-persistent and adds no runtime
+persistence behavior, file writes, settings files, runtime state files, schema
+files, ProjectSchema mutation, CLI behavior, reload/export behavior, discovery
+execution, validation execution, solver execution, install/uninstall behavior,
+or issue/release/tag/asset mutation.

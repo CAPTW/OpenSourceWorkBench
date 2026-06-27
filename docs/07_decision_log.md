@@ -2813,3 +2813,40 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   separate evidence and trust gates exist; built-ins remain authoritative;
   deactivation/reactivation history and historical evidence are retained; and
   live optional validation issues `#6` through `#11` remain open and separate.
+
+## ADR-0129: Optional Solver Plugin Manifest Persistence GUI Is Review-Only And Non-Writing
+
+- Status: Accepted for experimental persistence GUI implementation
+- Date: 2026-06-27
+- Context: OSW-EXP-092 added a pure persistence view-model, OSW-EXP-093 added a
+  pure in-memory persistence schema model, and OSW-EXP-094 defined the GUI
+  semantics as design-only. The next safe slice is a bounded PySide review
+  surface that renders those supplied records without saving, reloading,
+  exporting, activating, trusting, validating, or executing anything.
+- Decision: Implement `OptionalSolverPluginManifestPersistencePanel` under
+  `src/osw/gui/dialogs/` and expose it through the lazy `osw.gui.dialogs`
+  package export. The panel renders summary, source, candidate, acknowledgement,
+  diagnostic, redaction/privacy, schema/migration, stale-source/re-preview,
+  conflict/shared-stack, unsafe-claim, evidence/history, trust/provenance,
+  non-action flag, safety, and disabled action-state records from the persistence
+  view-model and caller-supplied in-memory schema model records. Acknowledgement
+  interaction is widget-local and non-persistent through an injected pure
+  callback. All persistence, file, settings, runtime state, schema file,
+  ProjectSchema, reload, export, file dialog, save dialog, clipboard,
+  open-output-folder, CLI, automatic activation, trust restoration, discovery,
+  validation, solver execution, install/uninstall, solver uninstall, issue,
+  release, tag, asset, version, validation claim, issue-closure claim,
+  bundled-solver claim, and certification actions remain disabled or absent.
+- Consequences: Future persistence writer, settings-file, runtime state-file,
+  ProjectSchema integration, CLI persistence, reload, export-summary,
+  reloadable-bundle, source/discovery integration, validation, install/uninstall,
+  solver-execution, issue, release, tag, asset, version, trust-elevation, and
+  certification gates remain separate. Existing activation, deactivation,
+  reactivation, discovery-refresh, persistence view-model, and schema-model
+  behavior is not mutated. User/plugin manifests remain untrusted and
+  non-validating; built-ins remain authoritative; stale sources require
+  re-preview; unsafe claims remain blocked; deactivation/reactivation history and
+  historical evidence are retained; skipped-missing evidence remains neither pass
+  nor failure; package metadata remains `0.1.5rc1`; public prerelease remains
+  `v0.1.5-rc1`; and live optional validation issues `#6` through `#11` remain
+  open and separate.
