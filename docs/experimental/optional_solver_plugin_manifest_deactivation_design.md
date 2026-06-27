@@ -385,3 +385,13 @@ different sequence, follow the repo's latest convention and update this mapping.
 Persistence, discovery integration, validation, install/uninstall, solver
 execution, and any live validation remain separate, later gates regardless of
 numbering.
+
+## Reactivation follow-up
+
+Reactivation semantics are defined design-only in OSW-EXP-087:
+[Optional solver plugin manifest reactivation design](optional_solver_plugin_manifest_reactivation_design.md).
+Reactivation routes a deactivated candidate back through future activation review;
+it remains explicit, acknowledged, provenance-preserving,
+deactivation-history-retaining, non-validating, non-installing, non-executing, and
+non-persistent. The reactivation view-model extension, GUI implementation, and any
+state persistence remain future, separate gates.

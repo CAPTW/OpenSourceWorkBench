@@ -2529,3 +2529,38 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   evidence is retained; a deactivated state is not a validation failure; and live
   optional validation issues `#6` through `#11` remain open and separate with
   skipped-missing evidence still neither pass nor failure.
+
+## ADR-0121: Optional Solver Plugin Manifest Reactivation Starts As Design-Only
+
+- Status: Accepted for experimental reactivation design
+- Date: 2026-06-27
+- Context: OSW-EXP-086 added a view-model-driven deactivation GUI surface.
+  Deactivated candidate state now has GUI visibility, but reactivation semantics
+  remain undefined. Reactivation could be confused with automatic activation,
+  trust restoration, validation success, dependency installation, solver
+  execution, issue closure, or release mutation without a design gate.
+- Decision: Define reactivation semantics as design-only before implementation.
+  Reactivation remains explicit, acknowledged, provenance-preserving,
+  deactivation-history-retaining, non-validating, non-installing, non-executing,
+  non-persistent, and separate from discovery, issues, releases, tags, assets, and
+  certification. Specify reactivation preconditions, acknowledgements, a
+  source/trust/provenance model, a reactivation state machine, a conflict/
+  shared-stack policy, a stale-source/re-preview policy, a validation/evidence
+  policy, and design-only `OSPMG_REACTIVATION_*` diagnostic reservations.
+  Reactivation routes a deactivated candidate back through future activation
+  review; it does not directly activate, trust, validate, install, uninstall,
+  execute, or persist anything.
+- Consequences: Future reactivation view-model and GUI implementation gates have a
+  safety contract. No runtime behavior changes in this gate, and live optional
+  validation issues `#6` through `#11` remain open and separate. User/plugin
+  manifests remain untrusted and non-validating unless separate evidence and trust
+  gates exist; built-ins remain authoritative; deactivation history and historical
+  validation evidence are retained; and skipped-missing evidence remains neither
+  pass nor failure. No runtime source, GUI source, view-model source, CLI source,
+  reactivation implementation, reactivation persistence, automatic activation,
+  trust restoration, file restore/rewrite/delete, dependency install/uninstall,
+  solver uninstall, plugin package import, directory scan, network fetch, discovery
+  execution, validation execution, solver execution, release edit, issue mutation,
+  tag mutation, asset mutation, bundled-solver claim, certification claim,
+  validation-pass claim, validation-fail claim, issue-closure claim, or version
+  change occurs in this design gate.

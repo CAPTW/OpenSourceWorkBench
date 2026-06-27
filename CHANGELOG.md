@@ -6,6 +6,25 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reactivation Design
+
+- Designed optional solver plugin manifest reactivation semantics as a future
+  explicit, acknowledged, provenance-preserving, deactivation-history-retaining,
+  non-validating, non-installing, non-executing, non-persistent, and
+  issue/release-safe workflow.
+- Defined reactivation definition and non-meaning, preconditions,
+  acknowledgements, source/trust/provenance labels, a reactivation state machine,
+  a conflict/shared-stack policy, a stale-source/re-preview policy, a
+  validation/evidence-retention policy, and design-only `OSPMG_REACTIVATION_*`
+  diagnostic reservations.
+- Kept the slice docs/tests-only: no reactivation implementation, no reactivation
+  persistence, no GUI reactivation behavior, no CLI reactivation, no automatic
+  activation, no trust restoration, no file restoration/rewrite/deletion, no
+  dependency install/uninstall, no solver uninstall, no plugin package import, no
+  directory scan, no network fetch, no discovery execution, no validation
+  execution, no solver execution, no issue/release/tag/asset mutation, no version
+  bump, no validation-pass/fail claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Deactivation GUI
 
 - Added a view-model driven PySide deactivation GUI surface for optional solver

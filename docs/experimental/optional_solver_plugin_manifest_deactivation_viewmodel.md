@@ -228,7 +228,9 @@ non-mutating; the view-model itself remains pure and gains no PySide/Qt imports.
 
 ## Future gates
 
-- `OSW-EXP-087_OPTIONAL_SOLVER_PLUGIN_MANIFEST_REACTIVATION_DESIGN`
+- `OSW-EXP-087_OPTIONAL_SOLVER_PLUGIN_MANIFEST_REACTIVATION_DESIGN` — designed in
+  [Optional solver plugin manifest reactivation design](optional_solver_plugin_manifest_reactivation_design.md)
+  (design-only; reactivation view-model/GUI/persistence remain future-gated).
 - A future deactivation persistence gate (out of scope here).
 - A future deactivation source/discovery-integration gate.
 - `OSW-VALID` prepared-machine validation reuse.
