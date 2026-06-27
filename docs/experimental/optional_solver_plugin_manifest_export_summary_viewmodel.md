@@ -298,6 +298,19 @@ OSW-EXP-097 binds the design to deterministic in-memory records and adapters
 from the persistence view-model/schema model. It does not mutate those prior
 models or their source behavior.
 
+OSW-EXP-098 follows this view-model with a design-only future export-summary GUI
+review contract. It does not modify this module and does not add GUI
+implementation, file export, file writes, export file creation, report file
+creation, clipboard behavior, report attachment, open-output-folder behavior,
+reloadable bundle creation, runtime persistence behavior, settings files,
+runtime state files, schema files, ProjectSchema mutation, CLI behavior, reload
+behavior, source mutation, automatic activation, trust restoration, file
+restore/rewrite/delete behavior, dependency install/uninstall behavior, solver
+uninstall behavior, plugin package import, directory scan, network fetch,
+discovery execution, validation execution, solver execution, issue/release/tag
+or asset mutation, version bump, validation-pass/fail claim, issue-closure
+claim, bundled-solver claim, or certification claim.
+
 ## Future gates
 
 Future work remains separate:

@@ -2930,3 +2930,39 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   remains neither pass nor failure; package metadata remains `0.1.5rc1`; public
   prerelease remains `v0.1.5-rc1`; and live optional validation issues `#6`
   through `#11` remain open and separate.
+
+## ADR-0132: Optional Solver Plugin Manifest Export Summary GUI Starts As Design-Only
+
+- Status: Accepted for experimental export-summary GUI design
+- Date: 2026-06-27
+- Context: OSW-EXP-091 defined state export-summary semantics as design-only,
+  and OSW-EXP-097 added a pure export-summary view-model. Future users need a
+  GUI review surface, but export-summary GUI could be mistaken for file export,
+  clipboard behavior, report attachment, reloadable bundle creation, persistence,
+  validation evidence, issue closure, release mutation, or certification.
+- Decision: Define export-summary GUI semantics as design-only before
+  implementation. Export-summary GUI remains view-model driven, explicit,
+  redaction-first, acknowledgement-aware, stale-source-aware, limitation-visible,
+  history-retaining, non-validating, non-writing, non-persistent,
+  non-reloadable, non-installing, non-executing, non-mutating, and separate from
+  discovery, validation, issues, releases, tags, assets, clipboard, report
+  attachments, reloadable bundles, file export, file writes, ProjectSchema,
+  persistence, reload behavior, dependency install/uninstall, solver uninstall,
+  solver execution, trust restoration, and certification.
+- Consequences: Future export-summary GUI implementation has a safety contract.
+  No runtime behavior changes in this gate. No GUI source, runtime source,
+  view-model source, schema-model source, CLI source, ProjectSchema source,
+  persistence writer, settings file, runtime state file, schema file, export
+  file, report file, reloadable bundle, file dialog, save dialog, clipboard
+  action, report attachment action, open-output-folder action, dependency
+  install/uninstall, solver uninstall, plugin package import, directory scan,
+  network fetch, discovery execution, validation execution, solver execution,
+  issue mutation, release mutation, tag mutation, asset mutation, version bump,
+  validation-pass claim, validation-fail claim, issue-closure claim,
+  bundled-solver claim, or certification claim is added. User/plugin manifests
+  remain untrusted and non-validating unless separate evidence and trust gates
+  exist; built-ins remain authoritative; deactivation/reactivation history and
+  historical evidence are retained; skipped-missing remains neither pass nor
+  failure; package metadata remains `0.1.5rc1`; public prerelease remains
+  `v0.1.5-rc1`; and live optional validation issues `#6` through `#11` remain
+  open and separate.

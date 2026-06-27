@@ -112,6 +112,22 @@ request should stop, park, or defer.
   solver execution, dependency installation, issue mutation, release mutation,
   tag mutation, asset mutation, version bump, validation claims, or certification
   claims.
+- Design-only optional solver plugin manifest export-summary GUI contracts that
+  define future PySide review semantics over the OSW-EXP-097 export-summary
+  view-model, including header, sections, source/provenance, candidate,
+  acknowledgement, diagnostics, redaction/privacy, stale-source/re-preview,
+  conflict/shared-stack, unsafe-claim, evidence/history, limitation, non-action
+  flag, action-state, safety guidance, and `OSPMG_EXPORT_SUMMARY_GUI_*`
+  diagnostic boundaries, without GUI implementation, file export, file writes,
+  export file creation, report file creation, clipboard behavior, report
+  attachment, open-output-folder behavior, reloadable bundle creation, runtime
+  persistence behavior, settings files, runtime state files, schema files,
+  ProjectSchema mutation, CLI behavior, reload behavior, source behavior
+  mutation, automatic activation, trust restoration, file mutation, dependency
+  installation, dependency uninstall, solver uninstall, plugin package import,
+  directory scan, network fetch, discovery execution, validation execution,
+  solver execution, issue/release/tag/asset mutation, version bump,
+  validation-pass/fail claim, or certification claim.
 - ProjectSchema, UnitSystem, MaterialDB, ResultDataset, and FigureDataset.
 - Standard/exported CAD, CAE, CFD, chemistry, `.m`, and `.mat` workflows.
 - meshio, Gmsh, PyVista, and Matplotlib integration points.
@@ -1004,6 +1020,18 @@ Scope drift is any change that:
   validation-pass or validation-fail evidence, solver execution, issue closure,
   release mutation, tag mutation, asset mutation, version bump, bundled-solver
   claim, or certification claim without a separate gate;
+- turns the optional solver plugin manifest export-summary GUI design into GUI
+  implementation, file export, file writes, export file creation, report file
+  creation, clipboard behavior, report attachment, open-output-folder behavior,
+  reloadable bundle creation, runtime persistence behavior, settings file
+  creation, runtime state file creation, schema file creation, ProjectSchema
+  mutation, CLI behavior, reload behavior, automatic activation, trust
+  restoration, file restore/rewrite/delete, dependency installation, dependency
+  uninstall, solver uninstall, plugin package import, directory scanning,
+  network fetching, automatic discovery execution, validation-pass or
+  validation-fail evidence, solver execution, issue closure, release mutation,
+  tag mutation, asset mutation, version bump, bundled-solver claim, or
+  certification claim without a separate gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is

@@ -185,6 +185,20 @@ renders an in-memory redacted summary accessor only. It adds no file dialog, no
 save dialog, no reload behavior, no export behavior, no clipboard behavior, no
 shell/browser action, and no open-output-folder behavior.
 
+OSW-EXP-098 designs a separate export-summary GUI review surface over
+OSW-EXP-097. It is not persistence GUI behavior and adds no GUI implementation,
+file export, file writes, export file creation, report file creation, clipboard
+behavior, report attachment, open-output-folder behavior, reloadable bundle
+creation, persistence writer behavior, settings files, runtime state files,
+schema files, ProjectSchema mutation, CLI behavior, reload behavior, activation
+source behavior mutation, deactivation source behavior mutation, reactivation
+source behavior mutation, discovery-refresh source behavior mutation, automatic
+activation, trust restoration, file restore/rewrite/delete behavior, dependency
+install/uninstall behavior, solver uninstall behavior, plugin package import,
+directory scan, network fetch, discovery execution, validation execution, solver
+execution, issue/release/tag/asset mutation, version bump, validation-pass/fail
+claim, issue-closure claim, bundled-solver claim, or certification claim.
+
 ## Relationship to live optional validation issues
 
 issues `#6` through `#11` remain open. Persistence readiness is not live optional

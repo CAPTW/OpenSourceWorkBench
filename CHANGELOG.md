@@ -6,6 +6,30 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Export-Summary GUI Design
+
+- Designed optional solver plugin manifest export-summary GUI semantics as a
+  future view-model driven, redaction-first, acknowledgement-aware,
+  stale-source-aware, limitation-visible, history-retaining, non-validating,
+  non-writing, non-persistent, non-reloadable, non-installing, non-executing,
+  non-mutating, and issue/release-safe review workflow.
+- Defined future export-summary header, sections, source/provenance, candidate
+  summary, acknowledgement, diagnostics, redaction/privacy, stale-source/
+  re-preview, conflict/shared-stack, unsafe-claim, evidence/history, limitation,
+  non-action flag, action-state, and `OSPMG_EXPORT_SUMMARY_GUI_*` diagnostic
+  design boundaries.
+- Kept the slice docs/tests-only: no GUI implementation, no file export, no file
+  writes, no export file creation, no report file creation, no clipboard
+  behavior, no report attachment, no open-output-folder behavior, no reloadable
+  bundle creation, no runtime persistence behavior, no settings file creation,
+  no runtime state file creation, no schema file creation, no ProjectSchema
+  mutation, no CLI behavior, no reload behavior, no source behavior mutation, no
+  automatic activation, no trust restoration, no file mutation, no dependency
+  install/uninstall, no solver uninstall, no plugin package import, no directory
+  scan, no network fetch, no discovery execution, no validation execution, no
+  solver execution, no issue/release/tag/asset mutation, no version bump, no
+  validation-pass/fail claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Export-Summary View-Model
 
 - Added a pure optional solver plugin manifest export-summary view-model for

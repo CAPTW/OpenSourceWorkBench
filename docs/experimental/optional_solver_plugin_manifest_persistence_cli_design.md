@@ -694,6 +694,18 @@ surfaces require separate gates. Export summaries remain non-reloadable unless a
 future state-bundle gate defines otherwise. A report/export surface is not
 validation evidence.
 
+OSW-EXP-098 designs export-summary GUI semantics only. It does not add CLI
+behavior, persistence CLI behavior, GUI implementation, file export, file writes,
+export file creation, report file creation, clipboard behavior, report
+attachment, open-output-folder behavior, reloadable bundle creation, runtime
+persistence behavior, settings files, runtime state files, schema files,
+ProjectSchema mutation, reload behavior, source mutation, automatic activation,
+trust restoration, file restore/rewrite/delete behavior, dependency
+install/uninstall behavior, solver uninstall behavior, plugin package import,
+directory scan, network fetch, discovery execution, validation execution, solver
+execution, issue/release/tag/asset mutation, version bump, validation-pass/fail
+claim, issue-closure claim, bundled-solver claim, or certification claim.
+
 ## 30. Relationship to live optional validation issues
 
 Issues `#6` through `#11` remain open. The persistence CLI is not live optional
