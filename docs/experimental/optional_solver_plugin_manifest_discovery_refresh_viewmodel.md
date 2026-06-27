@@ -238,9 +238,17 @@ User-selected and plugin-provided manifests remain untrusted; built-ins remain
 authoritative; skipped-missing optional validation remains neither pass nor
 failure, and issues `#6` through `#11` stay open.
 
+## GUI implementation status
+
+A PySide GUI surface for this view-model is implemented in OSW-EXP-084:
+[Optional solver plugin manifest discovery refresh GUI implementation](optional_solver_plugin_manifest_discovery_refresh_gui_implementation.md)
+(`src/osw/gui/dialogs/optional_solver_plugin_manifest_discovery_refresh_panel.py`).
+The panel renders this view-model's records only and stays view-model driven and
+non-executing; the view-model itself remains pure and gains no PySide/Qt imports.
+
 ## Future gates
 
-- `OSW-EXP-084_OPTIONAL_SOLVER_PLUGIN_MANIFEST_DISCOVERY_REFRESH_GUI_IMPLEMENTATION`
 - `OSW-EXP-085_OPTIONAL_SOLVER_PLUGIN_MANIFEST_DEACTIVATION_VIEWMODEL_EXTENSION`
 - `OSW-EXP-086_OPTIONAL_SOLVER_PLUGIN_MANIFEST_DEACTIVATION_GUI_IMPLEMENTATION`
+- A future discovery-refresh source-integration gate (runtime integration)
 - `OSW-VALID` prepared-machine validation reuse

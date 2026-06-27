@@ -395,3 +395,13 @@ CLI behavior, activation/deactivation persistence, plugin package import,
 directory scan, network fetch, discovery execution, validation execution, solver
 execution, dependency installation, and issue/release/tag/asset mutation remain
 future, separate gates.
+
+A view-model-driven PySide GUI surface over that view-model is implemented in
+OSW-EXP-084:
+[Optional solver plugin manifest discovery refresh GUI implementation](optional_solver_plugin_manifest_discovery_refresh_gui_implementation.md)
+(`src/osw/gui/dialogs/optional_solver_plugin_manifest_discovery_refresh_panel.py`).
+The panel renders refresh readiness, modes, source inclusion/exclusion,
+acknowledgements, diagnostics, conflicts, unsafe claims, trust/provenance, and
+disabled/future actions only; it implements no runtime discovery integration and
+changes no passive discovery behavior. Runtime discovery-refresh source
+integration remains a future, separate gate.

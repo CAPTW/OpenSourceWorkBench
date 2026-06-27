@@ -2440,3 +2440,33 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   claim, or version change occurs in this view-model gate, and live optional
   validation issues `#6` through `#11` remain open and separate with
   skipped-missing evidence still neither pass nor failure.
+
+## ADR-0118: Optional Solver Plugin Manifest Discovery Refresh GUI Is ViewModel-Driven And Non-Executing
+
+- Status: Accepted for experimental discovery-refresh GUI implementation
+- Date: 2026-06-27
+- Context: OSW-EXP-082 defined discovery-refresh integration semantics as
+  design-only and OSW-EXP-083 added a pure discovery-refresh view-model. The next
+  safe slice is a PySide GUI surface that renders refresh readiness, modes, source
+  inclusion/exclusion, acknowledgements, diagnostics, conflicts, unsafe claims,
+  and action availability without runtime discovery side effects.
+- Decision: Implement a PySide discovery-refresh panel
+  (`OptionalSolverPluginManifestDiscoveryRefreshPanel`) under
+  `src/osw/gui/dialogs/`. The panel consumes
+  `OptionalSolverPluginManifestDiscoveryRefreshViewModel` records and renders
+  summary, refresh mode/state, discovery sources, deactivated candidates,
+  acknowledgements, diagnostics, conflicts, unsafe claims, trust/provenance
+  badges, safety guidance, and disabled/future action states. Acknowledgement
+  interaction is widget-local and non-persistent via an injected pure callback;
+  unsafe actions (run discovery, run validation, install dependency, execute
+  solver, close issue) stay disabled/future-only. The panel performs no runtime
+  discovery integration, passive discovery behavior change, activation/deactivation
+  persistence, plugin package import, directory scan, network fetch, discovery
+  execution, validation, dependency installation, solver execution, issue
+  mutation, release mutation, tag mutation, asset mutation, or version change.
+- Consequences: Users can inspect future discovery-refresh readiness and safety
+  requirements in the GUI. Runtime discovery integration remains future-gated.
+  Activated user/plugin manifest candidates remain untrusted and non-validating,
+  built-ins remain authoritative, refresh-ready is not validation evidence, and
+  live optional validation issues `#6` through `#11` remain open and separate with
+  skipped-missing evidence still neither pass nor failure.

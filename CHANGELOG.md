@@ -6,6 +6,24 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Discovery Refresh GUI
+
+- Added a view-model driven PySide discovery-refresh GUI surface for optional
+  solver plugin manifests, preserving no-runtime-discovery, no-validation,
+  no-install, no-execution, no-persistence, and issue/release-safe boundaries.
+- Rendered refresh summary, refresh mode/state, discovery source
+  inclusion/exclusion, deactivated candidates, acknowledgements, blockers,
+  diagnostics, conflicts, unsafe claims, trust/provenance badges, safety
+  guidance, and disabled/future action states from the OSW-EXP-083
+  discovery-refresh view-model, with widget-local non-persistent acknowledgement
+  interaction via an injected pure callback.
+- Kept the slice safe: no runtime discovery integration, no passive discovery
+  behavior change, no activation/deactivation persistence, no CLI behavior, no
+  plugin package import, no directory scan, no network fetch, no discovery
+  execution, no validation execution, no solver execution, no dependency install,
+  no issue mutation, no release mutation, no validation-pass claim, and no
+  certification claim.
+
 ### Optional Solver Plugin Manifest Discovery Refresh View-Model
 
 - Added a pure, side-effect-free optional solver plugin manifest discovery-refresh
