@@ -51,6 +51,14 @@ mutation, GUI persistence behavior, CLI persistence behavior, reload behavior,
 export summary behavior, discovery integration, validation, install/uninstall,
 solver execution, issue closure, and release mutation remain future-gated.
 
+OSW-EXP-100 design follow-up: the optional solver plugin manifest state writer
+is separately defined as design-only. It does not implement writes, settings
+files, runtime state files, schema files, reload behavior, export behavior,
+ProjectSchema mutation, GUI/CLI behavior, automatic activation, trust
+restoration, discovery, validation, solver execution, issue mutation, release
+mutation, tag mutation, asset mutation, version bump, validation-pass/fail
+claims, issue-closure claims, or certification claims.
+
 ## Purpose
 
 Define future persistence semantics for optional solver plugin manifest UX state,

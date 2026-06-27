@@ -26,6 +26,12 @@ rows.
 It is intended for future GUI/CLI/reload/export gates to render the same safety
 contract without making this gate responsible for saving state.
 
+OSW-EXP-100 defines the future state writer as a separate design-only contract.
+The persistence view-model remains pure input to future writer review; it does
+not write files, create runtime state, create settings, reload, export, mutate
+ProjectSchema, activate, restore trust, run discovery, run validation, execute
+solvers, mutate issues, mutate releases, or certify anything.
+
 ## Public module/class names
 
 - Module:

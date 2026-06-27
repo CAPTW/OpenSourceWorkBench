@@ -38,6 +38,14 @@ without writing files, creating settings, creating runtime state, mutating
 ProjectSchema, reloading state, exporting summaries, activating candidates,
 restoring trust, running discovery, running validation, or executing solvers.
 
+OSW-EXP-100 defines the future state writer as a separate design-only contract.
+This panel remains review-only and does not add writer controls, file/save
+dialogs, file writes, runtime state files, settings files, schema files, reload
+behavior, export behavior, ProjectSchema mutation, automatic activation, trust
+restoration, discovery execution, validation execution, solver execution, issue
+mutation, release mutation, tag mutation, asset mutation, version bump,
+validation-pass/fail claim, or certification claim.
+
 ## Public module and class names
 
 - Module:

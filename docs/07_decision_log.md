@@ -3003,3 +3003,29 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   provenance-preserving, limitation-visible, and history-retaining. Package
   metadata remains `0.1.5rc1`, public prerelease remains `v0.1.5-rc1`, and live
   optional validation issues `#6` through `#11` remain open and separate.
+
+## ADR-0134: Optional Solver Plugin Manifest State Writer Starts As Design-Only
+
+- Status: Accepted for experimental state writer design
+- Date: 2026-06-28
+- Context: OSW-EXP-090 defined state persistence semantics. OSW-EXP-092 added a
+  pure persistence view-model. OSW-EXP-093 added a pure in-memory persistence
+  schema model. OSW-EXP-095 added a non-writing persistence GUI review surface.
+  OSW-EXP-096 defined persistence CLI semantics as dry-run/review/explain only.
+  OSW-EXP-097 and OSW-EXP-099 added export-summary view-model and GUI review
+  surfaces. A future writer is useful, but a writer can easily be mistaken for
+  validation evidence, trust restoration, automatic activation, ProjectSchema
+  mutation, reload, export, issue closure, or release mutation.
+- Decision: Define state writer semantics as design-only before implementation.
+  The future writer must be explicit, redaction-first, schema-versioned,
+  acknowledgement-aware, stale-source-aware, conflict-aware,
+  unsafe-claim-blocking, history-retaining, non-validating,
+  non-trust-restoring, non-activating, non-installing, non-executing,
+  issue/release-safe, and separate from reload/export/report/ProjectSchema
+  behavior.
+- Consequences: Future writer implementation has a safety contract. No runtime
+  behavior changes in this gate. No files are written in this gate. User/plugin
+  manifests remain untrusted and non-validating unless separate evidence and
+  trust gates exist. Package metadata remains `0.1.5rc1`, public prerelease
+  remains `v0.1.5-rc1`, and live optional validation issues `#6` through `#11`
+  remain open and separate.

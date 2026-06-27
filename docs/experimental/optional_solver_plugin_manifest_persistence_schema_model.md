@@ -30,6 +30,14 @@ It exists so that a future schema writer, settings-file model, GUI, CLI, reload,
 or export gate can agree on one redaction-first, acknowledgement-aware,
 schema-versioned contract without this gate writing anything.
 
+OSW-EXP-100 defines the future state writer as a separate design-only contract.
+This schema model remains in-memory and does not become a writer, settings-file
+model, runtime state file creator, schema file creator, reload path, export path,
+ProjectSchema integration, GUI/CLI action, trust restoration, automatic
+activation, discovery execution, validation execution, solver execution, issue
+mutation, release mutation, tag mutation, asset mutation, version bump,
+validation-pass/fail claim, or certification claim.
+
 ## Public module/class names
 
 - Module:

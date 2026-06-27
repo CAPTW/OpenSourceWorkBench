@@ -6,6 +6,23 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest State Writer Design
+
+- Designed optional solver plugin manifest state-writer semantics as a future
+  explicit, redaction-first, schema-versioned, acknowledgement-aware,
+  stale-source-aware, conflict-aware, unsafe-claim-blocking, history-retaining,
+  non-validating, non-trust-restoring, non-activating, non-installing,
+  non-executing, and issue/release-safe workflow.
+- Kept the slice docs/tests-only: no writer implementation, no file writes, no
+  runtime state files, no settings files, no schema files, no export files, no
+  report files, no reloadable bundles, no ProjectSchema mutation, no GUI/CLI/
+  reload/export behavior, no file/save dialogs, no clipboard/report/open-folder
+  behavior, no automatic activation, no trust restoration, no file mutation, no
+  dependency install/uninstall, no solver uninstall, no plugin package import,
+  no directory scan, no network fetch, no discovery/validation/solver execution,
+  no issue/release/tag/asset mutation, no version bump, no validation-pass/fail
+  claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Export-Summary GUI
 
 - Added a view-model driven PySide export-summary GUI review surface for

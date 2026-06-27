@@ -78,6 +78,15 @@ permission to persist, reload, export, activate, trust, validate, install,
 execute, close issues, mutate releases, mutate tags, mutate assets, or certify
 anything.
 
+OSW-EXP-100 defines the future state writer as a separate design-only contract.
+This CLI design remains non-implemented and dry-run/review/explain oriented; it
+does not add write commands, save/load commands, file writes, runtime state
+files, settings files, schema files, reload behavior, export behavior,
+ProjectSchema mutation, GUI behavior, automatic activation, trust restoration,
+discovery execution, validation execution, solver execution, issue mutation,
+release mutation, tag mutation, asset mutation, version bump, validation-pass/
+fail claim, or certification claim.
+
 ## 3. Current state before persistence CLI
 
 - OSW-EXP-090 defines the future optional solver plugin manifest state

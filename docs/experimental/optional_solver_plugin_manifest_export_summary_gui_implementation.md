@@ -29,6 +29,15 @@ conflict/shared-stack rows, unsafe-claim rows, evidence/history rows, limitation
 rows, trust/provenance text, non-action flags, safety guidance, and
 disabled/future action states.
 
+OSW-EXP-100 defines the future state writer as a separate design-only contract.
+This export-summary panel remains review-only and non-writing; it does not add
+writer controls, file writes, runtime state files, settings files, schema files,
+reload behavior, export behavior, report files, clipboard/report/open-folder
+behavior, ProjectSchema mutation, GUI writer behavior, CLI behavior, automatic
+activation, trust restoration, discovery execution, validation execution, solver
+execution, issue mutation, release mutation, tag mutation, asset mutation,
+version bump, validation-pass/fail claim, or certification claim.
+
 ## GUI flow
 
 The initial state uses

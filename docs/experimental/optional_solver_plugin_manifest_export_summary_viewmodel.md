@@ -59,6 +59,15 @@ so future GUI, CLI, report, support-summary, file-export, clipboard, and bundle
 gates have a deterministic record contract without granting permission to write,
 persist, reload, validate, execute, trust, or mutate anything.
 
+OSW-EXP-100 defines the future state writer as a separate design-only contract.
+The export-summary view-model remains non-writing and non-persistent; it does
+not become a state writer, runtime state file creator, settings file creator,
+schema file creator, reload path, ProjectSchema integration, GUI/CLI action,
+automatic activation, trust restoration, discovery execution, validation
+execution, solver execution, issue mutation, release mutation, tag mutation,
+asset mutation, version bump, validation-pass/fail claim, or certification
+claim.
+
 An export summary remains:
 
 - redaction-first
