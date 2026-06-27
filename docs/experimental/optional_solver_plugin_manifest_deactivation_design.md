@@ -332,6 +332,18 @@ and no certification claim. User-selected and plugin-provided manifests remain
 untrusted; skipped-missing optional validation remains neither pass nor failure,
 and issues `#6` through `#11` stay open.
 
+## View-model extension follow-up
+
+OSW-EXP-085 implements the pure deactivation view-model extension only:
+[Optional solver plugin manifest deactivation view-model](optional_solver_plugin_manifest_deactivation_viewmodel.md)
+(`src/osw/experimental/optional_solvers/plugin_manifest_deactivation_viewmodel.py`).
+It realizes the classification/record layer of this design — deactivation
+readiness, acknowledgements, diagnostics, shared-stack warnings, evidence
+retention, trust badges, and disabled/future action states — and stays pure and
+non-mutating. Deactivation persistence, GUI button behavior, CLI behavior,
+discovery integration, validation, install/uninstall, solver execution, issue
+closure, and release mutation remain future-gated.
+
 ## Discovery-refresh integration follow-up
 
 [Optional solver plugin manifest discovery refresh integration design](optional_solver_plugin_manifest_discovery_refresh_integration_design.md)

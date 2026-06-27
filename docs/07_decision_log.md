@@ -2470,3 +2470,32 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   built-ins remain authoritative, refresh-ready is not validation evidence, and
   live optional validation issues `#6` through `#11` remain open and separate with
   skipped-missing evidence still neither pass nor failure.
+
+## ADR-0119: Optional Solver Plugin Manifest Deactivation ViewModel Is Pure And Non-Mutating
+
+- Status: Accepted for experimental deactivation view-model implementation
+- Date: 2026-06-27
+- Context: OSW-EXP-081 defined deactivation semantics as design-only, and
+  OSW-EXP-079 already included a generic `deactivated` activation state. The next
+  safe slice is a pure view-model extension that models deactivation readiness,
+  acknowledgements, evidence retention, diagnostics, shared-stack warnings, and
+  action availability without runtime side effects.
+- Decision: Implement a pure deactivation view-model
+  (`OptionalSolverPluginManifestDeactivationViewModel`) under
+  `src/osw/experimental/optional_solvers/`. The view-model consumes supplied
+  activation/deactivation candidate data and produces deterministic
+  deactivation-readiness, acknowledgement, diagnostic, shared-stack,
+  evidence-retention, trust, and action-state records over the OSW-EXP-081
+  deactivation state machine and `OSPMG_DEACTIVATION_*` vocabulary, with redacted
+  source references and honesty flags that remain false. It performs no file IO,
+  file deletion, GUI behavior, CLI behavior, activation/deactivation persistence,
+  plugin import, directory scan, network fetch, discovery execution, validation,
+  dependency install/uninstall, solver uninstall/execution, issue mutation,
+  release mutation, tag mutation, asset mutation, or version change.
+- Consequences: Future deactivation GUI or source-integration gates can bind to a
+  deterministic state model. Deactivation remains non-persistent and non-mutating
+  in this gate. User/plugin manifests remain untrusted, non-validating, and
+  provenance-preserving; built-ins remain authoritative; historical validation
+  evidence is retained; a deactivated candidate is not a validation failure; and
+  live optional validation issues `#6` through `#11` remain open and separate with
+  skipped-missing evidence still neither pass nor failure.

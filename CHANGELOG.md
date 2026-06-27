@@ -6,6 +6,24 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Deactivation View-Model Extension
+
+- Added a pure optional solver plugin manifest deactivation view-model extension
+  for readiness, acknowledgements, diagnostics, evidence retention, shared-stack
+  warnings, provenance, and disabled/future action states without persistence,
+  deletion, uninstall, discovery, validation, solver execution, or issue/release
+  mutation.
+- Modeled the OSW-EXP-081 deactivation state machine and `OSPMG_DEACTIVATION_*`
+  vocabulary over supplied activation candidate data (or caller-supplied
+  deactivation candidates) plus acknowledgement state, with redacted source
+  references and honesty flags that remain false.
+- Kept the slice side-effect-free: no deactivation persistence, no GUI behavior,
+  no CLI behavior, no file deletion, no dependency uninstall, no solver uninstall,
+  no plugin package import, no directory scan, no network fetch, no discovery
+  execution, no validation execution, no solver execution, no dependency install,
+  no issue mutation, no release mutation, no validation-pass/fail claim, and no
+  certification claim.
+
 ### Optional Solver Plugin Manifest Discovery Refresh GUI
 
 - Added a view-model driven PySide discovery-refresh GUI surface for optional
