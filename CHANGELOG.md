@@ -6,6 +6,29 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Persistence CLI Design
+
+- Designed optional solver plugin manifest persistence CLI semantics as a future
+  dry-run/review/explain workflow over persistence readiness, preserving
+  redaction-first, acknowledgement-aware, schema/migration-aware,
+  stale-source-aware, history-retaining, non-validating, non-writing,
+  non-installing, non-executing, non-mutating, and issue/release-safe
+  boundaries.
+- Defined future command vocabulary, stdout-only output modes, user flow states,
+  summary output, acknowledgement expiry, redaction/privacy, schema/migration,
+  stale-source/re-preview, conflict/shared-stack, unsafe-claim,
+  evidence/history, trust/provenance, action-state, exit-code, and
+  `OSPMG_PERSISTENCE_CLI_*` diagnostic design boundaries.
+- Kept the slice docs/tests-only: no CLI implementation, no runtime persistence
+  behavior, no file writes, no settings file creation, no runtime state file
+  creation, no schema file creation, no ProjectSchema mutation, no save/load/
+  reload/export behavior, no clipboard/open-output-folder behavior, no GUI
+  behavior, no automatic activation, no trust restoration, no file mutation, no
+  dependency install/uninstall, no solver uninstall, no plugin package import,
+  no directory scan, no network fetch, no discovery execution, no validation
+  execution, no solver execution, no issue/release/tag/asset mutation, no
+  version bump, no validation-pass/fail claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Persistence GUI
 
 - Added `OptionalSolverPluginManifestPersistencePanel`, a view-model/schema-model

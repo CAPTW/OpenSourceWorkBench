@@ -2850,3 +2850,39 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   nor failure; package metadata remains `0.1.5rc1`; public prerelease remains
   `v0.1.5-rc1`; and live optional validation issues `#6` through `#11` remain
   open and separate.
+
+## ADR-0130: Optional Solver Plugin Manifest Persistence CLI Starts As Design-Only
+
+- Status: Accepted for experimental persistence CLI design
+- Date: 2026-06-27
+- Context: OSW-EXP-092 added a pure persistence view-model, OSW-EXP-093 added a
+  pure in-memory persistence schema model, and OSW-EXP-095 added a
+  view-model/schema-model driven PySide persistence GUI review surface. A future
+  CLI surface is useful for headless review, CI, and support diagnostics, but CLI
+  persistence could be mistaken for save/load/reload, file writes, settings file
+  creation, runtime state file creation, schema file creation, ProjectSchema
+  mutation, automatic activation, trust restoration, validation evidence, issue
+  closure, release mutation, tag mutation, asset mutation, or certification.
+- Decision: Define persistence CLI semantics as design-only before
+  implementation. The persistence CLI remains dry-run/review/explain oriented,
+  explicit, redaction-first, acknowledgement-aware, schema/migration-aware,
+  stale-source-aware, history-retaining, non-validating, non-writing,
+  non-installing, non-executing, non-mutating, and separate from discovery,
+  validation, issues, releases, tags, assets, reloads, exports, ProjectSchema,
+  save/load commands, clipboard behavior, open-output-folder behavior,
+  dependency install/uninstall, solver uninstall, solver execution, and
+  certification.
+- Consequences: Future persistence CLI implementation has a safety contract. No
+  runtime behavior changes in this gate. No CLI source, runtime source, GUI
+  source, view-model source, schema-model source, ProjectSchema source,
+  persistence writer, settings file, runtime state file, schema file, export
+  file, reloadable bundle, clipboard action, open-output-folder action,
+  dependency install/uninstall, solver uninstall, plugin package import,
+  directory scan, network fetch, discovery execution, validation execution,
+  solver execution, issue mutation, release mutation, tag mutation, asset
+  mutation, version bump, validation-pass claim, validation-fail claim,
+  issue-closure claim, bundled-solver claim, or certification claim is added.
+  User/plugin manifests remain untrusted and non-validating unless separate
+  evidence and trust gates exist; built-ins remain authoritative;
+  deactivation/reactivation history and historical evidence are retained; and
+  live optional validation issues `#6` through `#11` remain open and separate.
