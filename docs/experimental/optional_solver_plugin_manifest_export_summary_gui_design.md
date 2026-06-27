@@ -816,3 +816,19 @@ export-summary view-model, and OSW-EXP-098 designs the future GUI review surface
 If the repository later reserves different numbering, follow the newest
 decision-log mapping and keep implementation, writer, CLI, validation, issue,
 release, tag, asset, and certification gates separate.
+
+## Implementation follow-up
+
+OSW-EXP-099 implements this review surface as
+`OptionalSolverPluginManifestExportSummaryPanel` in
+`src/osw/gui/dialogs/optional_solver_plugin_manifest_export_summary_panel.py`.
+The implementation remains view-model driven, non-exporting, non-writing,
+non-persistent, non-reloadable, non-installing, non-executing, non-mutating, and
+issue/release-safe. It adds no file export, file writes, export file creation,
+report file creation, clipboard behavior, report attachment,
+open-output-folder behavior, reloadable bundle creation, runtime persistence
+behavior, settings files, runtime state files, schema files, ProjectSchema
+mutation, CLI behavior, reload behavior, discovery execution, validation
+execution, solver execution, issue/release/tag/asset mutation, version bump,
+validation-pass/fail claim, issue-closure claim, bundled-solver claim, or
+certification claim.

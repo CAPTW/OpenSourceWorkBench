@@ -77,6 +77,19 @@ execution, solver execution, issue/release/tag/asset mutation, version bump,
 validation-pass/fail claim, issue-closure claim, bundled-solver claim, or
 certification claim.
 
+OSW-EXP-099 implements the bounded export-summary GUI review panel over that
+view-model. The implementation is non-exporting and display-only for supplied
+in-memory records; it adds no file export, file writes, export file creation,
+report file creation, clipboard behavior, report attachment,
+open-output-folder behavior, reloadable bundle creation, persistence writer
+behavior, settings files, runtime state files, schema files, ProjectSchema
+mutation, CLI behavior, reload behavior, source mutation, automatic activation,
+trust restoration, file restore/rewrite/delete behavior, dependency
+install/uninstall behavior, solver uninstall behavior, plugin package import,
+directory scan, network fetch, discovery execution, validation execution, solver
+execution, issue/release/tag/asset mutation, version bump, validation-pass/fail
+claim, issue-closure claim, bundled-solver claim, or certification claim.
+
 ## Purpose
 
 Define future export-summary semantics for optional solver plugin manifest UX

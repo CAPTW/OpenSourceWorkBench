@@ -6,6 +6,18 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Export-Summary GUI
+
+- Added a view-model driven PySide export-summary GUI review surface for
+  optional solver plugin manifests, preserving non-exporting, no file writes, no
+  clipboard, no report attachment, no reloadable bundle, no persistence, no
+  ProjectSchema mutation, no CLI/reload behavior, no discovery, no validation,
+  no solver execution, and issue/release-safe boundaries.
+- Rendered header, sections, source/provenance, candidate, acknowledgement,
+  diagnostic, redaction/privacy, stale-source/re-preview, conflict/shared-stack,
+  unsafe-claim, evidence/history, limitation, trust/provenance, non-action flag,
+  safety, and disabled/future action-state records.
+
 ### Optional Solver Plugin Manifest Export-Summary GUI Design
 
 - Designed optional solver plugin manifest export-summary GUI semantics as a

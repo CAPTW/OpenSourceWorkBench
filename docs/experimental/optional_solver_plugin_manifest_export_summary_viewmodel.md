@@ -311,6 +311,19 @@ discovery execution, validation execution, solver execution, issue/release/tag
 or asset mutation, version bump, validation-pass/fail claim, issue-closure
 claim, bundled-solver claim, or certification claim.
 
+OSW-EXP-099 implements a bounded PySide review panel over this view-model as
+`OptionalSolverPluginManifestExportSummaryPanel`. The implementation does not
+modify this view-model and keeps this module PySide/Qt-free. It adds no file
+export, file writes, export file creation, report file creation, clipboard
+behavior, report attachment, open-output-folder behavior, reloadable bundle
+creation, runtime persistence behavior, settings files, runtime state files,
+schema files, ProjectSchema mutation, CLI behavior, reload behavior, source
+mutation, automatic activation, trust restoration, dependency install/uninstall
+behavior, solver uninstall behavior, plugin package import, directory scan,
+network fetch, discovery execution, validation execution, solver execution,
+issue/release/tag/asset mutation, version bump, validation-pass/fail claim,
+issue-closure claim, bundled-solver claim, or certification claim.
+
 ## Future gates
 
 Future work remains separate:

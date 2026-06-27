@@ -2966,3 +2966,40 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   failure; package metadata remains `0.1.5rc1`; public prerelease remains
   `v0.1.5-rc1`; and live optional validation issues `#6` through `#11` remain
   open and separate.
+
+## ADR-0133: Optional Solver Plugin Manifest Export Summary GUI Is Review-Only
+
+- Status: Accepted for experimental export-summary GUI implementation
+- Date: 2026-06-27
+- Context: OSW-EXP-091 defined export-summary semantics, OSW-EXP-097 added a
+  pure export-summary view-model, and OSW-EXP-098 defined the export-summary GUI
+  safety contract. Users need a PySide review surface, but a GUI could be
+  mistaken for file export, clipboard behavior, report attachment, reloadable
+  bundle creation, persistence, validation evidence, issue closure, release
+  mutation, tag mutation, asset mutation, or certification.
+- Decision: Implement `OptionalSolverPluginManifestExportSummaryPanel` as a
+  view-model-driven PySide review panel over supplied in-memory export-summary
+  records. The panel renders header, sections, source/provenance, candidate,
+  acknowledgement, diagnostics, redaction/privacy, stale-source/re-preview,
+  conflict/shared-stack, unsafe-claim, evidence/history, limitation,
+  trust/provenance, non-action flag, safety, and disabled/future action-state
+  data. Acknowledgement interaction is optional, widget-local, non-persistent,
+  and callback-injected. The panel performs no file export, file writes, export
+  file creation, report file creation, clipboard behavior, report attachment,
+  open-output-folder behavior, reloadable bundle creation, runtime persistence
+  behavior, settings-file creation, runtime-state-file creation, schema-file
+  creation, ProjectSchema mutation, CLI behavior, reload behavior, source
+  mutation, automatic activation, trust restoration, file restore/rewrite/delete,
+  dependency install/uninstall, solver uninstall, plugin package import,
+  directory scan, network fetch, discovery execution, validation execution,
+  solver execution, issue/release/tag/asset mutation, version bump,
+  validation-pass/fail claim, issue-closure claim, bundled-solver claim, or
+  certification claim.
+- Consequences: Users can inspect export-summary limitations in GUI without
+  creating export files or changing runtime state. Actual file export,
+  clipboard, report attachment, reloadable bundles, CLI export, persistence
+  writer, ProjectSchema integration, and report integration remain future-gated.
+  User/plugin manifests remain untrusted, non-validating, redaction-first,
+  provenance-preserving, limitation-visible, and history-retaining. Package
+  metadata remains `0.1.5rc1`, public prerelease remains `v0.1.5-rc1`, and live
+  optional validation issues `#6` through `#11` remain open and separate.
