@@ -355,6 +355,16 @@ mutation, no discovery, no validation, no solver execution, disabled/future
 actions displayed, diagnostics visible, skipped-missing preserved, and
 source/provenance/trust visible.
 
+## OSW-EXP-109 Implementation Follow-Up
+
+OSW-EXP-109 implements
+`OptionalSolverPluginManifestReloadPanel` as a read-only/review-only PySide
+surface over already-built reload view-model records. The implementation keeps
+the design boundary: no file dialog, no file reader/parser, no runtime reload,
+no ProjectSchema mutation, no discovery/validation/solver execution, no
+automatic activation, no trust restoration, no issue/release mutation, and no
+certification claim.
+
 ## Future Gates
 
 Suggested sequence:

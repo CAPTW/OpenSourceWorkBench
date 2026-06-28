@@ -415,6 +415,14 @@ behavior, file reading/parsing, runtime reload behavior, ProjectSchema mutation,
 discovery, validation, solver execution, automatic activation, trust
 restoration, issue/release mutation, or certification claims.
 
+## OSW-EXP-109 GUI Implementation Follow-Up
+
+OSW-EXP-109 implements a read-only reload GUI review panel over the OSW-EXP-107
+view-model. It does not add file dialogs, file reader/parser behavior, runtime
+reload, ProjectSchema mutation, discovery, validation, solver execution,
+automatic activation, trust restoration, issue/release mutation, or
+certification claims.
+
 ## Future Gates
 
 Suggested future gates:

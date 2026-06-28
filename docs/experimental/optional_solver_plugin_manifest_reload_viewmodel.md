@@ -426,6 +426,15 @@ reader/parser behavior, runtime reload, ProjectSchema mutation, discovery,
 validation, solver execution, automatic activation, trust restoration,
 issue/release mutation, or certification claims.
 
+## OSW-EXP-109 GUI Implementation Follow-Up
+
+OSW-EXP-109 adds `OptionalSolverPluginManifestReloadPanel`, a read-only PySide
+review panel that renders this view-model's mapping/text records. The panel
+does not mutate the view-model and adds no file dialog, file reader/parser,
+runtime reload, ProjectSchema mutation, discovery, validation, solver
+execution, automatic activation, trust restoration, issue/release mutation, or
+certification claims.
+
 ## Future Gates
 
 Future gates remain separate:

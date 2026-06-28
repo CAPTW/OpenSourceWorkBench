@@ -3232,3 +3232,30 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   activation, discovery, validation, solver execution, issue/release mutation,
   and certification claims remain future-gated. No persisted state file is read
   or parsed in this gate.
+
+## ADR-0143: Optional Solver Plugin Manifest Reload GUI Is Review-Only
+
+- Status: Accepted for experimental reload GUI implementation
+- Date: 2026-06-28
+- Context: OSW-EXP-106 defined reload semantics as design-only. OSW-EXP-107
+  added a pure reload view-model over caller-supplied mappings. OSW-EXP-108
+  designed a reload GUI review surface. Users need a GUI panel to inspect
+  reload state, but it must not become a file dialog, runtime reload path,
+  trust restoration surface, automatic activation surface, validation evidence
+  surface, ProjectSchema mutation surface, issue closure tool, release mutation
+  tool, or certification claim.
+- Decision: Implement `OptionalSolverPluginManifestReloadPanel` as a read-only
+  PySide review panel over already-built reload view-model records. The panel
+  renders summary, source/provenance, schema/migration, candidates,
+  acknowledgements/expiry, redaction/privacy, stale-source/re-preview,
+  conflicts/shared stacks, unsafe claims, evidence/history, diagnostics,
+  disabled/future actions, and safety guidance. The panel does not read files,
+  parse files, open file dialogs, perform runtime reload, run discovery, run
+  validation, execute solvers, mutate ProjectSchema, activate candidates,
+  restore trust, close issues, mutate releases/tags/assets, or claim
+  certification.
+- Consequences: Future reload GUI entry points can reuse the panel. File
+  dialog, file reader/parser, runtime reload, activation, discovery refresh,
+  validation, ProjectSchema integration, CLI reload, and prepared-machine
+  validation remain future-gated. No persisted state file is read or parsed in
+  this gate.

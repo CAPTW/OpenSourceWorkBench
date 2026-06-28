@@ -6,6 +6,17 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload GUI
+
+- Added a read-only optional solver plugin manifest reload GUI review panel over
+  existing reload view-model records, rendering schema, redaction,
+  acknowledgement-expiry, stale-source, conflict, unsafe-claim,
+  evidence/history, trust/provenance diagnostics, and disabled/future actions
+  without file dialogs, runtime reload, file reader/parser behavior,
+  ProjectSchema mutation, discovery/validation/solver execution, automatic
+  activation, trust restoration, issue/release mutation, or certification
+  claims.
+
 ### Optional Solver Plugin Manifest Reload GUI Design
 
 - Designed optional solver plugin manifest reload GUI semantics as a future
