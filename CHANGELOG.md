@@ -6,6 +6,14 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Persistence CLI
+
+- Added a dry-run-first optional solver plugin manifest persistence CLI over the
+  explicit state-writer library, requiring caller-supplied paths and
+  acknowledgements for writes while preserving no live discovery, no
+  ProjectSchema mutation, no GUI/reload/export/report/clipboard behavior, no
+  validation, no solver execution, and issue/release-safe boundaries.
+
 ### Optional Solver Plugin Manifest State Writer
 
 - Added an explicit local optional solver plugin manifest state writer that

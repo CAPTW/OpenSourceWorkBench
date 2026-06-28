@@ -197,6 +197,19 @@ Diagnostics are writer-library diagnostics. They are not validation evidence and
 do not claim validation success, validation failure, issue closure, release
 mutation, bundled solvers, or certification.
 
+## CLI follow-up
+
+OSW-EXP-103 adds a bounded persistence CLI that calls this writer library for
+dry-run planning and explicit local writes. The CLI does not bypass preflight:
+actual write still requires a caller-supplied target path, explicit write mode,
+caller acknowledgement, existing parent directory, replacement opt-in when
+needed, schema compatibility, view-model readiness, and no blocker diagnostics.
+The CLI adds no GUI behavior, reload behavior, ProjectSchema mutation, live
+discovery, validation execution, solver execution, dependency install/uninstall,
+report/export/clipboard/open-folder behavior, issue mutation, release mutation,
+tag mutation, asset mutation, version bump, validation-pass/fail claim,
+issue-closure claim, bundled-solver claim, or certification claim.
+
 ## Relationship to prior gates
 
 OSW-EXP-100 remains the design-only state-writer contract. OSW-EXP-101 remains

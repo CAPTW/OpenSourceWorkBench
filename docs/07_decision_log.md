@@ -3093,3 +3093,31 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   future-gated. Written state files are local UX state only, not validation
   evidence, trust restoration, automatic activation, issue closure, release
   mutation, bundled-solver evidence, or certification.
+
+## ADR-0137: Optional Solver Plugin Manifest Persistence CLI Is Explicit And Dry-Run-First
+
+- Status: Accepted for experimental persistence CLI implementation
+- Date: 2026-06-28
+- Context: OSW-EXP-096 defined persistence CLI semantics as dry-run/review/
+  explain. OSW-EXP-101 added a deterministic state-writer view-model.
+  OSW-EXP-102 added an explicit local state-writer library. Users and
+  maintainers need a CLI surface, but CLI persistence can be mistaken for live
+  discovery, validation, ProjectSchema mutation, reload, report/export
+  creation, issue closure, release mutation, trust restoration, automatic
+  activation, or certification.
+- Decision: Implement a bounded CLI surface over the state-writer view-model and
+  state-writer library. The CLI defaults to review/dry-run. Actual write
+  requires an explicit target path, explicit write mode, explicit
+  acknowledgement, and writer preflight success. The CLI does not perform
+  discovery, validation, solver execution, dependency install/uninstall, plugin
+  package import, directory scan, network fetch, ProjectSchema mutation, GUI
+  behavior, reload, report/export/clipboard/open-folder behavior, issue
+  mutation, release mutation, tag mutation, asset mutation, or version changes.
+- Consequences: Maintainers can exercise writer behavior from CLI without
+  adding GUI controls or live discovery integration. Future reload, GUI writer
+  controls, live state source integration, report/export CLI, prepared-machine
+  validation, install/uninstall, solver execution, issue closure,
+  release/tag/asset mutation, and certification remain future-gated. Written
+  state files remain local UX state only, not validation evidence, trust
+  restoration, automatic activation, issue closure, release mutation,
+  bundled-solver evidence, or certification.

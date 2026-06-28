@@ -783,6 +783,17 @@ A later CLI implementation gate should add tests that verify:
 These are future tests. This gate adds only focused docs tests for this design
 document and related guardrail/risk/checklist/validation references.
 
+## Implementation follow-up
+
+OSW-EXP-103 implements a bounded persistence CLI over the OSW-EXP-101
+state-writer view-model and OSW-EXP-102 state-writer library. This historical
+OSW-EXP-096 document remains the design-only contract for the safety boundaries:
+dry-run/review-first, caller-path-only writes, no default path, no live
+discovery, no plugin package import, no directory scan, no network fetch, no
+ProjectSchema mutation, no GUI/reload/export/report/clipboard/open-folder
+behavior, no validation execution, no solver execution, and no issue/release/
+tag/asset mutation.
+
 ## 33. Non-actions
 
 This gate explicitly does not:
