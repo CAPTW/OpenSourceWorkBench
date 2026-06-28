@@ -43,6 +43,13 @@ adapt supplied persistence schema-model records without mutating them. It does
 not create schema files, implement a writer, or change this schema model's
 behavior.
 
+OSW-EXP-102 adds an explicit local state-writer library API that can serialize
+state-writer view-model output derived from this schema model. It does not
+serialize this schema model directly into a schema file, mutate the schema
+model, create settings/runtime/schema/export/report files, create reloadable
+bundles, mutate ProjectSchema, add GUI/CLI/reload/export behavior, run
+discovery or validation, execute solvers, or mutate issues/releases/tags/assets.
+
 ## Public module/class names
 
 - Module:

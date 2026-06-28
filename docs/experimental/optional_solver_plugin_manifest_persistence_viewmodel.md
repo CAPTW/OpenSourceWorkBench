@@ -37,6 +37,13 @@ adapt supplied persistence view-model records without mutating them. The writer
 view-model remains non-writing and does not change this persistence
 view-model's behavior.
 
+OSW-EXP-102 adds an explicit local state-writer library API that can consume the
+state-writer view-model produced from these records. It does not mutate this
+persistence view-model, add persistence source behavior, choose a default write
+path, create settings/runtime/schema/export/report files, mutate ProjectSchema,
+add GUI/CLI/reload/export behavior, run discovery or validation, execute
+solvers, or mutate issues/releases/tags/assets.
+
 ## Public module/class names
 
 - Module:

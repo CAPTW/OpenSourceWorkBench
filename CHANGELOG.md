@@ -6,6 +6,19 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest State Writer
+
+- Added an explicit local optional solver plugin manifest state writer that
+  serializes redacted view-model state to caller-supplied paths with
+  deterministic JSON, dry-run/preflight diagnostics, explicit write
+  acknowledgement, and atomic temp-file/replace behavior.
+- Preserved the bounded writer scope: no default write path, no directory
+  creation, no settings files, no schema files, no export/report files, no
+  reloadable bundles, no ProjectSchema mutation, no GUI/CLI/reload/export/
+  clipboard/open-folder behavior, no discovery, no validation, no solver
+  execution, no issue/release/tag/asset mutation, no validation-pass/fail claim,
+  no issue-closure claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest State Writer View-Model
 
 - Added a pure optional solver plugin manifest state-writer readiness/write-plan

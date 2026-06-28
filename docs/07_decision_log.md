@@ -3062,3 +3062,34 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   claim, bundled-solver claim, or certification claim. Package metadata remains
   `0.1.5rc1`, public prerelease remains `v0.1.5-rc1`, and live optional
   validation issues `#6` through `#11` remain open and separate.
+
+## ADR-0136: Optional Solver Plugin Manifest State Writer Is Explicit And Local-Only
+
+- Status: Accepted for experimental state-writer implementation
+- Date: 2026-06-28
+- Context: OSW-EXP-100 defined state-writer semantics as design-only.
+  OSW-EXP-101 added a pure state-writer readiness/write-plan view-model. A
+  writer implementation is useful, but file writing can be mistaken for
+  persistence integration, ProjectSchema mutation, reload behavior, export or
+  report behavior, validation evidence, issue closure, release mutation, trust
+  restoration, automatic activation, or certification.
+- Decision: Implement an explicit local state writer under
+  `src/osw/experimental/optional_solvers/`. The writer requires
+  caller-supplied target paths and explicit write acknowledgement. It produces
+  deterministic JSON payloads from supplied view-model/write-plan data, performs
+  local preflight checks, and uses same-directory atomic temp-file/replace
+  behavior. It does not choose default app/project/user paths, create
+  directories, create settings/schema/export/report files, create reloadable
+  bundles, mutate ProjectSchema, add GUI/CLI/reload/export/clipboard/report/
+  open-folder behavior, run discovery/validation/solver execution,
+  install/uninstall dependencies or solvers, import plugin packages, scan
+  directories, fetch network manifests, mutate issues/releases/tags/assets,
+  bump versions, or claim validation/certification.
+- Consequences: Future reload, GUI writer controls, CLI writer commands,
+  ProjectSchema integration, export/report integration, settings/runtime state
+  files, schema files, reloadable bundles, source/discovery integration,
+  validation, install/uninstall, solver execution, issue closure, release/tag/
+  asset mutation, trust elevation, and certification claims remain
+  future-gated. Written state files are local UX state only, not validation
+  evidence, trust restoration, automatic activation, issue closure, release
+  mutation, bundled-solver evidence, or certification.

@@ -1,0 +1,220 @@
+# Optional solver plugin manifest state writer implementation
+
+## Status
+
+OSW-EXP-102 implements an explicit local state writer library API for optional
+solver plugin manifest UX state.
+
+The implementation is intentionally bounded:
+
+- explicit local state writer only
+- caller-supplied target path required
+- deterministic JSON serialization
+- dry-run planning without writing
+- actual write only through explicit caller acknowledgement
+- same-directory atomic temp-file/replace write strategy
+- no default write path
+- no directory creation
+- no settings file creation
+- no schema file creation
+- no export file creation
+- no report file creation
+- no reloadable bundle creation
+- no ProjectSchema mutation
+- no GUI behavior
+- no CLI behavior
+- no reload behavior
+- no export behavior
+- no clipboard behavior
+- no report attachment
+- no open-output-folder behavior
+- no discovery execution
+- no validation execution
+- no solver execution
+- no issue mutation
+- no release mutation
+- no tag mutation
+- no asset mutation
+- no version bump
+- no validation-pass claim
+- no validation-fail claim
+- no issue-closure claim
+- no certification claim
+
+This gate may write a caller-chosen local state file from the writer API. It does
+not create default runtime state, settings, schema, export, report, or bundle
+files.
+
+## Public API
+
+Public module:
+
+`osw.experimental.optional_solvers.plugin_manifest_state_writer`
+
+Public names:
+
+- `OptionalSolverPluginManifestStateWriter`
+- `OptionalSolverPluginManifestStateWriterRequest`
+- `OptionalSolverPluginManifestStateWriterResult`
+- `OptionalSolverPluginManifestStateWriterStatus`
+- `OptionalSolverPluginManifestStateWriterDiagnostic`
+- `build_optional_solver_plugin_manifest_state_writer_payload`
+- `plan_optional_solver_plugin_manifest_state_write`
+- `write_optional_solver_plugin_manifest_state`
+
+The package-level experimental optional-solver namespace exports these names.
+
+## Request model
+
+`OptionalSolverPluginManifestStateWriterRequest` requires an explicit
+`target_path` and carries:
+
+- `allow_replace`
+- `dry_run`
+- `require_existing_parent`
+- `expected_schema_version`
+- `operation_label`
+- `caller_acknowledged_write`
+- `encoding`
+- `newline`
+
+Missing targets, directory targets, symlink targets, missing parents, and
+existing targets without `allow_replace=True` block writing.
+
+## Result model
+
+`OptionalSolverPluginManifestStateWriterResult` reports:
+
+- status
+- redacted target display
+- planned and written byte counts
+- deterministic SHA-256
+- payload key and section counts
+- diagnostics, blockers, and warnings
+- write and file-write booleans
+- temp-file and atomic-replace booleans
+- false non-action flags for runtime state files, settings files, schema files,
+  export files, report files, reloadable bundles, ProjectSchema mutation, GUI,
+  CLI, reload, export, clipboard, report attachment, open-output-folder,
+  discovery, validation, solver execution, issue/release/tag/asset mutation,
+  version bump, validation-pass/fail claims, issue closure, and certification.
+
+## Payload model
+
+The writer builds a deterministic JSON-compatible payload from supplied
+`OptionalSolverPluginManifestStateWriterViewModel` records, mappings returned by
+`to_mapping()`, or an already-built payload mapping.
+
+Payload sections include:
+
+- `payload_kind`
+- `payload_schema_version`
+- `writer_version`
+- `generated_by`
+- `state_scope`
+- `header`
+- `summary`
+- `storage_options`
+- `write_plan`
+- `write_plans`
+- `file_format`
+- `schema_boundary`
+- `sources`
+- `provenance`
+- `candidates`
+- `acknowledgements`
+- `redaction_privacy`
+- `schema_migration`
+- `stale_sources`
+- `conflicts`
+- `unsafe_claims`
+- `evidence_history`
+- `atomicity_error_handling_plan`
+- `diagnostics`
+- `limitations`
+- `non_action_flags`
+- `action_states`
+- `migration_notes`
+- `safety_boundary`
+
+The payload preserves the supplied trust, provenance, acknowledgement expiry,
+redaction, stale-source/re-preview, conflict/shared-stack, unsafe-claim, and
+evidence/history records. Persisted state remains local UX state only.
+
+## Deterministic serialization
+
+Serialization uses UTF-8, sorted JSON keys, stable indentation, and a trailing
+newline. The writer does not add timestamps, random ids, environment variables,
+or machine-specific default paths.
+
+The planned SHA-256 is computed over the serialized bytes and is available for
+dry-run and actual-write results.
+
+## Write policy
+
+The writer writes only when all are true:
+
+- `dry_run=False`
+- `caller_acknowledged_write=True`
+- the target path is explicit
+- the parent directory already exists
+- the target is not a directory or symlink
+- replacing an existing target is explicitly allowed
+- the payload schema version matches any supplied expectation
+- the supplied view-model readiness is `ready_for_future_write`
+- no supplied blocker diagnostics remain
+- schema, redaction, stale-source, conflict, unsafe-claim, and acknowledgement
+  preconditions are satisfied
+
+`dry_run=True` never writes. Failed preflight never writes. Serialization failure
+does not leave a target file behind. The writer creates a same-directory
+temporary file and uses atomic replace; temporary files are cleaned up after a
+replace failure when possible.
+
+## Blocking and readiness
+
+Actual writes are blocked for unavailable state, missing explicit requests,
+missing/unsupported/migration-required schema state, redaction review blockers,
+unredacted paths, secret-like content, stale-source re-preview blockers,
+conflicts, shared-stack warnings, unsafe claims, missing acknowledgements,
+`dry_run_only`, `future_writer_required`, and errors.
+
+`future_writer_required` remains explicit and safe: this writer does not silently
+override a supplied view-model that still says a future writer is required.
+
+## Diagnostics
+
+The writer surfaces:
+
+- `OSPMG_STATE_WRITER_WRITE_PLANNED`
+- `OSPMG_STATE_WRITER_WRITE_COMPLETED`
+- `OSPMG_STATE_WRITER_WRITE_BLOCKED`
+- `OSPMG_STATE_WRITER_WRITE_ERROR`
+- path, caller-acknowledgement, schema-version, payload-secret, payload-path,
+  serialization, and atomic-replace diagnostics
+
+Diagnostics are writer-library diagnostics. They are not validation evidence and
+do not claim validation success, validation failure, issue closure, release
+mutation, bundled solvers, or certification.
+
+## Relationship to prior gates
+
+OSW-EXP-100 remains the design-only state-writer contract. OSW-EXP-101 remains
+the pure non-writing view-model. This gate consumes those records without
+mutating them and adds only the explicit writer API.
+
+OSW-EXP-090, OSW-EXP-092, OSW-EXP-093, OSW-EXP-095, OSW-EXP-096, OSW-EXP-097,
+and OSW-EXP-099 remain separate persistence, schema, GUI, CLI-design, and
+export-summary contracts.
+
+## Future gates
+
+Future separate gates remain required for GUI writer controls, CLI writer
+commands, reload behavior, ProjectSchema integration, report/export integration,
+settings files, runtime state files, schema files, reloadable bundles, source
+integration, discovery integration, validation, install/uninstall, solver
+execution, issue/release/tag/asset mutation, trust elevation, and certification
+claims.
+
+Issues `#6` through `#11` remain open. Package metadata remains `0.1.5rc1`.
+The public prerelease remains `v0.1.5-rc1`.

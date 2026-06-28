@@ -356,6 +356,21 @@ OSW-EXP-100 defined state-writer semantics as design-only. OSW-EXP-101 is the
 first pure implementation follow-up. It implements the in-memory readiness and
 write-plan records, not the actual writer.
 
+## 22a. Relationship to OSW-EXP-102 writer implementation
+
+OSW-EXP-102 adds
+[optional_solver_plugin_manifest_state_writer_implementation.md](optional_solver_plugin_manifest_state_writer_implementation.md),
+an explicit local writer library API that consumes this view-model or its
+mapping output. The writer requires a caller-supplied target path, deterministic
+JSON serialization, dry-run/preflight review, explicit write acknowledgement,
+and atomic temp-file/replace behavior.
+
+This view-model remains non-writing. OSW-EXP-102 does not mutate this
+view-model's records or turn them into ProjectSchema state, reload behavior,
+GUI/CLI controls, export/report/clipboard behavior, discovery, validation,
+solver execution, issue/release mutation, validation-pass/fail claims, trust
+restoration, automatic activation, or certification.
+
 ## 23. Relationship to OSW-EXP-092/093 persistence models
 
 OSW-EXP-092 supplied the persistence view-model. OSW-EXP-093 supplied the pure

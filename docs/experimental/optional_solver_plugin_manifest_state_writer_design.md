@@ -80,6 +80,22 @@ mutation, no GUI behavior, no CLI behavior, no reload/export behavior, no
 discovery execution, no validation execution, no solver execution, and no
 issue/release/tag/asset mutation.
 
+## Implementation follow-up: explicit local writer (OSW-EXP-102)
+
+OSW-EXP-102 implements the first explicit local state-writer library API:
+[optional_solver_plugin_manifest_state_writer_implementation.md](optional_solver_plugin_manifest_state_writer_implementation.md).
+It requires a caller-supplied target path, deterministic JSON serialization,
+dry-run/preflight review, explicit caller acknowledgement for actual writes, and
+same-directory atomic temp-file/replace behavior.
+
+The OSW-EXP-102 writer remains local and bounded: no default app/project/user
+write path, no directory creation, no settings files, no schema files, no
+export/report files, no reloadable bundles, no ProjectSchema mutation, no GUI or
+CLI behavior, no reload/export/clipboard/open-folder behavior, no discovery,
+validation, solver execution, dependency install/uninstall, issue/release/tag/
+asset mutation, validation-pass/fail claim, issue-closure claim, bundled-solver
+claim, or certification claim.
+
 ## 2. Purpose
 
 Define future writer semantics for optional solver plugin manifest UX state.
