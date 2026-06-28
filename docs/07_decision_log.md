@@ -3165,3 +3165,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   file-output, report, reloadable-bundle, and live source integration behavior
   remain future-gated. Export-summary output remains human-review-only and
   non-validating.
+
+## ADR-0140: Optional Solver Plugin Manifest Reload Starts As Design-Only
+
+- Status: Accepted for experimental reload design
+- Date: 2026-06-28
+- Context: OSW-EXP-102 added an explicit local state writer. OSW-EXP-103 added
+  a persistence CLI that can write state through the writer. OSW-EXP-105 added
+  stdout-first export-summary CLI review. Reloading persisted state is useful
+  but can be mistaken for trust restoration, automatic activation, validation
+  evidence, ProjectSchema mutation, discovery, issue closure, or release
+  mutation.
+- Decision: Define reload semantics as design-only before implementation.
+  Future reload must be explicit, user-selected, schema-aware,
+  redaction-first, acknowledgement-aware, stale-source-aware, conflict-aware,
+  unsafe-claim-blocking, history-retaining, non-validating,
+  non-trust-restoring, non-activating, non-discovering, non-executing,
+  ProjectSchema-safe, and issue/release-safe. This gate edits docs/tests only
+  and adds no runtime source behavior.
+- Consequences: Future reload view-model, GUI, CLI, and file-reader gates have
+  a safety contract. Reload implementation remains future-gated. No persisted
+  state file is read or parsed in this gate. No ProjectSchema, discovery,
+  validation, solver, issue, release, tag, asset, or version behavior changes
+  occur.

@@ -6,6 +6,15 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload Design
+
+- Designed optional solver plugin manifest reload semantics as a future
+  explicit, schema-aware, redaction-first, acknowledgement-aware,
+  stale-source-aware, conflict-aware, unsafe-claim-blocking, non-validating,
+  non-trust-restoring, non-activating, non-discovering, non-executing,
+  ProjectSchema-safe, issue/release-safe workflow without implementing reload
+  behavior, reading state files, or creating reloadable bundles.
+
 ### Optional Solver Plugin Manifest Export-Summary CLI
 
 - Added a stdout-first optional solver plugin manifest export-summary CLI for
