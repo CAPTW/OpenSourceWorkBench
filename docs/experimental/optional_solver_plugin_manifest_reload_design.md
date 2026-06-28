@@ -58,6 +58,15 @@ No reload implementation exists. No reload GUI exists. No reload CLI exists. No
 runtime state-file parser exists for this line. No ProjectSchema mutation exists
 for this line. User/plugin manifests remain untrusted and non-validating.
 
+Implementation follow-up: OSW-EXP-107 adds a pure, mapping-only reload
+view-model in
+[optional_solver_plugin_manifest_reload_viewmodel.md](optional_solver_plugin_manifest_reload_viewmodel.md).
+It consumes caller-supplied in-memory payload mappings only and still adds no
+file reader/parser, runtime reload behavior, GUI behavior, CLI behavior,
+ProjectSchema mutation, discovery, validation, solver execution, automatic
+activation, trust restoration, issue mutation, release mutation, or
+certification claim.
+
 ## Definition of Reload
 
 Future reload is an explicit user-requested transformation from a

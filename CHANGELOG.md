@@ -6,6 +6,16 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload View-Model
+
+- Added a pure optional solver plugin manifest reload view-model over
+  caller-supplied persisted-state mappings, surfacing schema, redaction,
+  acknowledgement-expiry, stale-source, conflict, unsafe-claim,
+  evidence/history, trust/provenance diagnostics, and disabled/future actions
+  without reading files, implementing runtime reload, mutating ProjectSchema,
+  running discovery/validation/solver execution, restoring trust, or activating
+  candidates.
+
 ### Optional Solver Plugin Manifest Reload Design
 
 - Designed optional solver plugin manifest reload semantics as a future

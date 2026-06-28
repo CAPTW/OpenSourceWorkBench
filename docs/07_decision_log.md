@@ -3188,3 +3188,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   state file is read or parsed in this gate. No ProjectSchema, discovery,
   validation, solver, issue, release, tag, asset, or version behavior changes
   occur.
+
+## ADR-0141: Optional Solver Plugin Manifest Reload View-Model Is Pure And Mapping-Only
+
+- Status: Accepted for experimental reload view-model implementation
+- Date: 2026-06-28
+- Context: OSW-EXP-106 defined reload semantics as design-only. OSW-EXP-102
+  added an explicit state writer. A reload view-model is needed before any file
+  reader, GUI, or CLI reload behavior. Reload can be mistaken for trust
+  restoration, automatic activation, validation evidence, ProjectSchema
+  mutation, discovery, issue closure, release mutation, or certification.
+- Decision: Implement a pure reload view-model under
+  `src/osw/experimental/optional_solvers/`. It consumes caller-supplied payload
+  mappings/records only. It does not read files, parse from paths, scan
+  directories, fetch network data, import plugin packages, run discovery, run
+  validation, execute solvers, mutate ProjectSchema, close issues, mutate
+  releases/tags/assets, restore trust, or activate candidates. It exposes
+  schema, redaction, acknowledgement, stale-source, conflict, unsafe-claim,
+  evidence/history, trust diagnostics, and disabled/future actions.
+- Consequences: Future reload file-reader, GUI, and CLI gates have a pure model
+  to render. Runtime reload behavior remains future-gated. Written state remains
+  local UX state only, not validation evidence, trust restoration, automatic
+  activation, issue closure, release mutation, or certification.
