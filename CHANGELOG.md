@@ -6,6 +6,15 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Export-Summary CLI Design
+
+- Designed optional solver plugin manifest export-summary CLI semantics as a
+  future redaction-first, stdout-first, human-reviewable, non-validating,
+  non-trust-restoring, non-activating, non-reloading, non-discovering,
+  non-executing, no-report-attachment, no-clipboard, no-open-folder,
+  issue/release-safe workflow without implementing CLI behavior or creating
+  export/report/reloadable-bundle outputs.
+
 ### Optional Solver Plugin Manifest Persistence CLI
 
 - Added a dry-run-first optional solver plugin manifest persistence CLI over the

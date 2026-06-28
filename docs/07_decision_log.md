@@ -3121,3 +3121,22 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   state files remain local UX state only, not validation evidence, trust
   restoration, automatic activation, issue closure, release mutation,
   bundled-solver evidence, or certification.
+
+## ADR-0138: Optional Solver Plugin Manifest Export Summary CLI Starts As Design-Only
+
+- Status: Accepted for experimental export-summary CLI design
+- Date: 2026-06-28
+- Context: OSW-EXP-091 defined export-summary semantics. OSW-EXP-097 added a
+  pure export-summary view-model. OSW-EXP-099 added an export-summary GUI review
+  panel. OSW-EXP-103 added a persistence CLI over the state-writer library. An
+  export-summary CLI is useful, but it could be mistaken for report generation,
+  reloadable bundle creation, persistence, validation evidence, issue closure,
+  release mutation, tag mutation, asset mutation, or certification.
+- Decision: Define export-summary CLI semantics as design-only before
+  implementation. Future CLI must be explicit, redaction-first, stdout-first,
+  human-reviewable, non-validating, non-trust-restoring, non-activating,
+  non-reloading, non-discovering, non-executing, no-report-attachment,
+  no-clipboard, no-open-folder, and issue/release-safe.
+- Consequences: Future export-summary CLI implementation has a safety contract.
+  No runtime behavior changes in this gate. No CLI source is edited in this
+  gate. No export/report/reloadable-bundle output is created in this gate.
