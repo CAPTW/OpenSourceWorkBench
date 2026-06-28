@@ -71,7 +71,7 @@ plugin code execution during install/health is part of v0.1.
 
 ## Artifact Hygiene
 
-Generated `artifacts/*` outputs and `.codex/reports/*` reports are runtime
-evidence. Leave them untracked unless a later prompt explicitly promotes a small
-curated fixture. Duplicate `* (1)` files should be cleaned manually in a later
+Generated `artifacts/*` outputs and local report files are runtime evidence.
+Leave them untracked unless a later change explicitly promotes a small curated
+fixture. Duplicate `* (1)` files should be cleaned manually in a later
 hygiene step and must not be staged from this docs gate.

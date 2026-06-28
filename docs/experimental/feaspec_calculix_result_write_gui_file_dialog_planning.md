@@ -77,7 +77,7 @@ The default directory should be visible and reviewable:
   reason;
 - never default silently to hidden temporary directories;
 - never default silently to release asset directories;
-- never default silently to `.git`, `.codex`, cache, or build artifact
+- never default silently to `.git`, `.venv`, cache, or build artifact
   locations.
 
 Defaults are suggestions only. The selected directory remains explicit user
@@ -101,7 +101,7 @@ before enabling a write action:
 - normalize path separators and redundant path components for display;
 - reject traversal or unsafe internal paths;
 - reject reserved Windows names and invalid Windows path characters;
-- reject `.git`, `.codex`, release asset output directories, caches, and build
+- reject `.git`, `.venv`, release asset output directories, caches, and build
   artifact locations;
 - reject paths that would place ResultDataset review files inside solver
   runtime artifact directories unless explicitly allowed by a separate gate;

@@ -68,7 +68,7 @@ The model requires an explicit output directory for the standard layout.
 - `create_dir=True` records `FDW_CREATE_DIR_REQUIRED` and marks directory
   creation as planned only; it does not create the directory.
 - Paths with `..` segments produce `FDW_PATH_TRAVERSAL_REJECTED`.
-- Paths under forbidden locations such as `.git` or `.codex` produce
+- Paths under forbidden locations such as `.git` or `.venv` produce
   `FDW_UNSAFE_PATH`.
 - Existing file targets and non-empty directories block by default.
 - `overwrite=True` records reviewed overwrite intent but still does not modify

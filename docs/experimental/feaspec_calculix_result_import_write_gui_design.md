@@ -130,7 +130,7 @@ The future file dialog policy is:
   reviewed create-directory behavior;
 - use no implicit parent creation unless explicitly requested;
 - require overwrite confirmation before replacing existing standard files;
-- reject unsafe internal paths such as `.git`, `.codex`, and release artifact
+- reject unsafe internal paths such as `.git`, `.venv`, and release artifact
   output locations.
 
 Choosing a directory should only update the pending write plan. The chooser

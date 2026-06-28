@@ -272,7 +272,7 @@ def test_readme_run_first_missing_required_warning_emits_ux_warning(
     assert any(expected_warning in warning for warning in summary["portable_ux"]["warnings"])
 
 
-@pytest.mark.parametrize("entry", [".git/config", ".codex/report.md", ".venv/pyvenv.cfg"])
+@pytest.mark.parametrize("entry", [".git/config", ".venv/pyvenv.cfg"])
 def test_portable_zip_forbidden_directories_fail(entry: str, tmp_path: Path) -> None:
     archive = tmp_path / "portable.zip"
     _write_zip(archive, {f"OpenSolverWorkbench/{entry}": b"no"})

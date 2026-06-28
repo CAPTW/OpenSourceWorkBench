@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Print a local stop-task summary for Codex reports."""
+"""Print a local stop-task summary for workflow reports."""
 
 from __future__ import annotations
 

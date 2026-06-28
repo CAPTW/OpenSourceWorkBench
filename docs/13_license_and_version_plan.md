@@ -232,8 +232,8 @@ git tag -d v0.1.3-rc1
 ```
 
 If a tag was already pushed, stop and ask for maintainer direction. Do not delete
-or rewrite remote tags from an autopilot prompt unless the maintainer explicitly
-requests that exact operation.
+or rewrite remote tags from an automation instruction unless the maintainer
+explicitly requests that exact operation.
 
 ## Release Artifact Policy
 

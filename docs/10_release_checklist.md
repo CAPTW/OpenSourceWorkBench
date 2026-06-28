@@ -111,7 +111,7 @@ or full solver parity.
 
 | Item | Status | Evidence / decision |
 | --- | --- | --- |
-| OSW-FUNC-020 release gate | `PASS_WITH_WARNINGS` | Current `develop` passed the tracked release validation suite on 2026-06-02. Detailed evidence is recorded in `.codex/reports/func/OSW-FUNC-020_RELEASE_VALIDATION_GATE.md`. |
+| OSW-FUNC-020 release gate | `PASS_WITH_WARNINGS` | Current `develop` passed the tracked release validation suite on 2026-06-02. Summary evidence is recorded in `docs/release/v0_1_freeze_handoff.md`. |
 | Queue state | `PASS` | Functional queue now includes `OSW-FUNC-020_RELEASE_VALIDATION_GATE`, `current_step` is `null`, and `next_step` is `OSW-FUNC-021_PACKAGING_RELEASE_DOCS`. UI queue remains complete. |
 | Test and QA evidence | `PASS_WITH_WARNINGS` | Unit, integration, golden, validation, tracked GUI, focused release targets, fast QA, release-gate QA scripts, filtered Ruff, docs links, plugin manifests, scope, architecture, solver-artifact, JSON, and diff checks passed. Raw Ruff/GUI collection still sees untracked desktop duplicate `* (1).py` files, which remain untracked and are classified as repository hygiene warnings. |
 | CLI and optional dependency smoke | `PASS_WITH_WARNINGS` | Base CLI, project/report, runner fake, mesh format, script preview/scan, figure, curve, CalculiX, OpenFOAM, result catalog, and field commands passed. Missing Octave, SciPy MAT reader support, Gmsh, CoolProp, and Cantera reported explicit diagnostics. |
@@ -409,8 +409,8 @@ or full solver parity.
 
 | Item | Status | Evidence / notes |
 | --- | --- | --- |
-| `.codex/reports/self_check/` contains this phase self-check report. | `PASS` | Required for this step before merge. |
-| `.codex/reports/review/` contains this phase review report. | `PASS` | Required for this step before merge. |
+| Release documentation contains this phase self-check summary. | `PASS` | Required for this step before merge. |
+| Release documentation contains this phase review summary. | `PASS` | Required for this step before merge. |
 | Reports record commands run, command results, skipped checks, remaining risks, and merge recommendation. | `PASS` | Required report templates include those sections. |
 | Report evidence avoids secrets, generated solver runtime directories, binary outputs, and uncontrolled report exports. | `PASS` | This release gate writes text-only docs and reports. |
 
