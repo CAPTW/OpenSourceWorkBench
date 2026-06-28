@@ -135,6 +135,14 @@ The view-model exposes frozen records for:
 text lines in memory. `to_mapping()` returns a JSON-like mapping in memory. None
 of these helpers creates an export file or report attachment.
 
+## CLI relationship
+
+OSW-EXP-105 adds a stdout-first export-summary CLI that consumes these
+view-model records without mutating them. The CLI is a renderer over supplied
+deterministic in-memory state; it does not add file export, report generation,
+reloadable bundles, live discovery, validation, solver execution, ProjectSchema
+mutation, issue/release mutation, or certification claims.
+
 ## Readiness
 
 The readiness values are:

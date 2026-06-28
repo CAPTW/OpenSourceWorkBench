@@ -13,6 +13,11 @@ from pathlib import Path
 from typing import Any
 
 from osw import __version__
+from osw.cli.optional_solver_manifest_export_summary import (
+    OPTIONAL_SOLVER_PLUGIN_MANIFEST_EXPORT_SUMMARY_COMMAND,
+    add_optional_solver_plugin_manifest_export_summary_parser,
+    run_optional_solver_plugin_manifest_export_summary_cli,
+)
 from osw.cli.optional_solver_manifest_persistence import (
     OPTIONAL_SOLVER_PLUGIN_MANIFEST_PERSISTENCE_COMMAND,
     add_optional_solver_plugin_manifest_persistence_parser,
@@ -571,6 +576,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Include detailed safety policy disclaimers in text output.",
     )
     add_optional_solver_plugin_manifest_persistence_parser(subparsers)
+    add_optional_solver_plugin_manifest_export_summary_parser(subparsers)
     plugin_health_parser = subparsers.add_parser(
         "plugin-health",
         help="Report local plugin manifest, dependency, and executable status.",
@@ -1708,6 +1714,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == OPTIONAL_SOLVER_PLUGIN_MANIFEST_PERSISTENCE_COMMAND:
         return run_optional_solver_plugin_manifest_persistence_cli(args)
+
+    if args.command == OPTIONAL_SOLVER_PLUGIN_MANIFEST_EXPORT_SUMMARY_COMMAND:
+        return run_optional_solver_plugin_manifest_export_summary_cli(args)
 
     if args.command == "plugin-health":
         plugin_paths = [

@@ -650,6 +650,17 @@ stale-source/re-preview, conflict/shared-stack, unsafe-claim, evidence/history,
 trust/provenance, action-state, exit-code, ProjectSchema, and live validation
 issue boundaries.
 
+[Optional solver plugin manifest export-summary CLI implementation](experimental/optional_solver_plugin_manifest_export_summary_cli_implementation.md)
+implements stdout-first automated CLI-review evidence over supplied
+export-summary view-model state. It has no file output, no export file creation,
+no report file creation, no reloadable bundle creation, no clipboard behavior,
+no report attachment, no open-output-folder behavior, no GUI behavior, no reload
+behavior, no ProjectSchema mutation, no live discovery, no passive refresh, no
+plugin package import, no directory scan, no network fetch, no validation
+execution, no solver execution, no dependency install/uninstall, no
+issue/release/tag/asset mutation, no validation-pass/fail claim, and no
+certification claim.
+
 [Optional solver plugin manifest state writer design](experimental/optional_solver_plugin_manifest_state_writer_design.md)
 defines future state-writer semantics over optional solver plugin manifest UX
 state. It is docs/test design evidence only: no runtime source change, no writer

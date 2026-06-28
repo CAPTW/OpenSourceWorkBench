@@ -61,6 +61,14 @@ conflicts and shared stacks, unsafe claims, evidence/history, and limitations.
 It renders plain-text panels for trust/provenance, non-action flags, safety
 guidance, and action state.
 
+## CLI relationship
+
+OSW-EXP-105 adds a separate stdout-first export-summary CLI review surface over
+the same view-model semantics. It does not import this PySide panel, add GUI
+behavior, create export/report/reloadable outputs, reload state, mutate
+ProjectSchema, run discovery or validation, execute solvers, mutate issues or
+releases, or claim certification.
+
 ## Header and summary behavior
 
 The summary label renders summary kind, state scope, generated-by display, schema

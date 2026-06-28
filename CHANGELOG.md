@@ -6,6 +6,15 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Export-Summary CLI
+
+- Added a stdout-first optional solver plugin manifest export-summary CLI for
+  redacted, human-reviewable diagnostics, acknowledgements, source/provenance,
+  candidate, stale-source, conflict, unsafe-claim, evidence/history, limitation,
+  and action-state inspection without export/report/reloadable-bundle files,
+  clipboard/report/open-folder behavior, live discovery, validation, solver
+  execution, ProjectSchema mutation, or issue/release mutation.
+
 ### Optional Solver Plugin Manifest Export-Summary CLI Design
 
 - Designed optional solver plugin manifest export-summary CLI semantics as a

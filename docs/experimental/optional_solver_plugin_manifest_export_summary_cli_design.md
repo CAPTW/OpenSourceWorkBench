@@ -20,6 +20,13 @@ uninstall, no issue mutation, no release mutation, no tag mutation, no asset
 mutation, no version bump, no validation-pass claim, no validation-fail claim,
 no issue-closure claim, no bundled-solver claim, and no certification claim.
 
+## Implementation follow-up
+
+OSW-EXP-105 implements this command vocabulary as a stdout-first review CLI in
+[optional solver plugin manifest export-summary CLI implementation](optional_solver_plugin_manifest_export_summary_cli_implementation.md).
+The implementation keeps `write-summary` disabled/future-only and still creates
+no export files, report files, or reloadable bundles.
+
 ## 2. Purpose
 
 This document defines future export-summary CLI semantics for optional solver

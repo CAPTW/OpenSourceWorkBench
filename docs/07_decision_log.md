@@ -3140,3 +3140,28 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: Future export-summary CLI implementation has a safety contract.
   No runtime behavior changes in this gate. No CLI source is edited in this
   gate. No export/report/reloadable-bundle output is created in this gate.
+
+## ADR-0139: Optional Solver Plugin Manifest Export Summary CLI Is Stdout-First And Non-Exporting
+
+- Status: Accepted for experimental export-summary CLI implementation
+- Date: 2026-06-28
+- Context: OSW-EXP-104 designed export-summary CLI semantics. OSW-EXP-097 added
+  a pure export-summary view-model. OSW-EXP-099 added a GUI review panel.
+  OSW-EXP-103 added persistence CLI over the state-writer library.
+  Export-summary CLI can be useful for maintainers, but could be mistaken for
+  file export, report generation, reloadable bundles, ProjectSchema mutation,
+  validation evidence, issue closure, release mutation, tag mutation, asset
+  mutation, or certification.
+- Decision: Implement a bounded stdout-first export-summary CLI review surface.
+  The CLI uses deterministic sample/unavailable state and existing
+  export-summary view-model semantics. It does not perform live discovery,
+  passive refresh, plugin import, directory scan, network fetch, validation,
+  solver execution, dependency install/uninstall, ProjectSchema mutation, GUI
+  behavior, reload, file export, report generation, clipboard, report
+  attachment, open-output-folder behavior, issue/release/tag/asset mutation,
+  version bump, validation-pass/fail claim, bundled-solver claim, or
+  certification claim.
+- Consequences: Users can inspect export-summary semantics from CLI. Actual
+  file-output, report, reloadable-bundle, and live source integration behavior
+  remain future-gated. Export-summary output remains human-review-only and
+  non-validating.
