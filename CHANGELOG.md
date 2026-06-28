@@ -6,6 +6,15 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload GUI Design
+
+- Designed optional solver plugin manifest reload GUI semantics as a future
+  read-only, review-only PySide surface over existing reload view-model records,
+  preserving no file dialog, no runtime reload, no file reader/parser, no
+  ProjectSchema mutation, no discovery/validation/solver execution, no
+  automatic activation, no trust restoration, no issue/release mutation, and no
+  certification claims.
+
 ### Optional Solver Plugin Manifest Reload View-Model
 
 - Added a pure optional solver plugin manifest reload view-model over

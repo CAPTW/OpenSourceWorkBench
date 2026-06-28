@@ -407,6 +407,14 @@ Future OSW-EXP-107 and later gates must test:
 - no issue/release mutation;
 - no raw path leak.
 
+## OSW-EXP-108 Follow-Up
+
+OSW-EXP-108 adds the reload GUI design as a review-only contract over
+already-built reload view-model records. It does not add GUI source, file dialog
+behavior, file reading/parsing, runtime reload behavior, ProjectSchema mutation,
+discovery, validation, solver execution, automatic activation, trust
+restoration, issue/release mutation, or certification claims.
+
 ## Future Gates
 
 Suggested future gates:

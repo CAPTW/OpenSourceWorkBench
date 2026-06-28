@@ -417,6 +417,15 @@ Adjacent state-writer, state-writer view-model, persistence schema-model,
 persistence view-model, export-summary view-model, and reload design-doc tests
 remain part of the gate validation.
 
+## OSW-EXP-108 GUI Design Follow-Up
+
+OSW-EXP-108 designs a future GUI review surface for this view-model. That design
+requires future GUI code to consume already-built reload view-model records and
+remain read-only/review-only. It does not authorize file dialogs, file
+reader/parser behavior, runtime reload, ProjectSchema mutation, discovery,
+validation, solver execution, automatic activation, trust restoration,
+issue/release mutation, or certification claims.
+
 ## Future Gates
 
 Future gates remain separate:

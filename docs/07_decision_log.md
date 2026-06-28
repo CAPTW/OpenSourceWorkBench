@@ -3210,3 +3210,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   to render. Runtime reload behavior remains future-gated. Written state remains
   local UX state only, not validation evidence, trust restoration, automatic
   activation, issue closure, release mutation, or certification.
+
+## ADR-0142: Optional Solver Plugin Manifest Reload GUI Starts As Review-Only Design
+
+- Status: Accepted for experimental reload GUI design
+- Date: 2026-06-28
+- Context: OSW-EXP-106 defined reload semantics as design-only. OSW-EXP-107
+  added a pure reload view-model over caller-supplied mappings. Users need a
+  future GUI review surface for reload state, but a GUI can be mistaken for
+  file loading, runtime reload, trust restoration, automatic activation,
+  validation evidence, ProjectSchema mutation, issue closure, release mutation,
+  or certification.
+- Decision: Define reload GUI semantics as design-only before implementation.
+  Future reload GUI must consume already-built reload view-model records, remain
+  read-only/review-only, and render schema, redaction, acknowledgement-expiry,
+  stale-source, conflict, unsafe-claim, evidence/history, trust/provenance,
+  diagnostics, disabled/future actions, and safety guidance. This gate adds no
+  GUI source and no runtime behavior.
+- Consequences: Future reload GUI implementation has a safety contract. File
+  dialogs, file readers/parsers, runtime reload, ProjectSchema integration,
+  activation, discovery, validation, solver execution, issue/release mutation,
+  and certification claims remain future-gated. No persisted state file is read
+  or parsed in this gate.
