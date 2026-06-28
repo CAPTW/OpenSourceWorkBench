@@ -38,6 +38,11 @@ activation, discovery execution, validation execution, solver execution, issue
 mutation, release mutation, tag mutation, asset mutation, version bump,
 validation-pass/fail claim, or certification claim.
 
+OSW-EXP-101 adds a pure state-writer readiness/write-plan view-model that can
+adapt supplied persistence schema-model records without mutating them. It does
+not create schema files, implement a writer, or change this schema model's
+behavior.
+
 ## Public module/class names
 
 - Module:

@@ -6,6 +6,19 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest State Writer View-Model
+
+- Added a pure optional solver plugin manifest state-writer readiness/write-plan
+  view-model for deterministic storage options, schema readiness, redaction,
+  acknowledgements, stale-source/re-preview, conflicts, unsafe claims,
+  evidence/history, atomicity/error planning, non-action flags, diagnostics,
+  and disabled/future actions.
+- Kept the slice side-effect-free and non-writing: no writer implementation, no
+  file writes, no directory creation, no runtime state files, no settings files,
+  no schema files, no ProjectSchema mutation, no GUI/CLI/reload/export behavior,
+  no discovery, no validation, no solver execution, and no issue/release
+  mutation.
+
 ### Optional Solver Plugin Manifest State Writer Design
 
 - Designed optional solver plugin manifest state-writer semantics as a future

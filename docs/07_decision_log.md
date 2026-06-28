@@ -3029,3 +3029,36 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   trust gates exist. Package metadata remains `0.1.5rc1`, public prerelease
   remains `v0.1.5-rc1`, and live optional validation issues `#6` through `#11`
   remain open and separate.
+
+## ADR-0135: Optional Solver Plugin Manifest State Writer ViewModel Is Pure And Non-Writing
+
+- Status: Accepted for experimental state-writer view-model/schema-extension implementation
+- Date: 2026-06-28
+- Context: OSW-EXP-100 defined state-writer safety semantics as design-only.
+  OSW-EXP-092/093 already provide pure persistence view-model and schema-model
+  records, and OSW-EXP-097/099 provide export-summary records and GUI review.
+  The next safe slice is a deterministic state-writer readiness/write-plan
+  view-model that can review supplied state without writing files.
+- Decision: Implement
+  `OptionalSolverPluginManifestStateWriterViewModel` as a pure, side-effect-free,
+  in-memory planning layer. It exposes storage options, write plans,
+  file-format/schema-boundary records, source/trust/provenance rows, candidate
+  writer rows, acknowledgement/expiry rows, redaction/privacy rows,
+  schema/migration rows, stale-source rows, conflict/shared-stack rows,
+  unsafe-claim rows, evidence/history rows, atomicity/error-plan rows,
+  non-action flags, disabled/future action states, mapping/text renderers, and
+  `OSPMG_STATE_WRITER_*` diagnostics. It adapts supplied persistence
+  view-model, persistence schema-model, and export-summary view-model records
+  without mutating them.
+- Consequences: This gate adds automated view-model evidence only. It adds no
+  actual writer implementation, file write, directory creation, runtime state
+  file, settings file, schema file, export/report file, reloadable bundle,
+  ProjectSchema mutation, GUI behavior, CLI behavior, reload/export behavior,
+  clipboard/report/open-folder behavior, automatic activation, trust
+  restoration, file restoration/rewrite/deletion, dependency install/uninstall,
+  solver uninstall, plugin package import, directory scan, network fetch,
+  discovery execution, validation execution, solver execution, issue/release/
+  tag/asset mutation, version bump, validation-pass/fail claim, issue-closure
+  claim, bundled-solver claim, or certification claim. Package metadata remains
+  `0.1.5rc1`, public prerelease remains `v0.1.5-rc1`, and live optional
+  validation issues `#6` through `#11` remain open and separate.

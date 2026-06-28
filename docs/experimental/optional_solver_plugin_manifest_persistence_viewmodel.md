@@ -32,6 +32,11 @@ not write files, create runtime state, create settings, reload, export, mutate
 ProjectSchema, activate, restore trust, run discovery, run validation, execute
 solvers, mutate issues, mutate releases, or certify anything.
 
+OSW-EXP-101 adds a pure state-writer readiness/write-plan view-model that can
+adapt supplied persistence view-model records without mutating them. The writer
+view-model remains non-writing and does not change this persistence
+view-model's behavior.
+
 ## Public module/class names
 
 - Module:

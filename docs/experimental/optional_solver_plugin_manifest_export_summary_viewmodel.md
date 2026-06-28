@@ -68,6 +68,11 @@ execution, solver execution, issue mutation, release mutation, tag mutation,
 asset mutation, version bump, validation-pass/fail claim, or certification
 claim.
 
+OSW-EXP-101 adds a pure state-writer readiness/write-plan view-model that can
+adapt supplied export-summary records without mutating them. Export summaries
+remain review/report artifacts and do not become reloadable state or writer
+output.
+
 An export summary remains:
 
 - redaction-first

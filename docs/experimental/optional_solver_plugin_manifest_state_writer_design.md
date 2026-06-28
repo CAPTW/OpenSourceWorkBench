@@ -63,6 +63,23 @@ Status boundaries:
 - no issue-closure claim
 - no certification claim
 
+## Implementation follow-up: state writer view-model (OSW-EXP-101)
+
+OSW-EXP-101 implements the first pure in-memory state-writer readiness and
+write-plan view-model:
+[optional_solver_plugin_manifest_state_writer_viewmodel.md](optional_solver_plugin_manifest_state_writer_viewmodel.md).
+It adds deterministic storage-option, schema/migration, redaction,
+acknowledgement, stale-source, conflict/shared-stack, unsafe-claim,
+evidence/history, atomicity/error-plan, non-action flag, diagnostic, and
+disabled/future action records.
+
+The implementation remains non-writing: no writer implementation, no file
+writes, no directory creation, no runtime state files, no settings files, no
+schema files, no export/report files, no reloadable bundles, no ProjectSchema
+mutation, no GUI behavior, no CLI behavior, no reload/export behavior, no
+discovery execution, no validation execution, no solver execution, and no
+issue/release/tag/asset mutation.
+
 ## 2. Purpose
 
 Define future writer semantics for optional solver plugin manifest UX state.
