@@ -452,3 +452,13 @@ Future gates remain separate:
 - `OSW-EXP-112_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_FILE_READER_IMPLEMENTATION`
 - `OSW-VALID-OPTIONAL_PREPARED_MACHINE_MANIFEST_STATE_VALIDATION` if a prepared
   machine is available
+
+## Follow-up: file reader gate numbering (OSW-EXP-112)
+
+This early projection reserved `OSW-EXP-112` for the file-reader *implementation*.
+The actual sequence inserted a design gate first: `OSW-EXP-112` is the reload
+file-reader *design*
+([optional_solver_plugin_manifest_reload_file_reader_design.md](optional_solver_plugin_manifest_reload_file_reader_design.md)),
+and the file-reader *implementation* is now `OSW-EXP-113`. The future reader will
+produce the sanitized caller-supplied mapping this view-model already consumes; it
+remains design-only with no runtime file reading and no view-model mutation.

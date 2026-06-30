@@ -3312,3 +3312,34 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   schema migration, activation review, discovery refresh, ProjectSchema
   integration, validation, issue/release workflows, and certification remain
   future-gated.
+
+## ADR-0146: Optional Solver Plugin Manifest Reload File Reader Requires Explicit Local Path Design
+
+- Status: Accepted for experimental reload file-reader design
+- Date: 2026-06-30
+- Context: OSW-EXP-102 added an explicit state writer that can write local UX
+  state files. OSW-EXP-107 added a pure reload view-model over caller-supplied
+  mappings, and OSW-EXP-109 and OSW-EXP-111 added GUI/CLI review surfaces that
+  deliberately avoid reading files. Users need a future bridge from explicit
+  local state files into reload review, but file reading can be mistaken for
+  trust restoration, automatic activation, validation evidence, ProjectSchema
+  mutation, issue closure, release mutation, or certification.
+- Decision: Define reload file-reader semantics as design-only before any
+  implementation. The future reader must accept explicit caller-provided local
+  paths only, with no default path, no background reload, no directory scan, no
+  network fetch, and no plugin package import. It must validate file eligibility,
+  size, encoding, JSON structure, payload kind, schema version, writer metadata,
+  non-action flags, redaction/privacy, unsafe claims, stale-source state,
+  conflicts, acknowledgement expiry, and trust/provenance, then return a safe
+  in-memory mapping (or a diagnostic reader report) suitable for OSW-EXP-107
+  reload view-model review. It reserves an `OSPMG_RELOAD_READER_*` diagnostics
+  vocabulary. This gate adds no source, no CLI source, no GUI source, and no
+  runtime file reading or parsing.
+- Consequences: A future file-reader implementation (OSW-EXP-113) has a safety
+  contract. Default paths, background reload, GUI file dialogs, CLI explicit-path
+  reload, runtime reload acceptance, schema migration, discovery, validation,
+  solver execution, ProjectSchema integration, issue/release/tag/asset mutation,
+  and certification claims remain future-gated. No persisted state file is read or
+  parsed in this gate; user/plugin files remain untrusted by default; built-ins
+  remain authoritative; skipped-missing remains skipped-missing; and live optional
+  validation issues `#6` through `#11` remain open and separate.

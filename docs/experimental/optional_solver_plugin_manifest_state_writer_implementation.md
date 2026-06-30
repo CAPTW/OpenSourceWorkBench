@@ -231,3 +231,14 @@ claims.
 
 Issues `#6` through `#11` remain open. Package metadata remains `0.1.5rc1`.
 The public prerelease remains `v0.1.5-rc1`.
+
+## Follow-up: reload file reader design (OSW-EXP-112)
+
+OSW-EXP-112 designs the future explicit local file reader/parser that would read
+state-writer-produced UX state files back into reload review
+([optional_solver_plugin_manifest_reload_file_reader_design.md](optional_solver_plugin_manifest_reload_file_reader_design.md)).
+That reader is the inverse-but-asymmetric counterpart of this writer: it reads only
+this bounded payload family, validates and redacts it, and returns a safe in-memory
+mapping for review. It is design-only — no reader is implemented, no file is read,
+and the writer's boundaries (no runtime reload, no trust restoration, no
+ProjectSchema mutation) are preserved.

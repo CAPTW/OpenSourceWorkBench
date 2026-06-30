@@ -6,6 +6,28 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload File Reader Design
+
+- Designed optional solver plugin manifest reload file-reader semantics as a
+  future explicit-local-path reader/parser boundary for state-writer-produced UX
+  state files, defining explicit-path, file-eligibility, encoding/JSON,
+  payload-kind/schema, writer-metadata/provenance, non-action-flag,
+  redaction/privacy, acknowledgement/expiry, candidate-lifecycle,
+  stale-source/re-preview, conflict/shared-stack, unsafe-claim, and
+  evidence/history policies, plus a reader report model, an
+  `OSPMG_RELOAD_READER_*` diagnostics reservation, a security/privacy review, a
+  future implementation test plan, and future gates.
+- Kept the gate design-only: no file reader implementation, no parser
+  implementation, no runtime file reading, no runtime state parsing, no source
+  edit, no CLI source edit, no GUI source edit, no default reload path, no
+  background reload, no directory scan, no network fetch, no plugin package
+  import, no runtime reload, no reloadable bundle creation, no export/report file
+  creation, no clipboard/report/open-folder behavior, no ProjectSchema mutation,
+  no live discovery, no passive refresh, no validation execution, no solver
+  execution, no dependency install/uninstall, no automatic activation, no trust
+  restoration, no issue/release/tag/asset mutation, no version bump, and no
+  validation-pass/fail, issue-closure, bundled-solver, or certification claims.
+
 ### Optional Solver Plugin Manifest Reload CLI
 
 - Added a stdout-first optional solver plugin manifest reload CLI review
