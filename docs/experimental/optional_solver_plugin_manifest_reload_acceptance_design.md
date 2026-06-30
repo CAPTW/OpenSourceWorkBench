@@ -619,3 +619,14 @@ Future gates remain separate:
 Runtime reload acceptance, activation review, discovery refresh, ProjectSchema
 integration, validation, issue/release workflows, export/report integration,
 persistence writes, reloadable bundles, and certification remain future-gated.
+
+## 30. Follow-up: Acceptance ViewModel (OSW-EXP-119)
+
+OSW-EXP-119 implements the pure reload acceptance view-model described by this
+design. The implementation consumes supplied reload preview/view-model records
+only and surfaces readiness, blockers, acknowledgements, diagnostics,
+accepted-for-session-review representation, non-action flags, and disabled/future
+action states. It still does not implement runtime reload acceptance, GUI
+buttons, CLI commands, persistence writes, ProjectSchema mutation, file IO,
+reader invocation, discovery, validation, solver execution, automatic activation,
+trust restoration, issue/release/tag/asset mutation, or certification claims.

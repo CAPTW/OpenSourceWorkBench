@@ -230,3 +230,13 @@ commands, does not infer acceptance from exit codes, and does not add default
 paths, persistence writes, ProjectSchema mutation, discovery, validation, solver
 execution, automatic activation, trust restoration, issue/release/tag/asset
 mutation, or certification claims.
+
+## 20. Follow-up: Acceptance ViewModel (OSW-EXP-119)
+
+OSW-EXP-119 adds a separate pure reload acceptance view-model for supplied
+reload preview records. This CLI explicit-path implementation remains
+stdout-first preview-only: it does not add acceptance CLI commands, does not
+infer acceptance from exit codes, does not persist state, does not mutate
+ProjectSchema, and does not run discovery, validation, solver execution,
+activation, trust restoration, issue/release/tag or asset workflows, or
+certification.

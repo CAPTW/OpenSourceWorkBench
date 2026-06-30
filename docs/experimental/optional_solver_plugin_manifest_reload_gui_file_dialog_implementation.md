@@ -171,3 +171,12 @@ does not accept runtime reload state, and does not add persistence writes,
 ProjectSchema mutation, discovery, validation, solver execution, automatic
 activation, trust restoration, issue/release/tag/asset mutation, or
 certification claims.
+
+## 13. Follow-up: Acceptance ViewModel (OSW-EXP-119)
+
+OSW-EXP-119 adds a separate pure reload acceptance view-model for supplied
+reload preview records. This GUI file-dialog implementation remains preview-only:
+it does not add acceptance buttons, does not accept runtime reload state, does
+not persist state, does not mutate ProjectSchema, and does not run discovery,
+validation, solver execution, activation, trust restoration, issue/release/tag
+or asset workflows, or certification.

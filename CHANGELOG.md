@@ -6,6 +6,16 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload Acceptance ViewModel
+
+- Added a pure optional solver plugin manifest reload acceptance view-model that
+  models reviewed-preview readiness, blockers, acknowledgements, diagnostics,
+  accepted-for-session-review state, future activation/discovery review
+  requirements, non-action flags, and disabled/future actions while preserving
+  no runtime acceptance, no persistence writes, no ProjectSchema mutation, no
+  discovery/validation/solver execution, no automatic activation, no trust
+  restoration, no issue/release mutation, and no certification claims.
+
 ### Optional Solver Plugin Manifest Reload Acceptance Design
 
 - Designed optional solver plugin manifest reload acceptance semantics as a

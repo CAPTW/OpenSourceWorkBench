@@ -3507,3 +3507,29 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   ProjectSchema integration, persistence writes, issue/release workflows,
   export/report/reloadable-bundle integration, and certification remain
   future-gated. No accepted state is created in this gate.
+
+## ADR-0153: Optional Solver Plugin Manifest Reload Acceptance ViewModel Is Pure And Side-Effect-Free
+
+- Status: Accepted for experimental reload acceptance view-model implementation
+- Date: 2026-06-30
+- Context: OSW-EXP-118 designed reload acceptance as a future explicit
+  reviewed-preview-to-session UX state boundary. Existing reload reader, CLI, and
+  GUI file-dialog preview surfaces remain preview/review-only. A view-model is
+  needed before GUI/CLI acceptance implementation so readiness, blockers,
+  acknowledgements, diagnostics, non-action flags, and future action states can
+  be tested without mutating runtime state.
+- Decision: Implement a pure reload acceptance view-model under
+  `src/osw/experimental/optional_solvers/`. It consumes supplied reload
+  preview/view-model records only. It models missing preview, not requested,
+  blocked, ready, accepted-for-session-review, future activation/discovery
+  review, and error states. It exposes `OSPMG_RELOAD_ACCEPTANCE_*` diagnostics,
+  acknowledgements, expiry reasons, non-action flags, and disabled/future action
+  states. It performs no file IO, reader invocation, GUI/CLI behavior, runtime
+  reload acceptance, persistence writes, ProjectSchema mutation, discovery,
+  validation, solver execution, activation, trust restoration,
+  issue/release/tag/asset mutation, or certification claim.
+- Consequences: Future GUI/CLI acceptance gates have a deterministic, testable
+  contract. Runtime reload acceptance, persistence, activation, discovery
+  refresh, validation, ProjectSchema integration, issue/release mutation, and
+  prepared-machine validation remain future-gated. No accepted runtime state is
+  created by this gate.

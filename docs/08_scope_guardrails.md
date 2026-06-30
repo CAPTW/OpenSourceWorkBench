@@ -413,6 +413,21 @@ request should stop, park, or defer.
   activation, trust restoration, issue/release/tag/asset mutation, version bump,
   validation-pass or validation-fail evidence, bundled-solver claim, or
   certification claim without a separate gate.
+- Optional solver plugin manifest reload acceptance view-model implementation
+  that models supplied reload preview readiness, blockers, acknowledgements,
+  diagnostics, accepted-for-session-review representation, future review
+  requirements, non-action flags, and disabled/future actions. It must stay
+  pure and side-effect-free: no runtime reload acceptance, source file IO,
+  reader invocation, GUI behavior, CLI behavior, acceptance buttons, acceptance
+  CLI commands, persistence write, ProjectSchema mutation, default reload path,
+  background reload, directory scan, network fetch, plugin package import, CLI
+  subprocess use, reloadable bundle creation, export/report file creation,
+  clipboard/report/open-folder behavior, live discovery, passive refresh,
+  validation execution, solver execution, dependency installation, dependency
+  uninstall, solver uninstall, automatic activation, trust restoration,
+  issue/release/tag/asset mutation, version bump, validation-pass or
+  validation-fail evidence, bundled-solver claim, or certification claim
+  without a separate gate.
 - Post-experimental ResultDataset scope review that summarizes completed
   FEASpec/CalculiX parser/import/write/GUI evidence, records skipped-missing
   live CalculiX validation, keeps issues `#6` through `#11` open, and routes
@@ -1271,6 +1286,18 @@ Scope drift is any change that:
   closure, release mutation, tag mutation, asset mutation, version bump,
   validation-pass or validation-fail evidence, bundled-solver claim, or
   certification claim without a separate gate;
+- turns the optional solver plugin manifest reload acceptance view-model
+  implementation into runtime reload acceptance, source file IO, reader
+  invocation, GUI behavior, CLI behavior, acceptance button implementation,
+  acceptance CLI command implementation, persistence write, ProjectSchema
+  mutation, default reload path, background reload, directory scan, network
+  fetch, plugin package import, CLI subprocess use, reloadable bundle creation,
+  export/report file creation, clipboard/report/open-folder behavior, live
+  discovery, passive refresh, validation execution, solver execution,
+  dependency installation, dependency uninstall, solver uninstall, automatic
+  activation, trust restoration, issue closure, release mutation, tag mutation,
+  asset mutation, version bump, validation-pass or validation-fail evidence,
+  bundled-solver claim, or certification claim without a separate gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is

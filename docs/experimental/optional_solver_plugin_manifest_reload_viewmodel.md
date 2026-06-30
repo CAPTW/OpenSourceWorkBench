@@ -513,3 +513,13 @@ Acceptance remains a future session/review state boundary, not trust
 restoration, automatic activation, ProjectSchema mutation, persistence write,
 discovery, validation, solver execution, issue/release/tag/asset mutation, or
 certification.
+
+## Follow-up: acceptance view-model (OSW-EXP-119)
+
+OSW-EXP-119 adds a separate pure reload acceptance view-model
+([optional_solver_plugin_manifest_reload_acceptance_viewmodel.md](optional_solver_plugin_manifest_reload_acceptance_viewmodel.md))
+that consumes this view-model's supplied review records. This reload view-model
+remains unchanged and still does not read files, invoke readers, accept runtime
+reload state, persist state, mutate ProjectSchema, run discovery or validation,
+execute solvers, activate candidates, restore trust, close issues, mutate
+releases, or certify manifests.
