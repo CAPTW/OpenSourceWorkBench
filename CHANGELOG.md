@@ -6,6 +6,27 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload File Reader
+
+- Added an explicit-path optional solver plugin manifest reload file reader
+  (`OptionalSolverPluginManifestReloadFileReader` /
+  `read_optional_solver_plugin_manifest_reload_file`) that reads exactly one
+  caller-provided local file, validates the bounded OSW-EXP-102 state-writer
+  payload family (eligibility, size, UTF-8/JSON object root, duplicate keys,
+  payload kind, schema/migration, redaction/secret, non-action flags, unsafe
+  claims, stale-source, conflict, evidence), and returns `OSPMG_RELOAD_READER_*`
+  diagnostics plus a sanitized in-memory mapping for OSW-EXP-107 reload view-model
+  review.
+- Kept the reader library-level and side-effect-free: no default paths, no
+  background reload, no directory scan, no network fetch, no plugin package import,
+  no CLI explicit-path wiring, no GUI file dialogs, no runtime reload acceptance,
+  no reloadable bundles, no export/report files, no clipboard/open-folder behavior,
+  no ProjectSchema mutation, no discovery/validation/solver execution, no
+  dependency install/uninstall, no automatic activation, no trust restoration, no
+  issue/release/tag/asset mutation, no version bump, and no validation-pass/fail,
+  issue-closure, bundled-solver, or certification claims. The reader writes,
+  creates, and deletes no files and never leaks raw paths in diagnostics.
+
 ### Optional Solver Plugin Manifest Reload File Reader Design
 
 - Designed optional solver plugin manifest reload file-reader semantics as a

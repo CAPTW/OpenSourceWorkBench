@@ -462,3 +462,11 @@ file-reader *design*
 and the file-reader *implementation* is now `OSW-EXP-113`. The future reader will
 produce the sanitized caller-supplied mapping this view-model already consumes; it
 remains design-only with no runtime file reading and no view-model mutation.
+
+## Follow-up: reader implemented (OSW-EXP-113)
+
+OSW-EXP-113 implements the explicit-path reader
+([optional_solver_plugin_manifest_reload_file_reader_implementation.md](optional_solver_plugin_manifest_reload_file_reader_implementation.md)).
+Its `safe_mapping` output feeds this view-model through `from_payload_mapping`. The
+reader imports only this module's payload-kind/schema constants, never mutates
+view-model records, and keeps this view-model pure and path-free.

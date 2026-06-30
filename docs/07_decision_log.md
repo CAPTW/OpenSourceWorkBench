@@ -3343,3 +3343,34 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   parsed in this gate; user/plugin files remain untrusted by default; built-ins
   remain authoritative; skipped-missing remains skipped-missing; and live optional
   validation issues `#6` through `#11` remain open and separate.
+
+## ADR-0147: Optional Solver Plugin Manifest Reload File Reader Is Explicit-Path And Review-Only
+
+- Status: Accepted for experimental reload file-reader implementation
+- Date: 2026-06-30
+- Context: OSW-EXP-102 added an explicit state writer, OSW-EXP-107 added a pure
+  reload view-model over caller-supplied mappings, and OSW-EXP-109/111 added
+  GUI/CLI review surfaces that avoid file reading. OSW-EXP-112 designed an explicit
+  local file-reader boundary. Users need a safe bridge from explicit local state
+  files into reload review, but file reading can be mistaken for trust restoration,
+  automatic activation, validation evidence, ProjectSchema mutation, issue closure,
+  release mutation, or certification.
+- Decision: Implement a library-level reload file reader
+  (`OptionalSolverPluginManifestReloadFileReader` /
+  `read_optional_solver_plugin_manifest_reload_file`) under
+  `src/osw/experimental/optional_solvers/`. It reads exactly one explicit
+  caller-provided local path (no default path, no background reload, no directory
+  scan, no network fetch, no glob, no plugin import) and validates file eligibility,
+  size, UTF-8 encoding, JSON object shape, duplicate keys, payload kind, schema
+  version/migration, non-action flags, redaction/privacy, unsafe claims,
+  stale-source state, conflicts, evidence/history, acknowledgements, and provenance.
+  It returns `OSPMG_RELOAD_READER_*` diagnostics and, only when no blockers remain,
+  a sanitized in-memory mapping suitable for OSW-EXP-107 reload view-model review.
+  It writes/creates/deletes no files and is not wired into the CLI or GUI.
+- Consequences: Future CLI explicit-path (OSW-EXP-114/115) and GUI file-dialog
+  (OSW-EXP-116/117) gates can reuse the reader. Runtime reload acceptance,
+  activation review, discovery refresh, validation, ProjectSchema integration,
+  issue/release/tag/asset mutation, and certification remain future-gated. No
+  default path or background reload exists; user/plugin files remain untrusted by
+  default; built-ins remain authoritative; skipped-missing remains skipped-missing;
+  and live optional validation issues `#6` through `#11` remain open and separate.

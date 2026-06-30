@@ -242,3 +242,13 @@ this bounded payload family, validates and redacts it, and returns a safe in-mem
 mapping for review. It is design-only — no reader is implemented, no file is read,
 and the writer's boundaries (no runtime reload, no trust restoration, no
 ProjectSchema mutation) are preserved.
+
+## Follow-up: reader implemented (OSW-EXP-113)
+
+OSW-EXP-113 implements that reader
+([optional_solver_plugin_manifest_reload_file_reader_implementation.md](optional_solver_plugin_manifest_reload_file_reader_implementation.md)).
+It reads only this writer's payload family from an explicit caller path, validates
+kind/schema/redaction/unsafe-claim/stale/conflict boundaries, and returns a safe
+review mapping. It reads but never writes, repairs, or migrates files, and it
+preserves the writer's no-runtime-reload, no-trust-restoration, and
+no-ProjectSchema-mutation boundaries.

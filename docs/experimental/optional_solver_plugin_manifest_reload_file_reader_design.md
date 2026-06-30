@@ -552,3 +552,14 @@ Suggested sequence (follow the repo's latest numbering convention if it differs)
 
 Each remains a separate, explicitly-scoped gate. This design gate authorizes none
 of them; it only defines the safety contract the reader implementation must meet.
+
+## Follow-up: implemented (OSW-EXP-113)
+
+The reader designed here is implemented in OSW-EXP-113 as a library-level,
+explicit-path reader. See
+[optional_solver_plugin_manifest_reload_file_reader_implementation.md](optional_solver_plugin_manifest_reload_file_reader_implementation.md).
+The implementation honors this contract: explicit path only, bounded eligibility,
+UTF-8/JSON object validation, payload-kind/schema checks, redaction/secret/unsafe
+blocking, stale/conflict surfacing, reference-only evidence, a safe review mapping,
+and no CLI wiring, GUI dialog, runtime reload acceptance, ProjectSchema mutation,
+discovery/validation/solver execution, activation, or trust restoration.

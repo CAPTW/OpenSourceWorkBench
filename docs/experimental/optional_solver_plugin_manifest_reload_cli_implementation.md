@@ -265,3 +265,11 @@ migration, runtime reload acceptance, activation review, discovery refresh,
 ProjectSchema integration, export/report integration, live optional validation,
 or issue/release workflows. Each must preserve explicit path policy,
 redaction, acknowledgements, tests, and non-overclaiming boundaries.
+
+## Follow-up: reload file reader (OSW-EXP-113)
+
+OSW-EXP-113 implements a library-level explicit-path reload file reader
+([optional_solver_plugin_manifest_reload_file_reader_implementation.md](optional_solver_plugin_manifest_reload_file_reader_implementation.md)).
+It is **not** wired into this CLI: `load-preview`/`read-file` remain
+disabled/future-only until a separate CLI explicit-path gate (OSW-EXP-114/115).
+Reader status never implies a validation pass/fail exit.
