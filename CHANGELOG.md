@@ -6,6 +6,17 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload GUI File Dialog
+
+- Added an explicit optional solver plugin manifest reload GUI file-dialog
+  preview wrapper that routes one user-selected state-writer UX state file
+  through the reload file reader and existing reload review panel, preserving
+  reader-first diagnostics, redacted selected-file display, cancellation as a
+  non-error, no default/background reload, no CLI subprocess use, no
+  ProjectSchema mutation, no discovery/validation/solver execution, no
+  automatic activation, no trust restoration, no issue/release mutation, and no
+  certification claims.
+
 ### Optional Solver Plugin Manifest Reload GUI File Dialog Design
 
 - Designed optional solver plugin manifest reload GUI file-dialog semantics as a

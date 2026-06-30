@@ -24,6 +24,13 @@ issue-closure claim, no bundled-solver claim, and no certification claim.
 This document is not implementation authorization. It records the future
 contract that a later OSW-EXP-117 implementation gate must satisfy.
 
+Follow-up: OSW-EXP-117 implements this design in
+[optional_solver_plugin_manifest_reload_gui_file_dialog_implementation.md](optional_solver_plugin_manifest_reload_gui_file_dialog_implementation.md)
+as an outer GUI chooser/controller that opens no native dialog on construction,
+uses the OSW-EXP-113 reader, renders diagnostics before view-model preview, and
+keeps reload acceptance, activation, validation, solver execution,
+ProjectSchema mutation, issue/release mutation, and certification out of scope.
+
 ## 2. Purpose
 
 This document defines future GUI file-dialog semantics for optional solver

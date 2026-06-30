@@ -306,3 +306,16 @@ implementation, add direct GUI JSON parsing, call the CLI as a subprocess, add
 default/background reload, accept runtime reload, mutate ProjectSchema, run
 discovery/validation/solver execution, activate candidates, restore trust,
 mutate issues/releases/tags/assets, or claim certification.
+
+## 33. GUI consumer added in OSW-EXP-117
+
+GUI consumer added in OSW-EXP-117:
+`OptionalSolverPluginManifestReloadFileDialogPanel` calls this reader only after
+an explicit GUI file-selection action. The GUI renders reader diagnostics before
+view-model preview, suppresses view-model construction when this reader reports
+blockers, and routes only `safe_mapping` output into the OSW-EXP-107 reload
+view-model. This reader remains the sole file parsing/policy boundary; the GUI
+does not duplicate JSON parsing, weaken redaction or unsafe-claim policy, call
+the CLI as a subprocess, accept runtime reload, mutate ProjectSchema, run
+discovery/validation/solver execution, activate candidates, restore trust,
+mutate issues/releases/tags/assets, or claim certification.

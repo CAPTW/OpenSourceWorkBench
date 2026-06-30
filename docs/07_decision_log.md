@@ -3450,3 +3450,33 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   ProjectSchema integration, issue/release workflows, export/report integration,
   and certification remain future-gated. No persisted state file is read or
   parsed in this gate.
+
+## ADR-0151: Optional Solver Plugin Manifest Reload GUI File Dialog Is Reader-First Preview
+
+- Status: Accepted for experimental reload GUI file-dialog implementation
+- Date: 2026-06-30
+- Context: OSW-EXP-109 implemented a read-only reload GUI review panel over
+  already-built reload view-model records. OSW-EXP-113 added an explicit-path
+  library reload file reader, OSW-EXP-115 added reader-first CLI explicit-path
+  preview, and OSW-EXP-116 designed GUI file-dialog semantics. Users need a GUI
+  path to preview a state-writer UX state file, but GUI file selection can be
+  mistaken for default/background reload, trusted runtime reload acceptance,
+  automatic activation, validation evidence, ProjectSchema mutation, issue
+  closure, release mutation, or certification.
+- Decision: Implement `OptionalSolverPluginManifestReloadFileDialogPanel` as an
+  outer PySide chooser/controller around the existing reload panel. It opens no
+  native dialog during construction, supports injected file picker/reader/request
+  and view-model factories for tests, reads only one explicitly selected path
+  through `OptionalSolverPluginManifestReloadFileReader`, renders reader
+  diagnostics before view-model preview, blocks view-model construction when the
+  reader reports blockers, and routes only reader `safe_mapping` output into
+  `OptionalSolverPluginManifestReloadViewModel.from_payload_mapping` for the
+  existing review panel. Cancellation is non-error and preserves the prior
+  preview. Selected-file display is redacted.
+- Consequences: GUI users can explicitly preview reload state files without
+  accepting runtime reload state. There is no default reload path, background
+  reload, directory scan, network fetch, plugin package import, CLI subprocess
+  bridge, ProjectSchema mutation, discovery/validation/solver execution,
+  automatic activation, trust restoration, issue/release/tag/asset mutation,
+  export/report/reloadable-bundle creation, version bump, validation-pass/fail
+  claim, issue-closure claim, bundled-solver claim, or certification claim.

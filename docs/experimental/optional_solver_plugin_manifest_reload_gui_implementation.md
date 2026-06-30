@@ -238,6 +238,18 @@ default/background reload, no CLI subprocess use, no ProjectSchema mutation, no
 discovery/validation/solver execution, no activation, no trust restoration, no
 issue/release/tag/asset mutation, and no certification claim.
 
+## Follow-up: GUI File-Dialog Implementation (OSW-EXP-117)
+
+OSW-EXP-117 adds
+`OptionalSolverPluginManifestReloadFileDialogPanel` as a separate outer
+chooser/controller around this review panel. The wrapper may invoke the
+OSW-EXP-113 reader after an explicit user-selected path, but this original
+`OptionalSolverPluginManifestReloadPanel` remains a pure renderer over supplied
+reload view-model records and still has no direct file dialog, file reader,
+runtime reload acceptance, ProjectSchema mutation, discovery/validation/solver
+execution, activation, trust restoration, issue/release/tag/asset mutation, or
+certification behavior.
+
 ## Future Gates
 
 Future gates remain separate:

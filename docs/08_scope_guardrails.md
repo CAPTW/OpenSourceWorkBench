@@ -387,6 +387,18 @@ request should stop, park, or defer.
   trust restoration, issue closure, release mutation, tag mutation, asset
   mutation, version bump, validation-pass or validation-fail evidence,
   bundled-solver claim, or certification claim without a separate gate.
+- Optional solver plugin manifest reload GUI file-dialog implementation that
+  adds only an explicit user-selected file preview wrapper around the reload
+  reader and existing reload review panel. It must stay reader-first and
+  review-only: no default reload path, background reload, directory scan,
+  network fetch, plugin package import, CLI subprocess bridge, runtime reload
+  acceptance, ProjectSchema mutation, live discovery, passive refresh,
+  validation execution, solver execution, dependency install/uninstall,
+  automatic activation, trust restoration, issue/release/tag/asset mutation,
+  version bump, validation-pass or validation-fail evidence, bundled-solver
+  claim, certification claim, reloadable bundle creation, export/report file
+  creation, clipboard behavior, report attachment, or open-output-folder
+  behavior.
 - Post-experimental ResultDataset scope review that summarizes completed
   FEASpec/CalculiX parser/import/write/GUI evidence, records skipped-missing
   live CalculiX validation, keeps issues `#6` through `#11` open, and routes
