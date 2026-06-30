@@ -228,6 +228,16 @@ states, safety guidance, `set_view_model()` refresh, view-model immutability,
 no file creation, and source checks for forbidden GUI/file/CLI/discovery/
 validation/solver/project behavior.
 
+## Follow-up: GUI File-Dialog Design (OSW-EXP-116)
+
+OSW-EXP-116 designs a future GUI file-dialog bridge from explicit user file
+selection to the OSW-EXP-113 reader and OSW-EXP-107 reload view-model review.
+That design keeps this panel pure and unchanged: no GUI source edits, no file
+dialog widgets, no file opening behavior, no runtime file reading/parsing, no
+default/background reload, no CLI subprocess use, no ProjectSchema mutation, no
+discovery/validation/solver execution, no activation, no trust restoration, no
+issue/release/tag/asset mutation, and no certification claim.
+
 ## Future Gates
 
 Future gates remain separate:
@@ -236,5 +246,7 @@ Future gates remain separate:
 - `OSW-EXP-111_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_CLI_IMPLEMENTATION`
 - `OSW-EXP-112_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_FILE_READER_DESIGN`
 - `OSW-EXP-113_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_FILE_READER_IMPLEMENTATION`
+- `OSW-EXP-116_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_GUI_FILE_DIALOG_DESIGN`
+- `OSW-EXP-117_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_GUI_FILE_DIALOG_IMPLEMENTATION`
 - `OSW-VALID-OPTIONAL_PREPARED_MACHINE_MANIFEST_STATE_VALIDATION` if a prepared
   machine is available

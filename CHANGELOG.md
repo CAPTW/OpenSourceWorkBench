@@ -6,6 +6,16 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload GUI File Dialog Design
+
+- Designed optional solver plugin manifest reload GUI file-dialog semantics as a
+  future explicit user-selected file bridge from the reload GUI to the
+  explicit-path library reader and reload view-model review, preserving no
+  implementation, no default path, no background reload, no CLI subprocess use,
+  no ProjectSchema mutation, no discovery/validation/solver execution, no
+  automatic activation, no trust restoration, no issue/release mutation, and no
+  certification claims.
+
 ### Optional Solver Plugin Manifest Reload CLI Explicit Path
 
 - Added explicit-path optional solver plugin manifest reload CLI preview via

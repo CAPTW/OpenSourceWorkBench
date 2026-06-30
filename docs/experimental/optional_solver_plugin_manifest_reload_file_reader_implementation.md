@@ -295,3 +295,14 @@ This follow-up does not edit reader source, add default paths, add background
 reload, add GUI file dialogs, accept runtime reload, mutate ProjectSchema, run
 discovery/validation/solver execution, activate candidates, restore trust, mutate
 issues/releases/tags/assets, or claim certification.
+
+## 32. Follow-up: GUI file-dialog design (OSW-EXP-116)
+
+OSW-EXP-116 designs a future GUI chooser/controller that may call this reader
+with one explicit user-selected state file, render reader diagnostics before
+view-model preview, and pass only reader `safe_mapping` output into reload
+view-model review. That design does not edit reader source, add GUI file-dialog
+implementation, add direct GUI JSON parsing, call the CLI as a subprocess, add
+default/background reload, accept runtime reload, mutate ProjectSchema, run
+discovery/validation/solver execution, activate candidates, restore trust,
+mutate issues/releases/tags/assets, or claim certification.

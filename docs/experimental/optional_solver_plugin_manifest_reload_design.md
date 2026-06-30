@@ -434,6 +434,16 @@ ProjectSchema mutation, no discovery/validation/solver execution, no automatic
 activation, no trust restoration, no issue/release mutation, and no
 certification claim.
 
+## OSW-EXP-116 GUI File-Dialog Design Follow-Up
+
+OSW-EXP-116 designs a future GUI file-dialog bridge from explicit user file
+selection to the OSW-EXP-113 reader and this reload review model. It remains
+design-only: no GUI source edits, no file dialog widgets, no file opening
+behavior, no runtime file reading/parsing in this gate, no default reload path,
+no background reload, no CLI subprocess use, no ProjectSchema mutation, no
+discovery/validation/solver execution, no automatic activation, no trust
+restoration, no issue/release mutation, and no certification claim.
+
 ## Future Gates
 
 Suggested future gates:
@@ -445,5 +455,7 @@ Suggested future gates:
 - `OSW-EXP-111_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_CLI_IMPLEMENTATION`
 - `OSW-EXP-112_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_FILE_READER_IMPLEMENTATION`
   if file parsing is intentionally split out
+- `OSW-EXP-116_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_GUI_FILE_DIALOG_DESIGN`
+- `OSW-EXP-117_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_GUI_FILE_DIALOG_IMPLEMENTATION`
 - `OSW-VALID-OPTIONAL_PREPARED_MACHINE_MANIFEST_STATE_VALIDATION` if a prepared
   machine is available

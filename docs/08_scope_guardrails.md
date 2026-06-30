@@ -372,6 +372,21 @@ request should stop, park, or defer.
   experimental review-file persistence slice without adding runtime source
   changes, parser changes, writer changes, solver execution, live issue `#8`
   validation, bundled solvers, or certification claims.
+- Optional solver plugin manifest reload GUI file-dialog design that defines a
+  future explicit user-selected file bridge from GUI preview to the reload
+  reader and reload view-model without turning that design into GUI file-dialog
+  implementation, GUI source edit, CLI source edit, runtime source edit,
+  file-reader source edit, reload view-model source edit, file dialog widget
+  implementation, file opening behavior, runtime file reading, runtime state
+  parsing, runtime reload acceptance, default reload path, background reload,
+  directory scan, network fetch, plugin package import, CLI subprocess use,
+  reloadable bundle creation, export/report file creation,
+  clipboard/report/open-folder behavior, ProjectSchema mutation, live discovery,
+  passive refresh, validation execution, solver execution, dependency
+  installation, dependency uninstall, solver uninstall, automatic activation,
+  trust restoration, issue closure, release mutation, tag mutation, asset
+  mutation, version bump, validation-pass or validation-fail evidence,
+  bundled-solver claim, or certification claim without a separate gate.
 - Post-experimental ResultDataset scope review that summarizes completed
   FEASpec/CalculiX parser/import/write/GUI evidence, records skipped-missing
   live CalculiX validation, keeps issues `#6` through `#11` open, and routes

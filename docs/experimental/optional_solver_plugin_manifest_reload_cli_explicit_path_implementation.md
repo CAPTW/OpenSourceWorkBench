@@ -208,3 +208,14 @@ Future GUI file-dialog design and implementation remain separate. Runtime reload
 acceptance, activation review, discovery refresh, ProjectSchema integration,
 validation, issue/release workflows, export/report integration, and certification
 remain future-gated.
+
+## 18. Follow-up: GUI File-Dialog Design (OSW-EXP-116)
+
+OSW-EXP-116 designs the future GUI file-dialog counterpart to this CLI
+explicit-path preview. The GUI design shares reader-first, `safe_mapping`, and
+reload view-model semantics, but does not call this CLI as a subprocess and adds
+no GUI source, no file dialog widgets, no file opening behavior, no runtime file
+reading/parsing, no default/background reload, no ProjectSchema mutation, no
+discovery/validation/solver execution, no activation, no trust restoration, no
+issue/release/tag/asset mutation, and no certification claim in that design
+gate.

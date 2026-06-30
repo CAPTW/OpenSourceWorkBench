@@ -3422,3 +3422,31 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   safely. GUI file dialog, runtime reload acceptance, activation, discovery
   refresh, validation, ProjectSchema integration, and prepared-machine validation
   remain future-gated. No default/background reload exists.
+
+## ADR-0150: Optional Solver Plugin Manifest Reload GUI File Dialog Starts As Design-Only
+
+- Status: Accepted for experimental reload GUI file-dialog design
+- Date: 2026-06-30
+- Context: OSW-EXP-109 implemented a read-only reload GUI review panel over
+  already-built reload view-model records. OSW-EXP-113 added an explicit-path
+  library reload file reader, and OSW-EXP-115 added reader-first CLI
+  explicit-path preview. A future GUI file chooser is useful, but it can be
+  mistaken for default/background reload, trusted reload acceptance, automatic
+  activation, validation evidence, ProjectSchema mutation, issue closure,
+  release mutation, or certification.
+- Decision: Define GUI file-dialog semantics as design-only before
+  implementation. Future GUI file-dialog preview must require explicit user file
+  selection, call the OSW-EXP-113 reader, render reader diagnostics first, feed
+  only reader `safe_mapping` output into the OSW-EXP-107 reload view-model, and
+  keep the OSW-EXP-109 panel pure view-model rendering. This gate adds no GUI
+  source, no CLI source, no runtime source, no file-reader source, no reload
+  view-model source, no file dialog widgets, no file opening behavior, no
+  runtime file reading/parsing, no runtime reload acceptance, no default path,
+  no background reload, no CLI subprocess use, no ProjectSchema mutation, no
+  discovery/validation/solver execution, no activation, no trust restoration,
+  no issue/release/tag/asset mutation, and no certification claim.
+- Consequences: Future OSW-EXP-117 implementation has a safety contract.
+  Runtime reload acceptance, activation review, discovery refresh, validation,
+  ProjectSchema integration, issue/release workflows, export/report integration,
+  and certification remain future-gated. No persisted state file is read or
+  parsed in this gate.

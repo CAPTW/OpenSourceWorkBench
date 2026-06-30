@@ -491,3 +491,14 @@ review output only. Filesystem policy, path redaction, schema reading, and
 reader blockers remain outside this view-model; ProjectSchema mutation,
 activation, discovery, validation, solver execution, issue/release mutation, and
 certification remain out of scope.
+
+## Follow-up: GUI file-dialog design (OSW-EXP-116)
+
+OSW-EXP-116 designs a future GUI chooser/controller
+([optional_solver_plugin_manifest_reload_gui_file_dialog_design.md](optional_solver_plugin_manifest_reload_gui_file_dialog_design.md))
+that may call the OSW-EXP-113 reader and pass only reader `safe_mapping` output
+into this view-model. This view-model remains path-free and pure, and is not
+edited by that gate. File-dialog widgets, direct file opening, runtime file
+reading/parsing, default/background reload, ProjectSchema mutation, activation,
+discovery, validation, solver execution, issue/release mutation, trust
+restoration, and certification remain outside this view-model.

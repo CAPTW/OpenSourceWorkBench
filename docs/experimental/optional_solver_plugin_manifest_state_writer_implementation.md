@@ -262,3 +262,15 @@ The design adds no CLI implementation, no path argument implementation, no file
 reading/parsing at runtime in this gate, no default/background reload, no
 ProjectSchema mutation, no discovery/validation/solver execution, no activation,
 no trust restoration, no issue/release mutation, and no certification claim.
+
+## Follow-up: GUI file-dialog design (OSW-EXP-116)
+
+OSW-EXP-116 designs a future GUI file-dialog bridge from an explicit
+user-selected state file, through the OSW-EXP-113 reader, into reload view-model
+review
+([optional_solver_plugin_manifest_reload_gui_file_dialog_design.md](optional_solver_plugin_manifest_reload_gui_file_dialog_design.md)).
+The design does not edit writer source, implement GUI file dialogs, open files
+from GUI code, parse writer payloads outside the reader, add default/background
+reload, mutate ProjectSchema, run discovery/validation/solver execution,
+activate candidates, restore trust, mutate issues/releases/tags/assets, or claim
+certification.
