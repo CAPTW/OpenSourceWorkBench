@@ -3398,3 +3398,27 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   solver execution, ProjectSchema integration, issue/release/tag/asset mutation,
   and certification claims remain future-gated. No persisted state file is read
   or parsed in this gate.
+
+## ADR-0149: Optional Solver Plugin Manifest Reload CLI Explicit Path Uses Reader-First Review
+
+- Status: Accepted for experimental reload CLI explicit-path implementation
+- Date: 2026-06-30
+- Context: OSW-EXP-111 added stdout-first reload CLI review over deterministic
+  in-memory states. OSW-EXP-113 added an explicit-path library reload file
+  reader. OSW-EXP-114 designed CLI explicit-path preview. Users need
+  `load-preview --path` to inspect state-writer files from the CLI, but path
+  loading can be mistaken for default/background reload, trusted reload
+  acceptance, automatic activation, validation evidence, ProjectSchema mutation,
+  issue closure, release mutation, or certification.
+- Decision: Implement `load-preview --path` as reader-first, stdout-first
+  review. Reader diagnostics render before view-model preview. Reader blockers
+  prevent view-model preview. Reader safe mappings feed the reload view-model
+  only for review. Text/JSON output preserve non-validation exit-code semantics
+  and redacted diagnostics. There is no GUI file dialog, runtime reload
+  acceptance, default path, ProjectSchema mutation, discovery/validation/solver
+  execution, activation, trust restoration, issue/release/tag/asset mutation, or
+  certification claim.
+- Consequences: CLI can preview explicitly supplied local reload state files
+  safely. GUI file dialog, runtime reload acceptance, activation, discovery
+  refresh, validation, ProjectSchema integration, and prepared-machine validation
+  remain future-gated. No default/background reload exists.

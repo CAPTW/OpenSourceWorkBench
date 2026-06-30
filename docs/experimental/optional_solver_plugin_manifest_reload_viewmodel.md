@@ -480,3 +480,14 @@ gate does not edit view-model source, add path handling to the view-model, read
 or parse files at runtime, add default/background reload, mutate ProjectSchema,
 run discovery/validation/solver execution, activate candidates, restore trust,
 mutate issues/releases/tags/assets, or claim certification.
+
+## Follow-up: CLI explicit-path implementation (OSW-EXP-115)
+
+OSW-EXP-115 implements that CLI bridge
+([optional_solver_plugin_manifest_reload_cli_explicit_path_implementation.md](optional_solver_plugin_manifest_reload_cli_explicit_path_implementation.md))
+without changing this view-model. The CLI obtains a reader `safe_mapping` from an
+explicit local state file and calls the existing payload-mapping constructor for
+review output only. Filesystem policy, path redaction, schema reading, and
+reader blockers remain outside this view-model; ProjectSchema mutation,
+activation, discovery, validation, solver execution, issue/release mutation, and
+certification remain out of scope.

@@ -792,6 +792,20 @@ dependency install/uninstall, no automatic activation, no trust restoration, no
 issue/release/tag/asset mutation, no validation-pass/fail claim, and no
 certification claim.
 
+[Optional solver plugin manifest reload CLI explicit-path implementation](experimental/optional_solver_plugin_manifest_reload_cli_explicit_path_implementation.md)
+implements explicit `load-preview --path` preview as automated CLI implementation
+evidence. It is explicit-path only, reader-first, stdout-first, and review-only:
+the CLI calls the OSW-EXP-113 reader, renders reader diagnostics before
+view-model preview, routes only reader `safe_mapping` into OSW-EXP-107 reload
+view-model review, and returns non-validation exit codes. It adds no default
+reload path, no background reload, no directory scan, no network fetch, no plugin
+package import, no GUI file dialog, no runtime reload acceptance, no reloadable
+bundle creation, no export/report file creation, no clipboard/report/open-folder
+behavior, no ProjectSchema mutation, no live discovery, no passive refresh, no
+validation execution, no solver execution, no dependency install/uninstall, no
+automatic activation, no trust restoration, no issue/release/tag/asset mutation,
+no validation-pass/fail claim, and no certification claim.
+
 [Optional solver plugin manifest state writer design](experimental/optional_solver_plugin_manifest_state_writer_design.md)
 defines future state-writer semantics over optional solver plugin manifest UX
 state. It is docs/test design evidence only: no runtime source change, no writer

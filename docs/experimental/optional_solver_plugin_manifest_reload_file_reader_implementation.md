@@ -282,3 +282,16 @@ does not add path arguments, does not read or parse files at runtime in this
 gate, and does not add runtime reload acceptance, ProjectSchema mutation,
 discovery, validation, solver execution, automatic activation, trust restoration,
 issue/release mutation, or certification claims.
+
+## 31. Follow-up: CLI explicit-path implementation (OSW-EXP-115)
+
+OSW-EXP-115 wires this reader into the reload CLI only for explicit
+`load-preview --path` review
+([optional_solver_plugin_manifest_reload_cli_explicit_path_implementation.md](optional_solver_plugin_manifest_reload_cli_explicit_path_implementation.md)).
+The CLI remains a caller of the reader rather than duplicating parser logic:
+reader diagnostics render first, reader blockers suppress view-model preview,
+and reader `safe_mapping` output feeds the reload view-model only for review.
+This follow-up does not edit reader source, add default paths, add background
+reload, add GUI file dialogs, accept runtime reload, mutate ProjectSchema, run
+discovery/validation/solver execution, activate candidates, restore trust, mutate
+issues/releases/tags/assets, or claim certification.

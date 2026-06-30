@@ -284,3 +284,15 @@ background reload, no GUI file dialog, no runtime reload acceptance, no
 ProjectSchema mutation, no discovery/validation/solver execution, no automatic
 activation, no trust restoration, no issue/release mutation, and no
 certification claim.
+
+## Follow-up: CLI explicit-path implementation (OSW-EXP-115)
+
+OSW-EXP-115 updates this CLI so `load-preview --path <state-file>` calls the
+OSW-EXP-113 reload file reader, renders reader diagnostics first, and routes only
+reader `safe_mapping` output into the reload view-model review path. The
+historical no-`--path` `load-preview` behavior remains disabled/future-only and
+returns `2`. The explicit-path implementation remains stdout-first,
+review-only, non-mutating, and does not add default/background reload, GUI file
+dialog behavior, runtime reload acceptance, ProjectSchema mutation, discovery,
+validation, solver execution, activation, trust restoration, issue/release/tag/
+asset mutation, or certification claims.

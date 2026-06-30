@@ -699,3 +699,14 @@ Future gates remain separate:
 Runtime reload acceptance, activation review, discovery refresh, validation,
 ProjectSchema integration, export/report integration, issue/release mutation,
 and certification remain future-gated.
+
+## Follow-up: CLI explicit-path implementation (OSW-EXP-115)
+
+OSW-EXP-115 implements the designed `load-preview --path` bridge in
+[optional_solver_plugin_manifest_reload_cli_explicit_path_implementation.md](optional_solver_plugin_manifest_reload_cli_explicit_path_implementation.md).
+The implementation keeps the design boundaries: explicit path only,
+reader-first diagnostics, safe mapping into the reload view-model only for
+review, stdout-first text/JSON output, no default/background reload, no GUI file
+dialog, no runtime reload acceptance, no ProjectSchema mutation, no discovery,
+no validation, no solver execution, no activation, no trust restoration, no
+issue/release/tag/asset mutation, and no certification claim.
