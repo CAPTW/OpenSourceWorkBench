@@ -3259,3 +3259,28 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   validation, ProjectSchema integration, CLI reload, and prepared-machine
   validation remain future-gated. No persisted state file is read or parsed in
   this gate.
+
+## ADR-0144: Optional Solver Plugin Manifest Reload CLI Starts As Review-Only Design
+
+- Status: Accepted for experimental reload CLI design
+- Date: 2026-06-30
+- Context: OSW-EXP-106 defined reload semantics as design-only. OSW-EXP-107
+  added a pure reload view-model over caller-supplied mappings. OSW-EXP-109
+  implemented a read-only reload GUI review panel. A CLI review surface is
+  useful for maintainers and tests, but it can be mistaken for runtime file
+  reading, state parsing, reload acceptance, trust restoration, automatic
+  activation, validation evidence, ProjectSchema mutation, issue closure,
+  release mutation, or certification.
+- Decision: Define reload CLI semantics as design-only before implementation.
+  Future reload CLI must consume already-built reload view-model records,
+  remain headless/stdout-first/review-only, and render summary, source,
+  schema, candidate lifecycle, acknowledgements, redaction, stale-source,
+  conflict, unsafe-claim, evidence/history, diagnostics, disabled/future
+  actions, file-reader boundaries, reload-acceptance boundaries, and
+  non-validating exit-code semantics. This gate adds no CLI source and no
+  runtime behavior.
+- Consequences: Future reload CLI implementation has a safety contract. File
+  readers/parsers, runtime reload, default paths, background reload,
+  ProjectSchema integration, activation, discovery, validation, solver
+  execution, issue/release mutation, and certification claims remain
+  future-gated. No persisted state file is read or parsed in this gate.

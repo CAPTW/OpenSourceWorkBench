@@ -6,6 +6,15 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload CLI Design
+
+- Designed optional solver plugin manifest reload CLI semantics as a future
+  headless, stdout-first, review-only command surface over existing reload
+  view-model records, preserving no CLI source edits, no file reader/parser,
+  no runtime reload, no default reload path, no ProjectSchema mutation, no
+  discovery/validation/solver execution, no automatic activation, no trust
+  restoration, no issue/release mutation, and no certification claims.
+
 ### Optional Solver Plugin Manifest Reload GUI
 
 - Added a read-only optional solver plugin manifest reload GUI review panel over

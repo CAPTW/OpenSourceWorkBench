@@ -712,6 +712,19 @@ execution, no solver execution, no dependency install/uninstall, no automatic
 activation, no trust restoration, no issue/release/tag/asset mutation, no
 validation-pass/fail claim, and no certification claim.
 
+[Optional solver plugin manifest reload CLI design](experimental/optional_solver_plugin_manifest_reload_cli_design.md)
+defines future headless, stdout-first, review-only CLI semantics over existing
+reload view-model records. It is docs/test design evidence only: no CLI source
+edit, no command registration, no file reader/parser, no runtime file reading,
+no runtime state parsing, no runtime reload behavior, no default reload path, no
+background reload, no reload acceptance, no reloadable bundle creation, no
+export/report file creation, no clipboard/report/open-folder behavior, no GUI
+behavior, no ProjectSchema mutation, no live discovery, no passive refresh, no
+plugin package import, no directory scan, no network fetch, no validation
+execution, no solver execution, no dependency install/uninstall, no automatic
+activation, no trust restoration, no issue/release/tag/asset mutation, no
+validation-pass/fail claim, and no certification claim.
+
 [Optional solver plugin manifest state writer design](experimental/optional_solver_plugin_manifest_state_writer_design.md)
 defines future state-writer semantics over optional solver plugin manifest UX
 state. It is docs/test design evidence only: no runtime source change, no writer
