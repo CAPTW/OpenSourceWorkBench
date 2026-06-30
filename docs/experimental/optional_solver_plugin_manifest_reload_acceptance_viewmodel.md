@@ -311,3 +311,17 @@ no callbacks, no file IO, no reader invocation, no GUI subprocess use, no
 runtime reload acceptance, no persistence writes, no ProjectSchema mutation, no
 discovery, no validation, no solver execution, no automatic activation, no trust
 restoration, no issue/release/tag/asset mutation, and no certification claims.
+
+## 38. Follow-up: Acceptance CLI Implementation (OSW-EXP-123)
+
+OSW-EXP-123 implements a stdout-first CLI renderer over this view-model
+([optional_solver_plugin_manifest_reload_acceptance_cli_implementation.md](optional_solver_plugin_manifest_reload_acceptance_cli_implementation.md)).
+The CLI uses deterministic in-memory sample, unavailable, not-requested,
+blocked, ready, and accepted-for-session-review records, then renders
+`to_mapping()` output and safety guidance.
+
+The implementation does not edit this source module, add independent acceptance
+policy, read files, invoke the reader, call GUI code, mutate ProjectSchema,
+write persistence, run discovery, validation, or solver execution, activate
+candidates, restore trust, mutate issues/releases/tags/assets, or claim
+certification.

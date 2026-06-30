@@ -256,3 +256,18 @@ existing preview path, no GUI subprocess use, no runtime reload acceptance, no
 persistence writes, no ProjectSchema mutation, no discovery, no validation, no
 solver execution, no issue/release/tag/asset mutation, and no certification
 claims.
+
+## 22. Follow-up: Acceptance CLI Implementation (OSW-EXP-123)
+
+OSW-EXP-123 implements the reload acceptance CLI review surface as a separate
+command family
+([optional_solver_plugin_manifest_reload_acceptance_cli_implementation.md](optional_solver_plugin_manifest_reload_acceptance_cli_implementation.md)).
+It does not extend `load-preview --path`, accepts no path, invokes no reader,
+and does not infer acceptance from explicit-path preview success.
+
+The relationship remains one-way and review-only: explicit-path preview can
+produce reviewable UX state for future caller-supplied acceptance records, but
+the acceptance CLI itself performs no file IO, parsing, reader invocation,
+runtime acceptance, persistence write, ProjectSchema mutation, discovery,
+validation, solver execution, activation, trust restoration, issue/release
+mutation, or certification claim.

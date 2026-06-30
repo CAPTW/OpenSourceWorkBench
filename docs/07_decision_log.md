@@ -3627,3 +3627,28 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   validation, ProjectSchema integration, issue/release workflows, export/report/
   reloadable-bundle behavior, and certification remain future-gated. No CLI
   acceptance behavior is implemented in this gate.
+
+## ADR-0157: Optional Solver Plugin Manifest Reload Acceptance CLI Is Review-Only
+
+- Status: Accepted for experimental reload acceptance CLI implementation
+- Date: 2026-07-01
+- Context: OSW-EXP-119 added a pure reload acceptance view-model. OSW-EXP-121
+  added a view-model-only GUI review panel. OSW-EXP-122 designed a stdout-first
+  CLI review surface. Users need CLI visibility into acceptance readiness, but
+  CLI acceptance can be mistaken for runtime reload acceptance, automatic
+  activation, validation evidence, ProjectSchema mutation, persistence write,
+  issue closure, release mutation, or certification.
+- Decision: Implement a stdout-first reload acceptance CLI review module under
+  `src/osw/cli/`. It consumes deterministic in-memory
+  `OptionalSolverPluginManifestReloadAcceptanceViewModel` records only and
+  renders summary, blockers, acknowledgements, expiry, accepted-state scope,
+  provenance, diagnostics, non-action flags, disabled/future actions, and
+  safety guidance. `accept-future` remains disabled/future-only and
+  non-mutating. The CLI performs no file IO, file parsing, reader invocation,
+  GUI calls, GUI subprocess use, runtime reload acceptance, persistence write,
+  ProjectSchema mutation, discovery, validation, solver execution, activation,
+  trust restoration, issue/release/tag/asset mutation, or certification claim.
+- Consequences: Future runtime acceptance, if any, remains separately gated.
+  Existing reload CLI explicit-path preview remains preview-only. Existing GUI
+  acceptance panel remains review-only. No accepted runtime state is created by
+  this gate.

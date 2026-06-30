@@ -669,3 +669,13 @@ IO, no reader invocation, no GUI subprocess use, no persistence writes, no
 ProjectSchema mutation, no discovery, no validation, no solver execution, no
 automatic activation, no trust restoration, no issue/release/tag/asset mutation,
 and no certification claims.
+
+## 34. Follow-up: Acceptance CLI Implementation (OSW-EXP-123)
+
+OSW-EXP-123 implements a stdout-first, review-only CLI renderer for reload
+acceptance records
+([optional_solver_plugin_manifest_reload_acceptance_cli_implementation.md](optional_solver_plugin_manifest_reload_acceptance_cli_implementation.md)).
+It consumes deterministic in-memory OSW-EXP-119 view-model records and keeps all
+runtime acceptance, persistence, activation, discovery, validation,
+ProjectSchema integration, issue/release workflows, output creation, and
+certification future-gated.

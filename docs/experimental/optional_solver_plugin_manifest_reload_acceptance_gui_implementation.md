@@ -205,3 +205,16 @@ callbacks, no file IO, no reader invocation, no GUI subprocess use, no runtime
 reload acceptance, no persistence writes, no ProjectSchema mutation, no
 discovery, no validation, no solver execution, no automatic activation, no trust
 restoration, no issue/release/tag/asset mutation, and no certification claims.
+
+## 16. Follow-up: Acceptance CLI Implementation (OSW-EXP-123)
+
+OSW-EXP-123 implements the CLI counterpart to this GUI review panel
+([optional_solver_plugin_manifest_reload_acceptance_cli_implementation.md](optional_solver_plugin_manifest_reload_acceptance_cli_implementation.md)).
+The CLI and GUI remain sibling renderers over supplied acceptance view-model
+records. The CLI does not call this panel, this panel does not call the CLI, and
+no GUI subprocess bridge is introduced.
+
+The implementation remains review-only: no runtime acceptance, file IO, reader
+invocation, persistence write, ProjectSchema mutation, discovery, validation,
+solver execution, activation, trust restoration, issue/release/tag/asset
+mutation, or certification claim.

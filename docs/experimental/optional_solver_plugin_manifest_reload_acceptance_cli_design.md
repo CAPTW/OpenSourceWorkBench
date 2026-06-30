@@ -500,3 +500,18 @@ Runtime reload acceptance, persistence writes, activation, discovery refresh,
 validation, ProjectSchema integration, issue/release/tag/asset mutation,
 export/report integration, reloadable bundles, and certification remain
 future-gated.
+
+## 36. Follow-up: Acceptance CLI Implementation (OSW-EXP-123)
+
+OSW-EXP-123 implements the stdout-first CLI review surface described here
+([optional_solver_plugin_manifest_reload_acceptance_cli_implementation.md](optional_solver_plugin_manifest_reload_acceptance_cli_implementation.md)).
+The implementation consumes deterministic in-memory
+`OptionalSolverPluginManifestReloadAcceptanceViewModel` records only and renders
+readiness, blockers, acknowledgements, expiry, diagnostics, non-action flags,
+disabled/future actions, and safety guidance.
+
+The implementation still accepts no `--path`, reads no files, invokes no
+reader, calls no GUI code, uses no GUI subprocess, performs no runtime reload
+acceptance, writes no persistence, mutates no ProjectSchema, runs no discovery,
+validation, or solver execution, activates no candidates, restores no trust,
+mutates no issues/releases/tags/assets, and claims no certification.

@@ -6,6 +6,17 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload Acceptance CLI Implementation
+
+- Added a stdout-first optional solver plugin manifest reload acceptance CLI
+  review surface that renders acceptance readiness, blockers,
+  acknowledgements, expiry, diagnostics, non-action flags, disabled/future
+  actions, and safety guidance while preserving no runtime acceptance, no file
+  IO, no reader invocation, no GUI subprocess, no persistence write, no
+  ProjectSchema mutation, no discovery/validation/solver execution, no
+  automatic activation, no trust restoration, no issue/release mutation, and no
+  certification claims.
+
 ### Optional Solver Plugin Manifest Reload Acceptance CLI Design
 
 - Designed optional solver plugin manifest reload acceptance CLI semantics as a
