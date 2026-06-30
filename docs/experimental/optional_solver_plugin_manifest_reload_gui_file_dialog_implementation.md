@@ -191,3 +191,16 @@ invoke the reader independently, call the CLI as a subprocess, accept runtime
 reload state, persist state, mutate ProjectSchema, run discovery/validation/
 solver execution, activate candidates, restore trust, mutate issues/releases/
 tags/assets, or claim certification.
+
+## 15. Follow-up: Acceptance GUI Implementation (OSW-EXP-121)
+
+OSW-EXP-121 implements a separate
+`OptionalSolverPluginManifestReloadAcceptancePanel` after this preview wrapper
+has produced reload/acceptance view-model records
+([optional_solver_plugin_manifest_reload_acceptance_gui_implementation.md](optional_solver_plugin_manifest_reload_acceptance_gui_implementation.md)).
+The acceptance panel consumes supplied acceptance view-model mappings only. It
+does not call this file-dialog wrapper, open dialogs, invoke the reader, use the
+CLI as a bridge, accept runtime reload state, persist state, mutate
+ProjectSchema, run discovery/validation/solver execution, activate candidates,
+restore trust, mutate issues/releases/tags/assets, create outputs, or claim
+certification.

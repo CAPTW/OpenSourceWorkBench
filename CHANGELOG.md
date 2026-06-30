@@ -6,6 +6,17 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload Acceptance GUI
+
+- Added a view-model-only optional solver plugin manifest reload acceptance GUI
+  review panel over supplied acceptance view-model records, rendering readiness,
+  blockers, acknowledgements, expiry, accepted-state scope, provenance,
+  diagnostics, non-action flags, disabled/future actions, and safety guidance
+  while preserving no runtime acceptance, no file IO, no reader or CLI bridge,
+  no persistence write, no ProjectSchema mutation, no discovery/validation/
+  solver execution, no automatic activation, no trust restoration, no
+  issue/release mutation, and no certification claims.
+
 ### Optional Solver Plugin Manifest Reload Acceptance GUI Design
 
 - Designed optional solver plugin manifest reload acceptance GUI semantics as a

@@ -283,3 +283,19 @@ implementation, no acceptance buttons, no callbacks, no runtime acceptance, no
 persistence writes, no ProjectSchema mutation, no discovery, no validation, no
 solver execution, no activation, no trust restoration, no issue/release/tag/asset
 mutation, and no certification claims.
+
+## 36. Follow-up: Acceptance GUI Implementation (OSW-EXP-121)
+
+OSW-EXP-121 implements
+`OptionalSolverPluginManifestReloadAcceptancePanel` as the PySide review surface
+over this view-model
+([optional_solver_plugin_manifest_reload_acceptance_gui_implementation.md](optional_solver_plugin_manifest_reload_acceptance_gui_implementation.md)).
+The panel consumes `to_mapping()` output only and renders readiness, blockers,
+acknowledgements, expiry, accepted-state scope, provenance, diagnostics,
+non-action flags, disabled/future actions, and safety guidance.
+
+The implementation does not edit this source module, invoke readers, call CLI
+code, perform file IO, add acceptance buttons or callbacks, accept runtime
+reload state, write persistence, mutate ProjectSchema, run discovery,
+validation, or solver execution, activate candidates, restore trust, mutate
+issues/releases/tags/assets, or claim certification.

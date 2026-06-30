@@ -21,8 +21,10 @@ no release mutation, no tag mutation, no asset mutation, no version bump, no
 validation-pass claim, no validation-fail claim, no bundled-solver claim, and no
 certification claim.
 
-This document is not implementation authorization. It records a future GUI
-review contract only.
+This document is not runtime reload acceptance authorization. OSW-EXP-121
+implements the view-model-only GUI review surface described here without adding
+acceptance buttons, callbacks, persistence writes, ProjectSchema mutation,
+validation, solver execution, issue/release mutation, or certification claims.
 
 ## 2. Purpose
 
@@ -47,7 +49,8 @@ certification boundaries.
 - The OSW-EXP-118 reload acceptance design exists.
 - The OSW-EXP-119 reload acceptance view-model exists.
 - Existing reload GUI surfaces are preview/review-only.
-- No reload acceptance GUI exists.
+- OSW-EXP-121 adds a reload acceptance GUI review panel after this design, but
+  the panel remains view-model-only and review-only.
 - No acceptance buttons exist.
 - No runtime reload acceptance exists.
 - No ProjectSchema mutation exists.
@@ -432,9 +435,9 @@ certification claims.
 
 ## 34. Future Gates
 
+OSW-EXP-121 implements the view-model-only GUI review surface described here.
 Future gates remain separate:
 
-- `OSW-EXP-121_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_ACCEPTANCE_GUI_IMPLEMENTATION`
 - `OSW-EXP-122_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_ACCEPTANCE_CLI_DESIGN`
 - `OSW-EXP-123_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_ACCEPTANCE_CLI_IMPLEMENTATION`
 - future activation/discovery review consumption gates;
@@ -445,3 +448,22 @@ Runtime reload acceptance, persistence writes, activation, discovery refresh,
 validation, ProjectSchema integration, issue/release/tag/asset mutation,
 export/report integration, reloadable bundles, and certification remain
 future-gated.
+
+## 35. Follow-up: Acceptance GUI Implementation (OSW-EXP-121)
+
+OSW-EXP-121 implements the PySide review panel
+`OptionalSolverPluginManifestReloadAcceptancePanel`
+([optional_solver_plugin_manifest_reload_acceptance_gui_implementation.md](optional_solver_plugin_manifest_reload_acceptance_gui_implementation.md)).
+The implementation consumes already-built
+`OptionalSolverPluginManifestReloadAcceptanceViewModel` records only and renders
+summary/readiness, blockers, acknowledgements, expiry reasons,
+accepted-state scope, provenance, schema/migration, redaction/privacy,
+candidate lifecycle, stale-source, conflict/shared-stack, unsafe claims,
+evidence/history, trust/provenance, diagnostics, non-action flags,
+disabled/future actions, and safety guidance.
+
+The implementation adds no acceptance buttons, callbacks, runtime reload
+acceptance, reader invocation, CLI bridge, file IO, persistence writes,
+ProjectSchema mutation, discovery, validation, solver execution, activation,
+trust restoration, issue/release/tag/asset mutation, output creation, or
+certification claims.

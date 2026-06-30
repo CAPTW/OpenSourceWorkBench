@@ -3563,3 +3563,34 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   validation, ProjectSchema integration, issue/release workflows, export/report/
   reloadable-bundle behavior, and certification remain future-gated. No GUI
   acceptance behavior is implemented in this gate.
+
+## ADR-0155: Optional Solver Plugin Manifest Reload Acceptance GUI Is View-Model-Only
+
+- Status: Accepted for experimental reload acceptance GUI implementation
+- Date: 2026-06-30
+- Context: OSW-EXP-119 added a pure reload acceptance view-model and OSW-EXP-120
+  designed a future PySide review surface. The implementation must make
+  acceptance readiness inspectable without converting preview or file selection
+  into runtime acceptance, persistence, ProjectSchema mutation, validation
+  evidence, automatic activation, trust restoration, issue closure, release
+  mutation, or certification.
+- Decision: Implement
+  `OptionalSolverPluginManifestReloadAcceptancePanel` as a view-model-only
+  PySide panel over already-built
+  `OptionalSolverPluginManifestReloadAcceptanceViewModel` records. The panel
+  renders summary/readiness, blockers, acknowledgements, expiry,
+  accepted-state scope, reader/preview provenance, schema/migration,
+  redaction/privacy, candidate lifecycle, stale-source, conflict/shared-stack,
+  unsafe claims, evidence/history, trust/provenance, diagnostics, non-action
+  flags, disabled/future actions, and safety guidance. It opens no file dialog,
+  performs no file IO, invokes no reader, calls no CLI bridge, creates no
+  output files, writes no persistence, mutates no ProjectSchema, runs no
+  discovery, validation, solver execution, install, or uninstall, activates no
+  candidates, restores no trust, mutates no issues/releases/tags/assets, bumps
+  no version, and claims no validation pass/fail, bundled solver support, or
+  certification.
+- Consequences: Reload acceptance can now be reviewed in the GUI as automated
+  GUI evidence while runtime acceptance remains future-gated. Future CLI
+  acceptance, accepted-state storage, activation/discovery review consumption,
+  ProjectSchema integration, prepared-machine validation, issue/release
+  workflows, output creation, and certification remain separate gates.

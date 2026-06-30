@@ -606,11 +606,10 @@ Future OSW-EXP-119 and later implementation gates should test:
 
 ## 29. Future Gates
 
-Future gates remain separate:
+OSW-EXP-119, OSW-EXP-120, and OSW-EXP-121 implement the view-model,
+acceptance GUI design, and acceptance GUI review panel follow-ups without
+runtime acceptance. Remaining future gates stay separate:
 
-- `OSW-EXP-119_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_ACCEPTANCE_VIEWMODEL`
-- `OSW-EXP-120_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_ACCEPTANCE_GUI_DESIGN`
-- `OSW-EXP-121_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_ACCEPTANCE_GUI_IMPLEMENTATION`
 - `OSW-EXP-122_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_ACCEPTANCE_CLI_DESIGN`
 - `OSW-EXP-123_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_ACCEPTANCE_CLI_IMPLEMENTATION`
 - `OSW-VALID-OPTIONAL_PREPARED_MACHINE_MANIFEST_STATE_VALIDATION` if a prepared
@@ -641,3 +640,20 @@ acceptance callbacks, no runtime reload acceptance, no persistence writes, no
 ProjectSchema mutation, no discovery, no validation, no solver execution, no
 automatic activation, no trust restoration, no issue/release/tag/asset mutation,
 and no certification claims.
+
+## 32. Follow-up: Acceptance GUI Implementation (OSW-EXP-121)
+
+OSW-EXP-121 implements the GUI review panel described by OSW-EXP-120
+([optional_solver_plugin_manifest_reload_acceptance_gui_implementation.md](optional_solver_plugin_manifest_reload_acceptance_gui_implementation.md)).
+The panel consumes already-built reload acceptance view-model records only and
+renders readiness, blockers, acknowledgements, expiry, accepted-state scope,
+provenance, schema/migration, redaction/privacy, candidate lifecycle,
+stale-source, conflict/shared-stack, unsafe claims, evidence/history,
+trust/provenance, diagnostics, non-action flags, disabled/future actions, and
+safety guidance.
+
+The implementation still does not add acceptance buttons, callbacks, runtime
+reload acceptance, file IO, reader invocation, CLI behavior, persistence writes,
+ProjectSchema mutation, discovery, validation, solver execution, automatic
+activation, trust restoration, issue/release/tag/asset mutation, output
+creation, or certification claims.
