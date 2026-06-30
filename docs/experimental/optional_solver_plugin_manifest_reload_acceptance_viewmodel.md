@@ -299,3 +299,15 @@ code, perform file IO, add acceptance buttons or callbacks, accept runtime
 reload state, write persistence, mutate ProjectSchema, run discovery,
 validation, or solver execution, activate candidates, restore trust, mutate
 issues/releases/tags/assets, or claim certification.
+
+## 37. Follow-up: Acceptance CLI Design (OSW-EXP-122)
+
+OSW-EXP-122 defines future CLI rendering over supplied
+`OptionalSolverPluginManifestReloadAcceptanceViewModel` records
+([optional_solver_plugin_manifest_reload_acceptance_cli_design.md](optional_solver_plugin_manifest_reload_acceptance_cli_design.md)).
+The design keeps this view-model as the sole acceptance policy source of truth
+and adds no CLI source edits, no acceptance CLI commands, no acceptance flags,
+no callbacks, no file IO, no reader invocation, no GUI subprocess use, no
+runtime reload acceptance, no persistence writes, no ProjectSchema mutation, no
+discovery, no validation, no solver execution, no automatic activation, no trust
+restoration, no issue/release/tag/asset mutation, and no certification claims.

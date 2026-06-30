@@ -240,3 +240,19 @@ infer acceptance from exit codes, does not persist state, does not mutate
 ProjectSchema, and does not run discovery, validation, solver execution,
 activation, trust restoration, issue/release/tag or asset workflows, or
 certification.
+
+## 21. Follow-up: Acceptance CLI Design (OSW-EXP-122)
+
+OSW-EXP-122 designs a future stdout-first CLI acceptance review surface
+([optional_solver_plugin_manifest_reload_acceptance_cli_design.md](optional_solver_plugin_manifest_reload_acceptance_cli_design.md)).
+That future surface is separate from `load-preview --path`: explicit-path preview
+success is not acceptance, not validation evidence, not validation failure, not
+trust restoration, not automatic activation, not issue closure, not release
+mutation, and not certification.
+
+The design adds no CLI source edits, no acceptance CLI commands, no acceptance
+flags, no callbacks, no hidden file reads, no reader invocation beyond the
+existing preview path, no GUI subprocess use, no runtime reload acceptance, no
+persistence writes, no ProjectSchema mutation, no discovery, no validation, no
+solver execution, no issue/release/tag/asset mutation, and no certification
+claims.

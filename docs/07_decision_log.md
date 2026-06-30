@@ -3594,3 +3594,36 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   acceptance, accepted-state storage, activation/discovery review consumption,
   ProjectSchema integration, prepared-machine validation, issue/release
   workflows, output creation, and certification remain separate gates.
+
+## ADR-0156: Optional Solver Plugin Manifest Reload Acceptance CLI Starts As Design-Only
+
+- Status: Accepted for experimental reload acceptance CLI design
+- Date: 2026-07-01
+- Context: OSW-EXP-119 added a pure reload acceptance view-model and OSW-EXP-121
+  added a view-model-only GUI acceptance review panel. A future stdout-first CLI
+  review surface is useful for terminal and CI review, but CLI acceptance can be
+  mistaken for acceptance commands, flags, callbacks, runtime reload acceptance,
+  hidden file reads, reader invocation, persistence writes, ProjectSchema
+  mutation, validation evidence, automatic activation, trust restoration, issue
+  closure, release mutation, or certification.
+- Decision: Define reload acceptance CLI review as design-only. A future CLI
+  must consume supplied `OptionalSolverPluginManifestReloadAcceptanceViewModel`
+  records and render summary/readiness, blockers, acknowledgements,
+  acknowledgement expiry, accepted-state scope, reader/preview provenance,
+  schema/migration, redaction/privacy, candidate lifecycle, stale-source,
+  conflict/shared-stack, unsafe-claim, evidence/history,
+  `OSPMG_RELOAD_ACCEPTANCE_*` diagnostics, non-action flags, disabled/future
+  actions, and exit-code semantics. This gate adds no CLI source, no GUI source,
+  no runtime source, no file-reader source, no reload view-model source, no
+  reload acceptance view-model source, no acceptance CLI commands, no acceptance
+  flags, no acceptance callbacks, no file IO, no reader invocation, no GUI
+  subprocess use, no persistence writes, no ProjectSchema mutation, no runtime
+  reload acceptance, no default/background reload, no discovery, validation,
+  solver execution, activation, trust restoration, issue/release/tag/asset
+  mutation, validation-pass/fail claim, bundled-solver claim, or certification
+  claim.
+- Consequences: Future OSW-EXP-123 implementation has a safety contract.
+  Runtime reload acceptance, persistence writes, activation, discovery refresh,
+  validation, ProjectSchema integration, issue/release workflows, export/report/
+  reloadable-bundle behavior, and certification remain future-gated. No CLI
+  acceptance behavior is implemented in this gate.

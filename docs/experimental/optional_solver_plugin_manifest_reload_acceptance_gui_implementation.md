@@ -193,3 +193,15 @@ integration, and prepared-machine optional validation. Each remains separate and
 must preserve explicit user/caller review, no hidden trust restoration, no
 automatic activation, no skipped-missing-as-success, and no certification
 claims.
+
+## 15. Follow-up: Acceptance CLI Design (OSW-EXP-122)
+
+OSW-EXP-122 defines future stdout-first CLI acceptance review over the same
+OSW-EXP-119 acceptance view-model records rendered by this GUI panel
+([optional_solver_plugin_manifest_reload_acceptance_cli_design.md](optional_solver_plugin_manifest_reload_acceptance_cli_design.md)).
+The design keeps GUI and CLI as separate renderers over supplied records. It
+adds no CLI source edits, no acceptance CLI commands, no acceptance flags, no
+callbacks, no file IO, no reader invocation, no GUI subprocess use, no runtime
+reload acceptance, no persistence writes, no ProjectSchema mutation, no
+discovery, no validation, no solver execution, no automatic activation, no trust
+restoration, no issue/release/tag/asset mutation, and no certification claims.

@@ -657,3 +657,15 @@ reload acceptance, file IO, reader invocation, CLI behavior, persistence writes,
 ProjectSchema mutation, discovery, validation, solver execution, automatic
 activation, trust restoration, issue/release/tag/asset mutation, output
 creation, or certification claims.
+
+## 33. Follow-up: Acceptance CLI Design (OSW-EXP-122)
+
+OSW-EXP-122 designs a future stdout-first CLI review surface over the OSW-EXP-119
+reload acceptance view-model
+([optional_solver_plugin_manifest_reload_acceptance_cli_design.md](optional_solver_plugin_manifest_reload_acceptance_cli_design.md)).
+It remains design-only: no CLI source edits, no acceptance CLI commands, no
+acceptance flags, no acceptance callbacks, no runtime reload acceptance, no file
+IO, no reader invocation, no GUI subprocess use, no persistence writes, no
+ProjectSchema mutation, no discovery, no validation, no solver execution, no
+automatic activation, no trust restoration, no issue/release/tag/asset mutation,
+and no certification claims.
