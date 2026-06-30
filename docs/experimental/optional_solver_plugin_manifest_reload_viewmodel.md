@@ -470,3 +470,13 @@ OSW-EXP-113 implements the explicit-path reader
 Its `safe_mapping` output feeds this view-model through `from_payload_mapping`. The
 reader imports only this module's payload-kind/schema constants, never mutates
 view-model records, and keeps this view-model pure and path-free.
+
+## Follow-up: CLI explicit-path design (OSW-EXP-114)
+
+OSW-EXP-114 designs the future CLI path bridge
+([optional_solver_plugin_manifest_reload_cli_explicit_path_design.md](optional_solver_plugin_manifest_reload_cli_explicit_path_design.md)).
+The future CLI may pass a reader `safe_mapping` into this view-model, but this
+gate does not edit view-model source, add path handling to the view-model, read
+or parse files at runtime, add default/background reload, mutate ProjectSchema,
+run discovery/validation/solver execution, activate candidates, restore trust,
+mutate issues/releases/tags/assets, or claim certification.

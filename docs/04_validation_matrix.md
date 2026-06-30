@@ -776,6 +776,22 @@ no files, keeps user/plugin files untrusted by default, keeps built-ins
 authoritative, keeps skipped-missing as skipped-missing, and never leaks raw paths
 in diagnostics; issues `#6` through `#11` remain open.
 
+[Optional solver plugin manifest reload CLI explicit-path design](experimental/optional_solver_plugin_manifest_reload_cli_explicit_path_design.md)
+defines the future explicit `load-preview --path` bridge from the current
+stdout-first reload CLI to the OSW-EXP-113 library reader and OSW-EXP-107 reload
+view-model review. It is docs/test design evidence only: the reload CLI
+explicit-path design is design-only with no CLI source edit, no runtime source
+edit, no file-reader source edit, no GUI source edit, no path argument
+implementation, no runtime file reading, no runtime state parsing, no runtime
+reload acceptance, no default reload path, no background reload, no directory
+scan, no network fetch, no plugin package import, no GUI file dialog, no
+reloadable bundle creation, no export/report file creation, no
+clipboard/report/open-folder behavior, no ProjectSchema mutation, no live
+discovery, no passive refresh, no validation execution, no solver execution, no
+dependency install/uninstall, no automatic activation, no trust restoration, no
+issue/release/tag/asset mutation, no validation-pass/fail claim, and no
+certification claim.
+
 [Optional solver plugin manifest state writer design](experimental/optional_solver_plugin_manifest_state_writer_design.md)
 defines future state-writer semantics over optional solver plugin manifest UX
 state. It is docs/test design evidence only: no runtime source change, no writer

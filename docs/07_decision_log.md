@@ -3374,3 +3374,27 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   default path or background reload exists; user/plugin files remain untrusted by
   default; built-ins remain authoritative; skipped-missing remains skipped-missing;
   and live optional validation issues `#6` through `#11` remain open and separate.
+
+## ADR-0148: Optional Solver Plugin Manifest Reload CLI Explicit Path Is Design-Only
+
+- Status: Accepted for experimental reload CLI explicit-path design
+- Date: 2026-06-30
+- Context: OSW-EXP-111 implemented a stdout-first reload CLI review surface that
+  keeps `load-preview` disabled/future-only, and OSW-EXP-113 implemented a
+  library-level explicit-path reload file reader. A future CLI bridge is useful,
+  but it can be mistaken for default/background reload, trust restoration,
+  automatic activation, validation evidence, ProjectSchema mutation, issue
+  closure, release mutation, or certification.
+- Decision: Define CLI explicit-path semantics as design-only before
+  implementation. Future `load-preview --path` must use the library reader,
+  render reader diagnostics, route only reader `safe_mapping` output into the
+  reload view-model, keep text/JSON stdout-first, preserve redaction/privacy, and
+  use non-validation exit-code semantics. This gate adds no CLI source, no path
+  argument implementation, no runtime file reading/parsing, and no runtime
+  behavior.
+- Consequences: Future OSW-EXP-115 implementation has a safety contract. Default
+  paths, background reload, directory scans, network fetches, plugin imports, GUI
+  file dialogs, runtime reload acceptance, activation, discovery, validation,
+  solver execution, ProjectSchema integration, issue/release/tag/asset mutation,
+  and certification claims remain future-gated. No persisted state file is read
+  or parsed in this gate.

@@ -273,3 +273,14 @@ OSW-EXP-113 implements a library-level explicit-path reload file reader
 It is **not** wired into this CLI: `load-preview`/`read-file` remain
 disabled/future-only until a separate CLI explicit-path gate (OSW-EXP-114/115).
 Reader status never implies a validation pass/fail exit.
+
+## Follow-up: CLI explicit-path design (OSW-EXP-114)
+
+OSW-EXP-114 designs that future CLI explicit-path bridge
+([optional_solver_plugin_manifest_reload_cli_explicit_path_design.md](optional_solver_plugin_manifest_reload_cli_explicit_path_design.md)).
+It keeps this implementation unchanged: no CLI source edit, no path argument
+implementation, no runtime file reading/parsing, no default reload path, no
+background reload, no GUI file dialog, no runtime reload acceptance, no
+ProjectSchema mutation, no discovery/validation/solver execution, no automatic
+activation, no trust restoration, no issue/release mutation, and no
+certification claim.

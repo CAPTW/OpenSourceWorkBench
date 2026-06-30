@@ -252,3 +252,13 @@ kind/schema/redaction/unsafe-claim/stale/conflict boundaries, and returns a safe
 review mapping. It reads but never writes, repairs, or migrates files, and it
 preserves the writer's no-runtime-reload, no-trust-restoration, and
 no-ProjectSchema-mutation boundaries.
+
+## Follow-up: CLI explicit-path design (OSW-EXP-114)
+
+OSW-EXP-114 designs a future CLI `load-preview --path` bridge from this writer's
+payload family, through the OSW-EXP-113 reader, into reload view-model review
+([optional_solver_plugin_manifest_reload_cli_explicit_path_design.md](optional_solver_plugin_manifest_reload_cli_explicit_path_design.md)).
+The design adds no CLI implementation, no path argument implementation, no file
+reading/parsing at runtime in this gate, no default/background reload, no
+ProjectSchema mutation, no discovery/validation/solver execution, no activation,
+no trust restoration, no issue/release mutation, and no certification claim.

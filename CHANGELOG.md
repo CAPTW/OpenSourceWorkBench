@@ -6,6 +6,16 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload CLI Explicit-Path Design
+
+- Designed optional solver plugin manifest reload CLI explicit-path semantics as
+  a future `load-preview --path` bridge from the existing reload CLI to the
+  explicit-path library reader and reload view-model review, preserving no
+  implementation, no default path, no background reload, no GUI file dialog, no
+  ProjectSchema mutation, no discovery/validation/solver execution, no automatic
+  activation, no trust restoration, no issue/release mutation, and no
+  certification claims.
+
 ### Optional Solver Plugin Manifest Reload File Reader
 
 - Added an explicit-path optional solver plugin manifest reload file reader

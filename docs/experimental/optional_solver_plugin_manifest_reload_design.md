@@ -423,6 +423,17 @@ reload, ProjectSchema mutation, discovery, validation, solver execution,
 automatic activation, trust restoration, issue/release mutation, or
 certification claims.
 
+## OSW-EXP-114 CLI Explicit-Path Design Follow-Up
+
+OSW-EXP-114 designs a future `load-preview --path` CLI bridge from the
+stdout-first reload CLI to the OSW-EXP-113 explicit-path reader and this reload
+review model. It remains design-only: no CLI source edits, no path argument
+implementation, no runtime file reading/parsing in this gate, no default reload
+path, no background reload, no GUI file dialog, no runtime reload acceptance, no
+ProjectSchema mutation, no discovery/validation/solver execution, no automatic
+activation, no trust restoration, no issue/release mutation, and no
+certification claim.
+
 ## Future Gates
 
 Suggested future gates:

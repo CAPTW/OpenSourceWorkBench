@@ -271,3 +271,14 @@ write/delete behavior.
 
 Runtime reload acceptance, activation review, discovery refresh, validation,
 ProjectSchema integration, and certification remain future-gated.
+
+## 30. Follow-up: CLI explicit-path design (OSW-EXP-114)
+
+OSW-EXP-114 designs the future CLI bridge from `load-preview --path` to this
+reader
+([optional_solver_plugin_manifest_reload_cli_explicit_path_design.md](optional_solver_plugin_manifest_reload_cli_explicit_path_design.md)).
+The design does not wire this reader into the CLI, does not edit reader source,
+does not add path arguments, does not read or parse files at runtime in this
+gate, and does not add runtime reload acceptance, ProjectSchema mutation,
+discovery, validation, solver execution, automatic activation, trust restoration,
+issue/release mutation, or certification claims.

@@ -563,3 +563,14 @@ UTF-8/JSON object validation, payload-kind/schema checks, redaction/secret/unsaf
 blocking, stale/conflict surfacing, reference-only evidence, a safe review mapping,
 and no CLI wiring, GUI dialog, runtime reload acceptance, ProjectSchema mutation,
 discovery/validation/solver execution, activation, or trust restoration.
+
+## Follow-up: CLI explicit-path design (OSW-EXP-114)
+
+OSW-EXP-114 designs future CLI explicit-path semantics for using the implemented
+reader from `load-preview --path`
+([optional_solver_plugin_manifest_reload_cli_explicit_path_design.md](optional_solver_plugin_manifest_reload_cli_explicit_path_design.md)).
+It remains design-only: no CLI source edits, no path argument implementation, no
+runtime file reading/parsing in this gate, no default path, no background reload,
+no GUI file dialog, no runtime reload acceptance, no ProjectSchema mutation, no
+discovery/validation/solver execution, no activation, no trust restoration, no
+issue/release mutation, and no certification claim.
