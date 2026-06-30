@@ -630,3 +630,14 @@ action states. It still does not implement runtime reload acceptance, GUI
 buttons, CLI commands, persistence writes, ProjectSchema mutation, file IO,
 reader invocation, discovery, validation, solver execution, automatic activation,
 trust restoration, issue/release/tag/asset mutation, or certification claims.
+
+## 31. Follow-up: Acceptance GUI Design (OSW-EXP-120)
+
+OSW-EXP-120 designs a future GUI review surface over the OSW-EXP-119 reload
+acceptance view-model
+([optional_solver_plugin_manifest_reload_acceptance_gui_design.md](optional_solver_plugin_manifest_reload_acceptance_gui_design.md)).
+It remains design-only: no GUI source edits, no acceptance buttons, no
+acceptance callbacks, no runtime reload acceptance, no persistence writes, no
+ProjectSchema mutation, no discovery, no validation, no solver execution, no
+automatic activation, no trust restoration, no issue/release/tag/asset mutation,
+and no certification claims.

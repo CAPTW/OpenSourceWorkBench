@@ -180,3 +180,14 @@ it does not add acceptance buttons, does not accept runtime reload state, does
 not persist state, does not mutate ProjectSchema, and does not run discovery,
 validation, solver execution, activation, trust restoration, issue/release/tag
 or asset workflows, or certification.
+
+## 14. Follow-up: Acceptance GUI Design (OSW-EXP-120)
+
+OSW-EXP-120 designs a future GUI acceptance review surface after this preview
+wrapper has produced reader-first reload records
+([optional_solver_plugin_manifest_reload_acceptance_gui_design.md](optional_solver_plugin_manifest_reload_acceptance_gui_design.md)).
+The design does not edit this GUI source, add acceptance buttons or callbacks,
+invoke the reader independently, call the CLI as a subprocess, accept runtime
+reload state, persist state, mutate ProjectSchema, run discovery/validation/
+solver execution, activate candidates, restore trust, mutate issues/releases/
+tags/assets, or claim certification.

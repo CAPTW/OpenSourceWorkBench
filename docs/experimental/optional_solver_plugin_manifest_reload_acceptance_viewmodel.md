@@ -271,3 +271,15 @@ storage boundaries, activation/discovery-review consumption, ProjectSchema
 integration, and validation/issue/release workflows. Each remains separate and
 must preserve explicit user/caller review, no hidden trust restoration, no
 automatic activation, no skipped-missing-as-success, and no certification claims.
+
+## 35. Follow-up: Acceptance GUI Design (OSW-EXP-120)
+
+OSW-EXP-120 designs a future PySide review surface that consumes this view-model
+without editing this source module
+([optional_solver_plugin_manifest_reload_acceptance_gui_design.md](optional_solver_plugin_manifest_reload_acceptance_gui_design.md)).
+The design renders readiness, blockers, acknowledgements, expiry, provenance,
+diagnostics, non-action flags, and disabled/future actions only. It adds no GUI
+implementation, no acceptance buttons, no callbacks, no runtime acceptance, no
+persistence writes, no ProjectSchema mutation, no discovery, no validation, no
+solver execution, no activation, no trust restoration, no issue/release/tag/asset
+mutation, and no certification claims.

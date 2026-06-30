@@ -3533,3 +3533,33 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   refresh, validation, ProjectSchema integration, issue/release mutation, and
   prepared-machine validation remain future-gated. No accepted runtime state is
   created by this gate.
+
+## ADR-0154: Optional Solver Plugin Manifest Reload Acceptance GUI Starts As Design-Only
+
+- Status: Accepted for experimental reload acceptance GUI design
+- Date: 2026-06-30
+- Context: OSW-EXP-119 added a pure reload acceptance view-model over supplied
+  reload preview records. A future PySide review surface is useful, but GUI
+  acceptance can be mistaken for acceptance buttons, callbacks, runtime reload
+  acceptance, persistence writes, ProjectSchema mutation, validation evidence,
+  automatic activation, trust restoration, issue closure, release mutation, or
+  certification.
+- Decision: Define reload acceptance GUI review as design-only. The future GUI
+  must consume `OptionalSolverPluginManifestReloadAcceptanceViewModel` and
+  render summary/readiness, blockers, acknowledgements, acknowledgement expiry,
+  accepted-for-session-review state, reader/preview provenance, schema/migration,
+  redaction/privacy, stale-source, conflict/shared-stack, unsafe-claim,
+  evidence/history, `OSPMG_RELOAD_ACCEPTANCE_*` diagnostics, non-action flags,
+  and disabled/future actions. This gate adds no GUI source, no runtime source,
+  no CLI source, no file-reader source, no reload view-model source, no reload
+  acceptance view-model source, no acceptance buttons, no acceptance callbacks,
+  no acceptance CLI commands, no persistence writes, no ProjectSchema mutation,
+  no runtime reload acceptance, no default/background reload, no discovery,
+  validation, solver execution, activation, trust restoration,
+  issue/release/tag/asset mutation, validation-pass/fail claim, bundled-solver
+  claim, or certification claim.
+- Consequences: Future OSW-EXP-121 implementation has a safety contract.
+  Runtime reload acceptance, persistence writes, activation, discovery refresh,
+  validation, ProjectSchema integration, issue/release workflows, export/report/
+  reloadable-bundle behavior, and certification remain future-gated. No GUI
+  acceptance behavior is implemented in this gate.
