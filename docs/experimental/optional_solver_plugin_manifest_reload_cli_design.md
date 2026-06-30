@@ -4,6 +4,11 @@
 
 This gate is design-only.
 
+Follow-up: OSW-EXP-111 implements the bounded stdout-first reload CLI review
+surface described here. The OSW-EXP-110 design gate itself remains design-only
+evidence; the implementation is documented in
+[optional_solver_plugin_manifest_reload_cli_implementation.md](optional_solver_plugin_manifest_reload_cli_implementation.md).
+
 It adds no reload CLI implementation, no CLI source edits, no command parser,
 no command handler, no command registration, no runtime behavior, and no source
 behavior mutation.

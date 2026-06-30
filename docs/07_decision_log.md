@@ -3284,3 +3284,31 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   ProjectSchema integration, activation, discovery, validation, solver
   execution, issue/release mutation, and certification claims remain
   future-gated. No persisted state file is read or parsed in this gate.
+
+## ADR-0145: Optional Solver Plugin Manifest Reload CLI Is Stdout-First Review-Only
+
+- Status: Accepted for experimental reload CLI implementation
+- Date: 2026-06-30
+- Context: OSW-EXP-110 defined reload CLI semantics as design-only. OSW-EXP-107
+  already provides a pure mapping-only reload view-model, and OSW-EXP-109
+  provides a read-only GUI review panel. Maintainers need a headless CLI review
+  surface, but the command could be mistaken for a persisted-state file reader,
+  runtime reload path, trust restoration surface, automatic activation surface,
+  validation evidence, ProjectSchema mutation, issue closure, release mutation,
+  or certification.
+- Decision: Implement `optional-solver-plugin-manifest-reload` as a
+  stdout-first, review-only CLI over deterministic in-memory reload view-model
+  state. The command supports text and JSON output for summary, schema, source,
+  candidate, acknowledgement, diagnostic, redaction, stale-source, conflict,
+  unsafe-claim, evidence/history, and action-state sections. `load-preview` is
+  registered only as a disabled future action and returns `2` without implying
+  validation failure. The implementation does not read files, parse persisted
+  state, choose default paths, perform runtime reload, mutate ProjectSchema,
+  run discovery, import plugin packages, validate, execute solvers, activate
+  candidates, restore trust, close issues, mutate releases/tags/assets, bump
+  versions, or certify manifests.
+- Consequences: Reload review is available in headless workflows and tests
+  without adding reload acceptance. File reader/parser behavior, runtime reload,
+  schema migration, activation review, discovery refresh, ProjectSchema
+  integration, validation, issue/release workflows, and certification remain
+  future-gated.

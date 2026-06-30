@@ -13,6 +13,12 @@ The view-model is an in-memory review layer only. It consumes caller-supplied
 payload mappings/records and exposes deterministic rows, diagnostics, text, and
 mapping output for future GUI/CLI/file-reader gates.
 
+Follow-up: OSW-EXP-111 adds a bounded stdout-first reload CLI that renders this
+view-model's deterministic sample, empty, and unavailable states. The CLI does
+not add file reading, file parsing, runtime reload, default paths, discovery,
+validation, solver execution, ProjectSchema mutation, automatic activation, or
+trust restoration.
+
 ## Purpose
 
 The purpose of this gate is to provide a pure review model for optional solver

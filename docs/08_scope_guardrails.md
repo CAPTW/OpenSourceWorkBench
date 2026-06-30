@@ -1162,8 +1162,8 @@ Scope drift is any change that:
   release mutation, tag mutation, asset mutation, version bump, validation-pass
   or validation-fail evidence, bundled-solver claim, or certification claim
   without a separate gate;
-- turns the optional solver plugin manifest reload CLI design into CLI
-  implementation, command registration, file reader/parser implementation,
+- extends the optional solver plugin manifest reload CLI implementation beyond
+  stdout-first review-only output into file reader/parser implementation,
   runtime file reading, runtime state parsing, runtime reload behavior, default
   reload path, background reload, reload acceptance, reloadable bundle
   creation, export/report file creation, clipboard/report/open-folder behavior,

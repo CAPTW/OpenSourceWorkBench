@@ -6,6 +6,20 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload CLI
+
+- Added a stdout-first optional solver plugin manifest reload CLI review
+  surface over deterministic in-memory reload view-model state, with text/JSON
+  output for summary, schema, sources, candidates, acknowledgements,
+  diagnostics, redaction, stale-source, conflict, unsafe-claim,
+  evidence/history, and disabled/future action states.
+- Kept reload CLI implementation review-only: no file reader/parser, no
+  persisted state file reading/parsing, no runtime reload, no default reload
+  path, no background reload, no ProjectSchema mutation, no GUI behavior, no
+  discovery/validation/solver execution, no automatic activation, no trust
+  restoration, no issue/release/tag/asset mutation, no validation-pass/fail
+  claim, and no certification claim.
+
 ### Optional Solver Plugin Manifest Reload CLI Design
 
 - Designed optional solver plugin manifest reload CLI semantics as a future
