@@ -6,6 +6,15 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload Acceptance Design
+
+- Designed optional solver plugin manifest reload acceptance semantics as a
+  future explicit reviewed-preview-to-session-state boundary, preserving no
+  implementation, no runtime reload acceptance, no persistence write, no
+  ProjectSchema mutation, no default/background reload, no discovery/validation/
+  solver execution, no automatic activation, no trust restoration, no
+  issue/release mutation, and no certification claims.
+
 ### Optional Solver Plugin Manifest Reload GUI File Dialog
 
 - Added an explicit optional solver plugin manifest reload GUI file-dialog

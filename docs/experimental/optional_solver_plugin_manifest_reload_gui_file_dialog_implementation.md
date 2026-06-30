@@ -160,3 +160,14 @@ OSW-EXP-107 reload view-model.
 Runtime reload acceptance, activation review, discovery refresh, ProjectSchema
 integration, validation, issue/release workflows, export/report integration, and
 certification remain future-gated.
+
+## 12. Follow-up: Acceptance Design (OSW-EXP-118)
+
+OSW-EXP-118 designs future reload acceptance semantics after this GUI wrapper has
+performed explicit user-selected, reader-first preview
+([optional_solver_plugin_manifest_reload_acceptance_design.md](optional_solver_plugin_manifest_reload_acceptance_design.md)).
+The acceptance design does not edit GUI source, does not add acceptance buttons,
+does not accept runtime reload state, and does not add persistence writes,
+ProjectSchema mutation, discovery, validation, solver execution, automatic
+activation, trust restoration, issue/release/tag/asset mutation, or
+certification claims.

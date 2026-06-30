@@ -502,3 +502,14 @@ edited by that gate. File-dialog widgets, direct file opening, runtime file
 reading/parsing, default/background reload, ProjectSchema mutation, activation,
 discovery, validation, solver execution, issue/release mutation, trust
 restoration, and certification remain outside this view-model.
+
+## Follow-up: acceptance design (OSW-EXP-118)
+
+OSW-EXP-118 designs future reload acceptance semantics
+([optional_solver_plugin_manifest_reload_acceptance_design.md](optional_solver_plugin_manifest_reload_acceptance_design.md))
+after this view-model has already reviewed reader-safe mapping output. The
+acceptance design keeps this view-model unchanged, path-free, and pure.
+Acceptance remains a future session/review state boundary, not trust
+restoration, automatic activation, ProjectSchema mutation, persistence write,
+discovery, validation, solver execution, issue/release/tag/asset mutation, or
+certification.

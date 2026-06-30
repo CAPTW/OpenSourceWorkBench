@@ -219,3 +219,14 @@ reading/parsing, no default/background reload, no ProjectSchema mutation, no
 discovery/validation/solver execution, no activation, no trust restoration, no
 issue/release/tag/asset mutation, and no certification claim in that design
 gate.
+
+## 19. Follow-up: Acceptance Design (OSW-EXP-118)
+
+OSW-EXP-118 designs future reload acceptance semantics after this CLI has
+performed explicit-path reader-first preview
+([optional_solver_plugin_manifest_reload_acceptance_design.md](optional_solver_plugin_manifest_reload_acceptance_design.md)).
+The acceptance design does not edit CLI source, does not add acceptance CLI
+commands, does not infer acceptance from exit codes, and does not add default
+paths, persistence writes, ProjectSchema mutation, discovery, validation, solver
+execution, automatic activation, trust restoration, issue/release/tag/asset
+mutation, or certification claims.

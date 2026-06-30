@@ -444,6 +444,18 @@ no background reload, no CLI subprocess use, no ProjectSchema mutation, no
 discovery/validation/solver execution, no automatic activation, no trust
 restoration, no issue/release mutation, and no certification claim.
 
+## OSW-EXP-118 Acceptance Design Follow-Up
+
+OSW-EXP-118 designs future reload acceptance semantics after reader and
+view-model review
+([optional_solver_plugin_manifest_reload_acceptance_design.md](optional_solver_plugin_manifest_reload_acceptance_design.md)).
+Acceptance remains future-gated and session/review scoped. It does not add
+reload acceptance implementation, runtime reload acceptance, persistence writes,
+ProjectSchema mutation, default/background reload, discovery, validation, solver
+execution, automatic activation, trust restoration, issue/release/tag/asset
+mutation, validation-pass/fail claims, bundled-solver claims, or certification
+claims.
+
 ## Future Gates
 
 Suggested future gates:
@@ -457,5 +469,6 @@ Suggested future gates:
   if file parsing is intentionally split out
 - `OSW-EXP-116_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_GUI_FILE_DIALOG_DESIGN`
 - `OSW-EXP-117_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_GUI_FILE_DIALOG_IMPLEMENTATION`
+- `OSW-EXP-118_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_ACCEPTANCE_DESIGN`
 - `OSW-VALID-OPTIONAL_PREPARED_MACHINE_MANIFEST_STATE_VALIDATION` if a prepared
   machine is available

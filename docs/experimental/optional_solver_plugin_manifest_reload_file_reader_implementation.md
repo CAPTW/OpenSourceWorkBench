@@ -319,3 +319,13 @@ does not duplicate JSON parsing, weaken redaction or unsafe-claim policy, call
 the CLI as a subprocess, accept runtime reload, mutate ProjectSchema, run
 discovery/validation/solver execution, activate candidates, restore trust,
 mutate issues/releases/tags/assets, or claim certification.
+
+## 34. Follow-up: acceptance design (OSW-EXP-118)
+
+OSW-EXP-118 designs future reload acceptance semantics
+([optional_solver_plugin_manifest_reload_acceptance_design.md](optional_solver_plugin_manifest_reload_acceptance_design.md))
+after this reader and the reload view-model have produced a reviewed safe
+mapping. The acceptance design does not edit this reader, does not weaken reader
+diagnostics, and does not turn reader success into trust, activation,
+ProjectSchema mutation, persistence write, discovery, validation, solver
+execution, issue/release/tag/asset mutation, or certification.

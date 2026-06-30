@@ -3480,3 +3480,30 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   automatic activation, trust restoration, issue/release/tag/asset mutation,
   export/report/reloadable-bundle creation, version bump, validation-pass/fail
   claim, issue-closure claim, bundled-solver claim, or certification claim.
+
+## ADR-0152: Optional Solver Plugin Manifest Reload Acceptance Starts As Session-Scoped Design
+
+- Status: Accepted for experimental reload acceptance design
+- Date: 2026-06-30
+- Context: OSW-EXP-113 added an explicit-path reader, OSW-EXP-115 added
+  reader-first CLI preview, and OSW-EXP-117 added GUI file-dialog preview.
+  These surfaces can produce reviewed reload previews, but accepting a preview
+  can be mistaken for trusted runtime reload, automatic activation,
+  ProjectSchema mutation, persistence, discovery, validation evidence, issue
+  closure, release mutation, or certification.
+- Decision: Define reload acceptance as a future explicit user/caller action
+  after reader and view-model review. Future acceptance may copy reviewed safe
+  redacted non-trusted UX state into bounded in-memory/session review state and
+  mark the preview acknowledged for that session. This gate adds no reload
+  acceptance implementation, no runtime source, no GUI source, no CLI source, no
+  file-reader source, no reload view-model source, no acceptance button, no
+  acceptance CLI command, no persistence write, no ProjectSchema mutation, no
+  runtime reload acceptance, no default/background reload, no discovery,
+  validation, solver execution, automatic activation, trust restoration,
+  issue/release/tag/asset mutation, validation-pass/fail claim, bundled-solver
+  claim, or certification claim.
+- Consequences: Future OSW-EXP-119+ implementation has a safety contract.
+  Runtime reload acceptance, activation review, discovery refresh, validation,
+  ProjectSchema integration, persistence writes, issue/release workflows,
+  export/report/reloadable-bundle integration, and certification remain
+  future-gated. No accepted state is created in this gate.
