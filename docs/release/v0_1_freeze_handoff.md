@@ -16,7 +16,7 @@ not a tag push, not a binary installer, and not a package publication.
 | Current package metadata | `0.1.3rc1` |
 
 The remaining warnings are local-environment and release-line items: optional
-live solver/dependency stacks may be missing, local report files and
+live solver/dependency stacks may be missing, `.codex/reports/*` and
 `artifacts/*` are untracked by policy, historical tags through `v0.1.2` must not
 be moved, and the current candidate tag `v0.1.3-rc1` is not created by this
 handoff step.
@@ -94,7 +94,8 @@ Duplicate desktop `* (1)` files were quarantined during post-freeze hygiene.
 
 - Duplicate `* (1)` files were quarantined under ignored `artifacts/hygiene`
   during post-freeze hygiene and must not be staged.
-- Local report files are runtime evidence and remain untracked by policy.
+- `.codex/reports/*` reports are runtime evidence and remain untracked by
+  policy.
 - `artifacts/*` outputs are runtime evidence and remain git-ignored by policy.
 - Optional live solvers/dependencies may be unavailable locally.
 - A stale duplicate editable `.pth` in the local venv was repaired during
@@ -158,7 +159,7 @@ Primary docs:
 - [Packaging and release docs](../32_packaging_release_docs.md)
 - [Plugin install hardening](../33_plugin_install_hardening.md)
 
-Do not stage generated `artifacts/*`, local report files, root `GUI.png`, or
+Do not stage generated `artifacts/*`, `.codex/reports/*`, root `GUI.png`, or
 duplicate `* (1)` files. Manual cleanup of duplicate files should happen in a
 separate hygiene step after the release freeze is recorded.
 

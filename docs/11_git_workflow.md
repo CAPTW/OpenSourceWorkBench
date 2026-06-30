@@ -1,8 +1,8 @@
 # OSW Local Git Workflow
 
 This repository uses local Git safety rails for OpenSolver Workbench
-development. The workflow is designed so review, amend, and recovery remain
-possible without pushing or damaging user state.
+development. The workflow is designed for Codex-assisted work where review,
+amend, and recovery must be possible without pushing or damaging user state.
 
 ## Non-Negotiable Safety Rules
 
@@ -129,8 +129,8 @@ git worktree add -b amend/osw-p1-1-project-schema-review-01 ../_worktrees/osw-am
 ```
 
 An amend commit must state which review findings it addresses and must record
-rerun command evidence in the relevant release or review notes. Never amend
-while unrelated user changes are mixed into the index.
+rerun command evidence in `.codex/reports/amend/` when that report path is
+available. Never amend while unrelated user changes are mixed into the index.
 
 ## Merge Gate Policy
 
@@ -180,7 +180,7 @@ Prefer non-destructive recovery:
 - Park out-of-scope work in a new Task Card, risk entry, or decision-log entry.
 
 Do not use `git reset --hard`, `git clean`, branch deletion, or worktree
-removal as a recovery shortcut.
+removal as a Codex recovery shortcut.
 
 ## Dirty Recovery Policy
 
@@ -241,8 +241,14 @@ the appropriate identity. Do not guess or write global Git identity settings.
 
 ## Reports
 
-Keep review and release evidence in the public docs when it is useful to future
-maintainers. Generated local logs and temporary reports should remain untracked.
+Codex reports should be written under `.codex/reports/` when the relevant
+directory is available:
+
+- `.codex/reports/worktrees/` for worktree start reports.
+- `.codex/reports/review/` for pre-review checkpoint and review evidence.
+- `.codex/reports/amend/` for amend start and post-amend comparisons.
+- `.codex/reports/merge/` for merge or blocked-merge reports.
+- `.codex/reports/release/` for release gate evidence.
 
 ## Harness QA
 

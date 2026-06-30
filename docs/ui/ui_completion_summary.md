@@ -18,7 +18,7 @@ implementation queue or replace this GUI with a generic skeleton.
 - UI-009_VISUAL_QA_AND_SCREENSHOT_CAPTURE
 - UI-010_FINAL_POLISH_PASS
 
-The queue state is complete in `docs/ui/ui_queue_state.json`.
+The queue state is complete in `.codex/ui_queue_state.json`.
 
 ## Final GUI Capabilities
 
@@ -158,7 +158,7 @@ Recommended next prompt:
 OSW-FUNC-001_PROJECT_SCHEMA_INTEGRATION
 ```
 
-If the repository's functional automation queue is being used, adapt the existing
+If the repository's functional autopilot queue is being used, adapt the existing
 `OSW-AUTO-005_PROJECT_SCHEMA` step to this completed GUI baseline. Do not run a
 generic GUI skeleton step.
 

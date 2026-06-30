@@ -993,7 +993,7 @@ def _path_is_unsafe(path: str) -> bool:
     if not path:
         return False
     parts = {part.casefold() for part in PurePath(path).parts}
-    return bool(parts.intersection({".git", ".venv"}) or ".." in parts)
+    return bool(parts.intersection({".git", ".codex"}) or ".." in parts)
 
 
 def _has_blockers(value: object) -> bool:

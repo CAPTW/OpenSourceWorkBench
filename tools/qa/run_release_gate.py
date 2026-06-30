@@ -34,13 +34,8 @@ def main() -> int:
             "python tools/qa/check_plugin_manifests.py",
         ),
         (
-            [
-                python_executable(),
-                "-m",
-                "json.tool",
-                "docs/release/functional_queue_state.json",
-            ],
-            "python -m json.tool docs/release/functional_queue_state.json",
+            [python_executable(), "-m", "json.tool", ".codex/func_queue_state.json"],
+            "python -m json.tool .codex/func_queue_state.json",
         ),
     ]
 

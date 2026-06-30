@@ -31,6 +31,8 @@ DEFAULT_EXCLUDES = (
     ".pytest_cache/**",
     ".mypy_cache/**",
     ".ruff_cache/**",
+    ".codex/reports/**",
+    ".codex/rescue/**",
     "**/__pycache__/**",
     "**/constant/polyMesh/**",
     "**/processor*/**",

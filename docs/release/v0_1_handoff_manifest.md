@@ -82,7 +82,7 @@ python -m osw.cli cantera-check
 ruff check src tests
 ruff check tests/unit tests/gui tests/integration tests/validation
 python tools/qa/run_release_gate.py
-python -m json.tool docs/release/functional_queue_state.json
+python -m json.tool .codex/func_queue_state.json
 git diff --check
 ```
 
@@ -95,7 +95,7 @@ hygiene task before release validation.
 Do not stage:
 
 - `artifacts/**`
-- local report files
+- `.codex/reports/**`
 - duplicate `* (1)` files
 - root `GUI.png`
 - generated solver/runtime outputs
@@ -141,7 +141,7 @@ warnings:
 ## Next-Owner Checklist
 
 1. Confirm `git status --short` contains no tracked dirty files.
-2. Confirm `docs/release/functional_queue_state.json` has `current_step: null` and
+2. Confirm `.codex/func_queue_state.json` has `current_step: null` and
    `next_step: null`.
 3. Review [v0.1 Freeze Handoff](v0_1_freeze_handoff.md).
 4. Run the test/QA commands relevant to the local environment.

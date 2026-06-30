@@ -154,7 +154,7 @@ In plan-only mode, `files_written` is `false`, `written_files` is empty, and
 - Require an explicit output directory.
 - Reject single-file output paths.
 - Reject path traversal such as `..` segments.
-- Reject unsafe targets under `.git`, `.venv`, release artifact directories,
+- Reject unsafe targets under `.git`, `.codex`, release artifact directories,
   or other internal runtime locations.
 - Do not create parent directories implicitly.
 - Allow `--create-dir` only for reviewed explicit output directories.

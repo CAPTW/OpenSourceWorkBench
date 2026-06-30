@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check static release-gate invariants for OSW release state."""
+"""Check static release-gate invariants for OSW functional queue completion."""
 
 from __future__ import annotations
 
@@ -59,6 +59,7 @@ ALLOWED_NEXT_STEPS = {
 }
 
 FORBIDDEN_STAGED_PARTS = (
+    ".codex/reports/",
     "artifacts/release/",
     "artifacts/ui/",
     "artifacts/mesh/",
@@ -70,9 +71,6 @@ FORBIDDEN_STAGED_PARTS = (
     "artifacts/chm/",
     "artifacts/field/",
 )
-
-FUNC_STATE_PATH = Path("docs/release/functional_queue_state.json")
-UI_STATE_PATH = Path("docs/ui/ui_queue_state.json")
 
 
 def load_json(path: Path) -> dict[str, object]:
@@ -126,8 +124,8 @@ def main() -> int:
     failures: list[str] = []
     warnings: list[str] = []
 
-    func_state = load_json(root / FUNC_STATE_PATH)
-    ui_state = load_json(root / UI_STATE_PATH)
+    func_state = load_json(root / ".codex" / "func_queue_state.json")
+    ui_state = load_json(root / ".codex" / "ui_queue_state.json")
 
     failures.extend(missing_completed(func_state, FUNC_STEPS, label="functional"))
     failures.extend(missing_completed(ui_state, UI_STEPS, label="UI"))

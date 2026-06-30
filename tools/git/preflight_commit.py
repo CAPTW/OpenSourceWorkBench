@@ -108,7 +108,15 @@ def staged_files(root: Path) -> list[str]:
 
 def is_allowed_fixture_path(path: str) -> bool:
     normalized = path.replace("\\", "/").lstrip("/").lower()
-    return normalized.startswith("examples/") or normalized.startswith("tests/")
+    return (
+        normalized.startswith("examples/")
+        or normalized.startswith("tests/")
+        or normalized == ".codex/reports/.gitkeep"
+        or (
+            normalized.startswith(".codex/reports/review/")
+            and normalized.endswith(".md")
+        )
+    )
 
 
 def is_runtime_artifact(path: str) -> bool:

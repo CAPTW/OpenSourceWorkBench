@@ -25,7 +25,7 @@ EXPECTED_TAG_TARGETS = {
     "v0.1.3-rc1": "a6e8d3a8211e02359841d10e1947e16ab847b132",
 }
 
-FORBIDDEN_ARCHIVE_PARTS = {".git", ".venv"}
+FORBIDDEN_ARCHIVE_PARTS = {".git", ".codex", ".venv"}
 SECRET_NAME_PATTERN = re.compile(
     r"(^id_rsa$|^id_ed25519$|\.pem$|\.key$|password|token|secret)",
     re.IGNORECASE,

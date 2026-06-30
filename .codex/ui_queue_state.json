@@ -13,7 +13,7 @@
     "UI-010_FINAL_POLISH_PASS"
   ],
   "current_step": null,
-  "last_report": "docs/ui/ui_completion_summary.md",
+  "last_report": ".codex/reports/ui/UI-010_FINAL_POLISH_PASS.md",
   "last_visual_artifact": "artifacts/ui/osw_dark_after.png",
   "status": "complete"
 }

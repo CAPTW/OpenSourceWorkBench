@@ -7,9 +7,9 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 
 - Status: Accepted
 - Date: 2026-05-12
-- Context: OSW work is performed in local repositories and worktrees.
-  Review, amend, and recovery steps must not risk remote state or user work.
-- Decision: Local workflows must not push, force-push, add or modify remotes,
+- Context: OSW work is performed by Codex in local repositories and worktrees.
+  Review, amend, and recovery prompts must not risk remote state or user work.
+- Decision: Codex workflows must not push, force-push, add or modify remotes,
   delete branches, delete worktrees, run `git reset --hard`, or run `git clean`
   unless a user explicitly requests the exact operation.
 - Consequences: More local reports and checkpoint commits are required, but
@@ -217,7 +217,7 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   access part of release QA.
 - Decision: Add `tools/qa/check_docs_links.py` to validate local Markdown file
   links and anchors in README, CHANGELOG, docs, and examples. External links are
-  classified as skipped by default, generated report evidence is not
+  classified as skipped by default, generated `.codex/reports/` evidence is not
   scanned by default, and fast/pre-merge QA run the checker.
 - Consequences: Broken local docs links block QA. External URL freshness remains
   outside this local checker. Since this hardening commit advances `develop`

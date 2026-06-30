@@ -66,7 +66,7 @@ python tools/qa/check_scope_drift.py
 python tools/qa/check_architecture_boundaries.py
 python tools/qa/check_no_solver_artifacts_committed.py
 python tools/qa/run_release_gate.py
-python -m json.tool docs/release/functional_queue_state.json
+python -m json.tool .codex/func_queue_state.json
 git diff --check
 ```
 

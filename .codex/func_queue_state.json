@@ -26,6 +26,6 @@
   ],
   "current_step": null,
   "next_step": null,
-  "release_state": "v0.1-frozen",
-  "last_report": "docs/release/v0_1_freeze_handoff.md"
+  "release_state": "v0.1-internal-rc-frozen",
+  "last_report": ".codex/reports/func/OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF.md"
 }

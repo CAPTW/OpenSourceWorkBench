@@ -795,7 +795,7 @@ def _has_traversal(path: Path) -> bool:
 
 def _is_unsafe_path(path: Path) -> bool:
     normalized_parts = {part.lower() for part in path.parts}
-    return bool(normalized_parts.intersection({".git", ".venv"}))
+    return ".git" in normalized_parts or ".codex" in normalized_parts
 
 
 def _is_nonempty_directory(path: Path) -> bool:

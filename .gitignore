@@ -47,6 +47,12 @@ artifacts/
 tmp/
 temp/
 .cache/
+.codex/rescue/
+.codex/reports/merge/
+.codex/reports/blocked/
+.codex/reports/amend/
+.codex/reports/worktrees/
+.codex/reports/release/
 
 # Solver case/runtime directories
 solver_runs/
@@ -93,6 +99,8 @@ generated-reports/
 report-output/
 *.report.html
 report-*.html
+!.codex/reports/
+!.codex/reports/.gitkeep
 
 # Keep curated examples and tests available for golden fixtures.
 !examples/**

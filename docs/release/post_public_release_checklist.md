@@ -201,7 +201,7 @@ Run the subset required by the active gate:
 .venv\Scripts\python.exe tools/qa/check_docs_links.py
 .venv\Scripts\python.exe tools/qa/check_no_solver_artifacts_committed.py
 .venv\Scripts\python.exe tools/qa/check_public_docs.py
-.venv\Scripts\python.exe -m json.tool docs/release/functional_queue_state.json
+.venv\Scripts\python.exe -m json.tool .codex/func_queue_state.json
 git diff --check
 git status --short
 ```
@@ -231,7 +231,7 @@ git ls-remote --tags origin "refs/tags/<tag-name>^{}"
 - Never claim bundled external solvers.
 - Never claim native commercial CAD direct import or MATLAB/ANSYS/Simulink
   cloning.
-- Never stage local report files or runtime `artifacts/*`.
+- Never stage `.codex/reports/*`, `.codex/rescue/*`, or runtime `artifacts/*`.
 
 ## Known Limitations
 
