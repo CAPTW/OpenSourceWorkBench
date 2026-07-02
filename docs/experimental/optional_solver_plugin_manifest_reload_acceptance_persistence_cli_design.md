@@ -521,3 +521,17 @@ gated and must preserve explicit-path, dry-run-first, redaction-first,
 acknowledgement-gated, non-authoritative, non-validation,
 non-trust-restoration, non-activation, ProjectSchema-safe, issue/release-safe,
 and certification-safe boundaries.
+
+## 36. Implementation Follow-Up (OSW-EXP-128)
+
+OSW-EXP-128 implements this CLI design in
+[optional_solver_plugin_manifest_reload_acceptance_persistence_cli_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_implementation.md).
+The implementation remains stdout-first, explicit-target, and dry-run-only: it
+renders deterministic in-memory persistence view-model records and calls the
+OSW-EXP-126 writer only through dry-run planning. `write-future` is disabled,
+returns a deterministic nonzero status, and performs no file write. The
+implementation adds no input state-file reading/parsing, no reload file-reader
+invocation, no OSW-EXP-102 state-writer invocation, no GUI behavior, no
+subprocess use, no runtime reload acceptance, no ProjectSchema mutation, no
+discovery/validation/solver execution, no issue/release/tag/asset mutation, and
+no certification claim.

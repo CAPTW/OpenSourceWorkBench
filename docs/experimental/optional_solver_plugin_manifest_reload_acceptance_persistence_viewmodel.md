@@ -361,3 +361,16 @@ reader invocation, state-writer invocation, GUI call, subprocess use, runtime
 acceptance, ProjectSchema mutation, discovery, validation, solver execution,
 activation, trust restoration, issue/release/tag/asset mutation, validation
 claim, or certification claim.
+
+## 39. Follow-up: Persistence CLI Implementation (OSW-EXP-128)
+
+OSW-EXP-128 implements the persistence CLI review surface
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_implementation.md)).
+The CLI consumes deterministic in-memory records from this view-model, renders
+summary/readiness, storage, write-plan data, acknowledgements, expiry,
+diagnostics, non-action flags, disabled/future actions, and safety guidance, and
+bridges to the OSW-EXP-126 writer only for dry-run planning. It does not edit
+this view-model, read or parse input state files, invoke the reload file reader,
+perform actual CLI writes, mutate ProjectSchema, accept runtime reload, run
+discovery/validation/solver execution, activate candidates, restore trust,
+mutate issues/releases/tags/assets, or claim certification.

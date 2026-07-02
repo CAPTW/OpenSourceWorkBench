@@ -1404,6 +1404,22 @@ Scope drift is any change that:
   closure, release mutation, tag mutation, asset mutation, version bump,
   validation-pass or validation-fail evidence, bundled-solver claim, or
   certification claim without a separate gate;
+- reload acceptance persistence CLI implementation drift is any change that
+  turns dry-run-only review/write-plan output into an actual write or runtime
+  acceptance surface;
+- turns the optional solver plugin manifest reload acceptance persistence CLI
+  implementation into actual CLI writes, writer calls with `dry_run=False`,
+  input state-file reading or parsing, reload file-reader invocation,
+  OSW-EXP-102 state-writer invocation, GUI behavior, GUI subprocess use,
+  runtime reload acceptance, active acceptance mutation, ProjectSchema mutation,
+  default target path selection, background write, directory scan, network
+  fetch, plugin package import, reloadable bundle creation, export/report file
+  creation, clipboard/report/open-folder behavior, live discovery, passive
+  refresh, validation execution, solver execution, dependency installation,
+  dependency uninstall, solver uninstall, automatic activation, trust
+  restoration, issue closure, release mutation, tag mutation, asset mutation,
+  version bump, validation-pass or validation-fail evidence, bundled-solver
+  claim, or certification claim without a separate gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is

@@ -926,6 +926,23 @@ automatic activation, no trust restoration, no issue/release/tag/asset mutation,
 no validation-pass/fail claim, no bundled-solver claim, and no certification
 claim.
 
+[Optional solver plugin manifest reload acceptance persistence CLI implementation](experimental/optional_solver_plugin_manifest_reload_acceptance_persistence_cli_implementation.md)
+implements automated CLI implementation evidence for stdout-first reload
+acceptance persistence review and dry-run write-plan output. It renders
+deterministic in-memory persistence view-model records, calls the writer only
+with `dry_run=True`, keeps `write-future` disabled/future-only, and creates no
+files. It has no actual CLI writes, no writer call with `dry_run=False`, no
+input state-file reading/parsing, no reload file-reader invocation, no
+OSW-EXP-102 state-writer invocation, no GUI behavior, no subprocess use, no
+runtime reload acceptance, no active acceptance mutation, no ProjectSchema
+mutation, no default target path, no background write, no directory scan, no
+network fetch, no plugin package import, no reloadable bundle creation, no
+export/report file creation, no clipboard/report/open-folder behavior, no live
+discovery, no passive refresh, no validation execution, no solver execution, no
+dependency install/uninstall, no automatic activation, no trust restoration, no
+issue/release/tag/asset mutation, no validation-pass/fail claim, no
+bundled-solver claim, and no certification claim.
+
 ## Limitations
 
 - The matrix records validation evidence for v0.1 demos; it does not certify

@@ -240,3 +240,17 @@ state-writer invocation, no GUI behavior, no subprocess use, no runtime reload
 acceptance, no ProjectSchema mutation, no discovery, validation, solver
 execution, activation, trust restoration, issue/release/tag/asset mutation,
 validation claim, or certification claim.
+
+## 31. Follow-up: Persistence CLI Implementation (OSW-EXP-128)
+
+OSW-EXP-128 implements the stdout-first persistence CLI review/write-plan
+surface
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_implementation.md)).
+The CLI uses this writer only through `plan_reload_acceptance_persistence_write`
+with `dry_run=True`; it does not call the actual write function, does not create
+files, and keeps `write-future` disabled. It adds no input state-file
+reading/parsing, no reload file-reader invocation, no OSW-EXP-102 state-writer
+invocation, no GUI behavior, no subprocess use, no runtime reload acceptance,
+no ProjectSchema mutation, no discovery/validation/solver execution, no
+activation, no trust restoration, no issue/release/tag/asset mutation, no
+validation claim, and no certification claim.

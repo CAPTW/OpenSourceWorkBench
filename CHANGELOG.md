@@ -6,6 +6,19 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload Acceptance Persistence CLI Implementation
+
+- Added a stdout-first optional solver plugin manifest reload acceptance
+  persistence CLI review surface that renders deterministic persistence
+  view-model records and dry-run writer plans while keeping `write-future`
+  disabled/future-only and preserving no actual CLI writes, no writer call with
+  `dry_run=False`, no input state-file reading or parsing, no reload
+  file-reader invocation, no OSW-EXP-102 state-writer invocation, no GUI
+  subprocess, no runtime reload acceptance, no active acceptance mutation, no
+  ProjectSchema mutation, no default/background write, no discovery/validation/
+  solver execution, no automatic activation, no trust restoration, no
+  issue/release mutation, and no certification claims.
+
 ### Optional Solver Plugin Manifest Reload Acceptance Persistence CLI Design
 
 - Designed a future stdout-first optional solver plugin manifest reload

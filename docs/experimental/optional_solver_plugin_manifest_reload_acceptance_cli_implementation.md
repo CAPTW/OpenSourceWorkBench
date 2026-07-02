@@ -339,3 +339,15 @@ invocation, no state-writer invocation, no GUI behavior, no subprocess use, no
 runtime reload acceptance, no ProjectSchema mutation, no discovery, validation,
 solver execution, activation, trust restoration, issue/release/tag/asset
 mutation, validation claim, or certification claim.
+
+## 40. Follow-up: Acceptance Persistence CLI Implementation (OSW-EXP-128)
+
+OSW-EXP-128 implements the separate reload acceptance persistence CLI
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_implementation.md)).
+The new command consumes OSW-EXP-125 persistence view-model records and renders
+OSW-EXP-126 writer results only through dry-run planning. It does not change
+this acceptance CLI, perform actual CLI writes, call the writer with
+`dry_run=False`, read or parse input state files, invoke the reload file reader,
+call GUI code, mutate ProjectSchema, accept runtime reload, run discovery,
+validation, or solver execution, restore trust, activate candidates, mutate
+issues/releases/tags/assets, or claim certification.

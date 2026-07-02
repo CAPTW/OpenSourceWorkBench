@@ -3755,3 +3755,32 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   OSW-EXP-126 writer remains a separately invoked local API until a future CLI
   implementation gate wires it intentionally. No persisted acceptance record is
   created by this gate.
+
+## ADR-0162: Optional Solver Plugin Manifest Reload Acceptance Persistence CLI Is Dry-Run-Only
+
+- Status: Accepted for experimental reload acceptance persistence CLI
+  implementation
+- Date: 2026-07-03
+- Context: OSW-EXP-126 added an explicit-path dry-run-first writer.
+  OSW-EXP-127 designed a persistence CLI review/write-plan surface. Exposing
+  persistence through CLI can be mistaken for runtime acceptance, trusted reload
+  state, ProjectSchema mutation, validation evidence, issue closure, release
+  mutation, or certification.
+- Decision: Implement a stdout-first persistence CLI that renders deterministic
+  in-memory
+  `OptionalSolverPluginManifestReloadAcceptancePersistenceViewModel` records and
+  dry-run writer plans. The CLI calls the writer only through
+  `plan_reload_acceptance_persistence_write` with `dry_run=True`.
+  `write-future` remains disabled/future-only and non-mutating. The CLI
+  performs no actual file writes, no writer call with `dry_run=False`, no input
+  state-file reading/parsing, no reload file-reader invocation, no OSW-EXP-102
+  state-writer invocation, no GUI behavior, no subprocess use, no runtime reload
+  acceptance, no active acceptance mutation, no ProjectSchema mutation, no
+  default/background write, no discovery, no validation, no solver execution,
+  no activation, no trust restoration, no issue/release/tag/asset mutation, and
+  no certification claim.
+- Consequences: Users can inspect persistence readiness and dry-run write plans
+  from the CLI without creating persisted records. Actual CLI write behavior,
+  GUI persistence review, ProjectSchema integration, prepared-machine
+  validation, issue/release workflows, and certification-safe release evidence
+  remain separately gated.
