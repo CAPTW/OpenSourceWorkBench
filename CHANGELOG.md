@@ -6,6 +6,17 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload Acceptance Persistence CLI Design
+
+- Designed a future stdout-first optional solver plugin manifest reload
+  acceptance persistence CLI review/write-plan surface over the persistence
+  view-model and explicit writer boundaries, preserving no CLI implementation,
+  no source edits, no writer invocation, no file writes, no file reading or
+  parsing, no input state-file parsing, no reload file-reader invocation, no
+  runtime acceptance, no ProjectSchema mutation, no default/background write, no
+  discovery/validation/solver execution, no automatic activation, no trust
+  restoration, no issue/release mutation, and no certification claims.
+
 ### Optional Solver Plugin Manifest Reload Acceptance Persistence Writer
 
 - Added an explicit-path, dry-run-first optional solver plugin manifest reload

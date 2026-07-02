@@ -226,3 +226,17 @@ trailing newline, SHA-256, atomic temp cleanup, blocked view-models, policy
 blockers, payload sections, safety text, redaction, secret blocking,
 non-action flags, schema mismatches, forbidden imports/calls, and absence of
 dry-run output files.
+
+## 30. Follow-up: Persistence CLI Design (OSW-EXP-127)
+
+OSW-EXP-127 designs the future stdout-first reload acceptance persistence CLI
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_design.md)).
+The writer remains a local API boundary and is not invoked by this design gate.
+
+The future CLI design keeps actual writer invocation separately gated. It adds
+no CLI implementation, no source edits, no file writes, no input state-file
+reading or parsing, no reload file-reader invocation, no OSW-EXP-102
+state-writer invocation, no GUI behavior, no subprocess use, no runtime reload
+acceptance, no ProjectSchema mutation, no discovery, validation, solver
+execution, activation, trust restoration, issue/release/tag/asset mutation,
+validation claim, or certification claim.

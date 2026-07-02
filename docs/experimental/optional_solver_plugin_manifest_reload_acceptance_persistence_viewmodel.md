@@ -346,3 +346,18 @@ invocation, CLI/GUI behavior, subprocess use, ProjectSchema mutation,
 discovery, validation, solver execution, activation, trust restoration,
 issue/release/tag/asset mutation, validation-pass/fail claim, bundled-solver
 claim, or certification claim.
+
+## 38. Follow-up: Persistence CLI Design (OSW-EXP-127)
+
+OSW-EXP-127 designs a future CLI review/write-plan surface over this persistence
+view-model and the OSW-EXP-126 writer boundary
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_design.md)).
+The design does not change this view-model source or add CLI behavior.
+
+The future CLI remains stdout-first, dry-run/write-plan oriented, explicit-path
+only for any future write, redaction-first, and non-authoritative. This design
+gate performs no writer invocation, file write, input file read or parse,
+reader invocation, state-writer invocation, GUI call, subprocess use, runtime
+acceptance, ProjectSchema mutation, discovery, validation, solver execution,
+activation, trust restoration, issue/release/tag/asset mutation, validation
+claim, or certification claim.

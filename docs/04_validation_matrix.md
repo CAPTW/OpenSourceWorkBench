@@ -910,6 +910,22 @@ acceptance, no ProjectSchema mutation, no discovery/validation/solver
 execution, no automatic activation, no trust restoration, no issue/release/tag/
 asset mutation, no validation-pass/fail claim, and no certification claim.
 
+[Optional solver plugin manifest reload acceptance persistence CLI design](experimental/optional_solver_plugin_manifest_reload_acceptance_persistence_cli_design.md)
+defines future stdout-first, explicit-target-path, dry-run-first persistence CLI
+review and write-plan semantics over OSW-EXP-125 persistence view-model records
+and OSW-EXP-126 writer boundaries. It is docs/test design evidence only: no CLI
+implementation, no source edits, no writer invocation, no file writes, no input
+state-file reading/parsing, no reload file-reader invocation, no OSW-EXP-102
+state-writer invocation, no GUI/subprocess behavior, no runtime reload
+acceptance, no active acceptance mutation, no ProjectSchema mutation, no
+default/background write, no directory scan, no network fetch, no plugin package
+import, no reloadable bundle creation, no export/report file creation, no
+clipboard/report/open-folder behavior, no live discovery, no passive refresh, no
+validation execution, no solver execution, no dependency install/uninstall, no
+automatic activation, no trust restoration, no issue/release/tag/asset mutation,
+no validation-pass/fail claim, no bundled-solver claim, and no certification
+claim.
+
 ## Limitations
 
 - The matrix records validation evidence for v0.1 demos; it does not certify

@@ -314,3 +314,18 @@ only, requires caller acknowledgement for actual writes, and does not mutate
 ProjectSchema, accept runtime reloads, invoke readers, call CLI/GUI behavior,
 run discovery/validation/solver execution, activate candidates, restore trust,
 mutate issues/releases/tags/assets, or claim certification.
+
+## Follow-up: Reload Acceptance Persistence CLI Design (OSW-EXP-127)
+
+OSW-EXP-127 designs the future CLI review/write-plan surface for reload
+acceptance persistence
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_design.md)).
+It references this state writer only as an explicit-write precedent and does
+not import, edit, invoke, or wrap this writer.
+
+The design adds no CLI implementation, no writer invocation, no file writes, no
+input state-file reading or parsing, no reload file-reader invocation, no GUI
+behavior, no subprocess use, no runtime reload acceptance, no ProjectSchema
+mutation, no discovery, validation, solver execution, activation, trust
+restoration, issue/release/tag/asset mutation, validation claim, or
+certification claim.

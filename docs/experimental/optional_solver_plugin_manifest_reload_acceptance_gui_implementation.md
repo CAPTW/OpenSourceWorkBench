@@ -257,3 +257,18 @@ requires explicit target paths and caller acknowledgement for actual writes, and
 does not add GUI behavior, runtime reload acceptance, ProjectSchema mutation,
 discovery, validation, solver execution, activation, trust restoration,
 issue/release/tag/asset mutation, validation claims, or certification claims.
+
+## 20. Follow-up: Acceptance Persistence CLI Design (OSW-EXP-127)
+
+OSW-EXP-127 designs a future CLI review/write-plan surface for reload
+acceptance persistence
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_design.md)).
+This GUI panel remains view-model-only and non-writing; it does not call that
+future CLI, invoke the writer, pass target paths, write files, or spawn
+subprocesses.
+
+The CLI design gate adds no GUI source edits, no GUI behavior, no writer
+invocation, no file writes, no input state-file reading or parsing, no reload
+file-reader invocation, no ProjectSchema mutation, no runtime acceptance, no
+discovery, validation, solver execution, activation, trust restoration,
+issue/release/tag/asset mutation, validation claim, or certification claim.

@@ -3722,3 +3722,36 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   non-authoritative record. Persistence writer success remains distinct from
   runtime acceptance and validation evidence. CLI/GUI integration remains
   separately gated.
+
+## ADR-0161: Optional Solver Plugin Manifest Reload Acceptance Persistence CLI Starts As Design-Only
+
+- Status: Accepted for experimental reload acceptance persistence CLI design
+- Date: 2026-07-03
+- Context: OSW-EXP-125 added a pure persistence view-model for reload
+  acceptance review records. OSW-EXP-126 added an explicit-path,
+  dry-run-first writer API. A future stdout-first CLI can make persistence
+  readiness and write plans inspectable, but CLI persistence can be mistaken for
+  actual persistence writes, runtime reload acceptance, trusted reload state,
+  automatic activation, validation evidence, validation failure, ProjectSchema
+  mutation, issue closure, release mutation, or certification.
+- Decision: Define the reload acceptance persistence CLI as design-only. A
+  future CLI may render deterministic in-memory
+  `OptionalSolverPluginManifestReloadAcceptancePersistenceViewModel` records,
+  dry-run/write-plan data, explicit target path policy, writer result review,
+  acknowledgements, expiry, schema/migration, redaction/privacy, provenance,
+  stale-source, conflict/shared-stack, unsafe-claim, evidence/history,
+  `OSPMG_RELOAD_ACCEPTANCE_PERSISTENCE_CLI_*` diagnostics, non-action flags,
+  disabled/future actions, exit-code semantics, and safety guidance. This gate
+  adds no CLI implementation, no source edits, no writer invocation, no file
+  writes, no input state file reading/parsing, no reload file-reader
+  invocation, no OSW-EXP-102 state-writer invocation, no GUI behavior, no
+  subprocess use, no runtime reload acceptance, no active acceptance mutation,
+  no ProjectSchema mutation, no default/background write, no discovery, no
+  validation, no solver execution, no activation, no trust restoration, no
+  issue/release/tag/asset mutation, no validation-pass/fail claim, no
+  bundled-solver claim, and no certification claim.
+- Consequences: Future persistence CLI implementation has a safety contract.
+  Existing acceptance CLI/GUI review surfaces remain review-only. The
+  OSW-EXP-126 writer remains a separately invoked local API until a future CLI
+  implementation gate wires it intentionally. No persisted acceptance record is
+  created by this gate.

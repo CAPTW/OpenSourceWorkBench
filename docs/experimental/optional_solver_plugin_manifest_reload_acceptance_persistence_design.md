@@ -597,3 +597,18 @@ behavior, no subprocess use, no ProjectSchema mutation, no discovery,
 validation, solver execution, activation, trust restoration,
 issue/release/tag/asset mutation, validation-pass/fail claim, bundled-solver
 claim, or certification claim.
+
+## 38. Follow-up: Persistence CLI Design (OSW-EXP-127)
+
+OSW-EXP-127 designs the future stdout-first CLI surface for persistence
+readiness and dry-run/write-plan review
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_design.md)).
+It keeps this persistence boundary design-only for CLI integration and does not
+invoke the writer.
+
+The design adds no CLI implementation, no source edits, no writer invocation,
+no file write, no input state-file reading or parsing, no reload file-reader
+invocation, no OSW-EXP-102 state-writer invocation, no GUI behavior, no
+subprocess use, no runtime reload acceptance, no ProjectSchema mutation, no
+discovery, validation, solver execution, activation, trust restoration,
+issue/release/tag/asset mutation, validation claim, or certification claim.

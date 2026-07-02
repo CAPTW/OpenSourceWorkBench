@@ -325,3 +325,17 @@ target paths, caller acknowledgement for actual writes, redacted diagnostics,
 and no runtime reload acceptance, ProjectSchema mutation, discovery,
 validation, solver execution, activation, trust restoration,
 issue/release/tag/asset mutation, validation claim, or certification claim.
+
+## 39. Follow-up: Acceptance Persistence CLI Design (OSW-EXP-127)
+
+OSW-EXP-127 designs a separate reload acceptance persistence CLI
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_design.md)).
+That future command family is distinct from this acceptance review CLI: this
+CLI remains non-writing and does not invoke persistence behavior.
+
+The persistence CLI design gate adds no CLI source edits, no writer invocation,
+no file writes, no input state-file reading or parsing, no reload file-reader
+invocation, no state-writer invocation, no GUI behavior, no subprocess use, no
+runtime reload acceptance, no ProjectSchema mutation, no discovery, validation,
+solver execution, activation, trust restoration, issue/release/tag/asset
+mutation, validation claim, or certification claim.
