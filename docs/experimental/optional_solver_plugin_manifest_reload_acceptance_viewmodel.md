@@ -336,3 +336,17 @@ implementation, no persistence writes, no runtime reload acceptance, no
 ProjectSchema mutation, no file IO, no reader invocation, no discovery,
 validation, solver execution, activation, trust restoration, issue/release/tag/
 asset mutation, or certification claims.
+
+## 40. Follow-up: Acceptance Persistence ViewModel (OSW-EXP-125)
+
+OSW-EXP-125 adds a pure in-memory future persistence planning view-model
+([optional_solver_plugin_manifest_reload_acceptance_persistence_viewmodel.md](optional_solver_plugin_manifest_reload_acceptance_persistence_viewmodel.md))
+that consumes this acceptance view-model through `to_mapping()` or equivalent
+safe mappings. It does not edit this module and does not add independent
+acceptance policy.
+
+The persistence view-model remains future-writer-only: it writes no files,
+creates no checked-in state files, performs no runtime reload acceptance,
+mutates no ProjectSchema, calls no CLI/GUI behavior, invokes no reader or
+writer, runs no discovery, validation, or solver execution, and makes no
+issue/release/certification claims.

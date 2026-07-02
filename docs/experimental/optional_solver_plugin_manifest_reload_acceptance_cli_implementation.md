@@ -298,3 +298,16 @@ runtime reload acceptance, no ProjectSchema mutation, no file IO, no reader
 invocation, no discovery, no validation, no solver execution, no activation, no
 trust restoration, no issue/release/tag/asset mutation, and no certification
 claims.
+
+## 37. Follow-up: Acceptance Persistence ViewModel (OSW-EXP-125)
+
+OSW-EXP-125 adds a pure in-memory reload acceptance persistence view-model
+([optional_solver_plugin_manifest_reload_acceptance_persistence_viewmodel.md](optional_solver_plugin_manifest_reload_acceptance_persistence_viewmodel.md)).
+The CLI implementation remains a stdout-first acceptance review surface and does
+not invoke persistence behavior.
+
+The persistence view-model consumes supplied acceptance records only and remains
+future-writer-only. It adds no file IO, reader/writer invocation, CLI behavior,
+GUI behavior, subprocess use, persistence write, ProjectSchema mutation,
+runtime reload acceptance, discovery, validation, solver execution, activation,
+trust restoration, issue/release/tag/asset mutation, or certification claim.

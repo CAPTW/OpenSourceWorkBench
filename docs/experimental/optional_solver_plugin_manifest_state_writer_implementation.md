@@ -286,3 +286,17 @@ acceptance writer, creates no checked-in state files, writes no persistence,
 mutates no ProjectSchema, accepts no runtime reload state, performs no file IO
 in this gate, and claims no validation pass/fail, issue closure, release
 mutation, bundled solver support, or certification.
+
+## Follow-up: reload acceptance persistence view-model (OSW-EXP-125)
+
+OSW-EXP-125 implements the pure in-memory reload acceptance persistence
+view-model
+([optional_solver_plugin_manifest_reload_acceptance_persistence_viewmodel.md](optional_solver_plugin_manifest_reload_acceptance_persistence_viewmodel.md)).
+It uses the state writer only as a future pattern for explicit storage policy
+and dry-run planning. It does not import, edit, invoke, or wrap this writer.
+
+The view-model writes no files, creates no checked-in state files, performs no
+runtime reload acceptance, mutates no ProjectSchema, reads no files, parses no
+files, invokes no reader, calls no CLI/GUI behavior, uses no subprocesses, runs
+no discovery, validation, or solver execution, activates no candidates, restores
+no trust, mutates no issues/releases/tags/assets, and claims no certification.

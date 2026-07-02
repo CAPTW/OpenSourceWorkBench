@@ -3676,3 +3676,27 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: Future OSW-EXP-125/126 have a deterministic persistence
   contract. GUI and CLI acceptance review remain review-only. No persisted
   acceptance state or runtime accepted state is created by this gate.
+
+## ADR-0159: Optional Solver Plugin Manifest Reload Acceptance Persistence ViewModel Is Non-Writing
+
+- Status: Accepted for experimental reload acceptance persistence view-model
+  implementation
+- Date: 2026-07-02
+- Context: OSW-EXP-119 added a pure reload acceptance view-model. OSW-EXP-123
+  added a stdout-first CLI review surface. OSW-EXP-124 designed future reload
+  acceptance persistence. Persistence planning can be mistaken for runtime
+  acceptance, trusted reload, validation evidence, ProjectSchema mutation, issue
+  closure, release mutation, or certification.
+- Decision: Implement a pure reload acceptance persistence view-model under
+  `src/osw/experimental/optional_solvers/`. The view-model consumes supplied
+  acceptance records and renders future persistence readiness, write-plan data,
+  storage policy, acknowledgements, expiry, blockers, diagnostics, non-action
+  flags, disabled/future actions, and safety guidance. It performs no file IO,
+  no writer invocation, no reader invocation, no CLI/GUI calls, no subprocess,
+  no runtime reload acceptance, no persistence write, no ProjectSchema mutation,
+  no discovery, no validation, no solver execution, no activation, no trust
+  restoration, no issue/release/tag/asset mutation, and no certification claim.
+- Consequences: Future OSW-EXP-126 has a deterministic view-model contract.
+  Persistence writer behavior remains separately gated. GUI and CLI acceptance
+  review remain review-only. No persisted acceptance state or runtime accepted
+  state is created by this gate.

@@ -882,6 +882,23 @@ This evidence is useful for confidence and diagnostics, but it is not an
 industrial certification claim and does not make optional dependencies mandatory
 for base import, CLI smoke, or unit tests.
 
+[Optional solver plugin manifest reload acceptance persistence view-model](experimental/optional_solver_plugin_manifest_reload_acceptance_persistence_viewmodel.md)
+implements pure automated view-model evidence for future reload acceptance
+persistence planning. It is in-memory, view-model-only, future-writer-only, and
+supplied-record-only: it renders write-plan readiness, storage policy,
+acknowledgements, expiry, blockers, diagnostics, non-action flags,
+disabled/future actions, provenance, evidence/history, and safety guidance. It
+performs no persistence writes, no checked-in state file creation, no runtime
+reload acceptance, no active acceptance mutation, no file IO, no file reading or
+parsing, no writer or reader invocation, no CLI/GUI behavior, no subprocess use,
+no ProjectSchema mutation, no default/background reload, no directory scan, no
+network fetch, no plugin package import, no reloadable bundle creation, no
+export/report file creation, no clipboard/report/open-folder behavior, no live
+discovery, no passive refresh, no validation execution, no solver execution, no
+dependency install/uninstall, no automatic activation, no trust restoration, no
+issue/release/tag/asset mutation, no validation-pass/fail claim, and no
+certification claim.
+
 ## Limitations
 
 - The matrix records validation evidence for v0.1 demos; it does not certify

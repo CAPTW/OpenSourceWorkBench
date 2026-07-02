@@ -6,6 +6,18 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload Acceptance Persistence ViewModel
+
+- Added a pure in-memory optional solver plugin manifest reload acceptance
+  persistence view-model that renders future writer readiness, write-plan data,
+  storage policy, acknowledgements, expiry, blockers, diagnostics, non-action
+  flags, disabled/future actions, provenance, evidence/history, and safety
+  guidance while preserving no persistence writes, no checked-in state files,
+  no runtime acceptance, no file IO, no reader/writer invocation, no CLI/GUI
+  behavior, no subprocess use, no ProjectSchema mutation, no discovery/
+  validation/solver execution, no automatic activation, no trust restoration,
+  no issue/release mutation, and no certification claims.
+
 ### Optional Solver Plugin Manifest Reload Acceptance Persistence Design
 
 - Designed optional solver plugin manifest reload acceptance persistence

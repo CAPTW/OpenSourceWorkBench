@@ -565,3 +565,19 @@ Suggested sequence:
 Runtime reload acceptance, activation, discovery refresh, ProjectSchema
 integration, validation, issue/release workflows, export/report integration,
 reloadable bundles, and certification remain future-gated.
+
+## 35. Follow-up: Acceptance Persistence ViewModel (OSW-EXP-125)
+
+OSW-EXP-125 implements the pure in-memory reload acceptance persistence
+view-model described by this design
+([optional_solver_plugin_manifest_reload_acceptance_persistence_viewmodel.md](optional_solver_plugin_manifest_reload_acceptance_persistence_viewmodel.md)).
+It adds future-writer-only planning records, storage policy rows,
+acknowledgements, expiry, blockers, diagnostics, non-action flags,
+disabled/future actions, provenance, evidence/history, and safety guidance.
+
+The implementation remains non-writing and performs no persistence write, no
+checked-in state file creation, no runtime reload acceptance, no file IO, no
+reader or writer invocation, no CLI/GUI behavior, no subprocess use, no
+ProjectSchema mutation, no discovery, no validation, no solver execution, no
+automatic activation, no trust restoration, no issue/release/tag/asset mutation,
+and no certification claim.
