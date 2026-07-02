@@ -6,6 +6,15 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload Acceptance Persistence Writer
+
+- Added an explicit-path, dry-run-first optional solver plugin manifest reload
+  acceptance persistence writer for local review records, preserving no runtime
+  acceptance, no default/background path, no input state-file parsing, no reload
+  file-reader invocation, no CLI/GUI behavior, no ProjectSchema mutation, no
+  discovery/validation/solver execution, no automatic activation, no trust
+  restoration, no issue/release mutation, and no certification claims.
+
 ### Optional Solver Plugin Manifest Reload Acceptance Persistence ViewModel
 
 - Added a pure in-memory optional solver plugin manifest reload acceptance

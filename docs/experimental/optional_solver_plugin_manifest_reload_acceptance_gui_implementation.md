@@ -243,3 +243,17 @@ dialog, no file IO, no writer or reader invocation, no subprocess use, no
 persistence write, no ProjectSchema mutation, no runtime reload acceptance, no
 discovery, no validation, no solver execution, no activation, no trust
 restoration, no issue/release/tag/asset mutation, and no certification claim.
+
+## 19. Follow-up: Acceptance Persistence Writer (OSW-EXP-126)
+
+OSW-EXP-126 implements an explicit reload acceptance persistence writer
+([optional_solver_plugin_manifest_reload_acceptance_persistence_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_implementation.md)).
+The GUI panel remains view-model-only and review-only; it does not call the
+writer, show a save dialog, pass target paths, write files, or create persisted
+reload acceptance state.
+
+The writer remains separately gated and local API-only. It is dry-run-first,
+requires explicit target paths and caller acknowledgement for actual writes, and
+does not add GUI behavior, runtime reload acceptance, ProjectSchema mutation,
+discovery, validation, solver execution, activation, trust restoration,
+issue/release/tag/asset mutation, validation claims, or certification claims.

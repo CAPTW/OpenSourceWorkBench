@@ -350,3 +350,18 @@ creates no checked-in state files, performs no runtime reload acceptance,
 mutates no ProjectSchema, calls no CLI/GUI behavior, invokes no reader or
 writer, runs no discovery, validation, or solver execution, and makes no
 issue/release/certification claims.
+
+## Follow-up: Acceptance Persistence Writer (OSW-EXP-126)
+
+OSW-EXP-126 implements a separately gated persistence writer
+([optional_solver_plugin_manifest_reload_acceptance_persistence_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_implementation.md))
+that consumes downstream persistence view-model records derived from this
+acceptance view-model. The writer does not add independent acceptance policy and
+does not mutate this acceptance view-model.
+
+The writer remains explicit-target-path only, dry-run-first, and
+caller-acknowledged before actual writes. It does not accept runtime reloads,
+perform active acceptance mutation, invoke readers, call CLI/GUI behavior, use
+subprocesses, mutate ProjectSchema, run discovery/validation/solver execution,
+activate candidates, restore trust, mutate issues/releases/tags/assets, claim
+validation pass/fail evidence, or claim certification.

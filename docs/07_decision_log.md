@@ -3700,3 +3700,25 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   Persistence writer behavior remains separately gated. GUI and CLI acceptance
   review remain review-only. No persisted acceptance state or runtime accepted
   state is created by this gate.
+
+## ADR-0160: Optional Solver Plugin Manifest Reload Acceptance Persistence Writer Is Explicit and Non-Authoritative
+
+- Status: Accepted for experimental reload acceptance persistence writer
+  implementation
+- Date: 2026-07-02
+- Context: OSW-EXP-124 designed future reload acceptance persistence.
+  OSW-EXP-125 added a pure persistence view-model. Users need a bounded way to
+  write reviewed UX state, but persistence can be mistaken for runtime reload
+  acceptance, trust restoration, automatic activation, validation evidence,
+  ProjectSchema mutation, issue closure, release mutation, or certification.
+- Decision: Implement an explicit-path, dry-run-first, redacted writer for
+  reload acceptance persistence review records. Actual writes require caller
+  acknowledgement and an explicit target path. The writer performs no runtime
+  reload acceptance, no active acceptance mutation, no ProjectSchema mutation,
+  no discovery, no validation, no solver execution, no activation, no trust
+  restoration, no issue/release/tag/asset mutation, and no certification claim.
+  The writer does not read input state files or invoke the reload file reader.
+- Consequences: Reviewed reload acceptance UX state can be written as a local
+  non-authoritative record. Persistence writer success remains distinct from
+  runtime acceptance and validation evidence. CLI/GUI integration remains
+  separately gated.

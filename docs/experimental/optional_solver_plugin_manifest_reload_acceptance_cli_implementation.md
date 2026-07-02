@@ -311,3 +311,17 @@ future-writer-only. It adds no file IO, reader/writer invocation, CLI behavior,
 GUI behavior, subprocess use, persistence write, ProjectSchema mutation,
 runtime reload acceptance, discovery, validation, solver execution, activation,
 trust restoration, issue/release/tag/asset mutation, or certification claim.
+
+## 38. Follow-up: Acceptance Persistence Writer (OSW-EXP-126)
+
+OSW-EXP-126 adds an explicit reload acceptance persistence writer
+([optional_solver_plugin_manifest_reload_acceptance_persistence_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_implementation.md)).
+The CLI review surface remains stdout-first and non-writing; it does not invoke
+the writer, accept writer target paths, or convert review commands into
+persistence commands.
+
+The writer remains a separate local API with dry-run-first planning, explicit
+target paths, caller acknowledgement for actual writes, redacted diagnostics,
+and no runtime reload acceptance, ProjectSchema mutation, discovery,
+validation, solver execution, activation, trust restoration,
+issue/release/tag/asset mutation, validation claim, or certification claim.

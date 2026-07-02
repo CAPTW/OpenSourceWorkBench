@@ -300,3 +300,17 @@ runtime reload acceptance, mutates no ProjectSchema, reads no files, parses no
 files, invokes no reader, calls no CLI/GUI behavior, uses no subprocesses, runs
 no discovery, validation, or solver execution, activates no candidates, restores
 no trust, mutates no issues/releases/tags/assets, and claims no certification.
+
+## Follow-up: Reload Acceptance Persistence Writer (OSW-EXP-126)
+
+OSW-EXP-126 implements a separate reload acceptance persistence writer
+([optional_solver_plugin_manifest_reload_acceptance_persistence_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_implementation.md)).
+It borrows the state writer's explicit-write and deterministic-payload posture
+without importing, editing, invoking, or wrapping this state writer.
+
+The reload acceptance persistence writer is scoped to reload acceptance
+persistence records only. It remains dry-run-first and explicit-target-path
+only, requires caller acknowledgement for actual writes, and does not mutate
+ProjectSchema, accept runtime reloads, invoke readers, call CLI/GUI behavior,
+run discovery/validation/solver execution, activate candidates, restore trust,
+mutate issues/releases/tags/assets, or claim certification.

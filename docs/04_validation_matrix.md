@@ -899,6 +899,17 @@ dependency install/uninstall, no automatic activation, no trust restoration, no
 issue/release/tag/asset mutation, no validation-pass/fail claim, and no
 certification claim.
 
+[Optional solver plugin manifest reload acceptance persistence implementation](experimental/optional_solver_plugin_manifest_reload_acceptance_persistence_implementation.md)
+implements automated source evidence for an explicit local review-record
+persistence writer. It is explicit-target-path only, dry-run-first, requires
+caller acknowledgement for actual writes, serializes deterministic JSON, and
+uses redacted target display. It adds no default path, no background write, no
+directory creation, no input state-file reading/parsing, no reload file-reader
+invocation, no CLI/GUI behavior, no subprocess use, no runtime reload
+acceptance, no ProjectSchema mutation, no discovery/validation/solver
+execution, no automatic activation, no trust restoration, no issue/release/tag/
+asset mutation, no validation-pass/fail claim, and no certification claim.
+
 ## Limitations
 
 - The matrix records validation evidence for v0.1 demos; it does not certify

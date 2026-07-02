@@ -331,3 +331,18 @@ prepared-machine validation, issue/release workflows, or certification-safe
 release evidence. Each must remain separately reviewed and preserve the
 non-writing, non-validation, non-trust-restoration, non-activation,
 ProjectSchema-safe, issue/release-safe, and certification-safe boundaries.
+
+## 37. Follow-up: Persistence Writer (OSW-EXP-126)
+
+OSW-EXP-126 implements the explicit reload acceptance persistence writer
+([optional_solver_plugin_manifest_reload_acceptance_persistence_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_implementation.md))
+as the separately gated consumer of this future-writer-only view-model. The
+writer accepts this view-model as in-memory input, starts in dry-run mode, and
+requires an explicit target path plus caller acknowledgement before any write.
+
+The writer does not change this view-model's policy. It adds no runtime reload
+acceptance, active acceptance mutation, default path, background write, reader
+invocation, CLI/GUI behavior, subprocess use, ProjectSchema mutation,
+discovery, validation, solver execution, activation, trust restoration,
+issue/release/tag/asset mutation, validation-pass/fail claim, bundled-solver
+claim, or certification claim.

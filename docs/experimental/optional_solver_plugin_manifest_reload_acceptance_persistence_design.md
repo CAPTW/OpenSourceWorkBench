@@ -581,3 +581,19 @@ reader or writer invocation, no CLI/GUI behavior, no subprocess use, no
 ProjectSchema mutation, no discovery, no validation, no solver execution, no
 automatic activation, no trust restoration, no issue/release/tag/asset mutation,
 and no certification claim.
+
+## 37. Follow-up: Persistence Writer Implementation (OSW-EXP-126)
+
+OSW-EXP-126 implements the first persistence writer
+([optional_solver_plugin_manifest_reload_acceptance_persistence_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_implementation.md))
+for reload acceptance records. It remains explicit-target-path only,
+dry-run-first, deterministic, local, redacted, and caller-acknowledged before
+actual writes.
+
+The implementation preserves this design's boundaries: no runtime reload
+acceptance, no active acceptance mutation, no default path, no background write,
+no input state-file reading or parsing, no reader invocation, no CLI/GUI
+behavior, no subprocess use, no ProjectSchema mutation, no discovery,
+validation, solver execution, activation, trust restoration,
+issue/release/tag/asset mutation, validation-pass/fail claim, bundled-solver
+claim, or certification claim.
