@@ -291,3 +291,13 @@ separately gated and must preserve explicit-target, redaction-first,
 acknowledgement-bound, non-authoritative, non-validation,
 non-trust-restoration, non-activation, ProjectSchema-safe, issue/release-safe,
 and certification-safe boundaries.
+
+## 36. Follow-up: Persistence GUI Review Design (OSW-EXP-129)
+
+OSW-EXP-129 designs a future display-only PySide review surface for reload
+acceptance persistence planning and writer results
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_design.md)).
+The GUI design does not call this CLI, does not use a CLI subprocess, does not
+invoke the writer, and does not write files. CLI success still does not imply
+GUI persistence, runtime reload acceptance, ProjectSchema mutation, validation
+evidence, issue closure, release mutation, or certification.

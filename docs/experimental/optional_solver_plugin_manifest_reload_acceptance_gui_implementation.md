@@ -272,3 +272,16 @@ invocation, no file writes, no input state-file reading or parsing, no reload
 file-reader invocation, no ProjectSchema mutation, no runtime acceptance, no
 discovery, validation, solver execution, activation, trust restoration,
 issue/release/tag/asset mutation, validation claim, or certification claim.
+
+## 21. Follow-up: Acceptance Persistence GUI Review Design (OSW-EXP-129)
+
+OSW-EXP-129 designs a future display-only GUI surface for reload acceptance
+persistence review
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_design.md)).
+This acceptance GUI panel remains view-model-only and non-writing. The
+persistence GUI design adds no GUI implementation, no GUI source edits, no
+writer invocation, no file writes, no input state-file reading or parsing, no
+CLI behavior, no subprocess use, no runtime acceptance, no ProjectSchema
+mutation, no discovery/validation/solver execution, no activation, no trust
+restoration, no issue/release/tag/asset mutation, validation claim, or
+certification claim.

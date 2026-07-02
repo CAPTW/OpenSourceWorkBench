@@ -254,3 +254,13 @@ invocation, no GUI behavior, no subprocess use, no runtime reload acceptance,
 no ProjectSchema mutation, no discovery/validation/solver execution, no
 activation, no trust restoration, no issue/release/tag/asset mutation, no
 validation claim, and no certification claim.
+
+## 32. Follow-up: Persistence GUI Review Design (OSW-EXP-129)
+
+OSW-EXP-129 designs a future display-only GUI review surface over supplied
+persistence view-model and writer dry-run/result records
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_design.md)).
+The design does not call this writer, expose writer behavior through GUI, write
+files, choose a default target path, read or parse input state files, mutate
+ProjectSchema, run discovery/validation/solver execution, activate candidates,
+restore trust, mutate issues/releases/tags/assets, or claim certification.

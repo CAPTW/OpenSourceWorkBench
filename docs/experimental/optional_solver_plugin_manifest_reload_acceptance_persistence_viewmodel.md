@@ -374,3 +374,15 @@ this view-model, read or parse input state files, invoke the reload file reader,
 perform actual CLI writes, mutate ProjectSchema, accept runtime reload, run
 discovery/validation/solver execution, activate candidates, restore trust,
 mutate issues/releases/tags/assets, or claim certification.
+
+## 40. Follow-up: Persistence GUI Review Design (OSW-EXP-129)
+
+OSW-EXP-129 designs a future display-only persistence GUI review surface
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_design.md)).
+The GUI design keeps this view-model as the persistence readiness source,
+renders supplied writer dry-run/result records only, and adds no GUI
+implementation, writer invocation, file write, input state-file reading or
+parsing, reload file-reader invocation, CLI call, subprocess use, runtime
+acceptance, ProjectSchema mutation, discovery, validation, solver execution,
+activation, trust restoration, issue/release/tag/asset mutation, validation
+claim, or certification claim.

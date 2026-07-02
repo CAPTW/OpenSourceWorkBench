@@ -3784,3 +3784,27 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   GUI persistence review, ProjectSchema integration, prepared-machine
   validation, issue/release workflows, and certification-safe release evidence
   remain separately gated.
+
+## ADR-0163: Optional Solver Plugin Manifest Reload Acceptance Persistence GUI Review Is Display-Only
+
+- Status: Accepted for experimental reload acceptance persistence GUI review
+  design
+- Date: 2026-07-03
+- Context: OSW-EXP-125 added a pure persistence view-model. OSW-EXP-126
+  added an explicit-path dry-run-first writer. OSW-EXP-128 added a
+  dry-run-only persistence CLI review surface. A GUI surface may be useful for
+  reviewing persistence state and writer plans, but GUI persistence can be
+  mistaken for runtime acceptance, ProjectSchema mutation, validation evidence,
+  issue closure, release mutation, or certification.
+- Decision: Design a future PySide GUI review surface that displays
+  persistence readiness, writer dry-run/result data, target/storage policy,
+  acknowledgements, expiry, diagnostics, non-action flags, disabled/future
+  actions, and safety guidance. This gate adds no GUI source and invokes no
+  writer. Runtime reload acceptance, actual writes through GUI, ProjectSchema
+  mutation, discovery, validation, solver execution, activation, trust
+  restoration, issue/release/tag/asset mutation, and certification claims
+  remain out of scope.
+- Consequences: OSW-EXP-130 has a deterministic GUI review design contract.
+  The OSW-EXP-126 writer remains not reachable from GUI until a separate
+  implementation gate. Persistence records remain non-authoritative local
+  review records.
