@@ -6,6 +6,16 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload Acceptance Persistence Design
+
+- Designed optional solver plugin manifest reload acceptance persistence
+  semantics as a future explicit, redacted, dry-run-first, non-authoritative
+  review-state record over the reload acceptance view-model, preserving no
+  source implementation, no persistence write, no runtime acceptance, no file
+  IO, no reader invocation, no ProjectSchema mutation, no default/background
+  reload, no discovery/validation/solver execution, no automatic activation, no
+  trust restoration, no issue/release mutation, and no certification claims.
+
 ### Optional Solver Plugin Manifest Reload Acceptance CLI Implementation
 
 - Added a stdout-first optional solver plugin manifest reload acceptance CLI

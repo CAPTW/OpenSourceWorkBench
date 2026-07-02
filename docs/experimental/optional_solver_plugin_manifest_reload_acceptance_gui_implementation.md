@@ -218,3 +218,15 @@ The implementation remains review-only: no runtime acceptance, file IO, reader
 invocation, persistence write, ProjectSchema mutation, discovery, validation,
 solver execution, activation, trust restoration, issue/release/tag/asset
 mutation, or certification claim.
+
+## 17. Follow-up: Acceptance Persistence Design (OSW-EXP-124)
+
+OSW-EXP-124 designs future persistence of reload acceptance review-state
+metadata
+([optional_solver_plugin_manifest_reload_acceptance_persistence_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_design.md)).
+The GUI panel remains view-model-only and non-writing. The persistence design
+adds no GUI source edits, no GUI behavior, no file dialog, no persistence writes,
+no runtime reload acceptance, no ProjectSchema mutation, no file IO, no reader
+invocation, no CLI subprocess, no discovery, no validation, no solver execution,
+no activation, no trust restoration, no issue/release/tag/asset mutation, and no
+certification claims.

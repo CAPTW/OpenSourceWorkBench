@@ -679,3 +679,15 @@ It consumes deterministic in-memory OSW-EXP-119 view-model records and keeps all
 runtime acceptance, persistence, activation, discovery, validation,
 ProjectSchema integration, issue/release workflows, output creation, and
 certification future-gated.
+
+## 35. Follow-up: Acceptance Persistence Design (OSW-EXP-124)
+
+OSW-EXP-124 designs future reload acceptance persistence semantics
+([optional_solver_plugin_manifest_reload_acceptance_persistence_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_design.md)).
+The design defines only a future explicit, redacted, dry-run-first,
+non-authoritative review-state record over OSW-EXP-119 acceptance view-model
+records. It adds no persistence implementation, no source edits, no writer
+behavior, no persistence writes, no runtime reload acceptance, no ProjectSchema
+mutation, no file IO, no reader invocation, no discovery, no validation, no
+solver execution, no activation, no trust restoration, no issue/release/tag/asset
+mutation, and no certification claims.

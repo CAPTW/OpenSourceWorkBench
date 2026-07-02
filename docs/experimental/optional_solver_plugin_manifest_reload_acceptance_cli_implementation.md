@@ -286,3 +286,15 @@ persistence. Future runtime acceptance, accepted-state persistence,
 activation/discovery review consumption, ProjectSchema integration,
 prepared-machine optional validation, issue/release workflow, export/report
 behavior, reloadable bundles, and certification remain separately gated.
+
+## 36. Follow-up: Acceptance Persistence Design (OSW-EXP-124)
+
+OSW-EXP-124 designs the future persistence boundary for acceptance UX review
+state
+([optional_solver_plugin_manifest_reload_acceptance_persistence_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_design.md)).
+The CLI remains review-only and path-free: the persistence design adds no CLI
+source edits, no CLI behavior, no writer invocation, no persistence writes, no
+runtime reload acceptance, no ProjectSchema mutation, no file IO, no reader
+invocation, no discovery, no validation, no solver execution, no activation, no
+trust restoration, no issue/release/tag/asset mutation, and no certification
+claims.

@@ -325,3 +325,14 @@ policy, read files, invoke the reader, call GUI code, mutate ProjectSchema,
 write persistence, run discovery, validation, or solver execution, activate
 candidates, restore trust, mutate issues/releases/tags/assets, or claim
 certification.
+
+## 39. Follow-up: Acceptance Persistence Design (OSW-EXP-124)
+
+OSW-EXP-124 designs future persistence for reviewed acceptance UX state
+([optional_solver_plugin_manifest_reload_acceptance_persistence_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_design.md)).
+The persistence design keeps this view-model as the acceptance-policy source of
+truth and adds no source edits, no independent persistence policy, no writer
+implementation, no persistence writes, no runtime reload acceptance, no
+ProjectSchema mutation, no file IO, no reader invocation, no discovery,
+validation, solver execution, activation, trust restoration, issue/release/tag/
+asset mutation, or certification claims.

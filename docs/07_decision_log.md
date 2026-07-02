@@ -3652,3 +3652,27 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   Existing reload CLI explicit-path preview remains preview-only. Existing GUI
   acceptance panel remains review-only. No accepted runtime state is created by
   this gate.
+
+## ADR-0158: Optional Solver Plugin Manifest Reload Acceptance Persistence Remains Explicit and Non-Authoritative
+
+- Status: Accepted for experimental reload acceptance persistence design
+- Date: 2026-07-02
+- Context: OSW-EXP-119 added a pure reload acceptance view-model. OSW-EXP-121
+  added a view-model-only GUI review panel. OSW-EXP-123 added a stdout-first CLI
+  review surface. Users may want persistence of reviewed acceptance UX state,
+  but persistence can be mistaken for runtime reload acceptance, trust
+  restoration, automatic activation, validation evidence, validation failure,
+  ProjectSchema mutation, issue closure, release mutation, or certification.
+- Decision: Define reload acceptance persistence as an explicit, redacted,
+  non-authoritative future record derived from OSW-EXP-119 acceptance view-model
+  records. This gate adds no source and no writer behavior. Future persistence
+  must be explicit, dry-run-first, redaction-first, acknowledgement-bound,
+  expiry-aware, stale-source-aware, conflict-visible, unsafe-claim-blocked,
+  ProjectSchema-safe, issue/release-safe, and certification-safe. Runtime
+  acceptance, persistence implementation, ProjectSchema mutation, discovery,
+  validation, solver execution, activation, trust restoration,
+  issue/release/tag/asset mutation, and certification claims remain
+  future-gated.
+- Consequences: Future OSW-EXP-125/126 have a deterministic persistence
+  contract. GUI and CLI acceptance review remain review-only. No persisted
+  acceptance state or runtime accepted state is created by this gate.

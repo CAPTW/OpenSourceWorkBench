@@ -274,3 +274,15 @@ from GUI code, parse writer payloads outside the reader, add default/background
 reload, mutate ProjectSchema, run discovery/validation/solver execution,
 activate candidates, restore trust, mutate issues/releases/tags/assets, or claim
 certification.
+
+## Follow-up: reload acceptance persistence design (OSW-EXP-124)
+
+OSW-EXP-124 designs future reload acceptance persistence semantics
+([optional_solver_plugin_manifest_reload_acceptance_persistence_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_design.md)).
+It treats this OSW-EXP-102 writer as the closest future pattern for explicit
+target paths, redaction, dry-run planning, deterministic JSON, hashes, and
+atomic writes. It does not edit or invoke writer source, does not implement an
+acceptance writer, creates no checked-in state files, writes no persistence,
+mutates no ProjectSchema, accepts no runtime reload state, performs no file IO
+in this gate, and claims no validation pass/fail, issue closure, release
+mutation, bundled solver support, or certification.

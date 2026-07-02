@@ -1350,6 +1350,21 @@ Scope drift is any change that:
   mutation, asset mutation, version bump, validation-pass or validation-fail
   evidence, bundled-solver claim, or certification claim without a separate
   gate;
+- turns the optional solver plugin manifest reload acceptance persistence design
+  into persistence implementation, source edit, CLI source edit, GUI source edit,
+  runtime source edit, state-writer source edit, file-reader source edit, reload
+  view-model source edit, reload acceptance view-model source edit, persistence
+  write, checked-in state file, ProjectSchema mutation, runtime reload
+  acceptance, active acceptance mutation, file IO, file reading, file parsing,
+  reader invocation, CLI/GUI call, subprocess use, default reload path,
+  background reload, directory scan, network fetch, plugin package import,
+  reloadable bundle creation, export/report file creation,
+  clipboard/report/open-folder behavior, live discovery, passive refresh,
+  validation execution, solver execution, dependency installation, dependency
+  uninstall, solver uninstall, automatic activation, trust restoration, issue
+  closure, release mutation, tag mutation, asset mutation, version bump,
+  validation-pass or validation-fail evidence, bundled-solver claim, or
+  certification claim without a separate gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is
