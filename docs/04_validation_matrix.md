@@ -955,6 +955,18 @@ path, no discovery/validation/solver execution, no activation/trust
 restoration, no issue/release/tag/asset mutation, no validation-pass/fail
 claim, no bundled-solver claim, and no certification claim.
 
+[Optional solver plugin manifest reload acceptance persistence GUI review implementation](experimental/optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_implementation.md)
+implements automated GUI evidence for a display-only reload acceptance
+persistence review panel. It renders supplied persistence view-model records
+and supplied writer-result records only, with no writer invocation, no file
+writes, no input state-file reading/parsing, no reload file-reader invocation,
+no CLI/subprocess behavior, no runtime reload acceptance, no ProjectSchema
+mutation, no default/background path, no directory scan, no network fetch, no
+plugin package import, no discovery/validation/solver execution, no
+activation/trust restoration, no issue/release/tag/asset mutation, no
+validation-pass/fail claim, no bundled-solver claim, and no certification
+claim.
+
 ## Limitations
 
 - The matrix records validation evidence for v0.1 demos; it does not certify

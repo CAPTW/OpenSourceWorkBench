@@ -571,3 +571,14 @@ Suggested future gates:
 
 If later repository docs reserve different numbering, the next gate should map
 this design contract to the latest repo convention and explain the mapping.
+
+## 37. Implementation Follow-Up: OSW-EXP-130
+
+OSW-EXP-130 implements this design as a display-only PySide review panel
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_implementation.md)).
+The implementation consumes supplied persistence view-model records and supplied
+writer dry-run/result records only. It does not invoke the writer, write files,
+read or parse input state files, invoke the reload file reader, call CLI code,
+use subprocesses, accept runtime reload, mutate ProjectSchema, run discovery,
+run validation, execute solvers, activate candidates, restore trust, mutate
+issues/releases/tags/assets, or claim certification.

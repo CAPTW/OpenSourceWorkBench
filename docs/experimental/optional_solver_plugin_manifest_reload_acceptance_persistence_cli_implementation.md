@@ -301,3 +301,14 @@ The GUI design does not call this CLI, does not use a CLI subprocess, does not
 invoke the writer, and does not write files. CLI success still does not imply
 GUI persistence, runtime reload acceptance, ProjectSchema mutation, validation
 evidence, issue closure, release mutation, or certification.
+
+## 37. Follow-up: Persistence GUI Review Implementation (OSW-EXP-130)
+
+OSW-EXP-130 implements the display-only persistence GUI review panel
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_implementation.md)).
+The GUI consumes supplied persistence view-model records and supplied writer
+dry-run/result records only. It does not call this CLI, does not use a CLI
+subprocess, does not invoke the writer, does not write files, does not accept
+runtime reload, does not mutate ProjectSchema, does not run discovery,
+validation, or solver execution, and does not mutate issues/releases or claim
+certification.

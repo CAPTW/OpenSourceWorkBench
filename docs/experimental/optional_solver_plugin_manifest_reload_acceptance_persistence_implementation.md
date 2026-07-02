@@ -264,3 +264,13 @@ The design does not call this writer, expose writer behavior through GUI, write
 files, choose a default target path, read or parse input state files, mutate
 ProjectSchema, run discovery/validation/solver execution, activate candidates,
 restore trust, mutate issues/releases/tags/assets, or claim certification.
+
+## 33. Follow-up: Persistence GUI Review Implementation (OSW-EXP-130)
+
+OSW-EXP-130 implements a display-only GUI review panel over supplied persistence
+view-model records and supplied writer dry-run/result mappings
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_implementation.md)).
+The panel may display writer result records, but it does not import, construct,
+or invoke this writer, does not pass target paths, does not write files, and
+does not turn writer success into runtime acceptance, validation evidence,
+ProjectSchema state, issue closure, release mutation, or certification.

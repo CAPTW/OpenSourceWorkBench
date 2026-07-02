@@ -285,3 +285,14 @@ CLI behavior, no subprocess use, no runtime acceptance, no ProjectSchema
 mutation, no discovery/validation/solver execution, no activation, no trust
 restoration, no issue/release/tag/asset mutation, validation claim, or
 certification claim.
+
+## 22. Follow-up: Acceptance Persistence GUI Review Implementation (OSW-EXP-130)
+
+OSW-EXP-130 implements a separate display-only persistence GUI review panel
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_implementation.md)).
+The existing reload acceptance GUI panel remains view-model-only and
+non-writing. The persistence GUI panel consumes supplied persistence view-model
+and writer-result records only; it does not invoke the writer, write files,
+call CLI code, use subprocesses, accept runtime reload, mutate ProjectSchema,
+run discovery/validation/solver execution, activate candidates, restore trust,
+mutate issues/releases/tags/assets, or claim certification.

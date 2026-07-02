@@ -386,3 +386,14 @@ parsing, reload file-reader invocation, CLI call, subprocess use, runtime
 acceptance, ProjectSchema mutation, discovery, validation, solver execution,
 activation, trust restoration, issue/release/tag/asset mutation, validation
 claim, or certification claim.
+
+## 41. Follow-up: Persistence GUI Review Implementation (OSW-EXP-130)
+
+OSW-EXP-130 implements a display-only GUI panel that consumes this persistence
+view-model through `to_mapping()`
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_review_implementation.md)).
+The panel does not edit this view-model source, compute an independent
+acceptance policy, invoke the writer, write persistence state, read input state
+files, mutate ProjectSchema, accept runtime reload, run discovery/validation/
+solver execution, activate candidates, restore trust, mutate issues/releases,
+or claim certification.

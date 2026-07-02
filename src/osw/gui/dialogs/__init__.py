@@ -23,6 +23,7 @@ __all__ = [
     "OptionalSolverPluginManifestPersistencePanel",
     "OptionalSolverPluginManifestReactivationPanel",
     "OptionalSolverPluginManifestReloadAcceptancePanel",
+    "OptionalSolverPluginManifestReloadAcceptancePersistencePanel",
     "OptionalSolverPluginManifestReloadFileDialogPanel",
     "OptionalSolverPluginManifestReloadPanel",
     "PluginManagerDialog",
@@ -146,6 +147,12 @@ def __getattr__(name: str) -> object:
         )
 
         return OptionalSolverPluginManifestReloadAcceptancePanel
+    if name == "OptionalSolverPluginManifestReloadAcceptancePersistencePanel":
+        from osw.gui.dialogs.optional_solver_plugin_manifest_reload_acceptance_persistence_panel import (  # noqa: E501
+            OptionalSolverPluginManifestReloadAcceptancePersistencePanel,
+        )
+
+        return OptionalSolverPluginManifestReloadAcceptancePersistencePanel
     if name == "FEASpecHumanReviewDialog":
         from osw.gui.dialogs.feaspec_human_review_dialog import FEASpecHumanReviewDialog
 

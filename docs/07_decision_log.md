@@ -3808,3 +3808,32 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   The OSW-EXP-126 writer remains not reachable from GUI until a separate
   implementation gate. Persistence records remain non-authoritative local
   review records.
+
+## ADR-0164: Optional Solver Plugin Manifest Reload Acceptance Persistence GUI Review Panel Is Display-Only
+
+- Status: Accepted for experimental reload acceptance persistence GUI review
+  implementation
+- Date: 2026-07-03
+- Context: OSW-EXP-125 added a pure persistence view-model. OSW-EXP-126 added
+  an explicit-path dry-run-first writer. OSW-EXP-128 added a dry-run-only
+  persistence CLI review surface. OSW-EXP-129 designed a display-only
+  persistence GUI review surface. A GUI implementation can be mistaken for
+  writer invocation, file writes, runtime reload acceptance, ProjectSchema
+  mutation, validation evidence, issue closure, release mutation, or
+  certification.
+- Decision: Implement a PySide GUI review panel under `src/osw/gui/dialogs/`
+  that consumes supplied persistence view-model records and supplied writer
+  dry-run/result records only. It renders persistence readiness, writer result
+  data, target/storage policy, acknowledgements, expiry, schema/migration,
+  redaction/privacy, provenance, lifecycle, stale-source, conflict,
+  unsafe-claim, evidence/history, diagnostics, non-action flags,
+  disabled/future actions, and safety guidance. It performs no writer
+  invocation, no file IO, no input state-file parsing, no reload file-reader
+  invocation, no CLI/subprocess use, no runtime reload acceptance, no active
+  acceptance mutation, no ProjectSchema mutation, no discovery, no validation,
+  no solver execution, no activation, no trust restoration, no
+  issue/release/tag/asset mutation, and no certification claim.
+- Consequences: Users can review persistence readiness and writer-result
+  records in the GUI without mutation. Any GUI write workflow remains
+  separately gated. Persistence records remain non-authoritative local review
+  records.
