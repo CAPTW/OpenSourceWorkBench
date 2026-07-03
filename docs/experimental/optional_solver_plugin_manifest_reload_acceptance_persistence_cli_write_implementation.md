@@ -392,3 +392,16 @@ It does not invoke this CLI, read or parse input state files, call the writer,
 mutate ProjectSchema, create ProjectSchema validation evidence, accept runtime
 reload, run discovery/validation/solver execution, restore trust, activate
 candidates, mutate issues/releases/tags/assets, or claim certification.
+
+## 26. Prepared-Machine Prerequisites Follow-Up
+
+`OSW-VALID-OPTIONAL_PREPARED_MACHINE_MANIFEST_STATE_VALIDATION` was later
+parked because no safe runnable prepared-machine manifest-state validation
+command was found and the local optional solver/package prerequisites were
+missing. The parked prerequisites are documented in
+[Optional solver prepared-machine manifest-state validation prerequisites](optional_solver_prepared_machine_manifest_state_validation_prerequisites.md).
+
+CLI write success remains explicit local review-record persistence only. It is
+not prepared-machine validation, not validation success, not validation
+failure, not ProjectSchema mutation, not issue closure, not release mutation,
+not bundled-solver support, and not certification.

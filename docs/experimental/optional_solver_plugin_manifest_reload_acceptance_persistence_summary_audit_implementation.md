@@ -286,3 +286,16 @@ by a caller. It does not invoke this audit module to discover state, read audit
 files, convert audit rows into ProjectSchema state, create ProjectSchema
 validation evidence, restore trust, activate candidates, mutate issues or
 releases, or claim certification.
+
+## Prepared-Machine Prerequisites Follow-Up
+
+`OSW-VALID-OPTIONAL_PREPARED_MACHINE_MANIFEST_STATE_VALIDATION` was later
+parked because no safe runnable prepared-machine manifest-state validation
+command was found and the local optional solver/package prerequisites were
+missing. The parked prerequisites are documented in
+[Optional solver prepared-machine manifest-state validation prerequisites](optional_solver_prepared_machine_manifest_state_validation_prerequisites.md).
+
+Summary audit output remains non-authoritative and supplied-record-only. A
+parked prepared-machine prerequisite report is not validation success, not
+validation failure, not issue closure, not release mutation, not bundled-solver
+support, and not certification.

@@ -6,6 +6,13 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Prepared-Machine Manifest-State Validation Prerequisites
+
+- Documented the parked optional solver prepared-machine manifest-state
+  validation prerequisites, including missing local solver/package
+  requirements and the requirement for a safe runnable validation command
+  before retrying validation.
+
 ### Optional Solver Plugin Manifest Reload Acceptance Persistence ProjectSchema Boundary Implementation
 
 - Added a pure in-memory optional solver plugin manifest reload acceptance

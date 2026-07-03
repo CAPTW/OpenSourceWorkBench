@@ -302,3 +302,16 @@ Suggested next gate:
 
 - `OSW-VALID-OPTIONAL_PREPARED_MACHINE_MANIFEST_STATE_VALIDATION`, if a
   prepared machine is available.
+
+## Prepared-Machine Prerequisites Follow-Up
+
+`OSW-VALID-OPTIONAL_PREPARED_MACHINE_MANIFEST_STATE_VALIDATION` was later
+parked because no safe runnable prepared-machine manifest-state validation
+command was found and the local optional solver/package prerequisites were
+missing. The parked prerequisites are documented in
+[Optional solver prepared-machine manifest-state validation prerequisites](optional_solver_prepared_machine_manifest_state_validation_prerequisites.md).
+
+This boundary implementation remains supplied-record-only and non-mutating.
+The parked validation report is not ProjectSchema state, not ProjectSchema
+validation evidence, not runtime reload acceptance, not issue closure, not
+release mutation, not bundled-solver support, and not certification.

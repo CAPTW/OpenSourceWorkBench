@@ -4043,3 +4043,27 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   persistence records remain outside ProjectSchema without mutating project
   state. Prepared-machine validation, ProjectSchema integration, issue/release
   work, and certification claims remain separately gated.
+
+## ADR-0173: Prepared-Machine Optional Solver Validation Requires Explicit Local Prerequisites and a Runnable Command
+
+- Status: Accepted for validation prerequisite documentation
+- Date: 2026-07-03
+- Context: `OSW-VALID-OPTIONAL_PREPARED_MACHINE_MANIFEST_STATE_VALIDATION`
+  parked after OSW-EXP-138. Required regression and QA/static checks passed,
+  but no current runnable prepared-machine manifest-state validation command
+  was found in the repository and required optional solver/package
+  prerequisites were missing on this machine.
+- Decision: Document the missing prerequisites and command requirements before
+  retrying prepared-machine validation. Focused regressions, GUI tests, QA
+  checks, persistence records, summary audit output, and ProjectSchema boundary
+  output must not be treated as prepared-machine success. This documentation
+  gate installs no dependencies, installs no solvers, runs no solver execution,
+  implements no validation command, mutates no ProjectSchema, mutates no
+  issues/releases/tags/assets, and makes no validation-pass, validation-fail,
+  issue-closure, bundled-solver, or certification claim.
+- Consequences: Prepared-machine validation remains parked until operator
+  preparation or a separate command design/implementation gate provides a safe
+  runnable command and the required local prerequisites are present. Issues
+  `#6` through `#11` remain open. Package metadata remains `0.1.5rc1`, public
+  prerelease remains `v0.1.5-rc1`, and a future validation retry has explicit
+  prerequisites and evidence boundaries.
