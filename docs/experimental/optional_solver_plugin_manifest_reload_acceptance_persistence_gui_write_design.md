@@ -602,3 +602,17 @@ Suggested future gates:
 
 If later repository docs reserve different numbering, the next gate should map
 this design contract to the latest repo convention and explain the mapping.
+
+## 37. Follow-up: Persistence GUI Write Implementation (OSW-EXP-132)
+
+OSW-EXP-132 implements this design as an explicit-target, dry-run-first,
+acknowledgement-gated, confirmation-gated GUI write panel
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_implementation.md)).
+The implementation writes only local review records through the OSW-EXP-126
+writer after all gates pass. It does not write on construction, refresh, target
+assignment, or dry-run; chooses no default target path; performs no background
+write; reads or parses no input state files; invokes no reload file reader or
+OSW-EXP-102 state writer; calls no CLI; uses no subprocess; accepts no runtime
+reload; mutates no ProjectSchema; runs no discovery, validation, or solver
+execution; performs no automatic activation or trust restoration; mutates no
+issues/releases/tags/assets; and claims no certification.

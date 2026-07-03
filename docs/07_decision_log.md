@@ -3866,3 +3866,29 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   separate implementation gate. Persistence records remain non-authoritative
   local review records and remain separate from runtime acceptance, validation,
   ProjectSchema state, issue state, release state, and certification.
+
+## ADR-0166: Optional Solver Plugin Manifest Reload Acceptance Persistence GUI Write Is Explicit, Dry-Run-First, And Non-Authoritative
+
+- Status: Accepted for experimental reload acceptance persistence GUI write
+  implementation
+- Date: 2026-07-03
+- Context: OSW-EXP-126 added an explicit-path dry-run-first writer. OSW-EXP-130
+  added a display-only GUI review panel. OSW-EXP-131 designed a future GUI
+  write workflow. GUI writes can be mistaken for runtime acceptance,
+  ProjectSchema mutation, validation evidence, issue closure, release mutation,
+  or certification.
+- Decision: Implement a GUI write panel requiring explicit target, dry-run,
+  acknowledgement, and confirmation before invoking the OSW-EXP-126 writer.
+  The panel writes only local review-record persistence files through the
+  OSW-EXP-126 writer. It performs no write on construction, refresh, target
+  assignment, or dry-run; selects no default target path; performs no
+  background write; performs no input state-file parsing; invokes no reload
+  file reader or OSW-EXP-102 state writer; uses no CLI/subprocess bridge;
+  performs no runtime reload acceptance or ProjectSchema mutation; runs no
+  discovery, validation, or solver execution; performs no activation or trust
+  restoration; mutates no issues/releases/tags/assets; and makes no
+  certification claim.
+- Consequences: Users can perform an explicit local review-record persistence
+  write from GUI when all gates pass. GUI write success remains distinct from
+  runtime acceptance and validation evidence. Any ProjectSchema or validation
+  integration remains separately gated.

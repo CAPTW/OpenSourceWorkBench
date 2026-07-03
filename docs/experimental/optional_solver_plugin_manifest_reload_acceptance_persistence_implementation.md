@@ -287,3 +287,16 @@ file reader or OSW-EXP-102 state writer, does not call CLI code, does not use
 subprocesses, does not accept runtime reload, does not mutate ProjectSchema,
 does not run discovery/validation/solver execution, and does not mutate issues
 or releases or claim certification.
+
+## 35. Follow-up: Persistence GUI Write Implementation (OSW-EXP-132)
+
+OSW-EXP-132 implements the GUI write workflow through this writer
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_implementation.md)).
+The panel calls the writer only with an explicit caller target, first with
+`dry_run=True` for planning and then with `dry_run=False` only after a fresh
+successful dry-run, acknowledgement, and confirmation. The writer remains the
+only serialization/write path; the GUI does not read or parse input state
+files, invoke the reload file reader, invoke the OSW-EXP-102 state writer, call
+CLI code, use subprocesses, accept runtime reload, mutate ProjectSchema, run
+discovery/validation/solver execution, or mutate issues/releases or claim
+certification.

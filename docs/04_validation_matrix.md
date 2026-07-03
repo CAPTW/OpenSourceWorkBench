@@ -979,6 +979,18 @@ discovery/validation/solver execution, no activation/trust restoration, no
 issue/release/tag/asset mutation, no validation-pass/fail claim, no
 bundled-solver claim, and no certification claim.
 
+[Optional solver plugin manifest reload acceptance persistence GUI write implementation](experimental/optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_implementation.md)
+is focused GUI test evidence for an explicit-target, dry-run-first,
+acknowledgement-gated, confirmation-gated local review-record write panel. It
+writes only through the OSW-EXP-126 writer after all gates pass. Tests verify no
+write on construction, refresh, target assignment, or dry-run; no default target
+path; no background write; no input state-file reading/parsing; no reload
+file-reader or OSW-EXP-102 state-writer invocation; no CLI behavior or
+subprocess use; no runtime reload acceptance; no ProjectSchema mutation; no
+discovery/validation/solver execution; no activation/trust restoration; no
+issue/release/tag/asset mutation; no validation-pass/fail claim; no
+bundled-solver claim; and no certification claim.
+
 ## Limitations
 
 - The matrix records validation evidence for v0.1 demos; it does not certify

@@ -322,3 +322,13 @@ does not make CLI success evidence of GUI persistence, runtime reload
 acceptance, ProjectSchema mutation, validation evidence, issue closure, release
 mutation, or certification. Any future GUI write remains separately gated and
 must use the writer boundary directly rather than shelling out to the CLI.
+
+## 39. Follow-up: Persistence GUI Write Implementation (OSW-EXP-132)
+
+OSW-EXP-132 implements the separate GUI write panel
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_implementation.md)).
+The GUI panel does not call this CLI and does not use a CLI subprocess. GUI
+write success remains local review-record persistence only and remains
+separate from CLI dry-run review, runtime reload acceptance, ProjectSchema
+mutation, validation evidence, issue closure, release mutation, and
+certification.

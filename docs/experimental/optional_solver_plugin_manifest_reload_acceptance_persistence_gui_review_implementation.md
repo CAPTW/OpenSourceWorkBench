@@ -349,3 +349,13 @@ not invoke the reload file reader, does not call CLI code, does not use
 subprocesses, does not accept runtime reload, does not mutate ProjectSchema,
 does not run discovery/validation/solver execution, and does not mutate issues
 or releases or claim certification.
+
+## 37. Follow-up: Persistence GUI Write Implementation (OSW-EXP-132)
+
+OSW-EXP-132 implements a separate explicit-target GUI write panel that
+subclasses this display-only panel
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_implementation.md)).
+The write panel preserves this review panel's supplied-record rendering and
+adds only explicit target, dry-run, acknowledgement, and confirmation gates
+before invoking the OSW-EXP-126 writer for a local review-record write. It
+does not change this display-only panel's no-writer, no-file-write behavior.
