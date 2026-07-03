@@ -446,3 +446,12 @@ files, invoke writers or readers, call CLI/GUI behavior, use subprocesses,
 accept runtime reload, mutate ProjectSchema, run discovery/validation/solver
 execution, activate candidates, restore trust, mutate issues/releases/tags or
 assets, or claim certification.
+
+## 46. Follow-up: ProjectSchema Boundary Design (OSW-EXP-137)
+
+OSW-EXP-137 defines the separate ProjectSchema boundary design
+([optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_design.md)).
+Persistence view-model output remains UX readiness and review state only. It is
+not ProjectSchema state, ProjectSchema validation evidence, ProjectSchema
+validation failure, ProjectSchema trust state, ProjectSchema activation state,
+issue closure, release mutation, bundled-solver support, or certification.

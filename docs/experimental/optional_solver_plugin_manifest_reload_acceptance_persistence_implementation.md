@@ -326,3 +326,12 @@ calls CLI or GUI behavior, uses subprocesses, accepts runtime reload, mutates
 ProjectSchema, runs discovery/validation/solver execution, activates
 candidates, restores trust, mutates issues/releases/tags or assets, or claims
 certification.
+
+## 38. Follow-up: ProjectSchema Boundary Design (OSW-EXP-137)
+
+OSW-EXP-137 defines the separate ProjectSchema boundary design
+([optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_design.md)).
+Writer output remains a local review-record payload only. It is not
+ProjectSchema state, ProjectSchema validation evidence, ProjectSchema
+validation failure, ProjectSchema trust state, ProjectSchema activation state,
+issue closure, release mutation, bundled-solver support, or certification.

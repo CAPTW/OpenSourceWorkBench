@@ -396,3 +396,12 @@ writer, read or parse input state files, invoke the reload file reader or
 OSW-EXP-102 state writer, accept runtime reload, mutate ProjectSchema, run
 discovery/validation/solver execution, activate candidates, restore trust,
 mutate issues/releases/tags or assets, or claim certification.
+
+## 43. ProjectSchema Boundary Follow-Up (OSW-EXP-137)
+
+OSW-EXP-137 defines the separate ProjectSchema boundary design
+([optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_design.md)).
+GUI write success remains local review-record persistence only. It is not
+ProjectSchema state, ProjectSchema validation evidence, ProjectSchema
+validation failure, ProjectSchema trust state, ProjectSchema activation state,
+issue closure, release mutation, bundled-solver support, or certification.

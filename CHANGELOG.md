@@ -6,6 +6,16 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload Acceptance Persistence ProjectSchema Boundary Design
+
+- Designed the optional solver plugin manifest reload acceptance persistence
+  ProjectSchema boundary to keep local persistence records, writer results,
+  CLI/GUI writes, and summary audits separate from ProjectSchema state and
+  validation evidence, preserving no implementation, no ProjectSchema mutation,
+  no writer invocation, no file IO, no runtime acceptance, no discovery/
+  validation/solver execution, no automatic activation, no trust restoration,
+  no issue/release mutation, and no certification claims.
+
 ### Optional Solver Plugin Manifest Reload Acceptance Persistence Summary Audit Implementation
 
 - Added a pure in-memory optional solver plugin manifest reload acceptance

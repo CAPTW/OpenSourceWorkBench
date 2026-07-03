@@ -528,3 +528,13 @@ reload file-reader or OSW-EXP-102 state-writer invocation, no CLI/GUI calls, no
 subprocess use, no runtime reload acceptance, no ProjectSchema mutation, no
 discovery/validation/solver execution, no activation or trust restoration, no
 issue/release/tag/asset mutation, and no certification claim.
+
+## OSW-EXP-137 ProjectSchema Boundary Follow-Up
+
+OSW-EXP-137 defines a separate ProjectSchema boundary design
+([optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_design.md)).
+Summary audit output remains non-authoritative supplied-record review output
+only. It is not ProjectSchema state, ProjectSchema validation evidence,
+ProjectSchema validation failure, ProjectSchema trust state, ProjectSchema
+activation state, issue closure, release mutation, bundled-solver support, or
+certification.

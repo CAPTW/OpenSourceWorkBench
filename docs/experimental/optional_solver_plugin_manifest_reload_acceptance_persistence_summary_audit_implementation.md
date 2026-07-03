@@ -267,3 +267,12 @@ The next suggested gate is
 OSW-EXP-137_OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_ACCEPTANCE_PERSISTENCE_PROJECTSCHEMA_BOUNDARY_DESIGN.
 That gate, if accepted, should keep ProjectSchema integration explicitly
 separate from this audit implementation.
+
+## OSW-EXP-137 ProjectSchema Boundary Follow-Up
+
+OSW-EXP-137 defines the separate ProjectSchema boundary design
+([optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_design.md)).
+This summary audit implementation remains supplied-record-only and is not
+ProjectSchema state, ProjectSchema validation evidence, ProjectSchema
+validation failure, ProjectSchema trust state, ProjectSchema activation state,
+issue closure, release mutation, bundled-solver support, or certification.

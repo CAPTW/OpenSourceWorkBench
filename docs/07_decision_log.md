@@ -3994,3 +3994,23 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   mutation. Summary audit output remains distinct from runtime acceptance and
   validation evidence. Prepared-machine validation and ProjectSchema
   integration remain separately gated.
+
+## ADR-0171: Reload Acceptance Persistence Must Not Mutate ProjectSchema Without a Separate Gate
+
+- Status: Accepted for experimental ProjectSchema boundary design
+- Date: 2026-07-03
+- Context: OSW-EXP-124 through OSW-EXP-136 completed local reload acceptance
+  persistence and summary audit surfaces. Persistence records and summary
+  audits can be mistaken for ProjectSchema state or validation evidence.
+  ProjectSchema mutation has stronger semantics than local UX review
+  persistence.
+- Decision: Define a strict boundary that reload acceptance persistence
+  records, writer results, CLI/GUI writes, and summary audits do not mutate
+  ProjectSchema and are not ProjectSchema evidence. Any future ProjectSchema
+  integration requires separate design, implementation, prepared-machine
+  validation, explicit user review, and trust/provenance/stale/conflict/
+  unsafe-claim review gates. This gate adds no source and performs no
+  ProjectSchema mutation.
+- Consequences: Persistence and ProjectSchema semantics remain separate.
+  Future ProjectSchema work has a deterministic boundary contract. Local
+  persistence records remain non-authoritative UX review records.
