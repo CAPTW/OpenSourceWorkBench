@@ -3892,3 +3892,29 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   write from GUI when all gates pass. GUI write success remains distinct from
   runtime acceptance and validation evidence. Any ProjectSchema or validation
   integration remains separately gated.
+
+## ADR-0167: Optional Solver Plugin Manifest Reload Acceptance Persistence CLI Write Is Explicit, Dry-Run-First, And Non-Authoritative
+
+- Status: Accepted for experimental reload acceptance persistence CLI write
+  design
+- Date: 2026-07-03
+- Context: OSW-EXP-126 added an explicit-path dry-run-first writer.
+  OSW-EXP-128 added a dry-run-only persistence CLI review surface. OSW-EXP-132
+  added an explicit-target, dry-run-first, acknowledgement-gated,
+  confirmation-gated GUI write panel. Future CLI writes can be mistaken for
+  runtime acceptance, ProjectSchema mutation, validation evidence, issue
+  closure, release mutation, or certification.
+- Decision: Design a future CLI write workflow requiring explicit target,
+  dry-run-first planning, caller acknowledgement, write confirmation, and
+  explicit replacement policy before invoking the OSW-EXP-126 writer. This gate
+  adds no CLI source, invokes no writer, writes no files, reads or parses no
+  input state files, invokes no reload file reader, invokes no OSW-EXP-102
+  state writer, calls no GUI code, uses no subprocesses, accepts no runtime
+  reload, mutates no ProjectSchema, runs no discovery, validation, or solver
+  execution, performs no activation or trust restoration, mutates no
+  issues/releases/tags/assets, and makes no certification claim.
+- Consequences: OSW-EXP-134 has a deterministic CLI write design contract if a
+  future actual-write command is implemented. CLI write success, if later
+  implemented, remains explicit local review-record persistence only and
+  remains separate from runtime acceptance, validation, ProjectSchema state,
+  issue state, release state, and certification.

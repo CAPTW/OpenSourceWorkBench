@@ -991,6 +991,19 @@ discovery/validation/solver execution; no activation/trust restoration; no
 issue/release/tag/asset mutation; no validation-pass/fail claim; no
 bundled-solver claim; and no certification claim.
 
+[Optional solver plugin manifest reload acceptance persistence CLI write design](experimental/optional_solver_plugin_manifest_reload_acceptance_persistence_cli_write_design.md)
+is docs/test design evidence only for a future explicit-target, dry-run-first,
+acknowledgement-gated, confirmation-gated CLI write workflow through the
+OSW-EXP-126 writer. It has no CLI write implementation, no CLI source edit, no
+source edit, no writer invocation, no file write, no file reading/parsing, no
+input state-file reading/parsing, no reload file-reader invocation, no
+OSW-EXP-102 state-writer invocation, no GUI behavior, no subprocess use, no
+runtime reload acceptance, no active acceptance mutation, no ProjectSchema
+mutation, no default/background path, no discovery/validation/solver
+execution, no activation/trust restoration, no issue/release/tag/asset
+mutation, no validation-pass/fail claim, no bundled-solver claim, and no
+certification claim.
+
 ## Limitations
 
 - The matrix records validation evidence for v0.1 demos; it does not certify
