@@ -336,3 +336,16 @@ target review, dry-run-first planning, caller acknowledgement, redaction,
 non-authoritative records, no runtime acceptance, no ProjectSchema mutation, no
 validation/solver execution, no activation/trust restoration, no issue/release
 mutation, and no certification claims.
+
+## 36. Follow-up: Persistence GUI Write Design (OSW-EXP-131)
+
+OSW-EXP-131 designs a future explicit-target, dry-run-first GUI write workflow
+for local reload acceptance persistence review records
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_design.md)).
+That design keeps this panel as the display-only review foundation. It does not
+change this implementation, does not edit GUI source, does not invoke the
+writer, does not write files, does not read or parse input state files, does
+not invoke the reload file reader, does not call CLI code, does not use
+subprocesses, does not accept runtime reload, does not mutate ProjectSchema,
+does not run discovery/validation/solver execution, and does not mutate issues
+or releases or claim certification.

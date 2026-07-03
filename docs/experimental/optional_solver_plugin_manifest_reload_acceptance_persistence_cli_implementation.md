@@ -312,3 +312,13 @@ subprocess, does not invoke the writer, does not write files, does not accept
 runtime reload, does not mutate ProjectSchema, does not run discovery,
 validation, or solver execution, and does not mutate issues/releases or claim
 certification.
+
+## 38. Follow-up: Persistence GUI Write Design (OSW-EXP-131)
+
+OSW-EXP-131 designs a future explicit-target, dry-run-first GUI write workflow
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_design.md)).
+The GUI write design does not call this CLI, does not use a CLI subprocess, and
+does not make CLI success evidence of GUI persistence, runtime reload
+acceptance, ProjectSchema mutation, validation evidence, issue closure, release
+mutation, or certification. Any future GUI write remains separately gated and
+must use the writer boundary directly rather than shelling out to the CLI.

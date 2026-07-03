@@ -397,3 +397,15 @@ acceptance policy, invoke the writer, write persistence state, read input state
 files, mutate ProjectSchema, accept runtime reload, run discovery/validation/
 solver execution, activate candidates, restore trust, mutate issues/releases,
 or claim certification.
+
+## 42. Follow-up: Persistence GUI Write Design (OSW-EXP-131)
+
+OSW-EXP-131 designs a future GUI write workflow that consumes this persistence
+view-model as the readiness and precondition source
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_design.md)).
+The design does not edit this view-model source, compute independent acceptance
+policy, invoke a writer, write persistence state, read or parse input state
+files, invoke the reload file reader, call CLI code, use subprocesses, accept
+runtime reload, mutate ProjectSchema, run discovery/validation/solver
+execution, activate candidates, restore trust, mutate issues/releases, or claim
+certification.

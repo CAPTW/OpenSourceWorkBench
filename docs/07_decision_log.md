@@ -3837,3 +3837,32 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   records in the GUI without mutation. Any GUI write workflow remains
   separately gated. Persistence records remain non-authoritative local review
   records.
+
+## ADR-0165: Optional Solver Plugin Manifest Reload Acceptance Persistence GUI Write Is Explicit And Dry-Run-First
+
+- Status: Accepted for experimental reload acceptance persistence GUI write
+  design
+- Date: 2026-07-03
+- Context: OSW-EXP-125 added a pure persistence view-model. OSW-EXP-126 added
+  an explicit-path dry-run-first writer. OSW-EXP-128 added a dry-run-only
+  persistence CLI review/write-plan surface. OSW-EXP-130 added a display-only
+  persistence GUI review panel. A future GUI write workflow may be useful for
+  persisting local review records, but GUI write affordances can be mistaken
+  for runtime reload acceptance, ProjectSchema mutation, validation evidence,
+  issue closure, release mutation, or certification.
+- Decision: Design a future GUI write workflow that starts from the
+  display-only persistence GUI review panel, requires explicit target
+  selection, requires dry-run-first writer planning, requires acknowledgement
+  review, requires explicit confirmation, and uses the OSW-EXP-126 writer API
+  for any future local review-record write. This gate adds no GUI source,
+  invokes no writer, writes no files, reads or parses no input state files,
+  invokes no reload file reader, invokes no OSW-EXP-102 state writer, calls no
+  CLI code, uses no subprocesses, accepts no runtime reload, mutates no
+  ProjectSchema, runs no discovery, validation, or solver execution, performs
+  no activation or trust restoration, mutates no issues/releases/tags/assets,
+  and makes no certification claim.
+- Consequences: OSW-EXP-132 has a deterministic GUI write design contract if a
+  write UI is ever needed. The OSW-EXP-130 panel remains display-only until a
+  separate implementation gate. Persistence records remain non-authoritative
+  local review records and remain separate from runtime acceptance, validation,
+  ProjectSchema state, issue state, release state, and certification.

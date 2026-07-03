@@ -274,3 +274,16 @@ The panel may display writer result records, but it does not import, construct,
 or invoke this writer, does not pass target paths, does not write files, and
 does not turn writer success into runtime acceptance, validation evidence,
 ProjectSchema state, issue closure, release mutation, or certification.
+
+## 34. Follow-up: Persistence GUI Write Design (OSW-EXP-131)
+
+OSW-EXP-131 designs a future GUI write workflow over this writer
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_design.md)).
+The design keeps any future GUI write explicit-path, dry-run-first,
+caller-acknowledgement-gated, confirmation-gated, redacted, and
+non-authoritative. This design gate does not invoke this writer, does not write
+files, does not read or parse input state files, does not invoke the reload
+file reader or OSW-EXP-102 state writer, does not call CLI code, does not use
+subprocesses, does not accept runtime reload, does not mutate ProjectSchema,
+does not run discovery/validation/solver execution, and does not mutate issues
+or releases or claim certification.

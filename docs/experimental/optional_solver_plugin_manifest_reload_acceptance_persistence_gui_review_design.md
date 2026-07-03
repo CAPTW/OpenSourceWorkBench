@@ -582,3 +582,16 @@ read or parse input state files, invoke the reload file reader, call CLI code,
 use subprocesses, accept runtime reload, mutate ProjectSchema, run discovery,
 run validation, execute solvers, activate candidates, restore trust, mutate
 issues/releases/tags/assets, or claim certification.
+
+## 38. Follow-up: Persistence GUI Write Design (OSW-EXP-131)
+
+OSW-EXP-131 designs a future GUI write workflow over the OSW-EXP-130
+display-only review panel
+([optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_design.md](optional_solver_plugin_manifest_reload_acceptance_persistence_gui_write_design.md)).
+The design is explicit-target, dry-run-first, acknowledgement-gated, and
+confirmation-gated. It adds no GUI write implementation, no GUI source edits,
+no writer invocation, no file writes, no input state-file reading/parsing, no
+reload file-reader invocation, no CLI behavior, no subprocess use, no runtime
+acceptance, no ProjectSchema mutation, no discovery/validation/solver
+execution, no activation/trust restoration, no issue/release mutation, and no
+certification claim.

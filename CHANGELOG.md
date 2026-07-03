@@ -6,6 +6,16 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload Acceptance Persistence GUI Write Design
+
+- Designed the optional solver plugin manifest reload acceptance persistence GUI
+  write workflow as a future explicit-target, dry-run-first,
+  acknowledgement-gated, confirmation-gated path through the persistence
+  writer, preserving no GUI implementation, no writer invocation, no file
+  writes, no runtime acceptance, no ProjectSchema mutation, no discovery/
+  validation/solver execution, no automatic activation, no trust restoration,
+  no issue/release mutation, and no certification claims.
+
 ### Optional Solver Plugin Manifest Reload Acceptance Persistence GUI Review Implementation
 
 - Added a display-only optional solver plugin manifest reload acceptance
