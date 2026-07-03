@@ -516,3 +516,15 @@ Suggested next gates:
   if needed
 - OSW-VALID-OPTIONAL_PREPARED_MACHINE_MANIFEST_STATE_VALIDATION, if a prepared
   machine is available
+
+## OSW-EXP-136 Implementation Follow-Up
+
+OSW-EXP-136 implements this design as a pure in-memory supplied-record summary
+audit
+([optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md)).
+The implementation preserves this design's non-authoritative boundary: no
+writer invocation, no file reads or writes, no input state-file parsing, no
+reload file-reader or OSW-EXP-102 state-writer invocation, no CLI/GUI calls, no
+subprocess use, no runtime reload acceptance, no ProjectSchema mutation, no
+discovery/validation/solver execution, no activation or trust restoration, no
+issue/release/tag/asset mutation, and no certification claim.

@@ -313,3 +313,16 @@ invoke the reload file reader, invoke the OSW-EXP-102 state writer, call GUI
 code, use subprocesses, accept runtime reload, mutate ProjectSchema, run
 discovery/validation/solver execution, mutate issues/releases, or claim
 certification.
+
+## 37. Follow-up: Summary Audit Implementation (OSW-EXP-136)
+
+OSW-EXP-136 adds a separate supplied-record summary audit over persistence
+view-model, writer, CLI write, and GUI write records
+([optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md)).
+The audit consumes writer results only when supplied by the caller. It never
+imports or invokes this writer, plans writes, writes files, reads or parses
+input state files, invokes the reload file reader or OSW-EXP-102 state writer,
+calls CLI or GUI behavior, uses subprocesses, accepts runtime reload, mutates
+ProjectSchema, runs discovery/validation/solver execution, activates
+candidates, restores trust, mutates issues/releases/tags or assets, or claims
+certification.

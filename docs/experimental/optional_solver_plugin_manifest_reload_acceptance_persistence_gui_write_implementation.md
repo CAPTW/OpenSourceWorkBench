@@ -385,3 +385,14 @@ success remains local review-record persistence only and does not imply GUI
 write success, runtime reload acceptance, ProjectSchema mutation, validation
 evidence, issue closure, release mutation, trust restoration, automatic
 activation, bundled solver support, or certification.
+
+## 42. Summary Audit Follow-Up (OSW-EXP-136)
+
+OSW-EXP-136 adds a separate supplied-record summary audit
+([optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md)).
+The audit can summarize this GUI write result as local review-record evidence
+only. It does not import or call GUI behavior, invoke this panel, call the
+writer, read or parse input state files, invoke the reload file reader or
+OSW-EXP-102 state writer, accept runtime reload, mutate ProjectSchema, run
+discovery/validation/solver execution, activate candidates, restore trust,
+mutate issues/releases/tags or assets, or claim certification.

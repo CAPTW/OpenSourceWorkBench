@@ -3971,3 +3971,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   Summary audit output remains distinct from runtime acceptance and validation
   evidence. Prepared-machine validation and ProjectSchema integration remain
   separately gated.
+
+## ADR-0170: Optional Solver Plugin Manifest Reload Acceptance Persistence Summary Audit Is Supplied-Record-Only
+
+- Status: Accepted for experimental reload acceptance persistence summary audit
+  implementation
+- Date: 2026-07-03
+- Context: OSW-EXP-124 through OSW-EXP-134 completed a local reload acceptance
+  persistence chain across design, view-model, writer, CLI, and GUI surfaces.
+  OSW-EXP-135 designed a non-authoritative summary/audit surface. A summary
+  audit can be mistaken for runtime acceptance, validation evidence,
+  ProjectSchema state, issue closure, release mutation, or certification.
+- Decision: Implement a pure in-memory summary/audit model that consumes
+  supplied records only. The audit renders chain coverage, supplied CLI/GUI
+  write summaries, diagnostics, acknowledgements, expiry, redaction,
+  non-action flags, disabled/future actions, and safety boundaries. The audit
+  performs no writer invocation, no file IO, no reader invocation, no CLI/GUI
+  calls, no subprocess use, no ProjectSchema mutation, no discovery, no
+  validation, no solver execution, no activation, no trust restoration, no
+  issue/release/tag/asset mutation, and no certification claim.
+- Consequences: Maintainers can review persistence chain state without
+  mutation. Summary audit output remains distinct from runtime acceptance and
+  validation evidence. Prepared-machine validation and ProjectSchema
+  integration remain separately gated.

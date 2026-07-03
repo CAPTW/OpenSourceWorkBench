@@ -435,3 +435,14 @@ it does not read or parse input state files, invoke the reload file reader,
 call GUI code, use subprocesses, accept runtime reload, mutate ProjectSchema,
 run discovery/validation/solver execution, activate candidates, restore trust,
 mutate issues/releases, or claim certification.
+
+## 45. Follow-up: Summary Audit Implementation (OSW-EXP-136)
+
+OSW-EXP-136 adds a separate supplied-record summary audit that can consume this
+persistence view-model's records
+([optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md)).
+The audit does not edit this view-model, recompute acceptance policy from
+files, invoke writers or readers, call CLI/GUI behavior, use subprocesses,
+accept runtime reload, mutate ProjectSchema, run discovery/validation/solver
+execution, activate candidates, restore trust, mutate issues/releases/tags or
+assets, or claim certification.

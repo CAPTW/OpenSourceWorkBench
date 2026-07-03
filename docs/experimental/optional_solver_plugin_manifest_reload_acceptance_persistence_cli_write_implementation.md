@@ -362,3 +362,14 @@ Prepared-machine validation remains separate:
 
 - `OSW-VALID-OPTIONAL_PREPARED_MACHINE_MANIFEST_STATE_VALIDATION`, if a prepared
   machine is available.
+
+## 23. Summary Audit Follow-Up (OSW-EXP-136)
+
+OSW-EXP-136 adds a separate supplied-record summary audit
+([optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md)).
+The audit can summarize this CLI write result as local review-record evidence
+only. It does not invoke this CLI, call the writer, read or parse input state
+files, invoke the reload file reader or OSW-EXP-102 state writer, accept
+runtime reload, mutate ProjectSchema, run discovery/validation/solver
+execution, activate candidates, restore trust, mutate issues/releases/tags or
+assets, or claim certification.

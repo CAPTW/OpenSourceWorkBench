@@ -1035,6 +1035,19 @@ dependency install/uninstall, no automatic activation, no trust restoration, no
 issue/release/tag/asset mutation, no validation-pass/fail claim, no
 bundled-solver claim, and no certification claim.
 
+[Optional solver plugin manifest reload acceptance persistence summary audit implementation](experimental/optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md),
+`src/osw/experimental/optional_solvers/plugin_manifest_reload_acceptance_persistence_summary_audit.py`,
+and `tests/unit/test_optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit.py`
+are automated source/test evidence that reload acceptance persistence summary
+audit is implemented as pure in-memory, supplied-record-only,
+non-authoritative output. It has no writer invocation, no file read/write, no
+input state-file parsing, no reload file-reader invocation, no OSW-EXP-102
+state-writer invocation, no CLI/GUI calls, no subprocess, no runtime reload
+acceptance, no ProjectSchema mutation, no default/background path, no
+discovery/validation/solver execution, no activation/trust restoration, no
+issue/release/tag/asset mutation, no validation-pass/fail claim, and no
+certification claim.
+
 ## Limitations
 
 - The matrix records validation evidence for v0.1 demos; it does not certify

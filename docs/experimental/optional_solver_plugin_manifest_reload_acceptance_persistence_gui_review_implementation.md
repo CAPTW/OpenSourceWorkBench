@@ -359,3 +359,15 @@ The write panel preserves this review panel's supplied-record rendering and
 adds only explicit target, dry-run, acknowledgement, and confirmation gates
 before invoking the OSW-EXP-126 writer for a local review-record write. It
 does not change this display-only panel's no-writer, no-file-write behavior.
+
+## 38. Follow-up: Summary Audit Implementation (OSW-EXP-136)
+
+OSW-EXP-136 adds a separate supplied-record summary audit that can consume
+persistence GUI review records and GUI write records
+([optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md)).
+The audit does not import or call this panel, does not invoke the writer, does
+not write files, does not read or parse input state files, does not invoke the
+reload file reader or OSW-EXP-102 state writer, does not call CLI behavior,
+does not use subprocesses, does not accept runtime reload, does not mutate
+ProjectSchema, does not run discovery/validation/solver execution, and does
+not mutate issues/releases/tags or assets or claim certification.

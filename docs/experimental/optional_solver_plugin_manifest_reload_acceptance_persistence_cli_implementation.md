@@ -345,3 +345,14 @@ file-reader invocation, no OSW-EXP-102 state-writer invocation, no GUI
 behavior, no subprocess use, no runtime reload acceptance, no ProjectSchema
 mutation, no discovery, no validation, no solver execution, no issue/release
 mutation, and no certification claim.
+
+## 41. Summary Audit Follow-Up (OSW-EXP-136)
+
+OSW-EXP-136 adds a separate supplied-record summary audit
+([optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_implementation.md)).
+The audit can summarize supplied CLI review and write records without invoking
+this CLI. It remains pure in-memory and performs no file IO, no input
+state-file parsing, no reload reader or state writer invocation, no GUI calls,
+no subprocess use, no runtime reload acceptance, no ProjectSchema mutation, no
+discovery/validation/solver execution, no activation/trust restoration, no
+issue/release/tag/asset mutation, and no certification claim.
