@@ -455,3 +455,14 @@ Persistence view-model output remains UX readiness and review state only. It is
 not ProjectSchema state, ProjectSchema validation evidence, ProjectSchema
 validation failure, ProjectSchema trust state, ProjectSchema activation state,
 issue closure, release mutation, bundled-solver support, or certification.
+
+## 47. Follow-up: ProjectSchema Boundary Implementation (OSW-EXP-138)
+
+OSW-EXP-138 implements the separate supplied-record ProjectSchema boundary
+([optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_implementation.md)).
+The boundary may summarize this view-model's mapping only when supplied by a
+caller. It does not edit this view-model, recompute acceptance policy from
+files, invoke writers or readers, call CLI/GUI behavior, use subprocesses,
+accept runtime reload, mutate ProjectSchema, create ProjectSchema validation
+evidence, run discovery/validation/solver execution, activate candidates,
+restore trust, mutate issues/releases/tags or assets, or claim certification.

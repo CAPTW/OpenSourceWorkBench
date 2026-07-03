@@ -335,3 +335,15 @@ Writer output remains a local review-record payload only. It is not
 ProjectSchema state, ProjectSchema validation evidence, ProjectSchema
 validation failure, ProjectSchema trust state, ProjectSchema activation state,
 issue closure, release mutation, bundled-solver support, or certification.
+
+## 39. Follow-up: ProjectSchema Boundary Implementation (OSW-EXP-138)
+
+OSW-EXP-138 implements the separate supplied-record ProjectSchema boundary
+([optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_implementation.md)).
+The boundary may summarize writer result mappings only when supplied by a
+caller. It never imports or invokes this writer, plans writes, writes files,
+reads or parses input state files, invokes the reload file reader or
+OSW-EXP-102 state writer, mutates ProjectSchema, creates ProjectSchema
+validation evidence, accepts runtime reload, runs discovery/validation/solver
+execution, restores trust, activates candidates, mutates issues/releases/tags
+or assets, or claims certification.

@@ -382,3 +382,13 @@ CLI write success remains local review-record persistence only. It is not
 ProjectSchema state, ProjectSchema validation evidence, ProjectSchema
 validation failure, ProjectSchema trust state, ProjectSchema activation state,
 issue closure, release mutation, bundled-solver support, or certification.
+
+## 25. ProjectSchema Boundary Implementation Follow-Up (OSW-EXP-138)
+
+OSW-EXP-138 implements the separate supplied-record ProjectSchema boundary
+([optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_implementation.md)).
+The boundary may summarize CLI write mappings only when supplied by a caller.
+It does not invoke this CLI, read or parse input state files, call the writer,
+mutate ProjectSchema, create ProjectSchema validation evidence, accept runtime
+reload, run discovery/validation/solver execution, restore trust, activate
+candidates, mutate issues/releases/tags/assets, or claim certification.

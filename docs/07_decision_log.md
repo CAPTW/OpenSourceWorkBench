@@ -4014,3 +4014,32 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: Persistence and ProjectSchema semantics remain separate.
   Future ProjectSchema work has a deterministic boundary contract. Local
   persistence records remain non-authoritative UX review records.
+
+## ADR-0172: Reload Acceptance Persistence ProjectSchema Boundary Is Supplied-Record-Only
+
+- Status: Accepted for experimental ProjectSchema boundary implementation
+- Date: 2026-07-03
+- Context: OSW-EXP-137 designed a strict ProjectSchema boundary for local
+  reload acceptance persistence records, writer results, CLI/GUI writes, and
+  summary audits. Those records can be mistaken for ProjectSchema state,
+  ProjectSchema validation evidence, trust restoration, activation, issue
+  closure, release mutation, or certification.
+- Decision: Implement a pure in-memory, supplied-record-only, deterministic,
+  redaction-first ProjectSchema boundary model. The model consumes supplied
+  persistence, persistence view-model, writer, CLI write, GUI write, and
+  summary audit mappings only; renders ProjectSchema non-meaning, schema
+  separation, prohibited automatic flows, future preconditions, permitted
+  non-authoritative candidates, blockers, validation-evidence boundaries,
+  trust/provenance boundaries, lifecycle boundaries, built-in/shared-stack
+  boundaries, issue/release/certification boundaries, redaction/privacy rows,
+  diagnostics, non-action flags, and disabled/future actions; and performs no
+  ProjectSchema source edit, ProjectSchema mutation, ProjectSchema field
+  addition, ProjectSchema migration, ProjectSchema validation evidence, file
+  IO, writer invocation, reader invocation, CLI/GUI call, subprocess use,
+  runtime reload acceptance, discovery, validation, solver execution,
+  activation, trust restoration, issue/release/tag/asset mutation, version
+  bump, or certification claim.
+- Consequences: Maintainers can review whether supplied reload acceptance
+  persistence records remain outside ProjectSchema without mutating project
+  state. Prepared-machine validation, ProjectSchema integration, issue/release
+  work, and certification claims remain separately gated.

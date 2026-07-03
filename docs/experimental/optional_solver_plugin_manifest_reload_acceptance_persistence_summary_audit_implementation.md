@@ -276,3 +276,13 @@ This summary audit implementation remains supplied-record-only and is not
 ProjectSchema state, ProjectSchema validation evidence, ProjectSchema
 validation failure, ProjectSchema trust state, ProjectSchema activation state,
 issue closure, release mutation, bundled-solver support, or certification.
+
+## OSW-EXP-138 ProjectSchema Boundary Implementation Follow-Up
+
+OSW-EXP-138 implements the separate supplied-record ProjectSchema boundary
+([optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_implementation.md)).
+The boundary may summarize this audit only when the audit mapping is supplied
+by a caller. It does not invoke this audit module to discover state, read audit
+files, convert audit rows into ProjectSchema state, create ProjectSchema
+validation evidence, restore trust, activate candidates, mutate issues or
+releases, or claim certification.

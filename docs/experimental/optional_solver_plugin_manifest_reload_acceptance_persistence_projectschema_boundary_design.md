@@ -514,3 +514,16 @@ Suggested future sequence:
 
 Those gates must not be collapsed into this design gate. This document only
 defines the ProjectSchema boundary contract.
+
+## Implementation Follow-Up (OSW-EXP-138)
+
+OSW-EXP-138 implements this boundary as a pure in-memory supplied-record model
+([optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_implementation.md)).
+The implementation renders deterministic mappings/text over supplied
+persistence, writer, CLI, GUI, and summary audit records only. It does not edit
+ProjectSchema source or tests, mutate ProjectSchema, add ProjectSchema fields,
+migrate ProjectSchema, create ProjectSchema validation evidence, invoke writer,
+read or write files, invoke readers, call CLI/GUI behavior, use subprocesses,
+accept runtime reload, run discovery/validation/solver execution, restore
+trust, activate candidates, mutate issues/releases/tags/assets, or claim
+certification.

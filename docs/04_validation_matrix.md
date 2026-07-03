@@ -1061,6 +1061,20 @@ acceptance, no discovery/validation/solver execution, no activation/trust
 restoration, no issue/release/tag/asset mutation, no validation-pass/fail claim,
 and no certification claim.
 
+[Optional solver plugin manifest reload acceptance persistence ProjectSchema boundary implementation](experimental/optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary_implementation.md),
+`src/osw/experimental/optional_solvers/plugin_manifest_reload_acceptance_persistence_projectschema_boundary.py`,
+and `tests/unit/test_optional_solver_plugin_manifest_reload_acceptance_persistence_projectschema_boundary.py`
+are automated source/test evidence that the reload acceptance persistence
+ProjectSchema boundary is implemented as pure in-memory, supplied-record-only,
+non-mutating output. It has no ProjectSchema source edit, no ProjectSchema
+mutation, no ProjectSchema field addition, no ProjectSchema migration, no
+ProjectSchema validation evidence, no file read/write, no input state-file
+parsing, no writer invocation, no reload file-reader invocation, no OSW-EXP-102
+state-writer invocation, no CLI/GUI calls, no subprocess, no runtime reload
+acceptance, no discovery/validation/solver execution, no activation/trust
+restoration, no issue/release/tag/asset mutation, no validation-pass/fail claim,
+and no certification claim.
+
 ## Limitations
 
 - The matrix records validation evidence for v0.1 demos; it does not certify
