@@ -1566,6 +1566,12 @@ Scope drift is any change that:
   source edit, optional-solver source edit, solver source edit, plugin
   discovery edit, or checked-in runtime/report/export/reloadable-bundle
   artifact;
+- turns prepared-machine validation command design into command
+  implementation, source edit, CLI source edit, dependency installation,
+  solver installation, solver execution, live validation, ProjectSchema
+  mutation or evidence creation, issue/release/tag/asset mutation, validation
+  success/failure claim, issue closure claim, bundled solver support claim, or
+  certification claim without a separate implementation or validation gate;
 - turns a post-experimental ResultDataset scope review into runtime source
   changes, solver execution, issue closure, release mutation, tag or asset
   work, version metadata changes, or a claim that skipped-missing validation is

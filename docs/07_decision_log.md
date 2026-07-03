@@ -4067,3 +4067,20 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   `#6` through `#11` remain open. Package metadata remains `0.1.5rc1`, public
   prerelease remains `v0.1.5-rc1`, and a future validation retry has explicit
   prerequisites and evidence boundaries.
+
+## ADR-0174: Optional Solver Prepared-Machine Validation Requires an Explicit Local Command
+
+- Status: Accepted for validation command design
+- Date: 2026-07-03
+- Context: Prepared-machine validation is parked. Missing prerequisites have
+  been documented. There is no current safe runnable prepared-machine
+  manifest-state validation command. Focused regression tests are not a
+  substitute for prepared-machine validation.
+- Decision: Design a future explicit local command with preflight, plan, run,
+  diagnostics, prerequisites, evidence, and safety outputs. Future
+  implementation must not install dependencies, mutate ProjectSchema, mutate
+  issues/releases/tags/assets, or claim certification. Skipped-missing must
+  remain separate from pass.
+- Consequences: Validation retry has a deterministic command contract.
+  Prepared-machine validation remains parked until implementation and local
+  prerequisites exist. Issues `#6` through `#11` remain open.
