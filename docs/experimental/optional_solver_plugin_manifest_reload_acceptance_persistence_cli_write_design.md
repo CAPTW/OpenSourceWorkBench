@@ -654,3 +654,15 @@ Each future gate remains separately scoped and must preserve explicit-target,
 dry-run-first, redaction-first, acknowledgement-gated, confirmation-gated,
 non-authoritative, non-validation, non-trust-restoring, non-activating,
 ProjectSchema-safe, issue/release-safe, and certification-safe boundaries.
+
+## 41. Implementation Follow-Up (OSW-EXP-134)
+
+OSW-EXP-134 implements the CLI write design as the `write` subcommand in
+`optional-solver-plugin-manifest-reload-acceptance-persistence`
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_write_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_write_implementation.md)).
+The implementation keeps explicit target, dry-run-first, caller
+acknowledgement, confirmation, redacted output, and writer-policy enforcement.
+Write success remains local review-record persistence only and does not imply
+runtime reload acceptance, ProjectSchema mutation, validation evidence, issue
+closure, release mutation, trust restoration, automatic activation, bundled
+solver support, or certification.

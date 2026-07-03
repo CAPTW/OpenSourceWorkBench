@@ -130,7 +130,7 @@ def test_implementation_docs_and_meta_entries_are_present() -> None:
         "stdout-first",
         "dry-run planning only",
         "write-future disabled",
-        "no actual CLI writes",
+        "OSW-EXP-134",
         "no input state-file reading",
         "no reload file-reader invocation",
         "no OSW-EXP-102 state-writer invocation",
@@ -140,6 +140,7 @@ def test_implementation_docs_and_meta_entries_are_present() -> None:
     ):
         assert phrase in doc or " ".join(phrase.lower().split()) in normalised
     assert "Implementation Follow-Up (OSW-EXP-128)" in _read(DESIGN_DOC)
+    assert "CLI Write Implementation Follow-Up (OSW-EXP-134)" in doc
     assert "ADR-0162" in _read(DECISION_LOG)
     assert "reload acceptance persistence CLI implementation" in _read(GUARDRAILS)
     assert "reload acceptance persistence CLI implementation" in _read(
@@ -176,7 +177,8 @@ def test_explain_renders_purpose_and_non_actions(
     assert "Definition:" in out
     assert "plan command calls the writer only with dry_run=True" in out
     for phrase in (
-        "Persistence CLI performs no actual CLI writes.",
+        "Persistence CLI review subcommands perform no actual CLI writes.",
+        "Persistence CLI write performs only explicit local review-record writes",
         "Persistence CLI reads no input state files.",
         "Persistence CLI parses no input state files.",
         "Persistence CLI invokes no reload file reader.",
@@ -264,7 +266,7 @@ def test_plan_json_is_deterministic_and_non_mutating(
     assert payload["exit_semantics"]["runtime_acceptance"] is False
     assert payload["exit_semantics"]["persistence_write"] is False
     actions = {row["action"]: row for row in payload["disabled_future_actions"]}
-    assert actions["write_acceptance_review_record"]["enabled"] is False
+    assert actions["write_acceptance_review_record"]["enabled"] is True
     assert actions["plan_persistence_write"]["enabled"] is True
     assert actions["mutate_project_schema"]["enabled"] is False
     assert actions["validate_solver"]["enabled"] is False
@@ -380,10 +382,11 @@ def test_no_path_option_is_accepted(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_source_guardrails_forbidden_imports_calls_and_writer_mode() -> None:
     source = _module_source()
-    assert "write_reload_acceptance_persistence_record" not in source
-    assert "dry_run=False" not in source
+    assert "write_reload_acceptance_persistence_record" in source
+    assert "dry_run=False" in source
     assert "dry_run = False" not in source
     assert "dry_run=True" in source
+    assert source.index("dry_run=True") < source.index("dry_run=False")
 
     imports = _imported_modules() - {"__future__"}
     assert imports.isdisjoint(
@@ -431,12 +434,15 @@ def test_source_guardrails_forbidden_imports_calls_and_writer_mode() -> None:
         and getattr(node.func, "id", "") == "ReloadAcceptancePersistenceWriteRequest"
     ]
     assert request_calls
+    dry_run_values = []
     for call in request_calls:
         dry_run_keyword = next(
             keyword for keyword in call.keywords if keyword.arg == "dry_run"
         )
         assert isinstance(dry_run_keyword.value, ast.Constant)
-        assert dry_run_keyword.value.value is True
+        dry_run_values.append(dry_run_keyword.value.value)
+    assert True in dry_run_values
+    assert False in dry_run_values
 
 
 def test_no_output_or_runtime_state_files_created_by_review_commands(

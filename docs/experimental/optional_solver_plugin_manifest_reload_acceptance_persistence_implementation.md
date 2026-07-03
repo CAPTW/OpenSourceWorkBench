@@ -300,3 +300,16 @@ files, invoke the reload file reader, invoke the OSW-EXP-102 state writer, call
 CLI code, use subprocesses, accept runtime reload, mutate ProjectSchema, run
 discovery/validation/solver execution, or mutate issues/releases or claim
 certification.
+
+## 36. Follow-up: Persistence CLI Write Implementation (OSW-EXP-134)
+
+OSW-EXP-134 implements the CLI write workflow through this writer
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_write_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_write_implementation.md)).
+The CLI calls this writer first with `dry_run=True` and then calls with
+`dry_run=False` only after an explicit target, successful fresh dry-run,
+caller acknowledgement, and write confirmation. The writer remains the only
+serialization/write path; the CLI does not read or parse input state files,
+invoke the reload file reader, invoke the OSW-EXP-102 state writer, call GUI
+code, use subprocesses, accept runtime reload, mutate ProjectSchema, run
+discovery/validation/solver execution, mutate issues/releases, or claim
+certification.

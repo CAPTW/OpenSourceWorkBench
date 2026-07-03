@@ -6,6 +6,18 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Plugin Manifest Reload Acceptance Persistence CLI Write Implementation
+
+- Added the optional solver plugin manifest reload acceptance persistence CLI
+  `write` subcommand as an explicit-target, dry-run-first,
+  acknowledgement-gated, confirmation-gated local review-record write path
+  through the OSW-EXP-126 writer, preserving no input state-file
+  reading/parsing, no reload file-reader or OSW-EXP-102 state-writer
+  invocation, no GUI/subprocess behavior, no runtime acceptance, no
+  ProjectSchema mutation, no discovery/validation/solver execution, no
+  automatic activation, no trust restoration, no issue/release mutation, and no
+  certification claims.
+
 ### Optional Solver Plugin Manifest Reload Acceptance Persistence CLI Write Design
 
 - Designed the optional solver plugin manifest reload acceptance persistence CLI

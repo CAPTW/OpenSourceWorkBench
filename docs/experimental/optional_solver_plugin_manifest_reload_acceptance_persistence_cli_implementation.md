@@ -332,3 +332,16 @@ write success remains local review-record persistence only and remains
 separate from CLI dry-run review, runtime reload acceptance, ProjectSchema
 mutation, validation evidence, issue closure, release mutation, and
 certification.
+
+## 40. CLI Write Implementation Follow-Up (OSW-EXP-134)
+
+OSW-EXP-134 adds the separate `write` subcommand
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_write_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_write_implementation.md)).
+The original review commands remain stdout-first and non-writing, while the
+new write path is explicit-target, dry-run-first, acknowledgement-gated, and
+confirmation-gated through the OSW-EXP-126 writer. It writes only local review
+records and still performs no input state-file reading/parsing, no reload
+file-reader invocation, no OSW-EXP-102 state-writer invocation, no GUI
+behavior, no subprocess use, no runtime reload acceptance, no ProjectSchema
+mutation, no discovery, no validation, no solver execution, no issue/release
+mutation, and no certification claim.

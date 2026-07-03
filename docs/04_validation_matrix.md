@@ -1004,6 +1004,21 @@ execution, no activation/trust restoration, no issue/release/tag/asset
 mutation, no validation-pass/fail claim, no bundled-solver claim, and no
 certification claim.
 
+[Optional solver plugin manifest reload acceptance persistence CLI write implementation](experimental/optional_solver_plugin_manifest_reload_acceptance_persistence_cli_write_implementation.md)
+implements focused CLI test evidence for an explicit-target, dry-run-first,
+acknowledgement-gated, confirmation-gated local review-record write command
+through the OSW-EXP-126 writer. Tests verify missing target/ack/confirmation
+block before writes, successful `tmp_path` writes create only the explicit
+review record, replacement requires `--allow-replace`, blocked dry-runs write
+no file, writer errors return nonzero, review commands and `write-future`
+remain non-writing, output redacts raw targets, and source guardrails preserve
+no input state-file reading/parsing, no reload file-reader invocation, no
+OSW-EXP-102 state-writer invocation, no GUI behavior, no subprocess use, no
+runtime reload acceptance, no ProjectSchema mutation, no discovery/validation/
+solver execution, no activation/trust restoration, no issue/release/tag/asset
+mutation, no validation-pass/fail claim, no bundled-solver claim, and no
+certification claim.
+
 ## Limitations
 
 - The matrix records validation evidence for v0.1 demos; it does not certify

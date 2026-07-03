@@ -422,3 +422,16 @@ gates pass; it does not read or parse input state files, invoke the reload file
 reader, call CLI code, use subprocesses, accept runtime reload, mutate
 ProjectSchema, run discovery/validation/solver execution, activate candidates,
 restore trust, mutate issues/releases, or claim certification.
+
+## 44. Follow-up: Persistence CLI Write Implementation (OSW-EXP-134)
+
+OSW-EXP-134 implements a CLI write command that consumes this persistence
+view-model as supplied readiness state
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_write_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_write_implementation.md)).
+The CLI does not edit this view-model source or compute independent acceptance
+policy. It passes the supplied view-model to the OSW-EXP-126 writer only after
+explicit target, fresh dry-run, acknowledgement, and confirmation gates pass;
+it does not read or parse input state files, invoke the reload file reader,
+call GUI code, use subprocesses, accept runtime reload, mutate ProjectSchema,
+run discovery/validation/solver execution, activate candidates, restore trust,
+mutate issues/releases, or claim certification.

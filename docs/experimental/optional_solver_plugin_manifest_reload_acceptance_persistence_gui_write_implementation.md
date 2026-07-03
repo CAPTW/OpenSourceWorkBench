@@ -374,3 +374,14 @@ Suggested next gates:
 
 Any future ProjectSchema, reload, discovery, validation, solver execution,
 issue/release, tag/asset, or certification work remains separately gated.
+
+## 41. CLI Write Implementation Follow-Up (OSW-EXP-134)
+
+OSW-EXP-134 implements the separate CLI write path
+([optional_solver_plugin_manifest_reload_acceptance_persistence_cli_write_implementation.md](optional_solver_plugin_manifest_reload_acceptance_persistence_cli_write_implementation.md)).
+The GUI write panel and CLI write command share the OSW-EXP-126 writer
+contract but do not invoke each other or use subprocess bridges. CLI write
+success remains local review-record persistence only and does not imply GUI
+write success, runtime reload acceptance, ProjectSchema mutation, validation
+evidence, issue closure, release mutation, trust restoration, automatic
+activation, bundled solver support, or certification.

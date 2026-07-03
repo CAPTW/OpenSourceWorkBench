@@ -1,12 +1,14 @@
-"""Stdout-first reload acceptance persistence CLI review.
+"""Stdout-first reload acceptance persistence CLI review and explicit write.
 
 This command renders deterministic in-memory persistence view-model records and
-dry-run writer plans. It performs no input state-file reading/parsing, no reload
-file-reader invocation, no OSW-EXP-102 state-writer invocation, no GUI calls, no
-subprocess use, no actual CLI writes, no runtime reload acceptance, no
-ProjectSchema mutation, no discovery, no validation, no solver execution, no
-activation, no trust restoration, no issue/release/tag/asset mutation, and no
-certification claim.
+dry-run writer plans. Its write subcommand performs an explicit local
+review-record write only through the OSW-EXP-126 writer API after explicit
+target, fresh dry-run, acknowledgement, and confirmation gates pass. It performs
+no input state-file reading/parsing, no reload file-reader invocation, no
+OSW-EXP-102 state-writer invocation, no GUI calls, no subprocess use, no runtime
+reload acceptance, no ProjectSchema mutation, no discovery, no validation, no
+solver execution, no activation, no trust restoration, no issue/release/tag/asset
+mutation, and no certification claim.
 """
 
 from __future__ import annotations
@@ -26,6 +28,7 @@ from osw.experimental.optional_solvers import (
     OptionalSolverPluginManifestReloadViewModel,
     ReloadAcceptancePersistenceWriteRequest,
     plan_reload_acceptance_persistence_write,
+    write_reload_acceptance_persistence_record,
 )
 
 OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_ACCEPTANCE_PERSISTENCE_COMMAND = (
@@ -42,6 +45,7 @@ _SUBCOMMANDS = (
     "storage",
     "actions",
     "safety",
+    "write",
     "write-future",
 )
 
@@ -64,6 +68,10 @@ _COMMAND_PURPOSE = {
     "storage": "Render storage, target, schema, and path policy.",
     "actions": "Render disabled and future action states.",
     "safety": "Render persistence CLI safety guidance.",
+    "write": (
+        "Write an explicit local review record after dry-run, acknowledgement, "
+        "and confirmation gates."
+    ),
     "write-future": "Show that actual CLI writes remain disabled and future-only.",
 }
 
@@ -76,6 +84,26 @@ _CLI_DIAGNOSTICS = {
     ),
     "write_future_disabled": (
         "OSPMG_RELOAD_ACCEPTANCE_PERSISTENCE_CLI_WRITE_FUTURE_DISABLED"
+    ),
+    "write_target_required": (
+        "OSPMG_RELOAD_ACCEPTANCE_PERSISTENCE_CLI_WRITE_TARGET_REQUIRED"
+    ),
+    "write_ack_required": (
+        "OSPMG_RELOAD_ACCEPTANCE_PERSISTENCE_CLI_WRITE_ACK_REQUIRED"
+    ),
+    "write_confirm_required": (
+        "OSPMG_RELOAD_ACCEPTANCE_PERSISTENCE_CLI_WRITE_CONFIRM_REQUIRED"
+    ),
+    "write_dry_run_not_write": (
+        "OSPMG_RELOAD_ACCEPTANCE_PERSISTENCE_CLI_WRITE_DRY_RUN_NOT_WRITE"
+    ),
+    "write_completed_local_only": (
+        "OSPMG_RELOAD_ACCEPTANCE_PERSISTENCE_CLI_WRITE_COMPLETED_LOCAL_ONLY"
+    ),
+    "write_blocked": "OSPMG_RELOAD_ACCEPTANCE_PERSISTENCE_CLI_WRITE_BLOCKED",
+    "write_error": "OSPMG_RELOAD_ACCEPTANCE_PERSISTENCE_CLI_WRITE_ERROR",
+    "write_no_validation_claim": (
+        "OSPMG_RELOAD_ACCEPTANCE_PERSISTENCE_CLI_WRITE_NO_VALIDATION_CLAIM"
     ),
     "safety_guidance": "OSPMG_RELOAD_ACCEPTANCE_PERSISTENCE_CLI_SAFETY_GUIDANCE",
 }
@@ -98,6 +126,19 @@ _SAFETY_GUIDANCE = (
     "Dry-run planning success is not validation success.",
     "Dry-run planning success is not validation failure.",
     "Dry-run planning success is not a persistence write.",
+    "Explicit write success is local review-record persistence only.",
+    "Explicit write success is not runtime reload acceptance.",
+    "Explicit write success is not validation success.",
+    "Explicit write success is not validation failure.",
+    "Explicit write success is not ProjectSchema mutation.",
+    "Explicit write success is not trust restoration.",
+    "Explicit write success is not automatic activation.",
+    "Explicit write success is not discovery success.",
+    "Explicit write success is not dependency installation.",
+    "Explicit write success is not solver execution.",
+    "Explicit write success is not issue closure.",
+    "Explicit write success is not release mutation.",
+    "Explicit write success is not certification.",
     "Dry-run planning success is not ProjectSchema mutation.",
     "Dry-run planning success is not trust restoration.",
     "Dry-run planning success is not automatic activation.",
@@ -115,7 +156,11 @@ _SAFETY_GUIDANCE = (
 )
 
 _NON_ACTION_DENIALS = (
-    "Persistence CLI performs no actual CLI writes.",
+    "Persistence CLI review subcommands perform no actual CLI writes.",
+    (
+        "Persistence CLI write performs only explicit local review-record writes "
+        "through the OSW-EXP-126 writer."
+    ),
     "Persistence CLI performs no runtime reload acceptance.",
     "Persistence CLI performs no active acceptance mutation.",
     "Persistence CLI reads no input state files.",
@@ -243,9 +288,14 @@ _UNSAFE_CLAIM_ROWS = (
 
 _CLI_ACTION_ROWS = (
     ("request_persistence", False, True, "Persistence request mutation is future-gated."),
-    ("plan_persistence_write", True, False, "Dry-run planning is implemented only."),
-    ("write_acceptance_review_record", False, True, "Actual CLI write is disabled."),
-    ("persist_acceptance_record", False, True, "Persistence remains explicit/local."),
+    ("plan_persistence_write", True, False, "Dry-run planning is implemented."),
+    (
+        "write_acceptance_review_record",
+        True,
+        False,
+        "Explicit local review-record write is implemented only through write gates.",
+    ),
+    ("persist_acceptance_record", False, True, "Runtime persistence remains future-gated."),
 )
 
 
@@ -256,13 +306,15 @@ def add_optional_solver_plugin_manifest_reload_acceptance_persistence_parser(
 
     parser = subparsers.add_parser(
         OPTIONAL_SOLVER_PLUGIN_MANIFEST_RELOAD_ACCEPTANCE_PERSISTENCE_COMMAND,
-        help="Review reload acceptance persistence state and dry-run write plans.",
+        help="Review reload acceptance persistence state, plans, and explicit writes.",
         description=(
             "Render deterministic in-memory reload acceptance persistence "
-            "view-model records and dry-run writer plans. This command is "
-            "stdout-first, actual-write-disabled, non-reading, non-parsing, "
-            "non-GUI, non-subprocess, ProjectSchema-safe, issue-safe, "
-            "release-safe, and certification-safe."
+            "view-model records, dry-run writer plans, and explicit local "
+            "review-record writes. This command is stdout-first, "
+            "explicit-target-only, dry-run-first, acknowledgement-gated, "
+            "confirmation-gated, non-reading, non-parsing, non-GUI, "
+            "non-subprocess, ProjectSchema-safe, issue-safe, release-safe, "
+            "and certification-safe."
         ),
     )
     parser.add_argument(
@@ -302,7 +354,7 @@ def add_optional_solver_plugin_manifest_reload_acceptance_persistence_parser(
     )
     parser.add_argument(
         "--target",
-        help="Explicit target path for dry-run plan or write-future review only.",
+        help="Explicit target path for dry-run plan or write review.",
     )
     parser.add_argument(
         "--allow-replace",
@@ -312,7 +364,12 @@ def add_optional_solver_plugin_manifest_reload_acceptance_persistence_parser(
     parser.add_argument(
         "--acknowledge-persistence-write",
         action="store_true",
-        help="Visible acknowledgement flag; actual CLI writes remain disabled.",
+        help="Acknowledge that any write is local review-record persistence only.",
+    )
+    parser.add_argument(
+        "--confirm-persistence-write",
+        action="store_true",
+        help="Confirm the explicit local write after dry-run planning.",
     )
     parser.add_argument("--json", action="store_true", help="Emit deterministic JSON.")
     return parser
@@ -330,11 +387,13 @@ def run_optional_solver_plugin_manifest_reload_acceptance_persistence_cli(
 
     view_model, state_source = _view_model_from_args(args)
     plan_result = _plan_result(args, view_model)
-    payload = _payload(args, view_model, state_source, plan_result)
-    text_lines = _text_lines(args, view_model, state_source, plan_result)
+    write_result = _write_result(args, view_model)
+    exit_code = _return_code(args.persistence_command, write_result)
+    payload = _payload(args, view_model, state_source, plan_result, write_result, exit_code)
+    text_lines = _text_lines(args, view_model, state_source, plan_result, write_result, exit_code)
     disabled_future = args.persistence_command == "write-future"
-    _emit(payload, text_lines, args, error=disabled_future)
-    return 2 if disabled_future else 0
+    _emit(payload, text_lines, args, error=disabled_future or exit_code != 0)
+    return exit_code
 
 
 def _validate_args(args: argparse.Namespace) -> str:
@@ -346,8 +405,8 @@ def _validate_args(args: argparse.Namespace) -> str:
             "--ready-state, or --writer-ready-state."
         )
     target = str(getattr(args, "target", "") or "").strip()
-    if target and args.persistence_command not in {"plan", "write-future"}:
-        return "--target is accepted only for plan and write-future review."
+    if target and args.persistence_command not in {"plan", "write", "write-future"}:
+        return "--target is accepted only for plan, write, and write-future review."
     return ""
 
 
@@ -479,11 +538,213 @@ def _plan_result(
     return plan_reload_acceptance_persistence_write(request).to_mapping()
 
 
+def _write_result(
+    args: argparse.Namespace,
+    view_model: OptionalSolverPluginManifestReloadAcceptancePersistenceViewModel,
+) -> Mapping[str, object] | None:
+    if args.persistence_command != "write":
+        return None
+    target = str(args.target or "").strip()
+    if not target:
+        return _cli_write_blocked(
+            "write_target_required",
+            "Explicit --target is required before CLI persistence write.",
+            args.target,
+        )
+    if not bool(args.acknowledge_persistence_write):
+        return _cli_write_blocked(
+            "write_ack_required",
+            "--acknowledge-persistence-write is required before CLI persistence write.",
+            args.target,
+        )
+    if not bool(args.confirm_persistence_write):
+        return _cli_write_blocked(
+            "write_confirm_required",
+            "--confirm-persistence-write is required before CLI persistence write.",
+            args.target,
+        )
+
+    dry_run_request = ReloadAcceptancePersistenceWriteRequest(
+        persistence_viewmodel=view_model,
+        target_path=args.target,
+        dry_run=True,
+        allow_replace=bool(args.allow_replace),
+        caller_acknowledged_persistence_write=True,
+        safety_review_id="OSW-EXP-134_CLI_WRITE_DRY_RUN",
+        request_context="reload_acceptance_persistence_cli_write_dry_run",
+    )
+    dry_run_plan = _result_to_mapping(
+        write_reload_acceptance_persistence_record(dry_run_request)
+    )
+    dry_run_status = str(dry_run_plan.get("status") or "")
+    if dry_run_status != "planned":
+        status = "error" if dry_run_status == "error" else "blocked"
+        return {
+            "status": status,
+            "phase": "dry_run",
+            "target_display": _safe_display(args.target),
+            "target_redacted": True,
+            "dry_run_plan": dry_run_plan,
+            "writer_result": None,
+            "diagnostics": _write_diagnostics_from(
+                status,
+                "write_blocked" if status == "blocked" else "write_error",
+                "CLI persistence write stopped because dry-run planning did not pass.",
+                dry_run_plan,
+                None,
+            ),
+            "blockers": list(_sequence(dry_run_plan.get("blockers"))),
+            "warnings": list(_sequence(dry_run_plan.get("warnings"))),
+            "non_action_flags": _state_source_policy(),
+            "write_performed": False,
+            "persistence_write_performed": False,
+            "runtime_reload_acceptance_performed": False,
+            "project_schema_mutated": False,
+        }
+
+    write_request = ReloadAcceptancePersistenceWriteRequest(
+        persistence_viewmodel=view_model,
+        target_path=args.target,
+        dry_run=False,
+        allow_replace=bool(args.allow_replace),
+        caller_acknowledged_persistence_write=True,
+        safety_review_id="OSW-EXP-134_CLI_WRITE_CONFIRMED",
+        request_context="reload_acceptance_persistence_cli_write_confirmed",
+    )
+    writer_result = _result_to_mapping(
+        write_reload_acceptance_persistence_record(write_request)
+    )
+    status = str(writer_result.get("status") or "")
+    diagnostic_key = (
+        "write_completed_local_only"
+        if status == "completed"
+        else "write_error"
+        if status == "error"
+        else "write_blocked"
+    )
+    message = (
+        "CLI persistence write completed local review-record persistence only."
+        if status == "completed"
+        else "CLI persistence write did not complete."
+    )
+    return {
+        "status": status,
+        "phase": "write",
+        "target_display": writer_result.get("target_display", _safe_display(args.target)),
+        "target_redacted": True,
+        "dry_run_plan": dry_run_plan,
+        "writer_result": writer_result,
+        "diagnostics": _write_diagnostics_from(
+            status,
+            diagnostic_key,
+            message,
+            dry_run_plan,
+            writer_result,
+        ),
+        "blockers": list(_sequence(writer_result.get("blockers"))),
+        "warnings": list(_sequence(writer_result.get("warnings"))),
+        "non_action_flags": _mapping(writer_result.get("non_action_flags")),
+        "write_performed": bool(writer_result.get("write_performed")),
+        "persistence_write_performed": bool(
+            writer_result.get("persistence_write_performed")
+        ),
+        "runtime_reload_acceptance_performed": False,
+        "project_schema_mutated": False,
+    }
+
+
+def _cli_write_blocked(
+    diagnostic_key: str,
+    message: str,
+    target: object,
+) -> dict[str, object]:
+    return {
+        "status": "blocked",
+        "phase": "cli_gate",
+        "target_display": _safe_display(target),
+        "target_redacted": True,
+        "dry_run_plan": None,
+        "writer_result": None,
+        "diagnostics": [
+            {
+                "severity": "error",
+                "code": _CLI_DIAGNOSTICS[diagnostic_key],
+                "message": message,
+                "blocker": True,
+                "target_display": _safe_display(target),
+            },
+            {
+                "severity": "info",
+                "code": _CLI_DIAGNOSTICS["write_no_validation_claim"],
+                "message": "CLI write gating makes no validation or certification claim.",
+                "blocker": False,
+                "target_display": _safe_display(target),
+            },
+        ],
+        "blockers": [message],
+        "warnings": [],
+        "non_action_flags": _state_source_policy(),
+        "write_performed": False,
+        "persistence_write_performed": False,
+        "runtime_reload_acceptance_performed": False,
+        "project_schema_mutated": False,
+    }
+
+
+def _write_diagnostics_from(
+    status: str,
+    diagnostic_key: str,
+    message: str,
+    dry_run_plan: Mapping[str, object],
+    writer_result: Mapping[str, object] | None,
+) -> list[object]:
+    rows: list[object] = [
+        {
+            "severity": "info" if status == "completed" else "error",
+            "code": _CLI_DIAGNOSTICS[diagnostic_key],
+            "message": message,
+            "blocker": status != "completed",
+            "target_display": str(dry_run_plan.get("target_display") or ""),
+        },
+        {
+            "severity": "info",
+            "code": _CLI_DIAGNOSTICS["write_dry_run_not_write"],
+            "message": "The required dry-run plan is not a write.",
+            "blocker": False,
+            "target_display": str(dry_run_plan.get("target_display") or ""),
+        },
+        {
+            "severity": "info",
+            "code": _CLI_DIAGNOSTICS["write_no_validation_claim"],
+            "message": "Write success is not validation success, failure, or certification.",
+            "blocker": False,
+            "target_display": str(dry_run_plan.get("target_display") or ""),
+        },
+    ]
+    rows.extend(_sequence(dry_run_plan.get("diagnostics")))
+    if writer_result is not None:
+        rows.extend(_sequence(writer_result.get("diagnostics")))
+    return rows
+
+
+def _result_to_mapping(value: object) -> dict[str, object]:
+    if isinstance(value, Mapping):
+        return dict(value)
+    to_mapping = getattr(value, "to_mapping", None)
+    if callable(to_mapping):
+        mapped = to_mapping()
+        if isinstance(mapped, Mapping):
+            return dict(mapped)
+    return {}
+
+
 def _payload(
     args: argparse.Namespace,
     view_model: OptionalSolverPluginManifestReloadAcceptancePersistenceViewModel,
     state_source: str,
     plan_result: Mapping[str, object] | None,
+    write_result: Mapping[str, object] | None,
+    exit_code: int,
 ) -> dict[str, object]:
     mapping = view_model.to_mapping()
     payload = {
@@ -491,12 +752,13 @@ def _payload(
         "subcommand": args.persistence_command,
         "purpose": _COMMAND_PURPOSE[args.persistence_command],
         "stdout_first": True,
-        "dry_run_only": True,
-        "actual_cli_writes_enabled": False,
+        "dry_run_only": args.persistence_command != "write",
+        "dry_run_first": True,
+        "actual_cli_writes_enabled": args.persistence_command == "write",
         "write_future_disabled": True,
         "state_source": state_source,
-        "state_source_policy": _state_source_policy(),
-        "target_policy": _target_policy(args),
+        "state_source_policy": _state_source_policy(write_result),
+        "target_policy": _target_policy(args, write_result),
         "output_mode": "json" if args.json else "text",
         "view_model": mapping,
         "summary": mapping["summary"],
@@ -507,7 +769,7 @@ def _payload(
         "acknowledgement_expiry": mapping["acknowledgement_expiry"],
         "expiry_reasons": mapping["expiry_reasons"],
         "blockers": mapping["blockers"],
-        "diagnostics": _diagnostic_payload(mapping, plan_result, args),
+        "diagnostics": _diagnostic_payload(mapping, plan_result, write_result, args),
         "provenance": mapping["provenance"],
         "schema_migration": _table_payload(_SCHEMA_MIGRATION_ROWS),
         "redaction_privacy": _table_payload(_REDACTION_PRIVACY_ROWS),
@@ -516,25 +778,30 @@ def _payload(
         "conflict_shared_stack": _table_payload(_CONFLICT_ROWS),
         "unsafe_claims": _table_payload(_UNSAFE_CLAIM_ROWS),
         "evidence_history": mapping["evidence_history"],
-        "non_action_flags": _non_action_flags(mapping, plan_result),
+        "non_action_flags": _non_action_flags(mapping, plan_result, write_result),
         "disabled_future_actions": _action_payload(mapping),
         "safety_guidance": list(_SAFETY_GUIDANCE),
-        "exit_semantics": _exit_semantics(args.persistence_command),
+        "exit_semantics": _exit_semantics(args.persistence_command, exit_code),
         "writer_plan_result": plan_result,
-        "selected": _selected_payload(args, mapping, plan_result),
+        "dry_run_plan": _write_dry_run_plan(write_result),
+        "write_result": write_result,
+        "selected": _selected_payload(args, mapping, plan_result, write_result),
     }
     return _redact_payload(payload, args.target)
 
 
-def _state_source_policy() -> dict[str, bool]:
+def _state_source_policy(
+    write_result: Mapping[str, object] | None = None,
+) -> dict[str, bool]:
+    completed = _write_completed(write_result)
     return {
         "deterministic_in_memory_persistence_viewmodel_records_only": True,
         "input_state_file_read": False,
         "input_state_file_parsed": False,
         "reload_file_reader_invoked": False,
         "state_writer_invoked": False,
-        "actual_cli_write_performed": False,
-        "writer_called_with_dry_run_false": False,
+        "actual_cli_write_performed": completed,
+        "writer_called_with_dry_run_false": completed,
         "file_reading_performed": False,
         "file_parsing_performed": False,
         "gui_call_performed": False,
@@ -542,7 +809,7 @@ def _state_source_policy() -> dict[str, bool]:
         "gui_subprocess_used": False,
         "runtime_reload_acceptance_performed": False,
         "active_acceptance_mutation_performed": False,
-        "persistence_write_performed": False,
+        "persistence_write_performed": completed,
         "project_schema_mutated": False,
         "default_target_path_used": False,
         "background_write_performed": False,
@@ -568,16 +835,20 @@ def _state_source_policy() -> dict[str, bool]:
     }
 
 
-def _target_policy(args: argparse.Namespace) -> dict[str, object]:
+def _target_policy(
+    args: argparse.Namespace,
+    write_result: Mapping[str, object] | None,
+) -> dict[str, object]:
     selected = bool(str(args.target or "").strip())
     return {
         "explicit_target_required_for_plan": True,
+        "explicit_target_required_for_write": True,
         "target_supplied": selected,
         "target_display": _safe_display(args.target),
         "raw_target_display_hidden": True,
         "default_target_path_used": False,
         "background_write_performed": False,
-        "actual_cli_write_performed": False,
+        "actual_cli_write_performed": _write_completed(write_result),
         "write_future_accepts_target_for_review_only": (
             args.persistence_command == "write-future"
         ),
@@ -585,21 +856,19 @@ def _target_policy(args: argparse.Namespace) -> dict[str, object]:
         "caller_acknowledged_persistence_write": bool(
             args.acknowledge_persistence_write
         ),
+        "caller_confirmed_persistence_write": bool(
+            getattr(args, "confirm_persistence_write", False)
+        ),
     }
 
 
 def _diagnostic_payload(
     mapping: Mapping[str, object],
     plan_result: Mapping[str, object] | None,
+    write_result: Mapping[str, object] | None,
     args: argparse.Namespace,
 ) -> list[object]:
     rows: list[object] = [
-        {
-            "severity": "info",
-            "code": _CLI_DIAGNOSTICS["dry_run_only"],
-            "message": "Persistence CLI uses dry-run writer planning only.",
-            "blocker": False,
-        },
         {
             "severity": "info",
             "code": _CLI_DIAGNOSTICS["safety_guidance"],
@@ -607,6 +876,24 @@ def _diagnostic_payload(
             "blocker": False,
         },
     ]
+    if args.persistence_command == "write":
+        rows.append(
+            {
+                "severity": "info",
+                "code": _CLI_DIAGNOSTICS["write_dry_run_not_write"],
+                "message": "Persistence CLI write requires a dry-run plan first.",
+                "blocker": False,
+            }
+        )
+    else:
+        rows.append(
+            {
+                "severity": "info",
+                "code": _CLI_DIAGNOSTICS["dry_run_only"],
+                "message": "Persistence CLI review uses dry-run writer planning only.",
+                "blocker": False,
+            }
+        )
     if args.persistence_command == "write-future":
         rows.append(
             {
@@ -637,20 +924,47 @@ def _diagnostic_payload(
     rows.extend(_sequence(mapping.get("diagnostics")))
     if plan_result is not None:
         rows.extend(_sequence(plan_result.get("diagnostics")))
+    if write_result is not None:
+        rows.extend(_sequence(write_result.get("diagnostics")))
     return rows
 
 
 def _non_action_flags(
     mapping: Mapping[str, object],
     plan_result: Mapping[str, object] | None,
+    write_result: Mapping[str, object] | None,
 ) -> dict[str, bool]:
-    flags = dict(_mapping(mapping.get("non_action_flags")))
+    flags = _state_source_policy(write_result)
+    flags.update(dict(_mapping(mapping.get("non_action_flags"))))
     if plan_result is not None:
         flags.update(dict(_mapping(plan_result.get("non_action_flags"))))
-    flags.update(_state_source_policy())
-    flags["actual_cli_write_performed"] = False
-    flags["writer_called_with_dry_run_false"] = False
+    dry_run_plan = _write_dry_run_plan(write_result)
+    if dry_run_plan is not None:
+        flags.update(dict(_mapping(dry_run_plan.get("non_action_flags"))))
+    writer_result = _mapping(_mapping(write_result).get("writer_result"))
+    if writer_result:
+        flags.update(dict(_mapping(writer_result.get("non_action_flags"))))
+    completed = _write_completed(write_result)
+    flags["actual_cli_write_performed"] = completed
+    flags["writer_called_with_dry_run_false"] = completed
     flags["dry_run_writer_plan_rendered"] = plan_result is not None
+    flags["runtime_reload_acceptance_performed"] = False
+    flags["active_acceptance_mutation_performed"] = False
+    flags["project_schema_mutated"] = False
+    flags["validation_executed"] = False
+    flags["solver_executed"] = False
+    flags["candidate_activated"] = False
+    flags["trust_restored"] = False
+    flags["issue_mutated"] = False
+    flags["release_mutated"] = False
+    flags["tag_mutated"] = False
+    flags["asset_mutated"] = False
+    flags["version_bumped"] = False
+    flags["validation_pass_claimed"] = False
+    flags["validation_fail_claimed"] = False
+    flags["issue_closure_claimed"] = False
+    flags["bundled_solver_claimed"] = False
+    flags["certification_claimed"] = False
     return {str(key): bool(value) for key, value in sorted(flags.items())}
 
 
@@ -672,11 +986,14 @@ def _selected_payload(
     args: argparse.Namespace,
     mapping: Mapping[str, object],
     plan_result: Mapping[str, object] | None,
+    write_result: Mapping[str, object] | None,
 ) -> object:
     if args.persistence_command == "plan":
         return plan_result or mapping["write_plan"]
+    if args.persistence_command == "write":
+        return write_result
     if args.persistence_command == "diagnostics":
-        return _diagnostic_payload(mapping, plan_result, args)
+        return _diagnostic_payload(mapping, plan_result, write_result, args)
     if args.persistence_command == "acknowledgements":
         return mapping["acknowledgements"]
     if args.persistence_command == "expiry":
@@ -694,11 +1011,33 @@ def _selected_payload(
     return mapping
 
 
+def _write_dry_run_plan(
+    write_result: Mapping[str, object] | None,
+) -> Mapping[str, object] | None:
+    if write_result is None:
+        return None
+    dry_run_plan = _mapping(write_result.get("dry_run_plan"))
+    return dry_run_plan or None
+
+
+def _write_completed(write_result: Mapping[str, object] | None) -> bool:
+    if write_result is None:
+        return False
+    writer_result = _mapping(write_result.get("writer_result"))
+    return (
+        str(write_result.get("status") or "") == "completed"
+        and bool(writer_result.get("write_performed"))
+        and bool(writer_result.get("persistence_write_performed"))
+    )
+
+
 def _text_lines(
     args: argparse.Namespace,
     view_model: OptionalSolverPluginManifestReloadAcceptancePersistenceViewModel,
     state_source: str,
     plan_result: Mapping[str, object] | None,
+    write_result: Mapping[str, object] | None,
+    exit_code: int,
 ) -> list[str]:
     mapping = view_model.to_mapping()
     lines = _header_lines(args, mapping, state_source)
@@ -721,17 +1060,23 @@ def _text_lines(
         lines.extend(_conflict_lines())
         lines.extend(_unsafe_claim_lines())
         lines.extend(_evidence_history_lines(mapping))
-        lines.extend(_diagnostic_lines(mapping, plan_result, args))
-        lines.extend(_non_action_flag_lines(mapping, plan_result))
+        lines.extend(_diagnostic_lines(mapping, plan_result, write_result, args))
+        lines.extend(_non_action_flag_lines(mapping, plan_result, write_result))
         lines.extend(_action_lines(mapping))
         lines.extend(_safety_lines())
     elif args.persistence_command == "plan":
         lines.extend(_plan_lines(mapping, plan_result))
         lines.extend(_storage_lines(mapping, args))
-        lines.extend(_diagnostic_lines(mapping, plan_result, args))
+        lines.extend(_diagnostic_lines(mapping, plan_result, write_result, args))
+        lines.extend(_safety_lines())
+    elif args.persistence_command == "write":
+        lines.extend(_write_lines(args, write_result))
+        lines.extend(_storage_lines(mapping, args))
+        lines.extend(_diagnostic_lines(mapping, plan_result, write_result, args))
+        lines.extend(_non_action_flag_lines(mapping, plan_result, write_result))
         lines.extend(_safety_lines())
     elif args.persistence_command == "diagnostics":
-        lines.extend(_diagnostic_lines(mapping, plan_result, args))
+        lines.extend(_diagnostic_lines(mapping, plan_result, write_result, args))
     elif args.persistence_command == "acknowledgements":
         lines.extend(_acknowledgement_lines(mapping))
     elif args.persistence_command == "expiry":
@@ -746,7 +1091,7 @@ def _text_lines(
 
     if args.persistence_command not in {"preview", "plan", "safety"}:
         lines.extend(_safety_lines())
-    lines.extend(_exit_lines(args.persistence_command))
+    lines.extend(_exit_lines(args.persistence_command, exit_code))
     return _redact_lines(lines, args.target)
 
 
@@ -767,7 +1112,9 @@ def _header_lines(
             "view-model records only; no input state-file reading; no input "
             "state-file parsing; no reload file-reader invocation; no "
             "OSW-EXP-102 state-writer invocation; no GUI calls; no subprocess "
-            "use; no actual CLI writes; no ProjectSchema mutation"
+            "use; review subcommands perform no actual CLI writes; explicit "
+            "write subcommand writes only through OSW-EXP-126 writer after "
+            "dry-run/ack/confirm gates; no ProjectSchema mutation"
         ),
         f"state: {summary.get('state')}",
         f"readiness: {summary.get('readiness')}",
@@ -781,7 +1128,7 @@ def _header_lines(
             "ready_for_future_write_plan: "
             f"{summary.get('ready_for_future_write_plan')}"
         ),
-        "actual_cli_writes_enabled: False",
+        f"actual_cli_writes_enabled: {args.persistence_command == 'write'}",
         "write_future: disabled_future_only",
     ]
 
@@ -793,6 +1140,13 @@ def _explain_lines() -> list[str]:
         "- The command consumes deterministic in-memory view-model records only.",
         "- The plan command calls the writer only with dry_run=True.",
         "- The plan command creates no file.",
+        "- The write command calls the writer first with dry_run=True.",
+        (
+            "- The write command calls the writer with dry_run=False only after "
+            "explicit --target, --acknowledge-persistence-write, and "
+            "--confirm-persistence-write gates pass."
+        ),
+        "- The write command creates only an explicit local review record.",
         "- write-future remains disabled and non-mutating.",
         "Non-actions:",
         *[f"- {line}" for line in _NON_ACTION_DENIALS],
@@ -884,20 +1238,100 @@ def _plan_lines(
     return lines
 
 
+def _write_lines(
+    args: argparse.Namespace,
+    write_result: Mapping[str, object] | None,
+) -> list[str]:
+    result = _mapping(write_result)
+    dry_run_plan = _mapping(result.get("dry_run_plan"))
+    writer_result = _mapping(result.get("writer_result"))
+    status = str(result.get("status") or "blocked")
+    lines = [
+        "Write:",
+        f"- status: {status}",
+        f"- phase: {result.get('phase')}",
+        "- explicit_target_required: True",
+        f"- target_selected: {bool(str(args.target or '').strip())}",
+        f"- target_display: {_safe_display(args.target)}",
+        "- raw_target_display_hidden: True",
+        f"- acknowledgement_supplied: {bool(args.acknowledge_persistence_write)}",
+        (
+            "- confirmation_supplied: "
+            f"{bool(getattr(args, 'confirm_persistence_write', False))}"
+        ),
+        f"- allow_replace: {bool(args.allow_replace)}",
+        "- dry_run_first: True",
+        f"- dry_run_status: {dry_run_plan.get('status')}",
+        f"- dry_run_planned: {dry_run_plan.get('planned')}",
+        f"- dry_run_written: {dry_run_plan.get('written')}",
+        "- dry_run_is_not_write: True",
+        f"- writer_status: {writer_result.get('status')}",
+        f"- writer_target_display: {writer_result.get('target_display')}",
+        f"- writer_target_redacted: {writer_result.get('target_redacted')}",
+        f"- writer_dry_run: {writer_result.get('dry_run')}",
+        f"- writer_planned: {writer_result.get('planned')}",
+        f"- writer_written: {writer_result.get('written')}",
+        f"- writer_bytes_count: {writer_result.get('bytes_count')}",
+        f"- writer_sha256: {writer_result.get('sha256')}",
+        f"- writer_write_performed: {writer_result.get('write_performed')}",
+        (
+            "- writer_persistence_write_performed: "
+            f"{writer_result.get('persistence_write_performed')}"
+        ),
+        (
+            "- writer_runtime_reload_acceptance_performed: "
+            f"{writer_result.get('runtime_reload_acceptance_performed')}"
+        ),
+        (
+            "- writer_project_schema_mutated: "
+            f"{writer_result.get('project_schema_mutated')}"
+        ),
+        f"- cleanup_performed: {writer_result.get('cleanup_performed')}",
+        f"- temp_file_used: {writer_result.get('temp_file_used')}",
+        (
+            "- atomic_replace_performed: "
+            f"{writer_result.get('atomic_replace_performed')}"
+        ),
+        "- local review-record persistence only.",
+        "- write success is not runtime acceptance.",
+        "- write success is not validation success.",
+        "- write success is not validation failure.",
+        "- write success is not ProjectSchema mutation.",
+        "- write success is not trust restoration.",
+        "- write success is not automatic activation.",
+        "- write success is not issue closure.",
+        "- write success is not release mutation.",
+        "- write success is not certification.",
+    ]
+    for row in _mapping_list(result.get("diagnostics")):
+        lines.append(
+            "- write diagnostic: "
+            f"{row.get('severity')} {row.get('code')} "
+            f"blocker={row.get('blocker')}: {row.get('message')}"
+        )
+    return lines
+
+
 def _storage_lines(mapping: Mapping[str, object], args: argparse.Namespace) -> list[str]:
     target_display = _safe_display(args.target)
     lines = [
         "Storage/target policy:",
-        "- explicit target path is required for dry-run plan output.",
+        "- explicit target path is required for dry-run plan and write output.",
         f"- target_selected: {bool(str(args.target or '').strip())}",
         f"- target_display: {target_display}",
         "- raw_target_display_hidden: True",
         "- default_target_path_used: False",
         "- background_write_performed: False",
+        "- directory_scan_performed: False",
+        "- directory_creation_performed: False",
         f"- allow_replace: {bool(args.allow_replace)}",
         (
             "- caller_acknowledged_persistence_write: "
             f"{bool(args.acknowledge_persistence_write)}"
+        ),
+        (
+            "- caller_confirmed_persistence_write: "
+            f"{bool(getattr(args, 'confirm_persistence_write', False))}"
         ),
     ]
     for row in _mapping_list(mapping.get("storage_options")):
@@ -1030,10 +1464,11 @@ def _evidence_history_lines(mapping: Mapping[str, object]) -> list[str]:
 def _diagnostic_lines(
     mapping: Mapping[str, object],
     plan_result: Mapping[str, object] | None,
+    write_result: Mapping[str, object] | None,
     args: argparse.Namespace,
 ) -> list[str]:
     lines = ["Diagnostics:"]
-    for row in _diagnostic_payload(mapping, plan_result, args):
+    for row in _diagnostic_payload(mapping, plan_result, write_result, args):
         diagnostic = _mapping(row)
         lines.append(
             "- "
@@ -1047,9 +1482,10 @@ def _diagnostic_lines(
 def _non_action_flag_lines(
     mapping: Mapping[str, object],
     plan_result: Mapping[str, object] | None,
+    write_result: Mapping[str, object] | None,
 ) -> list[str]:
     lines = ["Non-action flags:"]
-    for key, value in _non_action_flags(mapping, plan_result).items():
+    for key, value in _non_action_flags(mapping, plan_result, write_result).items():
         lines.append(f"- {key}: {value}")
     return lines
 
@@ -1069,31 +1505,58 @@ def _safety_lines() -> list[str]:
     return ["Safety guidance:", *[f"- {line}" for line in _SAFETY_GUIDANCE]]
 
 
-def _exit_lines(command: str) -> list[str]:
-    semantics = _exit_semantics(command)
-    return [
+def _exit_lines(command: str, exit_code: int) -> list[str]:
+    semantics = _exit_semantics(command, exit_code)
+    lines = [
         "Exit-code policy:",
         f"- command_completion_code: {semantics['command_completion_code']}",
         f"- this_command_return_code: {semantics['this_command_return_code']}",
         "- exit code 0 is not validation success.",
         "- exit code 0 is not validation failure.",
         "- exit code 0 is not runtime acceptance.",
-        "- exit code 0 is not persistence write.",
-        "- exit code 0 is not ProjectSchema mutation.",
-        "- exit code 0 is not issue closure.",
-        "- exit code 0 is not release mutation.",
-        "- exit code 0 is not certification.",
     ]
+    if command != "write":
+        lines.append("- exit code 0 is not persistence write.")
+    else:
+        lines.append(
+            "- exit code 0 does not imply any write beyond the reported local "
+            "review-record writer result."
+        )
+    lines.extend(
+        [
+            "- exit code 0 is not ProjectSchema mutation.",
+            "- exit code 0 is not issue closure.",
+            "- exit code 0 is not release mutation.",
+            "- exit code 0 is not certification.",
+        ]
+    )
+    return lines
+
+def _return_code(
+    command: str,
+    write_result: Mapping[str, object] | None,
+) -> int:
+    if command == "write-future":
+        return 2
+    if command != "write":
+        return 0
+    status = str(_mapping(write_result).get("status") or "")
+    if status == "completed":
+        return 0
+    if status == "error":
+        return 1
+    return 2
 
 
-def _exit_semantics(command: str) -> dict[str, object]:
+def _exit_semantics(command: str, exit_code: int) -> dict[str, object]:
     return {
         "command_completion_code": 0,
-        "this_command_return_code": 2 if command == "write-future" else 0,
+        "this_command_return_code": exit_code,
         "validation_success": False,
         "validation_failure": False,
         "runtime_acceptance": False,
         "persistence_write": False,
+        "local_review_record_write_command": command == "write",
         "project_schema_mutation": False,
         "trust_restoration": False,
         "activation": False,

@@ -3918,3 +3918,32 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   implemented, remains explicit local review-record persistence only and
   remains separate from runtime acceptance, validation, ProjectSchema state,
   issue state, release state, and certification.
+
+## ADR-0168: Optional Solver Plugin Manifest Reload Acceptance Persistence CLI Write Uses The Writer Gate Only
+
+- Status: Accepted for experimental reload acceptance persistence CLI write
+  implementation
+- Date: 2026-07-03
+- Context: OSW-EXP-126 added an explicit-path dry-run-first persistence writer.
+  OSW-EXP-128 added a stdout-first dry-run-only persistence CLI review surface.
+  OSW-EXP-133 designed a future explicit-target, dry-run-first,
+  acknowledgement-gated, confirmation-gated CLI write workflow. Actual CLI
+  writes can be mistaken for runtime reload acceptance, ProjectSchema mutation,
+  validation evidence, issue closure, release mutation, trust restoration,
+  automatic activation, bundled solver support, or certification.
+- Decision: Implement the `write` subcommand for
+  `optional-solver-plugin-manifest-reload-acceptance-persistence`. The command
+  requires explicit `--target`, `--acknowledge-persistence-write`, and
+  `--confirm-persistence-write`; calls the OSW-EXP-126 writer first with
+  `dry_run=True`; stops if the dry run is blocked; and calls the writer with
+  `dry_run=False` only for the confirmed explicit local review-record write.
+  It does not read or parse input state files, invoke the reload file reader,
+  invoke the OSW-EXP-102 state writer, call GUI code, use subprocesses, accept
+  runtime reload, mutate ProjectSchema, run discovery, validation, or solver
+  execution, activate candidates, restore trust, mutate issues/releases/tags/
+  assets, bump versions, or claim validation success, validation failure,
+  issue closure, bundled solver support, or certification.
+- Consequences: The CLI can persist a local non-authoritative review record
+  when all gates pass. Review subcommands remain non-writing. Persisted records
+  remain separate from runtime acceptance, ProjectSchema state, validation
+  evidence, issue state, release state, and certification.
