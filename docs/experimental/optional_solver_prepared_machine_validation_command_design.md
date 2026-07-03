@@ -437,3 +437,17 @@ Suggested next gates:
 Prepared-machine validation remains parked until OSW-EXP-140 or a
 repo-consistent implementation gate creates the command and a prepared machine
 has the required prerequisites.
+
+## OSW-EXP-140 Implementation Follow-Up
+
+OSW-EXP-140 implements the explicit local command described by this design in
+[Optional solver prepared-machine validation command implementation](optional_solver_prepared_machine_validation_command_implementation.md).
+
+The implementation keeps the command local-only and non-installing. It checks
+executables with `shutil.which`, checks Python modules with
+`importlib.util.find_spec`, writes no evidence by default, requires explicit
+prepared-machine/local-only acknowledgements for `run`, and writes local
+JSON/Markdown evidence only under a caller-supplied directory. It still runs no
+solver execution, mutates no ProjectSchema state, mutates no issues/releases/
+tags/assets, bumps no version, and makes no validation, issue-closure,
+bundled-solver, or certification claim.

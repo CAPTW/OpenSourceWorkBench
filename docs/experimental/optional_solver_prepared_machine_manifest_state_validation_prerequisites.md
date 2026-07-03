@@ -203,3 +203,18 @@ This documentation gate does not:
 - implement a validation command;
 - edit runtime source, CLI source, GUI source, optional-solver source, solver
   source, plugin discovery, or ProjectSchema source.
+
+## OSW-EXP-140 Command Implementation Follow-Up
+
+OSW-EXP-140 implements a safe local command for the runnable-command
+prerequisite:
+[Optional solver prepared-machine validation command implementation](optional_solver_prepared_machine_validation_command_implementation.md).
+
+The new command can explain, list prerequisites, preflight, plan, run a
+local-only envelope, render diagnostics/evidence policy/safety guidance, and
+write local JSON/Markdown evidence only when explicitly requested. Missing
+local tools and packages still classify the validation retry as parked/
+skipped-missing rather than pass or failure. The command installs nothing,
+runs no solvers, mutates no ProjectSchema state, creates no ProjectSchema
+evidence, mutates no issues/releases/tags/assets, bumps no version, and claims
+no certification.

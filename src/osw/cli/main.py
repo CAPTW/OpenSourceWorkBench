@@ -38,6 +38,11 @@ from osw.cli.optional_solver_manifest_reload_acceptance_persistence import (
     add_optional_solver_plugin_manifest_reload_acceptance_persistence_parser,
     run_optional_solver_plugin_manifest_reload_acceptance_persistence_cli,
 )
+from osw.cli.optional_solver_prepared_machine_validation import (
+    OPTIONAL_SOLVER_PREPARED_MACHINE_VALIDATION_COMMAND,
+    add_optional_solver_prepared_machine_validation_parser,
+    run_optional_solver_prepared_machine_validation_cli,
+)
 from osw.core.executables import ExecutablePathRegistry
 from osw.experimental.optional_solvers import (
     OptionalSolverDiscoveryOptions,
@@ -597,6 +602,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_optional_solver_plugin_manifest_reload_acceptance_persistence_parser(
         subparsers
     )
+    add_optional_solver_prepared_machine_validation_parser(subparsers)
     plugin_health_parser = subparsers.add_parser(
         "plugin-health",
         help="Report local plugin manifest, dependency, and executable status.",
@@ -1751,6 +1757,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_optional_solver_plugin_manifest_reload_acceptance_persistence_cli(
             args
         )
+
+    if args.command == OPTIONAL_SOLVER_PREPARED_MACHINE_VALIDATION_COMMAND:
+        return run_optional_solver_prepared_machine_validation_cli(args)
 
     if args.command == "plugin-health":
         plugin_paths = [

@@ -4084,3 +4084,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: Validation retry has a deterministic command contract.
   Prepared-machine validation remains parked until implementation and local
   prerequisites exist. Issues `#6` through `#11` remain open.
+
+## ADR-0175: Optional Solver Prepared-Machine Validation Command Is Local-Only and Non-Installing
+
+- Status: Accepted for validation command implementation
+- Date: 2026-07-03
+- Context: Prepared-machine validation was parked. OSW-EXP-139 designed an
+  explicit local command because no safe runnable prepared-machine
+  manifest-state validation command existed. Missing prerequisites must not
+  trigger automatic installation, solver execution, ProjectSchema mutation,
+  issue/release mutation, or certification claims.
+- Decision: Implement a local-only prepared-machine validation command with
+  `explain`, `prerequisites`, `preflight`, `plan`, `run`, `diagnostics`,
+  `evidence`, and `safety` subcommands. The command detects prerequisites with
+  `shutil.which` and `importlib.util.find_spec`, without installing
+  dependencies, importing optional packages, executing solvers, running
+  arbitrary user workloads, or scanning arbitrary locations. Evidence writing
+  is explicit and local only through `--write-evidence --evidence-dir`. The
+  command does not mutate ProjectSchema, issues, releases, tags, assets, or
+  versions, and it does not claim certification.
+- Consequences: The next OSW-VALID retry has a runnable command. Missing
+  prerequisites still park validation rather than becoming pass/fail
+  overclaims. Issues `#6` through `#11` remain open until a separate triage
+  gate.

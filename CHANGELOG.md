@@ -6,6 +6,14 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Optional Solver Prepared-Machine Validation Command Implementation
+
+- Added a local-only optional solver prepared-machine validation command with
+  explain, prerequisites, preflight, plan, run, diagnostics, evidence, and
+  safety outputs, preserving no dependency installation, no solver execution,
+  no ProjectSchema mutation, no issue/release mutation, and no certification
+  claims.
+
 ### Optional Solver Prepared-Machine Validation Command Design
 
 - Designed a future optional solver prepared-machine validation command with
