@@ -1019,6 +1019,22 @@ solver execution, no activation/trust restoration, no issue/release/tag/asset
 mutation, no validation-pass/fail claim, no bundled-solver claim, and no
 certification claim.
 
+[Optional solver plugin manifest reload acceptance persistence summary audit design](experimental/optional_solver_plugin_manifest_reload_acceptance_persistence_summary_audit_design.md)
+is docs/test design evidence only for a future non-authoritative summary/audit
+surface over supplied persistence view-model, writer, CLI write, and GUI write
+records. It has no summary audit implementation, no CLI source edit, no GUI
+source edit, no source edit, no writer invocation, no file write, no file
+reading/parsing, no input state-file reading/parsing, no reload file-reader
+invocation, no OSW-EXP-102 state-writer invocation, no CLI/GUI behavior, no
+subprocess use, no runtime reload acceptance, no active acceptance mutation, no
+ProjectSchema mutation, no default/background path, no directory scan, no
+network fetch, no plugin package import, no reloadable bundle creation, no
+export/report file creation, no clipboard/report/open-folder behavior, no live
+discovery, no passive refresh, no validation execution, no solver execution, no
+dependency install/uninstall, no automatic activation, no trust restoration, no
+issue/release/tag/asset mutation, no validation-pass/fail claim, no
+bundled-solver claim, and no certification claim.
+
 ## Limitations
 
 - The matrix records validation evidence for v0.1 demos; it does not certify

@@ -3947,3 +3947,27 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   when all gates pass. Review subcommands remain non-writing. Persisted records
   remain separate from runtime acceptance, ProjectSchema state, validation
   evidence, issue state, release state, and certification.
+
+## ADR-0169: Optional Solver Plugin Manifest Reload Acceptance Persistence Summary Audit Is Non-Authoritative
+
+- Status: Accepted for experimental reload acceptance persistence summary audit
+  design
+- Date: 2026-07-03
+- Context: OSW-EXP-124 through OSW-EXP-134 completed the local reload
+  acceptance persistence chain across design, view-model, writer, CLI, and GUI
+  surfaces. Users may need a summary/audit view of what was reviewed or written.
+  Such audit output can be mistaken for runtime reload acceptance, validation
+  evidence, ProjectSchema state, issue closure, release mutation, or
+  certification.
+- Decision: Design a future summary/audit surface that reports chain coverage,
+  supplied CLI/GUI write results, diagnostics, acknowledgements, expiry,
+  non-action flags, disabled/future actions, and safety boundaries. Summary
+  audit remains non-authoritative and consumes supplied records only. This gate
+  adds no source, invokes no writer, reads or writes no files, calls no CLI or
+  GUI behavior, mutates no ProjectSchema, performs no discovery, validation, or
+  solver execution, and makes no issue, release, bundled-solver, or
+  certification claims.
+- Consequences: OSW-EXP-136 has a deterministic summary/audit contract.
+  Summary audit output remains distinct from runtime acceptance and validation
+  evidence. Prepared-machine validation and ProjectSchema integration remain
+  separately gated.
