@@ -1605,6 +1605,12 @@ Scope drift is any change that:
   release/tag/asset mutation, ProjectSchema mutation or evidence, version bump,
   dependency/solver installation, or certification, production-readiness,
   bundled-solver, or native-Windows validation claims;
+- turns the OpenFOAM v12 `pFinal` fix design into `fvSolution` source/template
+  implementation, golden fixture updates, adding `pFinal` to SIMPLE/`simpleFoam`
+  cases, solver execution, live validation, issue mutation, release/tag/asset
+  mutation, ProjectSchema mutation or evidence, version bump, or certification,
+  production-readiness, bundled-solver, or native-Windows validation claims
+  without a separate implementation/validation gate;
 - makes Abaqus or another commercial solver mandatory;
 - makes heavy dependencies mandatory for bootstrap or unit tests;
 - accepts proprietary native formats instead of standard/exported formats;

@@ -4159,3 +4159,33 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   native-Windows-validation claim is made. Issue `#18` remains open until the
   live-validation and issue-update gates complete. Package metadata remains
   `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`.
+
+## ADR-0178: OpenFOAM PISO Templates Need Algorithm-Aware pFinal Generation
+
+- Status: Accepted for OpenFOAM pFinal fix design
+- Date: 2026-07-04
+- Context: GitHub issue `#19` tracks a missing `pFinal` entry in
+  `system/fvSolution/solvers`. Live validation (OSW-VALID, WSL-only) showed the
+  OSW-EXP-142 Foundation v11/v12 generated cavity case reading
+  `constant/physicalProperties` and passing `blockMesh`, but `icoFoam` then failed
+  with `keyword pFinal is undefined` on the PISO final corrector. `pFinal` appears
+  nowhere in tracked source/tests/docs. SIMPLE/`simpleFoam` steady-state cases (the
+  duct default) have no final-corrector pressure solve and are not affected the
+  same way. This is a separate blocker from the `physicalProperties` fix (issue
+  `#18`).
+- Decision: Design an algorithm-aware `fvSolution` policy. Add a `pFinal` solver
+  entry (preferred form `pFinal { $p; relTol 0; }`, mirroring the OpenFOAM 12
+  `icoFoam` cavity tutorial) for PISO/`icoFoam` cases where the solver requires a
+  final-pressure solve; keep SIMPLE/`simpleFoam` behavior unchanged (no `pFinal`).
+  Gate the entry on the selected algorithm/solver, not on the property-file layout.
+  Reserve an `OSW_OPENFOAM_FVSOLUTION_*` diagnostic vocabulary. Keep the source
+  implementation, golden fixtures, and live validation in later gates
+  (OSW-EXP-144 and a live-validation retry).
+- Consequences: Issue `#19` has a safe, algorithm-aware design path. Implementation
+  must update source/templates/golden/tests in OSW-EXP-144 (the cavity `fvSolution`
+  golden gains `pFinal`; the duct `simpleFoam` golden is unchanged). Issue `#18`
+  remains open until the generated cavity runs `icoFoam` end-to-end, which requires
+  both the `physicalProperties` fix (landed) and the `pFinal` fix (designed here).
+  No certification, production-readiness, bundled-solver, or
+  native-Windows-validation claim is made. Package metadata remains `0.1.5rc1`;
+  public prerelease remains `v0.1.5-rc1`.

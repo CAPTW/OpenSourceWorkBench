@@ -164,3 +164,14 @@ and no native-Windows-validation claim.
 - `OSW-OPENFOAM_TEMPLATE_V12_COMPATIBILITY_ISSUE_UPDATE_PLAN` /
   `..._ISSUE_UPDATE_APPLY` — plan and apply an issue #18 update once
   implementation and validation exist.
+
+## 15. Follow-up: pFinal fvSolution gap (issue #19)
+
+Live validation (`OSW-VALID-OPENFOAM_TEMPLATE_V12_COMPATIBILITY_LIVE_VALIDATION`)
+confirmed this physicalProperties fix works — OpenFOAM 12 `icoFoam` reads
+`constant/physicalProperties` — but the generated Foundation cavity does **not**
+yet run `icoFoam` end-to-end: it fails on a **separate** `system/fvSolution`
+`pFinal` gap, tracked by issue #19 and designed in
+[OpenFOAM template v12 pFinal fix design](openfoam_template_v12_pfinal_fix_design.md)
+(`OSW-EXP-143`). Issue #18 remains open until both fixes land and the cavity runs
+`icoFoam` end-to-end.

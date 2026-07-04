@@ -6,6 +6,18 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### OpenFOAM Template v12 pFinal Fix Design
+
+- Designed an algorithm-aware OpenFOAM `pFinal` template fix for issue `#19`,
+  preserving SIMPLE/`simpleFoam` behavior while planning PISO/`icoFoam`
+  `system/fvSolution` support (add `pFinal { $p; relTol 0; }` for PISO cases only,
+  gated on the selected algorithm rather than the property-file layout), with a
+  golden fixture strategy and an `OSW_OPENFOAM_FVSOLUTION_*` diagnostics
+  reservation. Design-only: no source changes, no template changes, no golden
+  fixture changes, no solver execution, no live validation, no issue mutation, no
+  release/tag/asset mutation, no ProjectSchema mutation, and no certification,
+  production-readiness, bundled-solver, or native-Windows validation claims.
+
 ### OpenFOAM Template v12 Compatibility Fix Implementation
 
 - Added variant-aware OpenFOAM property-file generation so legacy/ESI cases keep
