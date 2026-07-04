@@ -91,7 +91,7 @@ class MainWindow(_BaseMainWindow):
         plugin_registry: PluginRegistry | None = None,
         plugin_state_store: PluginStateStore | None = None,
         executable_registry: ExecutablePathRegistry | None = None,
-        **_legacy_kwargs: object,
+        **legacy_kwargs: object,
     ) -> None:
         if QtCore is None or QtGui is None or QtWidgets is None:
             raise PySide6UnavailableError(pyside6_missing_message())
@@ -108,6 +108,19 @@ class MainWindow(_BaseMainWindow):
         self.plugin_registry = plugin_registry or PluginRegistry()
         self.plugin_state_store = plugin_state_store or PluginStateStore()
         self.executable_registry = executable_registry or ExecutablePathRegistry()
+        report_directory = legacy_kwargs.get("report_directory")
+        self.report_directory = (
+            Path(report_directory)
+            if report_directory is not None
+            else Path("artifacts") / "report"
+        )
+        from osw.gui.workflow_service import WorkbenchWorkflowSession
+
+        self.workflow_session = WorkbenchWorkflowSession(
+            project=self.current_project,
+            artifact_dir=legacy_kwargs.get("artifact_dir"),
+            registry=self.executable_registry,
+        )
         self.plugin_health_map: dict[str, object] = {}
         self.plugin_discovery_result: object | None = None
         self.plugin_manager_dialog: object | None = None
@@ -414,8 +427,68 @@ class MainWindow(_BaseMainWindow):
             self._placeholder_action("Plugin Health Check")
         return health_map
 
-    def set_project(self, project: Project) -> None:
+    def import_file(self, path: str | Path) -> object:
+        """Import or preview a file through the prepare-only workflow service."""
+
+        operation = self.workflow_session.import_path(path)
+        self._apply_workflow_operation(operation)
+        return operation
+
+    def run_workflow(self, _checked: bool = False) -> object:
+        """Prepare bounded workflow artifacts without executing external solvers."""
+
+        operation = self.workflow_session.run_generate()
+        self._apply_workflow_operation(operation)
+        return operation
+
+    def export_report(self, output_path: str | Path | None = None) -> Path:
+        """Compatibility wrapper for solver-free GUI report export smoke tests."""
+
+        target = (
+            Path(output_path)
+            if output_path is not None
+            else self.report_directory / "gui_workflow_report.html"
+        )
+        return self.export_current_report(output_path=target)
+
+    def _apply_workflow_operation(self, operation: object) -> None:
+        self.set_project(self.workflow_session.project, sync_workflow=False)
+        self._append_workflow_items_to_tree(getattr(operation, "items", ()) or ())
+        for line in getattr(operation, "logs", ()) or ():
+            if hasattr(self.run_monitor, "append_log"):
+                self.run_monitor.append_log(str(line), level="info")
+        self.generate_report_preview(log=False)
+
+    def _append_workflow_items_to_tree(self, items: Sequence[object]) -> None:
+        if not items or self.project_tree.topLevelItemCount() == 0:
+            return
+
+        root = self.project_tree.topLevelItem(0)
+        sections = {
+            root.child(index).text(0): root.child(index)
+            for index in range(root.childCount())
+        }
+        for item in items:
+            section_name = str(getattr(item, "section", "") or "Results")
+            section = sections.get(section_name)
+            if section is None:
+                section = QtWidgets.QTreeWidgetItem([section_name, ""])
+                root.addChild(section)
+                sections[section_name] = section
+            status = str(getattr(item, "status", "") or "")
+            marker = "✓" if status.lower().startswith(
+                ("imported", "prepared", "previewed", "calculated")
+            ) else ""
+            child = QtWidgets.QTreeWidgetItem([str(getattr(item, "label", "")), marker])
+            child.setData(0, QtCore.Qt.ItemDataRole.UserRole, "workflow")
+            section.addChild(child)
+            section.setExpanded(True)
+        root.setExpanded(True)
+
+    def set_project(self, project: Project, *, sync_workflow: bool = True) -> None:
         self.current_project = project
+        if sync_workflow and hasattr(self, "workflow_session"):
+            self.workflow_session.project = project
         if hasattr(self.project_tree_panel, "set_project"):
             self.project_tree_panel.set_project(project)
         if hasattr(self.properties_panel, "set_project"):
@@ -435,9 +508,17 @@ class MainWindow(_BaseMainWindow):
         )
         return build_report_summary(
             self.current_project,
-            figure_datasets=figure_datasets,
+            figure_datasets=(
+                *figure_datasets,
+                *tuple(getattr(self.workflow_session, "figure_datasets", ())),
+            ),
+            mesh_infos=tuple(getattr(self.workflow_session, "mesh_infos", ())),
             plugin_health=self.plugin_health_map,
-            result_tables=_result_tables_from_datasets(self._result_datasets_for_report()),
+            result_tables=(
+                *_result_tables_from_datasets(self._result_datasets_for_report()),
+                *tuple(getattr(self.workflow_session, "result_tables", ())),
+            ),
+            warnings=tuple(getattr(self.workflow_session, "warnings", ())),
         )
 
     def generate_report_preview(self, _checked: bool = False, *, log: bool = True) -> object:
@@ -472,9 +553,17 @@ class MainWindow(_BaseMainWindow):
         )
         result = build_report(
             ReportBuildRequest(project=self.current_project, output_path=target, format="html"),
-            figure_datasets=figure_datasets,
+            figure_datasets=(
+                *figure_datasets,
+                *tuple(getattr(self.workflow_session, "figure_datasets", ())),
+            ),
+            mesh_infos=tuple(getattr(self.workflow_session, "mesh_infos", ())),
             plugin_health=self.plugin_health_map,
-            result_tables=_result_tables_from_datasets(self._result_datasets_for_report()),
+            result_tables=(
+                *_result_tables_from_datasets(self._result_datasets_for_report()),
+                *tuple(getattr(self.workflow_session, "result_tables", ())),
+            ),
+            warnings=tuple(getattr(self.workflow_session, "warnings", ())),
         )
         if hasattr(self.properties_panel.report_preview_panel, "set_report_summary"):
             self.properties_panel.report_preview_panel.set_report_summary(result.summary)

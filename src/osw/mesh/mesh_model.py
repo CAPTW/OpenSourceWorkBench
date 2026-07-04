@@ -128,10 +128,8 @@ class MeshCellBlock:
         if isinstance(data, int) and count is None:
             count = data
             data = ()
-        normalized_data = tuple(
-            tuple(int(index) for index in row)
-            for row in (data or ())
-        )
+        data_rows = () if data is None else data
+        normalized_data = tuple(tuple(int(index) for index in row) for row in data_rows)
         object.__setattr__(self, "cell_type", str(cell_type))
         object.__setattr__(self, "data", normalized_data)
         object.__setattr__(

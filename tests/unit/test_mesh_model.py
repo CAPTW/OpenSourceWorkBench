@@ -1,6 +1,31 @@
 from __future__ import annotations
 
+import pytest
+
 from osw.mesh.mesh_model import MeshBounds, MeshCellBlock, MeshInfo, MeshModel
+
+
+def test_mesh_cell_block_accepts_none_data() -> None:
+    block = MeshCellBlock("triangle", None)
+
+    assert block.data == ()
+    assert block.count == 0
+
+
+def test_mesh_cell_block_preserves_list_and_tuple_data() -> None:
+    block = MeshCellBlock("triangle", [[0, 1, 2], (2, 3, 0)])
+
+    assert block.data == ((0, 1, 2), (2, 3, 0))
+    assert block.count == 2
+
+
+def test_mesh_cell_block_accepts_numpy_array_data() -> None:
+    np = pytest.importorskip("numpy")
+
+    block = MeshCellBlock("triangle", np.array([[0, 1, 2], [2, 3, 0]]))
+
+    assert block.data == ((0, 1, 2), (2, 3, 0))
+    assert block.count == 2
 
 
 def test_mesh_info_serializes_and_deserializes() -> None:

@@ -29,7 +29,6 @@ def test_gui_run_generate_updates_monitor_tree_and_report(
     app: object,
     tmp_path: Path,
 ) -> None:
-    pytest.skip("UI-010 pixel shell does not wire real import/run/export workflows.")
     from osw.gui.main_window import MainWindow
 
     geometry_path = tmp_path / "plate.stl"
@@ -46,11 +45,26 @@ def test_gui_run_generate_updates_monitor_tree_and_report(
     assert operation.status == "Prepared"
     assert "CalculiX linear static prepare" in _tree_labels(window)
     assert "OpenFOAM cavity prepare" in _tree_labels(window)
+    assert "Gmsh plate prepare" in _tree_labels(window)
     assert "M-script explicit run diagnostic" in _tree_labels(window)
     assert "Prepared input deck" in monitor_text
     assert "prepared openfoam cavity template" in monitor_text.lower()
+    assert "Prepared Gmsh .geo preview" in monitor_text
     assert window.workflow_session.project.solvers
-    assert window.table_viewer.table.rowCount() >= 1
+    assert window.workflow_session.result_tables
+    assert (tmp_path / "artifacts" / "gmsh" / "gui_plate.geo").exists()
+    assert not (tmp_path / "artifacts" / "gmsh" / "gui_plate.msh").exists()
+    assert (tmp_path / "artifacts" / "calculix" / "gui_cantilever.inp").exists()
+    assert not (tmp_path / "artifacts" / "calculix" / "gui_cantilever.frd").exists()
+    assert (
+        tmp_path
+        / "artifacts"
+        / "openfoam"
+        / "gui_cavity"
+        / "system"
+        / "controlDict"
+    ).exists()
+    assert not (tmp_path / "artifacts" / "openfoam" / "gui_cavity" / "1").exists()
     assert "plate.stl" in report_text
     assert "CalculiX linear static" in report_text
     assert "M-script execution is explicit" in report_text
