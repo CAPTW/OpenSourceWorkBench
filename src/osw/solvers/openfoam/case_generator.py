@@ -757,6 +757,8 @@ def _template_context(
         "fixed_walls": fixed_walls,
         "front_and_back": boundaries.front_and_back,
         "lid_velocity": _format_vector(boundaries.lid_velocity),
+        # The cavity always runs icoFoam (PISO), so it always needs pFinal.
+        "pfinal_block": _PFINAL_SOLVER_BLOCK,
     }
 
 
@@ -804,12 +806,14 @@ def _duct_template_context(
 
 def _duct_solver_settings(solver: str) -> dict[str, str]:
     if solver == "icoFoam":
+        # icoFoam uses PISO, whose final corrector needs a pFinal solver entry.
         return {
             "write_control": "runTime",
             "ddt_scheme": "Euler",
             "div_scheme": "Gauss linear",
             "laplacian_scheme": "Gauss linear orthogonal",
             "sn_grad_scheme": "orthogonal",
+            "pfinal_block": _PFINAL_SOLVER_BLOCK,
             "algorithm_block": "\n".join(
                 [
                     "PISO",
@@ -822,12 +826,15 @@ def _duct_solver_settings(solver: str) -> dict[str, str]:
                 ]
             ),
         }
+    # simpleFoam uses SIMPLE (steady-state); there is no final-corrector pressure
+    # solve, so no pFinal entry is emitted.
     return {
         "write_control": "timeStep",
         "ddt_scheme": "steadyState",
         "div_scheme": "Gauss upwind",
         "laplacian_scheme": "Gauss linear corrected",
         "sn_grad_scheme": "corrected",
+        "pfinal_block": "",
         "algorithm_block": "\n".join(
             [
                 "SIMPLE",
@@ -856,6 +863,21 @@ def _with_generated_header(text: str) -> str:
 
 _SAFE_CASE_NAME = re.compile(r"^[A-Za-z0-9_-]+$")
 _SUPPORTED_DUCT_SOLVERS = {"icoFoam", "simpleFoam"}
+
+# PISO/icoFoam cases need a `pFinal` solver entry for the PISO final corrector on
+# OpenFOAM Foundation v11/v12 (issue #19); SIMPLE/simpleFoam cases do not. This
+# block is injected via the `$pfinal_block` placeholder in the `fvSolution`
+# `solvers` dictionary and reuses the `p` solver via the OpenFOAM `$p` macro (kept
+# literal here because it lives in a substitution *value*, not template text). The
+# leading/trailing newlines slot it between the `p` block and the `U` block.
+_PFINAL_SOLVER_BLOCK = (
+    "\n"
+    "    pFinal\n"
+    "    {\n"
+    "        $p;\n"
+    "        relTol          0;\n"
+    "    }\n"
+)
 
 _EMBEDDED_TEMPLATES: dict[str, str] = {
     "0/U": """FoamFile
@@ -1089,7 +1111,7 @@ solvers
         tolerance       1e-06;
         relTol          0.05;
     }
-
+$pfinal_block
     U
     {
         solver          smoothSolver;
@@ -1366,7 +1388,7 @@ solvers
         tolerance       1e-06;
         relTol          0.05;
     }
-
+$pfinal_block
     U
     {
         solver          smoothSolver;

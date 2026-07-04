@@ -4189,3 +4189,30 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   No certification, production-readiness, bundled-solver, or
   native-Windows-validation claim is made. Package metadata remains `0.1.5rc1`;
   public prerelease remains `v0.1.5-rc1`.
+
+## ADR-0179: OpenFOAM PISO fvSolution Generation Includes pFinal
+
+- Status: Accepted for OpenFOAM pFinal implementation
+- Date: 2026-07-04
+- Context: Issue `#19` tracks a missing `pFinal` solver entry in
+  `system/fvSolution/solvers`. The OSW-EXP-142 Foundation v12 generated cavity
+  reads `constant/physicalProperties` and passes `blockMesh`, but `icoFoam` fails
+  when `pFinal` is absent (PISO final corrector). SIMPLE/`simpleFoam` cases have no
+  final-corrector pressure solve and do not require the entry. ADR-0178 designed an
+  algorithm-aware fix; OSW-EXP-144 implements it.
+- Decision: Add algorithm-aware `pFinal` generation. A `_PFINAL_SOLVER_BLOCK`
+  (`pFinal { $p; relTol 0; }`) is injected via a `$pfinal_block` placeholder into
+  the cavity/duct `fvSolution` `solvers` dictionary. The cavity always emits it
+  (always `icoFoam`); the duct emits it only for `icoFoam` (PISO) and omits it for
+  `simpleFoam` (SIMPLE), whose generated output is byte-identical to before. The
+  `pFinal` entry reuses the `p` solver via the OpenFOAM `$p` macro and sets
+  `relTol 0`. Gating is on the selected algorithm, not the property-file layout;
+  `physicalProperties` behavior is unchanged. The cavity `fvSolution` golden gains
+  `pFinal`; the duct golden is unchanged. Tests assert PISO and SIMPLE layouts
+  separately and never run OpenFOAM.
+- Consequences: Issue `#19` has an implemented source fix. Issue `#18` end-to-end
+  live validation can be retried (both the `physicalProperties` and `pFinal` fixes
+  now exist). Live solver validation remains a separate gate. No certification,
+  production-readiness, bundled-solver, or native-Windows-validation claim is made.
+  Package metadata remains `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`;
+  issues `#18` and `#19` remain open.

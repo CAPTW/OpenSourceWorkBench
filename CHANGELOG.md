@@ -6,6 +6,18 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### OpenFOAM Template v12 pFinal Fix Implementation
+
+- Added algorithm-aware OpenFOAM `pFinal` generation for PISO/`icoFoam` cases
+  (cavity always; duct when `icoFoam`) while preserving SIMPLE/`simpleFoam`
+  behavior byte-for-byte, via a `_PFINAL_SOLVER_BLOCK` (`pFinal { $p; relTol 0; }`)
+  injected through a `$pfinal_block` `fvSolution` placeholder. The cavity golden
+  fixture gains `pFinal`; the duct golden fixture is unchanged; `physicalProperties`
+  behavior is unchanged. Source/golden/unit coverage with no live solver execution
+  in the implementation gate; no issue mutation, no release/tag/asset mutation, no
+  ProjectSchema mutation, no version bump, and no certification,
+  production-readiness, bundled-solver, or native-Windows validation claims.
+
 ### OpenFOAM Template v12 pFinal Fix Design
 
 - Designed an algorithm-aware OpenFOAM `pFinal` template fix for issue `#19`,

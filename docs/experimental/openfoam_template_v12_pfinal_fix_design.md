@@ -264,3 +264,15 @@ claim, no bundled-solver support claim, and no native-Windows-validation claim.
 
 Package metadata remains `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`;
 issues `#18` and `#19` remain open.
+
+## 20. Implementation follow-up (OSW-EXP-144)
+
+This design was implemented in `OSW-EXP-144` — see
+[OpenFOAM template v12 pFinal fix implementation](openfoam_template_v12_pfinal_fix_implementation.md).
+The implementation adds a `_PFINAL_SOLVER_BLOCK` (`pFinal { $p; relTol 0; }`)
+injected via a `$pfinal_block` placeholder into the cavity/duct `fvSolution`
+`solvers` dictionary: the cavity always gets it (always `icoFoam`), the duct gets
+it only for `icoFoam` (PISO), and `simpleFoam` (SIMPLE) output is unchanged. The
+cavity golden fixture gains `pFinal`; the duct golden fixture is unchanged; unit
+tests never run a solver. Issues #18 and #19 remain open; end-to-end live
+validation stays a separate gate.

@@ -17,6 +17,12 @@ solvers
         relTol          0.05;
     }
 
+    pFinal
+    {
+        $p;
+        relTol          0;
+    }
+
     U
     {
         solver          smoothSolver;

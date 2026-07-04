@@ -175,3 +175,9 @@ yet run `icoFoam` end-to-end: it fails on a **separate** `system/fvSolution`
 [OpenFOAM template v12 pFinal fix design](openfoam_template_v12_pfinal_fix_design.md)
 (`OSW-EXP-143`). Issue #18 remains open until both fixes land and the cavity runs
 `icoFoam` end-to-end.
+
+The `pFinal` fix was implemented in `OSW-EXP-144` — see
+[OpenFOAM template v12 pFinal fix implementation](openfoam_template_v12_pfinal_fix_implementation.md).
+Both the `physicalProperties` and `pFinal` fixes have now landed in source;
+end-to-end `icoFoam` live validation of the generated Foundation cavity is the
+remaining step before issue #18 and issue #19 can be updated.
