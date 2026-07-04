@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from importlib import import_module
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +18,7 @@ _BaseDialog: Any = QtWidgets.QDialog if QtWidgets is not None else object
 
 
 class CalculixDeckDialog(_BaseDialog):
-    """Preview, write, and explicitly run CalculiX `.inp` text through a runner."""
+    """Preview and write CalculiX `.inp` text without launching ``ccx``."""
 
     if QtCore is not None:
         deckWritten = QtCore.Signal(str)
@@ -64,7 +63,10 @@ class CalculixDeckDialog(_BaseDialog):
         self.diagnostics_list.setObjectName("oswCalculixReadinessDiagnostics")
         layout.addWidget(self.diagnostics_list)
 
-        self.run_status_label = QtWidgets.QLabel("Run status: not run", self)
+        self.run_status_label = QtWidgets.QLabel(
+            "Run handoff: not prepared; GUI will not execute ccx.",
+            self,
+        )
         self.run_status_label.setObjectName("oswCalculixRunStatusLabel")
         layout.addWidget(self.run_status_label)
 
@@ -107,7 +109,7 @@ class CalculixDeckDialog(_BaseDialog):
         buttons.addStretch(1)
         self.write_deck_button = QtWidgets.QPushButton("Write Deck", self)
         self.write_deck_button.setObjectName("oswCalculixWriteDeckButton")
-        self.run_button = QtWidgets.QPushButton("Run with CalculiX", self)
+        self.run_button = QtWidgets.QPushButton("Prepare Run Handoff", self)
         self.run_button.setObjectName("oswCalculixRunButton")
         self.parse_results_button = QtWidgets.QPushButton("Parse Results", self)
         self.parse_results_button.setObjectName("oswCalculixParseResultsButton")
@@ -120,7 +122,7 @@ class CalculixDeckDialog(_BaseDialog):
         layout.addLayout(buttons)
 
         self.write_deck_button.clicked.connect(self.write_deck)
-        self.run_button.clicked.connect(self.run_calculix)
+        self.run_button.clicked.connect(self.prepare_run_handoff)
         self.parse_results_button.clicked.connect(self.parse_results)
         self.close_button.clicked.connect(self.close)
         self.set_theme_tokens(self._tokens)
@@ -156,28 +158,32 @@ class CalculixDeckDialog(_BaseDialog):
         self.deckWritten.emit(str(output_path))
         return output_path
 
-    def run_calculix(self) -> object | None:
-        """Run the written deck through the backend CalculiX runner."""
+    def prepare_run_handoff(self) -> Path | None:
+        """Write the deck and show the non-executing CalculiX handoff state."""
 
         deck_path = self.write_deck()
         if deck_path is None:
             return None
-        self.run_status_label.setText("Run status: running")
-        runner = self.runner
-        policy = self.run_policy
-        if runner is None:
-            runner_module = import_module("osw.solvers.calculix.runner")
-            runner = runner_module.CalculiXRunner()
-            if policy is None:
-                policy = runner_module.CalculiXRunPolicy(timeout_seconds=30.0)
-        result = runner.run_input_deck(
-            deck_path,
-            policy=policy,
-            case_dir=self.run_case_dir,
+        self.run_status_label.setText(
+            "Run handoff prepared; GUI did not execute CalculiX ccx."
         )
-        self.set_run_result(result)
-        self.calculixRunCompleted.emit(result)
-        return result
+        self.case_dir_label.setText(f"Deck path: {deck_path}")
+        self.run_log_preview.setPlainText(
+            "CalculiX execution is intentionally unavailable from this GUI path. "
+            "Use an explicit backend/service run gate to execute ccx."
+        )
+        self.run_artifacts_list.clear()
+        self.run_artifacts_list.addItem(f"input_deck: {deck_path}")
+        self.run_diagnostics_list.clear()
+        self.run_diagnostics_list.addItem(
+            "INFO runner-boundary: no ccx subprocess was started."
+        )
+        return deck_path
+
+    def run_calculix(self) -> Path | None:
+        """Compatibility entry point; prepares a handoff and does not run ``ccx``."""
+
+        return self.prepare_run_handoff()
 
     def set_run_result(self, result: object) -> None:
         self.run_result = result
@@ -208,11 +214,11 @@ class CalculixDeckDialog(_BaseDialog):
             source = self.run_result if self.run_result is not None else self.output_path.parent
             parsed = parser(source)
         else:
-            parser_module = import_module("osw.solvers.calculix.result_parser")
-            if self.run_result is not None:
-                parsed = parser_module.parse_calculix_run_artifacts(self.run_result)
-            else:
-                parsed = parser_module.parse_calculix_case_directory(self.output_path.parent)
+            self.result_diagnostics_list.clear()
+            self.result_diagnostics_list.addItem(
+                "INFO parser-boundary: result parsing requires an injected backend parser."
+            )
+            return None
         self.set_parsed_results(parsed)
         self.calculixResultsParsed.emit(parsed)
         return parsed

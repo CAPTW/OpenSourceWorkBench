@@ -70,6 +70,57 @@ def test_architecture_checker_runs_on_current_repo() -> None:
     assert proc.returncode == 0, proc.stdout + proc.stderr
 
 
+def test_architecture_checker_flags_gui_dynamic_runner_import(tmp_path: Path) -> None:
+    checker = load_module(
+        REPO_ROOT / "tools" / "qa" / "check_architecture_boundaries.py",
+        "check_architecture_boundaries_for_dynamic_runner_test",
+    )
+    sample = tmp_path / "dialog.py"
+    sample.write_text(
+        "\n".join(
+            [
+                "from importlib import import_module",
+                "runner_module = import_module('osw.solvers.openfoam.runner')",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    violations = checker.gui_boundary_violations(sample)
+
+    assert any("openfoam.runner" in violation for violation in violations)
+
+
+def test_architecture_checker_flags_gui_direct_runner_method(tmp_path: Path) -> None:
+    checker = load_module(
+        REPO_ROOT / "tools" / "qa" / "check_architecture_boundaries.py",
+        "check_architecture_boundaries_for_runner_method_test",
+    )
+    sample = tmp_path / "dialog.py"
+    sample.write_text(
+        "def launch(runner):\n    return runner.run_case('case', 'icoFoam', None)\n",
+        encoding="utf-8",
+    )
+
+    violations = checker.gui_boundary_violations(sample)
+
+    assert any("run_case" in violation for violation in violations)
+
+
+def test_architecture_checker_allows_run_monitor_status_text(tmp_path: Path) -> None:
+    checker = load_module(
+        REPO_ROOT / "tools" / "qa" / "check_architecture_boundaries.py",
+        "check_architecture_boundaries_for_run_monitor_text_test",
+    )
+    sample = tmp_path / "run_monitor.py"
+    sample.write_text(
+        "TITLE = 'Run Monitor'\nSTATUS = 'Run status: not run'\n",
+        encoding="utf-8",
+    )
+
+    assert checker.gui_boundary_violations(sample) == []
+
+
 def test_git_clean_reports_branch_and_status() -> None:
     proc = run_tool("tools/qa/check_git_clean.py", "--allow-dirty")
 

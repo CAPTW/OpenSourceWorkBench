@@ -59,7 +59,7 @@ class ScriptPreviewPanel(_BaseWidget):
         self.run_diagnostics_table.setRowCount(0)
         self.open_figures_button.setEnabled(False)
         self._figure_dataset = None
-        self.run_button.setEnabled(_preview_can_run(preview))
+        self.run_button.setEnabled(_preview_can_prepare_handoff(preview))
 
     def current_preview(self) -> ScriptPreview | None:
         return self._preview
@@ -74,45 +74,35 @@ class ScriptPreviewPanel(_BaseWidget):
         self,
         runner: object | None = None,
         policy: object | None = None,
-    ) -> object | None:
+    ) -> ScriptPreview | None:
+        del runner, policy
         preview = self._preview
         if preview is None:
             self.run_status_label.setText("No script preview loaded.")
             return None
-        if not _preview_can_run(preview):
-            self.run_status_label.setText("Run blocked by high-risk safety findings.")
+        if not _preview_can_prepare_handoff(preview):
+            self.run_status_label.setText("Run handoff blocked by high-risk safety findings.")
             return None
 
-        from osw.scripts.mscript.octave_runner import (
-            OctaveRunner,
-            OctaveRunRequest,
-        )
-
-        active_runner = runner or self._octave_runner or OctaveRunner()
-        self.run_button.setEnabled(False)
-        self.run_status_label.setText("Running with GNU Octave...")
-        QtWidgets.QApplication.processEvents()
-        request = OctaveRunRequest(
-            script_path=preview.source_path,
-            preview=preview,
-            policy=policy,
-        )
-        result = active_runner.run(request)
-        from osw.scripts.mscript.figure_capture import figure_dataset_from_octave_result
-
-        self._figure_dataset = figure_dataset_from_octave_result(result)
-        status = getattr(result.status, "value", result.status)
-        figure_count = len(getattr(self._figure_dataset, "figures", ()))
-        self.open_figures_button.setEnabled(figure_count > 0)
         self.run_status_label.setText(
-            f"Octave run: {status}; captured {figure_count} figure artifact(s)."
+            "Octave handoff prepared; GUI did not run GNU Octave."
         )
-        self.run_log_preview.setPlainText(getattr(result, "combined_log", "") or "")
-        self._populate_run_diagnostics(result)
-        self.runCompleted.emit(result)
-        self.figureDatasetReady.emit(self._figure_dataset)
-        self.run_button.setEnabled(_preview_can_run(preview))
-        return result
+        self.run_log_preview.setPlainText(
+            "Script path: "
+            f"{preview.source_path}\n"
+            "Execution requires an explicit backend/service run gate."
+        )
+        self.run_diagnostics_table.setRowCount(1)
+        self.run_diagnostics_table.setItem(0, 0, _readonly_item("info"))
+        self.run_diagnostics_table.setItem(0, 1, _readonly_item("runner-boundary"))
+        self.run_diagnostics_table.setItem(
+            0,
+            2,
+            _readonly_item("No MATLAB, Octave, or script code was executed by the GUI."),
+        )
+        self.run_diagnostics_table.resizeColumnsToContents()
+        self.open_figures_button.setEnabled(False)
+        return preview
 
     def set_theme_tokens(self, tokens: ThemeTokens) -> None:
         self._tokens = tokens
@@ -192,7 +182,7 @@ class ScriptPreviewPanel(_BaseWidget):
         tables.setSizes([540, 360])
         layout.addWidget(tables)
 
-        run_box = QtWidgets.QGroupBox("Octave Run", self)
+        run_box = QtWidgets.QGroupBox("Octave Handoff", self)
         run_layout = QtWidgets.QVBoxLayout(run_box)
         run_layout.setContentsMargins(8, 8, 8, 8)
         run_layout.setSpacing(6)
@@ -213,7 +203,7 @@ class ScriptPreviewPanel(_BaseWidget):
         layout.addWidget(run_box)
 
         button_row = QtWidgets.QHBoxLayout()
-        self.run_button = QtWidgets.QPushButton("Run with Octave", self)
+        self.run_button = QtWidgets.QPushButton("Prepare Octave Handoff", self)
         self.run_button.setObjectName("oswScriptRunWithOctaveButton")
         self.run_button.setEnabled(False)
         self.open_figures_button = QtWidgets.QPushButton("Open Figures", self)
@@ -291,13 +281,13 @@ def _code_preview_text(preview: ScriptPreview) -> str:
     return "\n".join(lines)
 
 
-def _preview_can_run(preview: ScriptPreview) -> bool:
+def _preview_can_prepare_handoff(preview: ScriptPreview) -> bool:
     if preview.source_path in {"", "<memory>"}:
         return False
     return not any(finding.severity in {"high", "blocked"} for finding in preview.safety_findings)
 
 
 def _run_status_text(preview: ScriptPreview) -> str:
-    if _preview_can_run(preview):
-        return "Ready for explicit GNU Octave run."
-    return "Run blocked until high-risk or out-of-scope findings are resolved."
+    if _preview_can_prepare_handoff(preview):
+        return "Ready to prepare GNU Octave handoff. GUI will not run scripts."
+    return "Run handoff blocked until high-risk or out-of-scope findings are resolved."

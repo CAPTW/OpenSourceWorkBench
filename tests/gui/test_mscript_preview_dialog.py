@@ -80,7 +80,7 @@ def test_script_preview_dialog_surfaces_safety_and_plot_hints(app: object) -> No
     assert safety_dialog.preview_panel.safety_table.rowCount() >= 4
     assert safety_dialog.preview_panel.safety_table.item(0, 0).text() == "high"
     assert not safety_dialog.preview_panel.run_button.isEnabled()
-    assert "run blocked" in safety_dialog.preview_panel.run_status_label.text().lower()
+    assert "run handoff blocked" in safety_dialog.preview_panel.run_status_label.text().lower()
     assert plot_dialog.preview_panel.plot_table.rowCount() >= 4
     commands = {
         plot_dialog.preview_panel.plot_table.item(row, 0).text()
@@ -91,37 +91,32 @@ def test_script_preview_dialog_surfaces_safety_and_plot_hints(app: object) -> No
     del app
 
 
-def test_script_preview_dialog_can_use_injected_octave_runner(app: object) -> None:
-    from osw.core.artifacts import RunArtifact
-    from osw.core.diagnostics import DiagnosticReport
+def test_script_preview_dialog_prepares_octave_handoff_without_runner(app: object) -> None:
     from osw.gui.dialogs.script_preview_dialog import ScriptPreviewDialog
     from osw.scripts.mscript.importer import preview_mscript
-    from osw.scripts.mscript.octave_runner import OctaveRunResult, OctaveRunStatus
 
     class FakeRunner:
-        def run(self, request: object) -> OctaveRunResult:
-            return OctaveRunResult(
-                run_id="gui-fake",
-                status=OctaveRunStatus.COMPLETED,
-                script_path=getattr(request, "script_path", ""),
-                workspace_dir="",
-                stdout="fake GUI Octave run\n",
-                artifacts=(RunArtifact(FIXTURES / "simple_plot.m", "octave_artifact"),),
-                diagnostics=DiagnosticReport(),
-            )
+        def __init__(self) -> None:
+            self.called = False
+
+        def run(self, request: object) -> object:
+            del request
+            self.called = True
+            return object()
 
     result = preview_mscript(FIXTURES / "simple_plot.m")
     assert result.preview is not None
     dialog = ScriptPreviewDialog(result.preview)
-    dialog.set_octave_runner(FakeRunner())
+    runner = FakeRunner()
+    dialog.set_octave_runner(runner)
 
     run_result = dialog.run_previewed_script_with_octave()
 
-    assert run_result is not None
-    assert run_result.status is OctaveRunStatus.COMPLETED
-    assert "completed" in dialog.preview_panel.run_status_label.text().lower()
-    assert "fake GUI Octave run" in dialog.preview_panel.run_log_preview.toPlainText()
-    assert dialog.current_figure_dataset() is not None
+    assert runner.called is False
+    assert run_result is result.preview
+    assert "did not run GNU Octave" in dialog.preview_panel.run_status_label.text()
+    assert "explicit backend/service run gate" in dialog.preview_panel.run_log_preview.toPlainText()
+    assert dialog.current_figure_dataset() is None
     assert dialog.preview_panel.open_figures_button.objectName() == "oswOpenFigureDatasetButton"
     del app
 

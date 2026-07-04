@@ -68,7 +68,7 @@ class ScriptPreviewDialog(_BaseDialog):
         self,
         runner: object | None = None,
         policy: object | None = None,
-    ) -> object | None:
+    ) -> ScriptPreview | None:
         return self.preview_panel.run_previewed_script_with_octave(runner=runner, policy=policy)
 
     def set_theme_tokens(self, tokens: ThemeTokens) -> None:

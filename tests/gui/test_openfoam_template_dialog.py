@@ -88,7 +88,7 @@ def test_openfoam_template_dialog_generates_case_without_openfoam(
     assert "Case directory" in dialog.case_summary.toPlainText()
 
 
-def test_openfoam_template_dialog_run_uses_injected_runner(
+def test_openfoam_template_dialog_run_prepares_handoff_without_runner(
     app: object,
     tmp_path: Path,
 ) -> None:
@@ -99,10 +99,12 @@ def test_openfoam_template_dialog_run_uses_injected_runner(
 
     result = dialog.run_openfoam()
 
-    assert runner.calls
+    assert runner.calls == []
     assert result is not None
-    assert "Run status: completed" in dialog.residual_summary.toPlainText()
-    assert "Ux: 0.01" in dialog.residual_summary.toPlainText()
+    assert "OpenFOAM run handoff prepared." in dialog.residual_summary.toPlainText()
+    assert "GUI did not run blockMesh, icoFoam, simpleFoam" in (
+        dialog.residual_summary.toPlainText()
+    )
 
 
 def test_openfoam_template_dialog_theme_switching(app: object, tmp_path: Path) -> None:

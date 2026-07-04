@@ -60,16 +60,16 @@ def test_gmsh_mesh_dialog_generates_geo_without_gmsh(app: object) -> None:
     assert dialog.preview_text.toPlainText() == script
 
 
-def test_gmsh_mesh_dialog_run_uses_injected_adapter(app: object) -> None:
+def test_gmsh_mesh_dialog_prepares_request_without_using_injected_adapter(app: object) -> None:
     from osw.gui.dialogs.gmsh_mesh_dialog import GmshMeshDialog
 
     adapter = FakeGmshAdapter()
     dialog = GmshMeshDialog(adapter=adapter)
     result = dialog.run_gmsh_mesh()
 
-    assert adapter.requests
-    assert getattr(result.status, "value", result.status) == "ok"
-    assert "Status: ok" in dialog.result_summary.text()
+    assert adapter.requests == []
+    assert getattr(result, "output_name", "") == "box"
+    assert "did not start gmsh" in dialog.result_summary.text()
 
 
 def test_gmsh_mesh_dialog_theme_switching(app: object) -> None:

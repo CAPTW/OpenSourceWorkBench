@@ -64,47 +64,21 @@ def test_calculix_deck_dialog_writes_deck_without_ccx(app: object, tmp_path: Pat
     assert "*CLOAD" in output_path.read_text(encoding="utf-8")
 
 
-def test_calculix_deck_dialog_run_hook_uses_injected_runner(
+def test_calculix_deck_dialog_run_hook_prepares_handoff_without_runner(
     app: object,
     tmp_path: Path,
 ) -> None:
-    from osw.core.artifacts import RunArtifact
-    from osw.core.diagnostics import DiagnosticReport
     from osw.gui.dialogs.calculix_deck_dialog import CalculixDeckDialog
     from osw.solvers.calculix.adapter import create_calculix_deck
-    from osw.solvers.calculix.runner import CalculiXRunResult, CalculiXRunStatus
 
     class FakeRunner:
         def __init__(self) -> None:
             self.called = False
 
-        def run_input_deck(self, path: Path, **kwargs: object) -> CalculiXRunResult:
-            del kwargs
+        def run_input_deck(self, path: Path, **kwargs: object) -> object:
+            del path, kwargs
             self.called = True
-            assert Path(path).exists()
-            report = DiagnosticReport()
-            report.add_info("ccx-run-completed", "CalculiX ccx run completed.")
-            return CalculiXRunResult(
-                run_id="fake",
-                status=CalculiXRunStatus.COMPLETED,
-                input_deck_path=Path(path),
-                case_dir=tmp_path / "case",
-                job_name="cantilever",
-                command=("fake-ccx", "cantilever"),
-                return_code=0,
-                stdout="fake stdout",
-                stderr="",
-                combined_log="fake stdout",
-                artifacts=(
-                    RunArtifact(
-                        tmp_path / "case" / "cantilever.inp",
-                        "input_deck",
-                        "Input deck.",
-                        exists=True,
-                    ),
-                ),
-                diagnostics=report,
-            )
+            return object()
 
     runner = FakeRunner()
     dialog = CalculixDeckDialog(
@@ -113,12 +87,13 @@ def test_calculix_deck_dialog_run_hook_uses_injected_runner(
         runner=runner,
     )
 
-    result = dialog.run_calculix()
+    deck_path = dialog.run_calculix()
 
-    assert runner.called
-    assert result is not None
-    assert "completed" in dialog.run_status_label.text()
-    assert "fake stdout" in dialog.run_log_preview.toPlainText()
+    assert runner.called is False
+    assert deck_path == tmp_path / "cantilever.inp"
+    assert deck_path.exists()
+    assert "did not execute CalculiX ccx" in dialog.run_status_label.text()
+    assert "explicit backend/service run gate" in dialog.run_log_preview.toPlainText()
     assert dialog.run_artifacts_list.count() == 1
     assert dialog.run_diagnostics_list.count() == 1
 

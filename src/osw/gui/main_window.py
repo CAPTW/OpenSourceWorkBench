@@ -668,15 +668,12 @@ class MainWindow(_BaseMainWindow):
         """Open the safe Gmsh request preview dialog."""
 
         from osw.gui.dialogs.gmsh_mesh_dialog import GmshMeshDialog
-        from osw.mesh.gmsh_adapter import GmshAdapter
 
         if self.gmsh_mesh_dialog is None:
             self.gmsh_mesh_dialog = GmshMeshDialog(
                 parent=self,
-                adapter=GmshAdapter(executable_registry=self.executable_registry),
                 theme_tokens=self.theme_manager.current_tokens,
             )
-            self.gmsh_mesh_dialog.meshGenerated.connect(self.attach_gmsh_mesh_result)
         else:
             self.gmsh_mesh_dialog.set_theme_tokens(self.theme_manager.current_tokens)
         self.gmsh_mesh_dialog.show()
@@ -685,13 +682,12 @@ class MainWindow(_BaseMainWindow):
         return self.gmsh_mesh_dialog
 
     def generate_gmsh_mesh_from_request(self, request: object) -> object:
-        """Run an explicit Gmsh request through the backend adapter."""
+        """Prepare an explicit Gmsh request without launching Gmsh from the GUI."""
 
-        from osw.mesh.gmsh_adapter import GmshAdapter
-
-        result = GmshAdapter(executable_registry=self.executable_registry).generate_mesh(request)
-        self.attach_gmsh_mesh_result(result)
-        return result
+        self._placeholder_action(
+            "Prepared Gmsh mesh request; external Gmsh execution is unavailable from GUI."
+        )
+        return request
 
     def attach_gmsh_mesh_result(self, result: object) -> bool:
         """Attach generated mesh metadata when a Gmsh result produced an artifact."""
@@ -786,18 +782,11 @@ class MainWindow(_BaseMainWindow):
     def open_openfoam_template_dialog(self, _checked: bool = False) -> object:
         """Open the safe OpenFOAM template dialog."""
 
-        from importlib import import_module
-
         from osw.gui.dialogs.openfoam_template_dialog import OpenFOAMTemplateDialog
-
-        runner_module = import_module("osw.solvers.openfoam.runner")
 
         if self.openfoam_template_dialog is None:
             self.openfoam_template_dialog = OpenFOAMTemplateDialog(
                 parent=self,
-                runner=runner_module.OpenFOAMRunner(
-                    executable_registry=self.executable_registry
-                ),
                 theme_tokens=self.theme_manager.current_tokens,
             )
             self.openfoam_template_dialog.caseGenerated.connect(
@@ -915,7 +904,7 @@ class MainWindow(_BaseMainWindow):
         figure_dataset = figure_dataset_from_octave_result(result)
         self._on_figure_dataset_ready(figure_dataset)
         if hasattr(self.run_monitor, "append_log"):
-            self.run_monitor.append_log(f"Octave script run: {status}", level="info")
+            self.run_monitor.append_log(f"Octave script result: {status}", level="info")
             combined = str(getattr(result, "combined_log", "") or "").strip()
             if combined:
                 self.run_monitor.append_log(combined.splitlines()[-1], level="info")

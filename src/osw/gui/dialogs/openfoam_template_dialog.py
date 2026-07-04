@@ -1,4 +1,4 @@
-"""Theme-aware OpenFOAM template generation and explicit run dialog."""
+"""Theme-aware OpenFOAM template generation and run handoff dialog."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ _BaseDialog: Any = QtWidgets.QDialog if QtWidgets is not None else object
 
 
 class OpenFOAMTemplateDialog(_BaseDialog):
-    """Generate bounded OpenFOAM templates and explicitly run them through a runner."""
+    """Generate bounded OpenFOAM templates without launching OpenFOAM solvers."""
 
     if QtCore is not None:
         caseGenerated = QtCore.Signal(object)
@@ -90,7 +90,7 @@ class OpenFOAMTemplateDialog(_BaseDialog):
         buttons.addStretch(1)
         self.generate_case_button = QtWidgets.QPushButton("Generate Case", self)
         self.generate_case_button.setObjectName("oswOpenFOAMGenerateCaseButton")
-        self.run_button = QtWidgets.QPushButton("Run OpenFOAM", self)
+        self.run_button = QtWidgets.QPushButton("Prepare Run Handoff", self)
         self.run_button.setObjectName("oswOpenFOAMRunButton")
         buttons.addWidget(self.generate_case_button)
         buttons.addWidget(self.run_button)
@@ -98,7 +98,7 @@ class OpenFOAMTemplateDialog(_BaseDialog):
 
         self.template_kind_combo.currentTextChanged.connect(self._sync_template_defaults)
         self.generate_case_button.clicked.connect(self.generate_case)
-        self.run_button.clicked.connect(self.run_openfoam)
+        self.run_button.clicked.connect(self.prepare_run_handoff)
         self.set_theme_tokens(self._tokens)
         self._sync_template_defaults(self.template_kind_combo.currentText())
 
@@ -146,22 +146,31 @@ class OpenFOAMTemplateDialog(_BaseDialog):
         self.caseGenerated.emit(result)
         return result
 
-    def run_openfoam(self) -> object | None:
+    def prepare_run_handoff(self) -> object | None:
+        """Prepare an OpenFOAM case handoff without running OpenFOAM commands."""
+
         if self.case_result is None:
             self.generate_case()
         if self.case_result is None:
             return None
-        model_module = import_module("osw.solvers.openfoam.model")
-        runner_module = import_module("osw.solvers.openfoam.runner")
-        runner = self.runner or runner_module.OpenFOAMRunner()
-        result = runner.run_case(
-            self.case_result.case_dir,
-            self.solver_combo.currentText(),
-            model_module.OpenFOAMRunPolicy(timeout_seconds=30.0),
+        lines = [
+            "OpenFOAM run handoff prepared.",
+            f"Case directory: {getattr(self.case_result, 'case_dir', '')}",
+            f"Solver preview: {self.solver_combo.currentText()}",
+            "GUI did not run blockMesh, icoFoam, simpleFoam, or OpenFOAM wrappers.",
+        ]
+        self.residual_summary.setPlainText("\n".join(lines))
+        self._show_diagnostics(getattr(self.case_result, "diagnostics", None))
+        self.diagnostics_list.addItem(
+            "INFO runner-boundary: external OpenFOAM execution requires an "
+            "explicit backend run gate."
         )
-        self.set_run_result(result)
-        self.openfoamRunCompleted.emit(result)
-        return result
+        return self.case_result
+
+    def run_openfoam(self) -> object | None:
+        """Compatibility entry point; prepares a handoff and does not run OpenFOAM."""
+
+        return self.prepare_run_handoff()
 
     def set_run_result(self, result: object) -> None:
         self.run_result = result

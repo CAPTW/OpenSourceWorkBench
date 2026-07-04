@@ -46,10 +46,12 @@ def test_workflow_session_run_generate_records_prepare_or_diagnostics(
     assert operation.status == "Prepared"
     assert "CalculiX linear static prepare" in labels
     assert "OpenFOAM cavity prepare" in labels
+    assert "Gmsh plate prepare" in labels
     assert "M-script explicit run diagnostic" in labels
     assert session.project.solvers
     assert session.result_tables
     assert any("execution is explicit" in warning for warning in session.warnings)
+    assert (tmp_path / "artifacts" / "gmsh" / "gui_plate.geo").exists()
 
 
 def _ascii_stl() -> str:

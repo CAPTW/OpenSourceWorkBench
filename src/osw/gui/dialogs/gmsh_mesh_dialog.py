@@ -1,4 +1,4 @@
-"""Theme-aware Gmsh mesh generation preview dialog."""
+"""Theme-aware Gmsh mesh request preview dialog."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ from typing import Any
 
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
 from osw.gui.theme_tokens import DARK_TOKENS, ThemeTokens
-from osw.mesh.gmsh_adapter import GmshAdapter
 from osw.mesh.gmsh_geometry import generate_geo_script
 from osw.mesh.gmsh_model import (
     GmshGeometryKind,
@@ -27,7 +26,7 @@ _BaseDialog: Any = QtWidgets.QDialog if QtWidgets is not None else object
 
 
 class GmshMeshDialog(_BaseDialog):
-    """Preview and explicitly run bounded primitive Gmsh requests."""
+    """Preview bounded primitive Gmsh requests without launching Gmsh."""
 
     if QtCore is not None:
         geoGenerated = QtCore.Signal(str)
@@ -45,10 +44,10 @@ class GmshMeshDialog(_BaseDialog):
             raise PySide6UnavailableError(pyside6_missing_message())
         super().__init__(parent)
         self.setObjectName("oswGmshMeshDialog")
-        self.setWindowTitle("Generate Mesh with Gmsh")
+        self.setWindowTitle("Prepare Gmsh Mesh Request")
         self.resize(900, 680)
         self._tokens = theme_tokens or DARK_TOKENS
-        self.adapter = adapter or GmshAdapter()
+        self.adapter = adapter
         self.output_dir = Path(output_dir)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -93,7 +92,10 @@ class GmshMeshDialog(_BaseDialog):
         self.diagnostics_list.setObjectName("oswGmshDiagnosticsList")
         layout.addWidget(self.diagnostics_list)
 
-        self.result_summary = QtWidgets.QLabel("No mesh run yet.", self)
+        self.result_summary = QtWidgets.QLabel(
+            "No Gmsh execution from GUI; generate a .geo preview or prepare a handoff.",
+            self,
+        )
         self.result_summary.setObjectName("oswGmshMeshResultSummary")
         layout.addWidget(self.result_summary)
 
@@ -101,14 +103,14 @@ class GmshMeshDialog(_BaseDialog):
         buttons.addStretch(1)
         self.generate_geo_button = QtWidgets.QPushButton("Generate Geo", self)
         self.generate_geo_button.setObjectName("oswGmshGenerateGeoButton")
-        self.run_button = QtWidgets.QPushButton("Run Gmsh", self)
+        self.run_button = QtWidgets.QPushButton("Prepare Request", self)
         self.run_button.setObjectName("oswGmshRunButton")
         buttons.addWidget(self.generate_geo_button)
         buttons.addWidget(self.run_button)
         layout.addLayout(buttons)
 
         self.generate_geo_button.clicked.connect(self.generate_geo_preview)
-        self.run_button.clicked.connect(self.run_gmsh_mesh)
+        self.run_button.clicked.connect(self.prepare_gmsh_request)
         self.geometry_kind_combo.currentTextChanged.connect(self._sync_dimension_for_kind)
         self.set_theme_tokens(self._tokens)
         self.generate_geo_preview()
@@ -140,16 +142,26 @@ class GmshMeshDialog(_BaseDialog):
         self.geoGenerated.emit(script)
         return script
 
-    def run_gmsh_mesh(self) -> object:
+    def prepare_gmsh_request(self) -> GmshMeshRequest:
+        """Prepare a mesh request for backend handoff without running Gmsh."""
+
         self.diagnostics_list.clear()
-        result = self.adapter.generate_mesh(self.current_request())
-        self.result_summary.setText(f"Status: {getattr(result.status, 'value', result.status)}")
-        diagnostics = getattr(result, "diagnostics", None)
-        if diagnostics is not None:
-            for message in getattr(diagnostics, "messages", ()):
-                self.diagnostics_list.addItem(f"{message.severity.value}: {message.message}")
-        self.meshGenerated.emit(result)
-        return result
+        request = self.current_request()
+        script = generate_geo_script(request)
+        self.preview_text.setPlainText(script)
+        self.geoGenerated.emit(script)
+        self.result_summary.setText(
+            "Prepared Gmsh request only; GUI did not start gmsh."
+        )
+        self.diagnostics_list.addItem(
+            "INFO runner-boundary: external Gmsh execution requires an explicit backend run gate."
+        )
+        return request
+
+    def run_gmsh_mesh(self) -> GmshMeshRequest:
+        """Compatibility entry point; prepares the request and does not run Gmsh."""
+
+        return self.prepare_gmsh_request()
 
     def set_theme_tokens(self, tokens: ThemeTokens) -> None:
         self._tokens = tokens
