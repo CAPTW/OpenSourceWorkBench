@@ -6,6 +6,18 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### OpenFOAM Template v12 Compatibility Fix Design
+
+- Designed a variant-aware OpenFOAM template compatibility fix for issue `#18`,
+  preserving legacy-Foundation/ESI `constant/transportProperties` support while
+  planning OpenFOAM Foundation v11/v12 `constant/physicalProperties` support, with
+  a variant selection policy, a golden fixture strategy, and an
+  `OSW_OPENFOAM_TEMPLATE_*` diagnostics reservation. Design-only: no OpenFOAM
+  source, template, or golden-fixture changes, no solver execution, no live
+  validation, no issue/release/tag/asset mutation, no ProjectSchema mutation, and
+  no certification, production-readiness, bundled-solver, or native-Windows
+  validation claims.
+
 ### Optional Solver Prepared-Machine Validation Command Implementation
 
 - Added a local-only optional solver prepared-machine validation command with

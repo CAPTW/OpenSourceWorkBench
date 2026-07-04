@@ -4107,3 +4107,27 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   prerequisites still park validation rather than becoming pass/fail
   overclaims. Issues `#6` through `#11` remain open until a separate triage
   gate.
+
+## ADR-0176: OpenFOAM Template Compatibility Requires Variant-Aware Property File Generation
+
+- Status: Accepted for OpenFOAM template compatibility fix design
+- Date: 2026-07-04
+- Context: GitHub issue `#18` was created for the `transportProperties` vs
+  `physicalProperties` mismatch. OpenFOAM Foundation v11/v12 expects
+  `constant/physicalProperties`, while the existing OSW OpenFOAM templates and
+  golden fixtures assume `constant/transportProperties`. ESI OpenFOAM and older
+  Foundation releases may still require `transportProperties`. Live validation
+  (WSL-only) showed the OSW-generated cavity case failing under OpenFOAM 12 while
+  OpenFOAM Foundation 12's official `icoFoam` cavity tutorial ran end-to-end.
+- Decision: Design a variant-aware template generation policy rather than a
+  blanket rename. Future implementation (OSW-EXP-142) must preserve legacy/ESI
+  `transportProperties` support while adding Foundation v11/v12
+  `physicalProperties` behavior, select the variant via an explicit option or
+  passive detection (no background detection, no solver execution required),
+  reserve an `OSW_OPENFOAM_TEMPLATE_*` diagnostic vocabulary, and cover both modes
+  with unit/golden tests. Live solver validation remains a separate gate.
+- Consequences: Issue `#18` has a safe, non-breaking fix path. Implementation
+  requires source/template/golden updates in OSW-EXP-142; this design gate makes
+  none. No certification, production-readiness, bundled-solver, or
+  native-Windows-validation claim is made. Issue `#18` remains open until
+  implementation and validation occur.
