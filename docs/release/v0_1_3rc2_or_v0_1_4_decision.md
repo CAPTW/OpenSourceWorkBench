@@ -4,9 +4,9 @@ Date: 2026-06-06
 
 Repo HEAD reviewed: `e889eb56591b9c36673c38fb9f7fa7749e05f72f`
 
-## Public Release Baseline
+## Historical Public Release Baseline
 
-- Current public release: `v0.1.3-rc1`
+- Public release at this decision gate: `v0.1.3-rc1`
 - Public release tag target: `a6e8d3a8211e02359841d10e1947e16ab847b132`
 - GitHub Release state: published prerelease, not draft
 - Release assets: wheel, sdist, Windows portable ZIP, `SHA256SUMS.txt`, and
@@ -17,7 +17,7 @@ production CAE platform, an industrial-certified solver product, a MATLAB,
 Simulink, ANSYS, Abaqus, or commercial CAD clone, or a bundled-solver
 distribution.
 
-## Current Develop
+## Develop At Review
 
 - Branch: `develop`
 - HEAD: `e889eb56591b9c36673c38fb9f7fa7749e05f72f`

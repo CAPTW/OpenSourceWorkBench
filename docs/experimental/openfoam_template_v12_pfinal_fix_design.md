@@ -34,10 +34,11 @@ relationship (physicalProperties).
 ## 4. Evidence basis
 
 - GitHub issue **#19** — "OpenFOAM 12 cavity template should include pFinal solver
-  entry" (OPEN; labels `bug`, `optional-dependency`, `live-solver`).
+  entry" (open at design time; labels `bug`, `optional-dependency`,
+  `live-solver`).
 - GitHub issue **#18** — "OpenFOAM cavity template should support OpenFOAM 12
-  physicalProperties" (OPEN); tracks the property-file fix implemented by
-  OSW-EXP-142.
+  physicalProperties" (open at design time); tracks the property-file fix
+  implemented by OSW-EXP-142.
 - Live validation evidence root:
   `artifacts/validation/OSW-VALID-OPENFOAM_TEMPLATE_V12_COMPATIBILITY_LIVE_VALIDATION_7ada538/`.
 - Log evidence: `Reading physicalProperties` (success) and
@@ -229,16 +230,18 @@ Future validation should include:
 ## 16. Issue #19 relationship
 
 - This design addresses issue **#19** as a design only.
-- Issue **#19 must remain open** until implementation and live validation occur.
+- At design time, issue **#19 had to remain open** until implementation and live
+  validation occurred.
 - **No issue mutation** occurs in this gate.
 
 ## 17. Issue #18 relationship
 
 - Issue **#18**'s physicalProperties fix is implemented (OSW-EXP-142) and
   **partially validated** (OpenFOAM 12 reads `physicalProperties`).
-- Issue **#18 remains open** until the generated cavity runs `icoFoam`
-  **end-to-end**, which additionally requires the issue #19 `pFinal` fix.
-- Issue #19 is a **separate blocker** that must land before #18 can be fully
+- At design time, issue **#18 remained open** until the generated cavity ran
+  `icoFoam` **end-to-end**, which additionally required the issue #19 `pFinal`
+  fix.
+- Issue #19 was a **separate blocker** that had to land before #18 could be
   validated end-to-end.
 
 ## 18. Non-actions
@@ -262,8 +265,8 @@ claim, no bundled-solver support claim, and no native-Windows-validation claim.
 - optional `OSW-OPENFOAM_TEMPLATE_V12_PFINAL_ISSUE_UPDATE_PLAN` — plan an issue #19
   update once the fix is implemented and validated.
 
-Package metadata remains `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`;
-issues `#18` and `#19` remain open.
+Package metadata remains `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`.
+At design time, issues `#18` and `#19` remained open.
 
 ## 20. Implementation follow-up (OSW-EXP-144)
 
@@ -274,5 +277,6 @@ injected via a `$pfinal_block` placeholder into the cavity/duct `fvSolution`
 `solvers` dictionary: the cavity always gets it (always `icoFoam`), the duct gets
 it only for `icoFoam` (PISO), and `simpleFoam` (SIMPLE) output is unchanged. The
 cavity golden fixture gains `pFinal`; the duct golden fixture is unchanged; unit
-tests never run a solver. Issues #18 and #19 remain open; end-to-end live
-validation stays a separate gate.
+tests never run a solver. Later WSL-scoped end-to-end validation of the
+generated Foundation cavity provided the issue-specific evidence used to close
+issues #18 and #19. Issue #9 remains open and separate.

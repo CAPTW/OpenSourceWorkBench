@@ -8,24 +8,25 @@ Repo HEAD before alignment: `b6f6ee0c9a7ead52d8947d987461dff798fea8b2`
 
 Metadata is aligned for the `v0.1.4-rc1` candidate.
 
-This page records metadata and documentation alignment only:
+This historical page records metadata and documentation alignment only. At this
+metadata gate:
 
 - no `v0.1.4-rc1` tag exists yet;
 - no `v0.1.4-rc1` release assets exist yet;
 - no GitHub Release for `v0.1.4-rc1` exists yet;
 - no release asset build, upload, overwrite, or publication was performed.
 
-## Baseline Public Release
+## Historical Baseline Public Release
 
-- Current public release: `v0.1.3-rc1`
-- Current public release tag target:
+- Public release at this metadata gate: `v0.1.3-rc1`
+- Public release tag target at this metadata gate:
   `a6e8d3a8211e02359841d10e1947e16ab847b132`
 - Public release state: published prerelease, not draft
 - Public release assets: wheel, sdist, Windows portable ZIP, `SHA256SUMS.txt`,
   and `release_asset_manifest.json`
 
-The existing `v0.1.3-rc1` tag and public GitHub Release remain the current
-published prerelease boundary.
+At this metadata gate, the existing `v0.1.3-rc1` tag and public GitHub Release
+remained the published prerelease boundary.
 
 ## Candidate
 

@@ -1,25 +1,28 @@
 # License And Version Plan
 
-Status: maintainer license decision recorded; v0.1.2 source release published; current metadata aligned to 0.1.3rc1 candidate
+Status: historical license/version plan; current package metadata is `0.1.5rc1`
+and current public prerelease is `v0.1.5-rc1`
 
-This document records the v0.1 maintainer license decision, package version
-scheme, tag plan, and release artifact policy. It does not provide legal
-advice, create a Git tag, announce a public release, or approve redistribution
-of third-party solver binaries.
+This historical document records the v0.1 maintainer license decision, package
+version scheme, tag plan, and release artifact policy. Older `v0.1.3-rc1`
+references in this file describe the release-candidate line at the time of that
+gate, not the current public prerelease. It does not provide legal advice,
+create a Git tag, announce a public release, or approve redistribution of
+third-party solver binaries.
 
-## Current License State Inventory
+## Historical License State Inventory
 
-| Area | Current state | Release impact |
+| Area | Recorded state at this gate | Release impact |
 | --- | --- | --- |
 | `LICENSE` | Present and replaced with the canonical GNU GPL version 3 text from a trusted local source: `D:\Program Files\Git\mingw64\share\licenses\xz\COPYING.GPLv3` (SHA-256 `3972DC9744F6499F0F9B2DBF76696F2AE7AD8AF9B23DDE66D6AF86C9DFB36986`). | Source license text is present. The "or later" grant is recorded in project metadata and release docs. |
-| `pyproject.toml` license metadata | Aligned to `GPL-3.0-or-later`; package version is `0.1.3rc1`. | OSW-AUTO-077 published the historical `v0.1.2` source branch and tag at `c39f21372ef837f096aa0d430cced82adc6f3485`. The current candidate line is `0.1.3rc1` / `v0.1.3-rc1`; OSW-RELEASE-008 pushed only that tag to `origin`, and branch push / GitHub Release / artifacts remain separate gates. |
+| `pyproject.toml` license metadata | Aligned to `GPL-3.0-or-later`; package version was `0.1.3rc1` for this historical gate. | OSW-AUTO-077 published the historical `v0.1.2` source branch and tag at `c39f21372ef837f096aa0d430cced82adc6f3485`. The then-current candidate line was `0.1.3rc1` / `v0.1.3-rc1`; OSW-RELEASE-008 pushed only that tag to `origin`, and branch push / GitHub Release / artifacts remained separate gates. |
 | README license statement | Dedicated License and Release Candidate Status sections link this plan, known limitations, and third-party notices. | README is aligned with the maintainer decision. |
 | `docs/10_release_checklist.md` | License, pyproject metadata, README license section, release notes, and third-party notices are marked PASS when this step's checks pass. | The v0.1.2 source branch and final tag are published; artifacts, GitHub Release notes, and announcement text remain separate gates. |
 | `docs/09_risk_register.md` | Tracks license metadata drift, third-party notice review, external solver redistribution, and tag-control risks. | License decision risk is lowered; redistribution and tag risks remain monitored. |
 | `docs/07_decision_log.md` | Records the maintainer GPL-3.0-or-later decision and rc package/tag naming policy. | Future release prompts have an auditable decision record. |
 | Plugin manifest expectations | `docs/03_plugin_contract.md` and `src/osw/plugins/manifest.py` require a manifest `license` field. Built-in solver/property plugin manifests currently use `GPL-3.0-or-later`. | Plugin metadata must stay explicit. Third-party plugin packages remain responsible for their own license terms. |
 | Optional dependency assumptions | Installation docs treat CalculiX, OpenFOAM, Gmsh, GNU Octave, Cantera, and CoolProp as optional external tools or optional Python dependencies. | v0.1 release artifacts must not bundle external solver binaries unless license compatibility and redistribution obligations are explicitly reviewed. |
-| Git tag state | Local `v0.1.0-rc1` exists as OSW-AUTO-043 historical evidence and points to `29c5c8bec8df30c7f7be72fc9be5e5409794968e`. Local `v0.1.0-rc2` exists as OSW-AUTO-045/046 historical evidence and points to `684dc6138d4257564bbcdd176a9d5ed311a7316d`. Local `v0.1.0-rc3` exists as OSW-AUTO-049 historical evidence and points to `dc7df75c53f0a4acb0a1ccf33d97c01ffdde4b16`. Local `v0.1.0` exists as OSW-AUTO-054 historical evidence and points to `da8728adf679314442755ed781c1dd57d1c6ed27`. Local `v0.1.1-rc1` exists as OSW-AUTO-060 patch RC evidence and points to `da1a2c9e2d27674dc4bb85a2800138170c4c4dec`. Local `v0.1.1` exists as OSW-AUTO-063 historical final evidence and points to `7b232f5003fcc8eb207846570499ffb3442d3197`. Local `v0.1.2-rc1` exists as OSW-AUTO-070 patch RC evidence and points to `28b30c1f79d4c62d160629e96fc1fcefa2382ebe`. Published `v0.1.2` points to `c39f21372ef837f096aa0d430cced82adc6f3485`. Local and remote `v0.1.3-rc1` exist as the current release-candidate tag and peel to `a6e8d3a8211e02359841d10e1947e16ab847b132`. | Existing rc and final tags must not be moved, recreated, retargeted, overwritten, deleted, force-updated, or reused as current. OSW-AUTO-077 published only `develop` and `v0.1.2`; OSW-RELEASE-008 pushed only `v0.1.3-rc1`. |
+| Git tag state | Local `v0.1.0-rc1` exists as OSW-AUTO-043 historical evidence and points to `29c5c8bec8df30c7f7be72fc9be5e5409794968e`. Local `v0.1.0-rc2` exists as OSW-AUTO-045/046 historical evidence and points to `684dc6138d4257564bbcdd176a9d5ed311a7316d`. Local `v0.1.0-rc3` exists as OSW-AUTO-049 historical evidence and points to `dc7df75c53f0a4acb0a1ccf33d97c01ffdde4b16`. Local `v0.1.0` exists as OSW-AUTO-054 historical evidence and points to `da8728adf679314442755ed781c1dd57d1c6ed27`. Local `v0.1.1-rc1` exists as OSW-AUTO-060 patch RC evidence and points to `da1a2c9e2d27674dc4bb85a2800138170c4c4dec`. Local `v0.1.1` exists as OSW-AUTO-063 historical final evidence and points to `7b232f5003fcc8eb207846570499ffb3442d3197`. Local `v0.1.2-rc1` exists as OSW-AUTO-070 patch RC evidence and points to `28b30c1f79d4c62d160629e96fc1fcefa2382ebe`. Published `v0.1.2` points to `c39f21372ef837f096aa0d430cced82adc6f3485`. Local and remote `v0.1.3-rc1` existed as the then-current release-candidate tag and peel to `a6e8d3a8211e02359841d10e1947e16ab847b132`. | Existing rc and final tags must not be moved, recreated, retargeted, overwritten, deleted, force-updated, or reused as current. OSW-AUTO-077 published only `develop` and `v0.1.2`; OSW-RELEASE-008 pushed only `v0.1.3-rc1`. |
 
 ## Maintainer Decision Recorded
 
@@ -134,8 +137,8 @@ Recommended package versions:
 | Historical patch release candidate | `0.1.1rc1` | Local `v0.1.1-rc1` evidence from OSW-AUTO-060. It remains preserved after the docs-only OSW-AUTO-061A cleanup and final metadata prep. |
 | Historical local patch final evidence | `0.1.1` | Prepared by OSW-AUTO-062 and locally tagged by OSW-AUTO-063. It must remain local-only historical evidence after OSW-AUTO-067 advanced `develop` with GUI workflow glue. |
 | Historical patch release candidate | `0.1.2rc1` | Prepared and locally tagged by OSW-AUTO-070 after OSW-AUTO-068 verified the GUI workflow fix with no P0/P1 blockers. |
-| Current GitHub source release | `0.1.2` | Prepared by OSW-AUTO-072 after OSW-AUTO-071 found no RC1 P0/P1 blockers, locally tagged by OSW-AUTO-073, and published to GitHub by OSW-AUTO-077. |
-| Current patch release candidate metadata | `0.1.3rc1` | Prepared by OSW-RELEASE-003 as the current candidate metadata line, locally tagged by OSW-RELEASE-005, and pushed tag-only by OSW-RELEASE-008. |
+| Historical GitHub source release | `0.1.2` | Prepared by OSW-AUTO-072 after OSW-AUTO-071 found no RC1 P0/P1 blockers, locally tagged by OSW-AUTO-073, and published to GitHub by OSW-AUTO-077. |
+| Historical patch release candidate metadata | `0.1.3rc1` | Prepared by OSW-RELEASE-003 as the then-current candidate metadata line, locally tagged by OSW-RELEASE-005, and pushed tag-only by OSW-RELEASE-008. |
 
 Recommended Git tag names:
 
@@ -148,8 +151,8 @@ Recommended Git tag names:
 | Historical patch release candidate | `v0.1.1-rc1` |
 | Historical local patch final evidence | `v0.1.1` |
 | Historical patch release candidate | `v0.1.2-rc1` |
-| Current published patch final | `v0.1.2` |
-| Current pushed patch release candidate | `v0.1.3-rc1` |
+| Historical published patch final | `v0.1.2` |
+| Historical pushed patch release candidate | `v0.1.3-rc1` |
 
 The package version and Git tag do not have to use identical syntax. Package
 metadata should follow PEP 440; Git tags may use the common `v` prefix and a
@@ -181,7 +184,8 @@ hyphenated release-candidate suffix.
   `v0.1.2-rc1`, and OSW-AUTO-072 prepares final package metadata `0.1.2`.
   OSW-AUTO-073 created local annotated `v0.1.2`, and OSW-AUTO-077 published
   `develop` plus `v0.1.2` to GitHub.
-- The current patch release-candidate line is `v0.1.3-rc1`. OSW-RELEASE-003
+- At this tag-only gate, the patch release-candidate line was `v0.1.3-rc1`.
+  OSW-RELEASE-003
   prepared package metadata as `0.1.3rc1`, OSW-RELEASE-005 created the
   annotated local tag, OSW-RELEASE-008 pushed only that tag to `origin`, and
   OSW-RELEASE-009 verified the remote tag target.
@@ -339,7 +343,8 @@ tag, changes no package version, and does not push. After this docs-only merge,
 `develop` may be ahead of `v0.1.1-rc1`; final prep may proceed from docs-clean
 `develop` only if the maintainer accepts the post-RC documentation delta. If
 exact final-from-current-RC identity is required, a later dedicated
-`v0.1.1-rc2` gate should create the next current release-candidate tag.
+`v0.1.1-rc2` gate should create the next release-candidate tag for that
+historical line.
 
 ## OSW-AUTO-062 Patch v0.1.1 Final Metadata Prep
 
@@ -458,8 +463,8 @@ source metadata was still `0.1.2`, but published `v0.1.2` already pointed to
 `c39f21372ef837f096aa0d430cced82adc6f3485`; therefore `v0.1.2` must not be
 moved or reused for the current `develop` line.
 
-If maintainers need a current release candidate after `f421318`, the
-recommended path is a new patch candidate:
+At that point, if maintainers needed a release candidate after `f421318`, the
+recommended historical path was a new patch candidate:
 
 - next release-candidate package version: `0.1.3rc1`
 - next release-candidate tag: `v0.1.3-rc1`
@@ -478,5 +483,5 @@ OSW-RELEASE-009 verifies that the remote tag peels to
 This tag-only path performs no branch push, all-tags push, force push, GitHub
 Release creation, package artifact build, binary installer publication, public
 announcement, or product behavior change. The existing `v0.1.2` source-release
-tag and current `v0.1.3-rc1` candidate tag must not be moved, reused, deleted,
-retargeted, recreated, or force-updated.
+tag and then-current `v0.1.3-rc1` candidate tag must not be moved, reused,
+deleted, retargeted, recreated, or force-updated.

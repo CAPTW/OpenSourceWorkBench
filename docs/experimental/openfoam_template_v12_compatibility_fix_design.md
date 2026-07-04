@@ -34,7 +34,7 @@ Foundation releases). This design addresses GitHub issue #18 as a design only.
 ## 4. Evidence basis
 
 - GitHub issue **#18** — "OpenFOAM cavity template should support OpenFOAM 12
-  physicalProperties" (OPEN; labels `bug`, `optional-dependency`).
+  physicalProperties" (open at design time; labels `bug`, `optional-dependency`).
 - Live validation evidence root:
   `artifacts/validation/OSW-VALID-OPTIONAL_LIVE_SOLVER_EVIDENCE_4f17c81/`
   (OSW template case + `solver.log` failing on missing `physicalProperties`; the
@@ -188,7 +188,8 @@ Future validation should include:
 ## 15. Issue #18 relationship
 
 - This design addresses issue **#18** as a design only.
-- Issue **#18 must remain open** until implementation and validation occur.
+- At design time, issue **#18 had to remain open** until implementation and
+  validation occurred.
 - **No issue mutation** occurs in this gate.
 
 ## 16. Non-actions
@@ -208,8 +209,8 @@ support claim, and no native-Windows-validation claim.
 - `OSW-OPENFOAM_TEMPLATE_V12_COMPATIBILITY_ISSUE_UPDATE_PLAN` — plan an issue #18
   update once implementation and validation exist.
 
-Package metadata remains `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`;
-issues `#6` through `#11` and `#18` remain open.
+Package metadata remains `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`.
+At design time, issues `#6` through `#11` and `#18` remained open.
 
 ## 18. Implementation follow-up (OSW-EXP-142)
 
@@ -220,5 +221,6 @@ The implementation adds an explicit `OpenFOAMPropertyFileLayout` selector
 `constant/physicalProperties`) with the legacy layout preserved as the default,
 a `--property-file-layout` CLI option on `openfoam-write-case`, Foundation
 v11/v12 golden fixtures alongside the retained legacy fixtures, and unit tests
-that never run a solver. Issue #18 remains open; live OpenFOAM validation stays a
-separate gate.
+that never run a solver. Later WSL-scoped validation plus the `pFinal` follow-up
+provided the issue-specific evidence used to close issues #18 and #19. Issue #9
+and optional validation issues #6 through #11 remain open and separate.

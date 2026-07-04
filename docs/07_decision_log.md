@@ -323,9 +323,9 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   package version, source code, tests, or any tag.
 - Consequences: This docs-only merge can advance `develop` beyond the
   `v0.1.1-rc1` tag. Final prep may proceed from docs-clean `develop` only if the
-  maintainer accepts this post-RC documentation delta; if exact final-from-current
-  RC identity is required, a later dedicated `v0.1.1-rc2` gate should create the
-  next current release-candidate tag.
+  maintainer accepts this post-RC documentation delta; if exact final-from-RC
+  identity is required, a later dedicated `v0.1.1-rc2` gate should create the
+  next release-candidate tag for that historical line.
 
 ## ADR-0021: Patch v0.1.1 Final Prep From Docs-Clean Develop
 
@@ -548,7 +548,7 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Date: 2026-06-06
 - Context: ADR-0030 selected `v0.1.4-rc1` as the cleaner next prerelease
   boundary after v0.1.4 planned scope completion. The repository still reported
-  package and CLI version `0.1.3rc2.dev0`, while the current public release
+  package and CLI version `0.1.3rc2.dev0`, while the then-current public release
   remained `v0.1.3-rc1`.
 - Decision: Align package metadata, `osw.__version__`, CLI version, release
   metadata QA, changelog, and release docs to candidate version `0.1.4rc1`.
@@ -4129,8 +4129,9 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: Issue `#18` has a safe, non-breaking fix path. Implementation
   requires source/template/golden updates in OSW-EXP-142; this design gate makes
   none. No certification, production-readiness, bundled-solver, or
-  native-Windows-validation claim is made. Issue `#18` remains open until
-  implementation and validation occur.
+  native-Windows-validation claim is made. At this design gate, issue `#18`
+  remained open until implementation and validation occurred; ADR-0180 records
+  the later WSL-scoped closure.
 
 ## ADR-0177: OpenFOAM Property File Generation Is Variant-Aware
 
@@ -4156,8 +4157,9 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 - Consequences: Issue `#18` has an implemented, non-breaking source fix. Live
   OpenFOAM validation remains separate (WSL-only evidence; `foamVersion` wrapper
   caveat). No certification, production-readiness, bundled-solver, or
-  native-Windows-validation claim is made. Issue `#18` remains open until the
-  live-validation and issue-update gates complete. Package metadata remains
+  native-Windows-validation claim is made. At this implementation gate, issue
+  `#18` remained open until the live-validation and issue-update gates completed;
+  ADR-0180 records the later WSL-scoped closure. Package metadata remains
   `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`.
 
 ## ADR-0178: OpenFOAM PISO Templates Need Algorithm-Aware pFinal Generation
@@ -4212,7 +4214,29 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   separately and never run OpenFOAM.
 - Consequences: Issue `#19` has an implemented source fix. Issue `#18` end-to-end
   live validation can be retried (both the `physicalProperties` and `pFinal` fixes
-  now exist). Live solver validation remains a separate gate. No certification,
+  now exist). At this implementation gate, live solver validation remained a
+  separate gate and issues `#18` and `#19` remained open. No certification,
   production-readiness, bundled-solver, or native-Windows-validation claim is made.
-  Package metadata remains `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`;
-  issues `#18` and `#19` remain open.
+  Package metadata remains `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`.
+
+## ADR-0180: OpenFOAM v12 Template Compatibility Issues Closed With WSL-Scoped Evidence
+
+- Status: Accepted for issue closure status
+- Date: 2026-07-04
+- Context: After OSW-EXP-142 and OSW-EXP-144, a WSL-scoped live OpenFOAM
+  validation gate generated the Foundation cavity case with
+  `constant/physicalProperties` and `system/fvSolution` `pFinal`. The run
+  reported `blockMesh` exit 0, `icoFoam` exit 0 end-to-end, time directories from
+  `0` to `1`, an end marker, and no recurrence of the previous `pFinal` fatal
+  error. Duct status remains generation/layout-verified only.
+- Decision: Treat GitHub issues `#18` and `#19` as closed for the bounded
+  OpenFOAM v12 template compatibility criteria. Issue `#18` covers
+  `physicalProperties`/layout compatibility; issue `#19` covers the `pFinal`
+  solver entry for OpenFOAM 12 PISO cavity generation. Closure comments were
+  posted before closure and labels remained intact.
+- Consequences: Optional live validation issue `#9` remains open, as do issues
+  `#6` through `#11`. The evidence is WSL-only, local validation artifacts are
+  not release assets, and the `foamVersion` delegation-wrapper caveat remains.
+  No native-Windows validation, certification, production-readiness,
+  bundled-solver, or release-readiness claim is made. Package metadata remains
+  `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`.

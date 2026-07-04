@@ -4,10 +4,10 @@ OpenSolver Workbench (OSW) is an educational/research open-source Engineering
 Solver & Script Workbench for inspectable desktop workflows, solver case
 preparation, script previews, result review, and report generation.
 
-OSW v0.1.3rc1 is a source release candidate. It is useful for teaching,
-research prototyping, and transparent workflow experiments, but it is not an
-industrial-certified CAE tool, MATLAB clone, ANSYS clone, Simulink clone, or
-commercial CAD replacement.
+OSW package metadata is currently `0.1.5rc1`, and the current public GitHub
+prerelease is `v0.1.5-rc1`. It is useful for teaching, research prototyping,
+and transparent workflow experiments, but it is not an industrial-certified CAE
+tool, MATLAB clone, ANSYS clone, Simulink clone, or commercial CAD replacement.
 
 ## What This Is
 
@@ -154,8 +154,9 @@ diagnostics or skips rather than pretending a workflow succeeded.
 - No full OpenFOAM field parser.
 - No plugin signing, remote plugin marketplace, or dependency auto-install.
 - No MSI installer or code signing yet.
-- The GitHub Release for `v0.1.4-rc1` is a public prerelease with assets; it is
-  not a stable production release.
+- The GitHub Release for `v0.1.5-rc1` is a public prerelease with assets; it is
+  not a stable production release, certification milestone, or bundled-solver
+  distribution.
 
 See [Known Limitations For v0.1](docs/release/known_limitations_v0_1.md) for
 the full public scope note.
@@ -163,15 +164,14 @@ the full public scope note.
 ## Release Status
 
 - Current `develop` package metadata: `0.1.5rc1`.
-- Current public prerelease tag: `v0.1.4-rc1`.
-- Current public prerelease tag target:
-  `f1683b441ab308fd65318ef6de3f1282549946a1`.
-- Next intended candidate tag: `v0.1.5-rc1` (not created yet).
-- Current `develop` includes post-tag documentation/status updates and
-  v0.1.5-rc1 candidate metadata alignment.
-- A public GitHub Release prerelease exists for `v0.1.4-rc1`.
+- Current public prerelease tag: `v0.1.5-rc1`.
+- `develop` may be ahead of the `v0.1.5-rc1` release tag.
+- A public GitHub Release prerelease exists for `v0.1.5-rc1`.
 - Release assets are attached: wheel, sdist, Windows portable ZIP, checksums,
-  and manifest.
+  and manifest; local validation artifacts are not release assets.
+- OpenFOAM v12 template compatibility issues #18 and #19 are closed with
+  WSL-scoped evidence. Issue #9 and optional validation issues #6 through #11
+  remain open and separate.
 - Future maintenance and feature work are tracked in the
   [post-public-release roadmap](docs/roadmap/README.md).
 - Package publication, installer/signing work, and public announcement text

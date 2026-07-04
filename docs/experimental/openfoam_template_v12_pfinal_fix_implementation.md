@@ -10,10 +10,16 @@ Implementation complete (`OSW-EXP-144`).
 - **No live solver validation** in this gate: no OpenFOAM execution, no
   `blockMesh`/`icoFoam`/`simpleFoam`/`foamVersion` invocation, and no unit test
   that requires an installed OpenFOAM.
-- **No issue mutation**: issues #18 and #19 stay OPEN.
+- **No issue mutation in this implementation gate**: issues #18 and #19 stayed
+  OPEN until a later validation/update gate.
 - **No certification**, production-readiness, bundled-solver, or
   native-Windows-validation claim.
 - Package metadata remains `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`.
+
+Follow-up status after the later validation/update gates: issues #18 and #19 are
+closed after WSL-scoped OpenFOAM v12 template compatibility evidence. This does
+not close optional live validation issue #9, and it does not claim native-Windows
+validation, certification, production readiness, or bundled solver support.
 
 ## 2. Public API / option names
 
@@ -107,25 +113,28 @@ unchanged (no new warnings; `generate_openfoam_case` still returns `ok`).
 
 ## 10. Relationship to issue #19
 
-This gate implements the source fix requested by issue #19. Issue #19 remains
-**OPEN**; it closes only after a live-validation gate confirms the generated
-Foundation cavity runs `icoFoam` end-to-end, followed by an explicit issue-update
-gate. No issue mutation occurs here.
+This gate implements the source fix requested by issue #19. At this
+implementation gate, issue #19 remained **OPEN** until a live-validation gate
+confirmed the generated Foundation cavity runs `icoFoam` end-to-end, followed by
+an explicit issue-update gate. No issue mutation occurred here. Follow-up: issue
+#19 is now **CLOSED** after WSL-scoped evidence for the generated Foundation
+cavity.
 
 ## 11. Relationship to issue #18
 
 Issue #18's `physicalProperties` fix (OSW-EXP-142) is unchanged and not regressed.
-Issue #18 remains **OPEN** until the generated cavity runs `icoFoam` end-to-end,
-which required both the `physicalProperties` fix (landed) and this `pFinal` fix
-(landed here). End-to-end live validation is the remaining step.
+At this implementation gate, issue #18 remained **OPEN** until the generated
+cavity ran `icoFoam` end-to-end, which required both the `physicalProperties` fix
+(landed) and this `pFinal` fix (landed here). Follow-up: issue #18 is now
+**CLOSED** after WSL-scoped evidence. Issue #9 remains open and separate.
 
 ## 12. Validation still required
 
 - `OSW-VALID-OPENFOAM_TEMPLATE_V12_COMPATIBILITY_LIVE_VALIDATION` (retry) —
   bounded WSL OpenFOAM live validation of the generated Foundation cavity,
   expecting `icoFoam` to run end-to-end (time directories beyond `0`).
-- No certification, production-readiness, or native-Windows-validation claim is
-  made until such evidence exists.
+- No certification, production-readiness, bundled-solver, or native-Windows
+  validation claim is made by this gate or the later WSL-scoped closure evidence.
 
 ## 13. Non-actions
 
@@ -137,8 +146,6 @@ and no native-Windows-validation claim.
 
 ## 14. Future gates
 
-- `OSW-VALID-OPENFOAM_TEMPLATE_V12_COMPATIBILITY_LIVE_VALIDATION` (retry) —
-  end-to-end live validation of the generated Foundation cavity.
-- `OSW-OPENFOAM_TEMPLATE_V12_COMPATIBILITY_ISSUE_UPDATE_PLAN` /
-  `..._ISSUE_UPDATE_APPLY` — plan and apply issue #18/#19 updates once end-to-end
-  validation exists.
+- Historical follow-up gates completed after this implementation: bounded
+  WSL-scoped live validation of the generated Foundation cavity, then issue
+  update plan/apply gates for #18 and #19.

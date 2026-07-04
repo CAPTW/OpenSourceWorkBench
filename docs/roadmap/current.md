@@ -1,25 +1,35 @@
 # Current Roadmap Pointer
 
-Current public release: `v0.1.3-rc1`.
+Current public prerelease: `v0.1.5-rc1`.
 
-Current development version: `0.1.3rc2.dev0`.
+Current package metadata: `0.1.5rc1`.
 
-Current development cycle: [v0.1.3rc2 maintenance cycle](../development/current_cycle.md).
+Current development cycle: [post-v0.1.5-rc1 development cycle](../development/current_cycle.md).
+
+`develop` may be ahead of the `v0.1.5-rc1` release tag. The public prerelease is
+not a production release, certification milestone, native-Windows validation
+claim, or bundled-solver distribution.
 
 Current recommended sequence:
 
-1. Use `v0.1.3rc2` for maintenance, revalidation, release-checklist polish, and
-   optional solver evidence.
-2. Work GitHub issues `#1` through `#17` against the `v0.1.3rc2`, `v0.1.4`,
-   and `live-optional-validation` milestones without expanding v0.1 scope.
-3. Start `v0.1.4` feature work only after maintenance tasks are either complete,
-   explicitly deferred, or assigned to issues.
+1. Keep repository docs and ChatGPT Project Sources aligned with the current
+   `v0.1.5-rc1` / `0.1.5rc1` status.
+2. Treat OpenFOAM issues #18 and #19 as closed only for WSL-scoped OpenFOAM v12
+   template compatibility evidence: `physicalProperties`, `pFinal`, `blockMesh`
+   exit 0, and `icoFoam` exit 0 for the Foundation cavity. Duct status remains
+   generation/layout-verified only.
+3. Keep optional validation issues #6 through #11 open and separate. Missing
+   optional dependencies are skipped-missing, not pass.
+4. Plan GUI runner-boundary hardening as a later P1 gate; do not use docs status
+   cleanup as permission for GUI direct solver execution.
 
 ## Track Links
 
 - [v0.1.3rc2 maintenance](v0_1_3rc2.md)
 - [v0.1.4 feature line](v0_1_4.md)
 - [Live optional validation](live_optional_validation.md)
+- [Post-v0.1.5-rc1 next worktrack selection](post_v0_1_5_rc1_next_worktrack_selection.md)
+- [Next experimental line selection](next_experimental_line_selection.md)
 - [Current development cycle](../development/current_cycle.md)
 
 ## Scope Reminder

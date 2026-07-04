@@ -19,14 +19,17 @@ industrial certification claims.
 
 ## Post-Public-Release Roadmap
 
-The public `v0.1.3-rc1` prerelease is published with source assets and a
-Windows portable ZIP. Post-public-release planning is split into separate
-tracks so maintenance, future features, and optional live validation do not
-blur scope or release claims:
+The current public prerelease is `v0.1.5-rc1`, and package metadata is
+`0.1.5rc1`. `develop` may be ahead of the release tag. Older `v0.1.3-rc1` and
+`v0.1.4-rc1` references are historical unless a page explicitly marks them as
+the current boundary.
 
-The active development metadata is `0.1.3rc2.dev0` for the `v0.1.3rc2`
-maintenance line. This is development-only metadata; it does not create a new
-tag or change the public `v0.1.3-rc1` prerelease boundary.
+Post-public-release planning stays split into separate tracks so maintenance,
+future features, and optional live validation do not blur scope or release
+claims. OpenFOAM v12 template compatibility issues #18 and #19 are closed with
+WSL-scoped evidence; this does not close optional live OpenFOAM validation issue
+#9. Issues #6 through #11 remain separate open optional validation tracks, and
+missing optional dependencies are skipped-missing, not pass.
 
 - [Post-public-release roadmap](roadmap/README.md)
 - [Current development cycle](development/current_cycle.md)
@@ -35,8 +38,8 @@ tag or change the public `v0.1.3-rc1` prerelease boundary.
 - [Live optional validation](roadmap/live_optional_validation.md)
 - [Current roadmap pointer](roadmap/current.md)
 
-The next recommended planning gate is
-`OSW-GH-001_ISSUES_AND_MILESTONES_TRIAGE`.
+The current next-gate pointer is maintained in
+[Current roadmap pointer](roadmap/current.md).
 
 ## Demo Mapping
 
