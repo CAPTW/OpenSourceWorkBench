@@ -210,3 +210,15 @@ support claim, and no native-Windows-validation claim.
 
 Package metadata remains `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`;
 issues `#6` through `#11` and `#18` remain open.
+
+## 18. Implementation follow-up (OSW-EXP-142)
+
+This design was implemented in `OSW-EXP-142` — see
+[OpenFOAM template v12 compatibility fix implementation](openfoam_template_v12_compatibility_fix_implementation.md).
+The implementation adds an explicit `OpenFOAMPropertyFileLayout` selector
+(`legacy` → `constant/transportProperties`, `foundation_v11_plus` →
+`constant/physicalProperties`) with the legacy layout preserved as the default,
+a `--property-file-layout` CLI option on `openfoam-write-case`, Foundation
+v11/v12 golden fixtures alongside the retained legacy fixtures, and unit tests
+that never run a solver. Issue #18 remains open; live OpenFOAM validation stays a
+separate gate.

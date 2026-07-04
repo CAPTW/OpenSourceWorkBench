@@ -16,6 +16,7 @@ from osw.solvers.openfoam.model import (
     OpenFOAMCaseRequest,
     OpenFOAMCaseResult,
     OpenFOAMControlSettings,
+    OpenFOAMPropertyFileLayout,
     OpenFOAMSolverKind,
     OpenFOAMTemplateKind,
     OpenFOAMTransportProperties,
@@ -23,9 +24,117 @@ from osw.solvers.openfoam.model import (
 
 DuctSolver = Literal["icoFoam", "simpleFoam"]
 
+# Diagnostic codes for variant-aware OpenFOAM property-file generation (issue #18).
+# These are the implementation-time subset of the vocabulary reserved by the
+# OSW-EXP-141 design; they trigger no solver execution.
+OSW_OPENFOAM_TEMPLATE_VARIANT_UNSUPPORTED = "OSW_OPENFOAM_TEMPLATE_VARIANT_UNSUPPORTED"
+OSW_OPENFOAM_TEMPLATE_FOUNDATION_V12_PHYSICAL_PROPERTIES = (
+    "OSW_OPENFOAM_TEMPLATE_FOUNDATION_V12_PHYSICAL_PROPERTIES"
+)
+OSW_OPENFOAM_TEMPLATE_LEGACY_TRANSPORT_PROPERTIES = (
+    "OSW_OPENFOAM_TEMPLATE_LEGACY_TRANSPORT_PROPERTIES"
+)
+
+# Relative case paths for the two mutually-exclusive constant property files.
+_TRANSPORT_PROPERTIES_PATH = "constant/transportProperties"
+_PHYSICAL_PROPERTIES_PATH = "constant/physicalProperties"
+
+# Accepted spellings that resolve to each layout. Keys are lower-cased with
+# hyphens normalized to underscores before lookup, so callers can pass CLI-style
+# ("foundation-v12"), enum-value ("foundation_v11_plus"), or file-name
+# ("physicalProperties") forms without guessing an unknown variant.
+_LEGACY_LAYOUT_ALIASES = frozenset(
+    {
+        "legacy",
+        "transportproperties",
+        "transport_properties",
+        "esi",
+        "foundation_v10",
+        "foundation_10",
+        "v10",
+    }
+)
+_FOUNDATION_V11_PLUS_LAYOUT_ALIASES = frozenset(
+    {
+        "foundation_v11_plus",
+        "foundation_v11",
+        "foundation_v12",
+        "physicalproperties",
+        "physical_properties",
+        "v11",
+        "v12",
+    }
+)
+
 
 class OpenFoamCaseTemplateError(ValueError):
     """Raised when a template case cannot be generated safely."""
+
+
+def resolve_property_file_layout(
+    value: OpenFOAMPropertyFileLayout | str | None,
+) -> OpenFOAMPropertyFileLayout:
+    """Resolve a layout selector to an :class:`OpenFOAMPropertyFileLayout`.
+
+    ``None`` and unspecified values resolve to the legacy default so existing
+    callers keep emitting ``constant/transportProperties``. Unknown spellings
+    raise :class:`OpenFoamCaseTemplateError` tagged with
+    ``OSW_OPENFOAM_TEMPLATE_VARIANT_UNSUPPORTED`` instead of silently guessing a
+    variant.
+    """
+
+    if isinstance(value, OpenFOAMPropertyFileLayout):
+        return value
+    if value is None:
+        return OpenFOAMPropertyFileLayout.LEGACY_TRANSPORT_PROPERTIES
+    key = str(value).strip().lower().replace("-", "_")
+    if not key:
+        return OpenFOAMPropertyFileLayout.LEGACY_TRANSPORT_PROPERTIES
+    if key in _LEGACY_LAYOUT_ALIASES:
+        return OpenFOAMPropertyFileLayout.LEGACY_TRANSPORT_PROPERTIES
+    if key in _FOUNDATION_V11_PLUS_LAYOUT_ALIASES:
+        return OpenFOAMPropertyFileLayout.FOUNDATION_V11_PLUS_PHYSICAL_PROPERTIES
+    raise OpenFoamCaseTemplateError(
+        f"{OSW_OPENFOAM_TEMPLATE_VARIANT_UNSUPPORTED}: unsupported OpenFOAM "
+        f"property-file layout {value!r}. Use 'legacy' (transportProperties for "
+        "ESI / Foundation <= 10) or 'foundation_v11_plus' (physicalProperties "
+        "for Foundation v11/v12)."
+    )
+
+
+def property_file_for_layout(layout: OpenFOAMPropertyFileLayout) -> str:
+    """Return the relative case path of the property file for ``layout``."""
+
+    if layout is OpenFOAMPropertyFileLayout.FOUNDATION_V11_PLUS_PHYSICAL_PROPERTIES:
+        return _PHYSICAL_PROPERTIES_PATH
+    return _TRANSPORT_PROPERTIES_PATH
+
+
+def layout_diagnostic_code(layout: OpenFOAMPropertyFileLayout) -> str:
+    """Return the informational diagnostic code describing ``layout``."""
+
+    if layout is OpenFOAMPropertyFileLayout.FOUNDATION_V11_PLUS_PHYSICAL_PROPERTIES:
+        return OSW_OPENFOAM_TEMPLATE_FOUNDATION_V12_PHYSICAL_PROPERTIES
+    return OSW_OPENFOAM_TEMPLATE_LEGACY_TRANSPORT_PROPERTIES
+
+
+def _apply_property_file_layout(
+    paths: tuple[str, ...],
+    layout: OpenFOAMPropertyFileLayout,
+) -> tuple[str, ...]:
+    """Swap the legacy property file for the layout's property file.
+
+    Exactly one of ``transportProperties`` / ``physicalProperties`` is emitted;
+    the base ``template_paths`` list the legacy file and this rewrites it in
+    place for the Foundation v11/v12 layout.
+    """
+
+    target = property_file_for_layout(layout)
+    if target == _TRANSPORT_PROPERTIES_PATH:
+        return paths
+    return tuple(
+        target if path == _TRANSPORT_PROPERTIES_PATH else path for path in paths
+    )
 
 
 @dataclass(frozen=True)
@@ -51,6 +160,9 @@ class OpenFoamCavityConfig:
     delta_t: float = 0.005
     write_interval: float = 0.1
     boundaries: OpenFoamBoundaryConfig | None = field(default_factory=OpenFoamBoundaryConfig)
+    property_file_layout: OpenFOAMPropertyFileLayout | str = (
+        OpenFOAMPropertyFileLayout.LEGACY_TRANSPORT_PROPERTIES
+    )
 
 
 @dataclass(frozen=True)
@@ -80,6 +192,9 @@ class OpenFoamDuctConfig:
     delta_t: float = 1.0
     write_interval: float = 20.0
     patches: OpenFoamDuctPatchConfig | None = field(default_factory=OpenFoamDuctPatchConfig)
+    property_file_layout: OpenFOAMPropertyFileLayout | str = (
+        OpenFOAMPropertyFileLayout.LEGACY_TRANSPORT_PROPERTIES
+    )
 
 
 @dataclass(frozen=True)
@@ -89,10 +204,19 @@ class OpenFoamGeneratedCase:
     root: Path
     files: tuple[Path, ...]
     warnings: tuple[str, ...] = ()
+    property_file_layout: OpenFOAMPropertyFileLayout = (
+        OpenFOAMPropertyFileLayout.LEGACY_TRANSPORT_PROPERTIES
+    )
 
     @property
     def relative_paths(self) -> tuple[str, ...]:
         return tuple(path.relative_to(self.root).as_posix() for path in self.files)
+
+    @property
+    def property_file(self) -> str:
+        """Relative path of the constant property file this case emitted."""
+
+        return property_file_for_layout(self.property_file_layout)
 
 
 class OpenFoamCaseGenerator:
@@ -150,11 +274,12 @@ class OpenFoamCaseGenerator:
         if report.has_errors:
             raise OpenFoamCaseTemplateError(report.friendly_summary())
 
+        layout = resolve_property_file_layout(config.property_file_layout)
         boundaries = config.boundaries or OpenFoamBoundaryConfig()
         root = Path(output_dir) / config.case_name
         rendered_files: list[Path] = []
         context = _template_context(config, boundaries)
-        for relative_path in self.template_paths:
+        for relative_path in _apply_property_file_layout(self.template_paths, layout):
             destination = root / relative_path
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_text(
@@ -166,7 +291,12 @@ class OpenFoamCaseGenerator:
         warnings = tuple(
             message.message for message in report.messages if message.severity == "warning"
         )
-        return OpenFoamGeneratedCase(root=root, files=tuple(rendered_files), warnings=warnings)
+        return OpenFoamGeneratedCase(
+            root=root,
+            files=tuple(rendered_files),
+            warnings=warnings,
+            property_file_layout=layout,
+        )
 
     def _render_template(self, relative_path: str, context: dict[str, str]) -> str:
         template_path = self.template_root / relative_path
@@ -241,11 +371,12 @@ class OpenFoamDuctCaseGenerator:
         if report.has_errors:
             raise OpenFoamCaseTemplateError(report.friendly_summary())
 
+        layout = resolve_property_file_layout(config.property_file_layout)
         patches = _resolved_duct_patches(config.patches)
         root = Path(output_dir) / config.case_name
         context = _duct_template_context(config, patches)
         rendered_files: list[Path] = []
-        for relative_path in self.template_paths:
+        for relative_path in _apply_property_file_layout(self.template_paths, layout):
             destination = root / relative_path
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_text(
@@ -257,7 +388,12 @@ class OpenFoamDuctCaseGenerator:
         warnings = tuple(
             message.message for message in report.messages if message.severity == "warning"
         )
-        return OpenFoamGeneratedCase(root=root, files=tuple(rendered_files), warnings=warnings)
+        return OpenFoamGeneratedCase(
+            root=root,
+            files=tuple(rendered_files),
+            warnings=warnings,
+            property_file_layout=layout,
+        )
 
     def _render_template(self, relative_path: str, context: dict[str, str]) -> str:
         template_path = self.template_root / relative_path
@@ -406,7 +542,14 @@ def generate_openfoam_case(request: OpenFOAMCaseRequest) -> OpenFOAMCaseResult:
         case_dir=generated.root,
         generated_files=generated.files,
         diagnostics=diagnostics,
-        metadata={"relative_paths": list(generated.relative_paths)},
+        metadata={
+            "relative_paths": list(generated.relative_paths),
+            "property_file_layout": generated.property_file_layout.value,
+            "property_file": generated.property_file,
+            "property_file_diagnostic": layout_diagnostic_code(
+                generated.property_file_layout
+            ),
+        },
     )
 
 
@@ -460,6 +603,21 @@ def _validate_boundary_config(
         report.add_error("boundaries.lid_velocity", "Lid velocity must have three components.")
 
 
+def _request_layout_value(request: OpenFOAMCaseRequest) -> OpenFOAMPropertyFileLayout | str:
+    """Extract the property-file layout selector from a request's metadata.
+
+    Absent/blank metadata falls back to the legacy layout. The raw value is
+    returned unresolved so ``generate()`` performs the (error-raising)
+    resolution inside the guarded generation path.
+    """
+
+    for key in ("property_file_layout", "openfoam_property_file_layout"):
+        value = request.metadata.get(key)
+        if value:
+            return value
+    return OpenFOAMPropertyFileLayout.LEGACY_TRANSPORT_PROPERTIES
+
+
 def _cavity_config_from_request(request: OpenFOAMCaseRequest) -> OpenFoamCavityConfig:
     moving_wall = _patch_by_role(request, "moving_wall")
     fixed_wall = _patch_by_role(request, "wall")
@@ -474,6 +632,7 @@ def _cavity_config_from_request(request: OpenFOAMCaseRequest) -> OpenFoamCavityC
         end_time=request.control.end_time,
         delta_t=request.control.delta_t,
         write_interval=request.control.write_interval,
+        property_file_layout=_request_layout_value(request),
         boundaries=OpenFoamBoundaryConfig(
             moving_wall=moving_wall.name if moving_wall else "movingWall",
             fixed_walls=(fixed_wall.name if fixed_wall else "fixedWalls",),
@@ -510,6 +669,7 @@ def _duct_config_from_request(request: OpenFOAMCaseRequest) -> OpenFoamDuctConfi
         end_time=request.control.end_time,
         delta_t=request.control.delta_t,
         write_interval=request.control.write_interval,
+        property_file_layout=_request_layout_value(request),
         patches=OpenFoamDuctPatchConfig(
             inlet=inlet.name if inlet else "inlet",
             outlet=outlet.name if outlet else "outlet",
@@ -768,6 +928,16 @@ transportModel  Newtonian;
 
 nu              [0 2 -1 0 0 0 0] $viscosity;
 """,
+    "constant/physicalProperties": """FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      physicalProperties;
+}
+
+nu              [0 2 -1 0 0 0 0] $viscosity;
+""",
     "system/blockMeshDict": """FoamFile
 {
     version     2.0;
@@ -1015,6 +1185,16 @@ boundaryField
 }
 
 transportModel  Newtonian;
+
+nu              [0 2 -1 0 0 0 0] $viscosity;
+""",
+    "constant/physicalProperties": """FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      physicalProperties;
+}
 
 nu              [0 2 -1 0 0 0 0] $viscosity;
 """,

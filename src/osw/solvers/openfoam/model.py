@@ -25,6 +25,22 @@ class OpenFOAMSolverKind(StrEnum):
     FOAMRUN_PLACEHOLDER = "foamRun_placeholder"
 
 
+class OpenFOAMPropertyFileLayout(StrEnum):
+    """Selects which ``constant`` property file a generated case emits.
+
+    OpenFOAM Foundation v11/v12 (openfoam.org) reads
+    ``constant/physicalProperties`` and aborts when only
+    ``constant/transportProperties`` is present. ESI OpenFOAM (openfoam.com) and
+    older Foundation releases (<= 10) still use ``constant/transportProperties``.
+    The layout is therefore variant-aware and never a blanket rename; ``LEGACY``
+    stays the default so existing cases, fixtures, and callers keep their
+    behavior.
+    """
+
+    LEGACY_TRANSPORT_PROPERTIES = "legacy"
+    FOUNDATION_V11_PLUS_PHYSICAL_PROPERTIES = "foundation_v11_plus"
+
+
 class OpenFOAMBoundaryType(StrEnum):
     FIXED_VALUE = "fixedValue"
     ZERO_GRADIENT = "zeroGradient"

@@ -4131,3 +4131,31 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   none. No certification, production-readiness, bundled-solver, or
   native-Windows-validation claim is made. Issue `#18` remains open until
   implementation and validation occur.
+
+## ADR-0177: OpenFOAM Property File Generation Is Variant-Aware
+
+- Status: Accepted for OpenFOAM template compatibility implementation
+- Date: 2026-07-04
+- Context: GitHub issue `#18` tracks Foundation v11/v12 `physicalProperties`
+  support. OSW's legacy OpenFOAM templates, case generator, and golden fixtures
+  used `constant/transportProperties`; OpenFOAM Foundation v11/v12 instead reads
+  `constant/physicalProperties`, while ESI OpenFOAM and Foundation <= 10 keep the
+  legacy file. ADR-0176 designed a variant-aware fix rather than a blanket rename;
+  OSW-EXP-142 implements it.
+- Decision: Implement an explicit `OpenFOAMPropertyFileLayout` selector
+  (`legacy` → `transportProperties`, `foundation_v11_plus` →
+  `physicalProperties`) on the cavity/duct configs, the request metadata, and the
+  `openfoam-write-case --property-file-layout` CLI option. Preserve the legacy
+  layout as the default so existing behavior, fixtures, and callers are
+  unchanged. Add the Foundation `physicalProperties` template content (matching
+  OpenFOAM 12's `icoFoam` cavity tutorial evidence: a single dimensioned `nu`
+  entry, no `transportModel`) and add Foundation v11/v12 golden fixtures beside
+  the retained legacy fixtures. Unknown selectors raise a deterministic
+  `OSW_OPENFOAM_TEMPLATE_VARIANT_UNSUPPORTED` error. Do not run OpenFOAM in
+  implementation tests; keep live validation a separate gate.
+- Consequences: Issue `#18` has an implemented, non-breaking source fix. Live
+  OpenFOAM validation remains separate (WSL-only evidence; `foamVersion` wrapper
+  caveat). No certification, production-readiness, bundled-solver, or
+  native-Windows-validation claim is made. Issue `#18` remains open until the
+  live-validation and issue-update gates complete. Package metadata remains
+  `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`.

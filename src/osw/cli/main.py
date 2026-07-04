@@ -1339,6 +1339,17 @@ def build_parser() -> argparse.ArgumentParser:
         default=0.0,
         help="Duct outlet pressure.",
     )
+    openfoam_write_parser.add_argument(
+        "--property-file-layout",
+        choices=("legacy", "foundation_v11_plus"),
+        default="legacy",
+        help=(
+            "OpenFOAM constant property-file layout. 'legacy' emits "
+            "constant/transportProperties (ESI OpenFOAM / Foundation <= 10). "
+            "'foundation_v11_plus' emits constant/physicalProperties "
+            "(OpenFOAM Foundation v11/v12)."
+        ),
+    )
     openfoam_run_parser = subparsers.add_parser(
         "openfoam-run-case",
         help="Explicitly run an OpenFOAM template case through the backend runner.",
@@ -2411,11 +2422,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             boundaries=request.boundaries,
             transport=request.transport,
             control=request.control,
-            metadata=request.metadata,
+            metadata={
+                **dict(request.metadata),
+                "property_file_layout": args.property_file_layout,
+            },
         )
         result = generate_openfoam_case(request)
         print(f"OpenFOAM case status: {result.status}")
         print(f"Case directory: {result.case_dir}")
+        print(f"Property file layout: {result.metadata.get('property_file_layout', 'legacy')}")
+        if result.metadata.get("property_file"):
+            print(f"Property file: {result.metadata['property_file']}")
         for path in result.generated_files:
             print(f"  - {path.relative_to(result.case_dir)}")
         if result.diagnostics.messages:

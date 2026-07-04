@@ -6,6 +6,20 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### OpenFOAM Template v12 Compatibility Fix Implementation
+
+- Added variant-aware OpenFOAM property-file generation so legacy/ESI cases keep
+  `constant/transportProperties` while OpenFOAM Foundation v11/v12 cases can emit
+  `constant/physicalProperties`, selectable via the `OpenFOAMPropertyFileLayout`
+  enum, the cavity/duct config `property_file_layout`, request metadata, and the
+  `openfoam-write-case --property-file-layout {legacy,foundation_v11_plus}` CLI
+  option (default `legacy`). Covered by unit and golden tests for both layouts on
+  cavity and duct with no live solver execution in the implementation gate. Issue
+  `#18` remains open for separate live validation; no OpenFOAM run, no issue
+  mutation, no release/tag/asset mutation, no ProjectSchema mutation, no version
+  bump, and no certification, production-readiness, bundled-solver, or
+  native-Windows validation claims.
+
 ### OpenFOAM Template v12 Compatibility Fix Design
 
 - Designed a variant-aware OpenFOAM template compatibility fix for issue `#18`,

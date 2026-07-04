@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from .adapter import OpenFoamCavityTemplateAdapter, OpenFoamDuctTemplateAdapter
 from .case_generator import (
+    OSW_OPENFOAM_TEMPLATE_FOUNDATION_V12_PHYSICAL_PROPERTIES,
+    OSW_OPENFOAM_TEMPLATE_LEGACY_TRANSPORT_PROPERTIES,
+    OSW_OPENFOAM_TEMPLATE_VARIANT_UNSUPPORTED,
     OpenFoamBoundaryConfig,
     OpenFoamCaseGenerator,
     OpenFoamCaseTemplateError,
@@ -17,6 +20,9 @@ from .case_generator import (
     generate_cavity_case,
     generate_duct_case,
     generate_openfoam_case,
+    layout_diagnostic_code,
+    property_file_for_layout,
+    resolve_property_file_layout,
     validate_case_request,
     write_openfoam_case,
 )
@@ -26,6 +32,7 @@ from .model import (
     OpenFOAMCaseRequest,
     OpenFOAMCaseResult,
     OpenFOAMControlSettings,
+    OpenFOAMPropertyFileLayout,
     OpenFOAMResidualSeries,
     OpenFOAMResidualSummary,
     OpenFOAMRunPolicy,
@@ -55,6 +62,9 @@ from .runner import (
 )
 
 __all__ = [
+    "OSW_OPENFOAM_TEMPLATE_FOUNDATION_V12_PHYSICAL_PROPERTIES",
+    "OSW_OPENFOAM_TEMPLATE_LEGACY_TRANSPORT_PROPERTIES",
+    "OSW_OPENFOAM_TEMPLATE_VARIANT_UNSUPPORTED",
     "OpenFoamBoundaryConfig",
     "OpenFoamCaseGenerator",
     "OpenFoamCaseTemplateError",
@@ -70,6 +80,7 @@ __all__ = [
     "OpenFOAMCaseRequest",
     "OpenFOAMCaseResult",
     "OpenFOAMControlSettings",
+    "OpenFOAMPropertyFileLayout",
     "OpenFOAMResidualSeries",
     "OpenFOAMResidualSummary",
     "OpenFOAMRunPolicy",
@@ -90,11 +101,14 @@ __all__ = [
     "generate_cavity_case",
     "generate_duct_case",
     "generate_openfoam_case",
+    "layout_diagnostic_code",
     "openfoam_residuals_to_result_dataset",
     "openfoam_solver_available",
     "parse_openfoam_case_logs",
     "parse_openfoam_log",
     "parse_openfoam_residuals_from_text",
+    "property_file_for_layout",
+    "resolve_property_file_layout",
     "result_dataset_from_openfoam_run",
     "validate_case_request",
     "write_openfoam_case",

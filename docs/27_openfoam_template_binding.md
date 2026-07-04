@@ -37,6 +37,24 @@ patches. The duct template uses inlet velocity, outlet pressure, wall no-slip,
 and empty front/back patches. Unsupported templates and missing duct roles
 produce diagnostics instead of silent mapping.
 
+### Property file layout (OpenFOAM Foundation v11/v12)
+
+`OpenFOAMPropertyFileLayout` selects the constant property file per OpenFOAM
+variant (issue `#18`):
+
+- `legacy` (default) → `constant/transportProperties` for ESI OpenFOAM and
+  OpenFOAM Foundation <= 10.
+- `foundation_v11_plus` → `constant/physicalProperties` for OpenFOAM Foundation
+  v11/v12.
+
+Selection is explicit (config `property_file_layout`, request metadata, or the
+`--property-file-layout` CLI option); OSW performs no `foamVersion` detection and
+runs no solver. A case emits exactly one of the two files, so this is a
+variant-aware swap rather than a blanket rename, and legacy behavior is
+preserved. Unknown layout selectors report
+`OSW_OPENFOAM_TEMPLATE_VARIANT_UNSUPPORTED` instead of guessing. Live OpenFOAM
+validation of the generated Foundation case remains a separate gate.
+
 ## Runner
 
 `OpenFOAMRunner` resolves `blockMesh`, `icoFoam`, and `simpleFoam` through
@@ -65,6 +83,7 @@ partial, or corrupt logs produce warnings/errors rather than tracebacks.
 ```powershell
 python -m osw.cli openfoam-check
 python -m osw.cli openfoam-write-case --template cavity --out-dir artifacts\openfoam\cavity
+python -m osw.cli openfoam-write-case --template cavity --property-file-layout foundation_v11_plus --out-dir artifacts\openfoam\cavity12
 python -m osw.cli openfoam-write-case --template duct --inlet-velocity 3.0 --outlet-pressure 0 --out-dir artifacts\openfoam\duct
 python -m osw.cli openfoam-run-case artifacts\openfoam\cavity --solver icoFoam --timeout 30
 python -m osw.cli openfoam-parse-log tests\fixtures\openfoam\residual_simple.log
