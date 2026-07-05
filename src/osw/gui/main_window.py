@@ -141,6 +141,8 @@ class MainWindow(_BaseMainWindow):
         self.mesh_viewer_dialog: object | None = None
         self.mesh_viewer: object | None = None
         self._mesh_scene_adapter_factory = mesh_scene_adapter_factory
+        self.last_imported_mesh_data: object | None = None
+        self.last_imported_mesh_ref: str | None = None
         self.result_catalog: object | None = None
         self.last_figure_dataset: object | None = None
         self.last_result_datasets: tuple[object, ...] = ()
@@ -608,7 +610,23 @@ class MainWindow(_BaseMainWindow):
         mesh_ref = mesh_to_project_ref(mesh)
         self.set_project(_project_with_mesh_ref(self.current_project, mesh_ref))
         self._placeholder_action(f"Imported mesh metadata: {mesh_ref.name}")
+        self._store_imported_mesh_for_viewer(mesh)
         return True
+
+    def _store_imported_mesh_for_viewer(self, mesh: object) -> None:
+        """Record the latest imported mesh for the 3D preview (latest wins).
+
+        Stores an already-built ``MeshData`` and a stable ``mesh_ref`` and, if the
+        preview panel already exists, refreshes its content in place. It does not
+        open/raise the dialog on import (populate-on-open handles the first user
+        open) and it runs no rendering, generation, parsing, or conversion.
+        """
+
+        mesh_data = mesh.to_mesh_data() if hasattr(mesh, "to_mesh_data") else mesh
+        self.last_imported_mesh_data = mesh_data
+        self.last_imported_mesh_ref = getattr(mesh, "id", "") or getattr(mesh, "name", "") or None
+        if self.mesh_viewer is not None and hasattr(self.mesh_viewer, "set_mesh"):
+            self.mesh_viewer.set_mesh(mesh_data, mesh_ref=self.last_imported_mesh_ref or "")
 
     def preview_script_file(self, path: str | Path, *, show_dialog: bool = False) -> bool:
         """Preview a MATLAB/Octave script and attach its ScriptRef metadata.
@@ -1139,10 +1157,31 @@ class MainWindow(_BaseMainWindow):
             layout.addWidget(self.mesh_viewer)
             if hasattr(self.mesh_viewer, "set_theme_tokens"):
                 self.mesh_viewer.set_theme_tokens(self.theme_manager.current_tokens)
+        self._populate_mesh_viewer_from_latest()
         self.mesh_viewer_dialog.show()
         self.mesh_viewer_dialog.raise_()
         self.mesh_viewer_dialog.activateWindow()
         return self.mesh_viewer_dialog
+
+    def _populate_mesh_viewer_from_latest(self) -> None:
+        """Show the latest imported mesh when the preview panel has none yet.
+
+        Runs on open so the first open after an import displays that mesh, but it
+        never clobbers a mesh the panel already holds (a manual load or a prior
+        refresh), keeping ``latest wins`` idempotent.
+        """
+
+        if (
+            self.mesh_viewer is not None
+            and self.last_imported_mesh_data is not None
+            and hasattr(self.mesh_viewer, "set_mesh")
+            and hasattr(self.mesh_viewer, "current_state")
+            and self.mesh_viewer.current_state().mesh is None
+        ):
+            self.mesh_viewer.set_mesh(
+                self.last_imported_mesh_data,
+                mesh_ref=self.last_imported_mesh_ref or "",
+            )
 
     def load_mesh_into_viewer(self, mesh: object, *, mesh_ref: str = "") -> object:
         """Show the mesh preview dialog and hand it an already-built mesh.
