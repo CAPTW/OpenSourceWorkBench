@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from importlib import import_module
 from pathlib import Path
@@ -11,6 +11,11 @@ from typing import Any
 
 from osw.mesh.mesh_model import MeshCellBlock, MeshData, MeshInfo
 from osw.post.field_dataset import FieldRenderRequest, FieldRenderResult
+from osw.post.scene_model import (
+    SceneScreenshotRecord,
+    SceneViewState,
+    build_screenshot_record,
+)
 
 
 class PyVistaUnavailableError(RuntimeError):
@@ -260,6 +265,47 @@ class PyVistaScene:
         values = mesh_data.point_data.get(scalar_field)
         if values is not None and hasattr(dataset, "point_data"):
             dataset.point_data[scalar_field] = values
+
+
+def export_screenshot_record(
+    mesh_data: MeshData,
+    target_path: str | Path,
+    *,
+    record_id: str,
+    scene_state: SceneViewState | None = None,
+    caption: str | None = None,
+    dataset_ref: str | None = None,
+    mesh_ref: str | None = None,
+    selection_ids: Sequence[str] = (),
+    created_by: str | None = None,
+    pyvista_module: Any | None = None,
+    loader: Callable[[], Any] | None = None,
+) -> SceneScreenshotRecord:
+    """Render an off-screen screenshot and return its local metadata record.
+
+    The scene camera state is *recorded* in the returned record's scene_state
+    but, for the MVP, is not applied to the plotter (that requires real PyVista
+    camera behavior and is deferred). PyVista stays optional and lazy: a fake
+    module/loader can be injected for tests, and a missing PyVista raises the
+    usual friendly ``PyVistaUnavailableError``. The written path is local
+    artifact metadata only -- not a release asset and not validation evidence.
+    """
+    if scene_state is not None:
+        config = PyVistaSceneConfig(**scene_state.render_options.to_pyvista_config_dict())
+    else:
+        config = PyVistaSceneConfig(off_screen=True)
+    scene = PyVistaScene(config=config, pyvista_module=pyvista_module, loader=loader)
+    written = scene.export_screenshot(mesh_data, target_path)
+    return build_screenshot_record(
+        str(written),
+        record_id=record_id,
+        scene_state=scene_state or SceneViewState(),
+        caption=caption,
+        dataset_ref=dataset_ref,
+        mesh_ref=mesh_ref,
+        selection_ids=selection_ids,
+        created_by=created_by,
+    )
 
 
 def _load_pyvista() -> ModuleType:

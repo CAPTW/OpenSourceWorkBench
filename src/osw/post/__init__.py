@@ -13,6 +13,7 @@ from osw.post.pyvista_scene import (
     PyVistaSceneState,
     PyVistaUnavailableError,
     build_scene_state,
+    export_screenshot_record,
     is_pyvista_available,
 )
 from osw.post.report_generator import (
@@ -48,6 +49,14 @@ from osw.post.result_view_model import (
     result_dataset_summary,
     result_dataset_to_view_model,
 )
+from osw.post.scene_model import (
+    SceneCameraState,
+    SceneInputRef,
+    SceneRenderOptions,
+    SceneScreenshotRecord,
+    SceneViewState,
+    build_screenshot_record,
+)
 
 __all__ = [
     "DEFAULT_REPORT_FILENAME",
@@ -67,11 +76,18 @@ __all__ = [
     "ReportSummary",
     "ReportTable",
     "ResultViewModel",
+    "SceneCameraState",
+    "SceneInputRef",
+    "SceneRenderOptions",
+    "SceneScreenshotRecord",
+    "SceneViewState",
     "boundary_curve_to_view_dataset",
     "build_report",
     "build_report_model",
     "build_report_summary",
     "build_scene_state",
+    "build_screenshot_record",
+    "export_screenshot_record",
     "export_report_html",
     "export_line_plot_dataset",
     "figure_dataset_to_view_dataset",
