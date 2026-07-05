@@ -28,8 +28,12 @@ Post-public-release planning stays split into separate tracks so maintenance,
 future features, and optional live validation do not blur scope or release
 claims. OpenFOAM v12 template compatibility issues #18 and #19 are closed with
 WSL-scoped evidence; this does not close optional live OpenFOAM validation issue
-#9. Issues #6 through #11 remain separate open optional validation tracks, and
-missing optional dependencies are skipped-missing, not pass.
+#9 by itself. Optional validation issues #6 through #11 are now closed after
+separate bounded evidence and closure gates. They remain conceptually separate
+tracks, and their closure evidence is issue-state evidence only: missing
+optional dependencies are skipped-missing, not pass, and bounded validation is
+not certification, production-readiness, broad solver/science correctness, or
+release-readiness evidence.
 
 - [Post-public-release roadmap](roadmap/README.md)
 - [Current development cycle](development/current_cycle.md)

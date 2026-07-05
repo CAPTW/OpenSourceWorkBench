@@ -4240,3 +4240,30 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   No native-Windows validation, certification, production-readiness,
   bundled-solver, or release-readiness claim is made. Package metadata remains
   `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`.
+
+## ADR-0181: Optional Validation Issues #6 Through #11 Closed With Bounded Evidence
+
+- Status: Accepted for issue closure status
+- Date: 2026-07-04
+- Context: After the `v0.1.5-rc1` public prerelease, separate prepared-machine
+  validation and issue-update gates collected bounded evidence for optional
+  validation issues #6 through #11. Evidence covered #6 Gmsh tiny mesh, #7 WSL
+  GNU Octave CLI/data/figure exchange, #8 WSL CalculiX `ccx` tiny C3D8
+  cantilever, #9 WSL OpenFOAM cavity plus the residual parser fix at
+  `de93800edfdd13008eee962f045fd3cdb866ab4c`, #10 CoolProp/Cantera bounded
+  property/reactor/equilibrium checks, and #11 PyVista/meshio tiny VTU plus
+  headless render checks. Human-authorized closure comments were posted and
+  issues #6 through #11 were closed. Issues #18 and #19 remained closed and were
+  not mutated by that closure apply gate.
+- Decision: Treat issues #6 through #11 as closed for their bounded optional
+  validation criteria. The tracks remain conceptually separate, #18/#19 do not
+  independently close #9, WSL-scoped evidence remains WSL-scoped, local
+  validation artifacts are not release assets, and the #9 parser fix is
+  parser/source QA evidence rather than new live OpenFOAM validation.
+- Consequences: Current-status docs should no longer describe #6 through #11 as
+  open, pending, comment-only, or closure-candidate-only except in clearly
+  historical gate records. This closure evidence does not create a new release
+  and is not certification, production-readiness evidence, release-readiness
+  evidence, bundled-solver support, native-Windows validation where evidence
+  was WSL-scoped, or broad solver/science correctness. Package metadata remains
+  `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`.

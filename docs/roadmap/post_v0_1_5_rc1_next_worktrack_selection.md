@@ -30,7 +30,7 @@ It does not perform the selected work.
   and prepared-machine optional validation discovery were follow-up work after
   the public `v0.1.5-rc1` release.
 
-## Open validation
+## Historical validation status at this planning gate
 
 - `#6` live Gmsh validation remains open.
 - `#7` live GNU Octave validation remains open.
@@ -39,6 +39,10 @@ It does not perform the selected work.
 - `#9` live OpenFOAM validation remains open.
 - `#10` live CoolProp / Cantera validation remains open.
 - `#11` live PyVista / meshio validation remains open.
+
+Later gates ran issue-specific bounded validation evidence and closed #6
+through #11. The historical open/skipped-missing status above is retained for
+this planning gate's chronology and is superseded as current issue state.
 
 ## Known risks
 
@@ -57,10 +61,10 @@ Selected worktrack: `maintenance hardening for GUI aggregate timeout and release
 
 ## Rationale
 
-Prepared-machine live optional validation is still important, but this gate has
-no evidence that a prepared solver/science environment is available. Issues
-`#6` through `#11` remain open, and issue `#8` is still `skipped-missing`
-because `ccx` was absent.
+Prepared-machine live optional validation was still important at this gate, but
+this gate had no evidence that a prepared solver/science environment was
+available. At this planning point, issues `#6` through `#11` remained open, and
+issue `#8` was still `skipped-missing` because `ccx` was absent.
 
 The release flow is now complete and the public release body note has been
 corrected. The next practical work is to harden recurring maintenance signals:
@@ -99,8 +103,9 @@ test file.
 
 The maintenance follow-up also adds `v0.1.5-rc1` release-monitoring notes for
 public prerelease state, duplicate-free asset checks, retained public download
-smoke evidence, open issues `#6` through `#11`, unsigned portable ZIP status,
-no MSI/code signing, no bundled external solvers, and no certification claim.
+smoke evidence, then-open issues `#6` through `#11`, unsigned portable ZIP
+status, no MSI/code signing, no bundled external solvers, and no certification
+claim.
 It does not edit the release, mutate assets or issues, execute solvers, bump
 versions, install dependencies, or mutate runtime source.
 
@@ -111,6 +116,8 @@ OSW-VALID-005 later reran prepared-machine discovery and classified issues
 science stacks were absent on this machine. The follow-up
 [next experimental line selection](next_experimental_line_selection.md) selects
 `Plugin ecosystem / optional solver manifest UX` as the next experimental line.
+Still later, separate issue-specific validation and closure gates closed #6
+through #11 with bounded caveats.
 
 That selection is planning-only. It does not implement source features, edit
 the release, mutate issues, execute solvers, install dependencies, bump

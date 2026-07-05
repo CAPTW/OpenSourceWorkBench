@@ -9,6 +9,11 @@ the public `v0.1.5-rc1` prerelease. The current machine was not prepared with
 the optional solver and science stacks, so every target is recorded as
 `skipped-missing`.
 
+This page is historical evidence for OSW-VALID-005. Later issue-specific
+prepared-machine validation and closure gates closed #6 through #11 with
+bounded caveats. The `skipped-missing` rows below remain historical setup
+evidence and are not the current issue state.
+
 No dependency installation, solver installation, release mutation, tag
 mutation, asset upload, issue closure, bundled solver claim, or certification
 claim occurred.
@@ -66,7 +71,10 @@ The artifact root is ignored local evidence and must not be staged.
 
 ## Issue policy
 
-- Issues `#6`, `#7`, `#8`, `#9`, `#10`, and `#11` remain open.
+- At this OSW-VALID-005 gate, issues `#6`, `#7`, `#8`, `#9`, `#10`, and `#11`
+  remained open.
+- Later issue-specific bounded validation and closure gates closed #6 through
+  #11. Treat those later closures as scoped issue-state evidence only.
 - `skipped-missing` targets are not passing live validation evidence.
 - A passed installed-only target would still require a separate closure-review
   gate before issue closure.

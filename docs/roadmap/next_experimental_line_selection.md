@@ -21,7 +21,7 @@ It does not implement the selected line.
 - Live optional validation: `skipped-missing` in OSW-VALID-005 on this
   machine because the target optional solver and science stacks were absent.
 
-## Open validation
+## Historical validation status at this planning gate
 
 - `#6` Gmsh validation remains open.
 - `#7` GNU Octave validation remains open.
@@ -31,6 +31,10 @@ It does not implement the selected line.
 - `#11` PyVista / meshio validation remains open.
 - OSW-VALID-005 classified all `#6` through `#11` targets as
   `skipped-missing`.
+
+Later issue-specific bounded validation and closure gates closed #6 through
+#11. The open/skipped-missing status above is retained as the historical state
+for this planning gate, not the current issue state.
 
 ## Candidate lines
 
@@ -50,9 +54,9 @@ Selected line: `Plugin ecosystem / optional solver manifest UX`
 
 The release flow is closed, the fresh public asset audit passed, and release
 body wording has been corrected. The latest prepared-machine validation pass
-did not find any target optional solver or science stack, so another immediate
-validation retry on the same environment would only repeat `skipped-missing`
-evidence.
+at this planning point did not find any target optional solver or science stack,
+so another immediate validation retry on the same environment would only repeat
+`skipped-missing` evidence.
 
 The selected line addresses the clearest product gap exposed by that evidence:
 users and maintainers need better optional dependency discovery, plugin
@@ -63,8 +67,9 @@ default.
 
 Skipped-missing live validation does not block this planning line because the
 selected work is about manifest and health UX design, not claiming installed
-solver capability. It also does not provide issue-closure evidence for issues
-`#6` through `#11`.
+solver capability. At this planning gate it also did not provide issue-closure
+evidence for issues `#6` through `#11`; later closure required separate
+issue-specific validation and human-authorized closure gates.
 
 ## Non-actions
 

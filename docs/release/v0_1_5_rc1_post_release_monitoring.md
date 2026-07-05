@@ -2,7 +2,7 @@
 
 ## Status
 
-`active monitoring`
+`active monitoring; optional validation issue state reconciled`
 
 `v0.1.5-rc1` is live as a public prerelease at:
 
@@ -32,9 +32,13 @@ state that the post-public audit and fresh public asset download smoke completed
 - Public download smoke evidence remains retained in release reports.
 - Checksums and `release_asset_manifest.json` remain consistent with the
   published assets.
-- Issues `#6`, `#7`, `#8`, `#9`, `#10`, and `#11` remain open until
-  prepared-machine live optional validation provides issue-specific evidence.
-- Issue `#8` remains open after the local `ccx` audit was `skipped-missing`.
+- Issues `#6`, `#7`, `#8`, `#9`, `#10`, and `#11` remain closed after the
+  later bounded optional validation evidence and closure gates. Treat those
+  closures as scoped issue-state evidence only, not certification,
+  production-readiness, release-readiness, broad solver/science correctness, bundled-solver
+  support, or native-Windows validation where evidence was WSL-scoped.
+- Historical `skipped-missing` checks remain historical setup evidence only and
+  do not replace the later issue-specific validation evidence.
 - Public notes continue to avoid stale audit-pending wording.
 
 ## Known risks

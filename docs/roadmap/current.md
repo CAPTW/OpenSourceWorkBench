@@ -18,8 +18,12 @@ Current recommended sequence:
    template compatibility evidence: `physicalProperties`, `pFinal`, `blockMesh`
    exit 0, and `icoFoam` exit 0 for the Foundation cavity. Duct status remains
    generation/layout-verified only.
-3. Keep optional validation issues #6 through #11 open and separate. Missing
-   optional dependencies are skipped-missing, not pass.
+3. Treat optional validation issues #6 through #11 as closed after separate
+   bounded evidence and closure gates. Keep the per-issue caveats visible:
+   WSL-scoped evidence stays WSL-scoped, native Windows remains unvalidated
+   where applicable, local validation artifacts are not release assets, and
+   bounded validation is not certification, production-readiness, broad
+   solver/science correctness, or release-readiness.
 4. Plan GUI runner-boundary hardening as a later P1 gate; do not use docs status
    cleanup as permission for GUI direct solver execution.
 

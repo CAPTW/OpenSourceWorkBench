@@ -170,8 +170,11 @@ the full public scope note.
 - Release assets are attached: wheel, sdist, Windows portable ZIP, checksums,
   and manifest; local validation artifacts are not release assets.
 - OpenFOAM v12 template compatibility issues #18 and #19 are closed with
-  WSL-scoped evidence. Issue #9 and optional validation issues #6 through #11
-  remain open and separate.
+  WSL-scoped evidence. Optional validation issues #6 through #11 are also
+  closed after separate bounded evidence and closure gates; each closure remains
+  scoped to its issue and is not certification, production-readiness evidence,
+  release-readiness evidence, bundled-solver support, or native-Windows
+  validation where the evidence was WSL-scoped.
 - Future maintenance and feature work are tracked in the
   [post-public-release roadmap](docs/roadmap/README.md).
 - Package publication, installer/signing work, and public announcement text
