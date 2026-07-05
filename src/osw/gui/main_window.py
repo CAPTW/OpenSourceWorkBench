@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -45,6 +45,7 @@ SHELL_MENU_ACTIONS = {
         "Generate Mesh with Gmsh...",
         "Import MATLAB/Octave Script",
         "Import MATLAB MAT Data",
+        "3D Mesh Preview",
     ),
     "Plugins": ("Plugin Manager", "Refresh Plugins", "Plugin Health Check", "Preferences"),
     "Run": (
@@ -91,6 +92,7 @@ class MainWindow(_BaseMainWindow):
         plugin_registry: PluginRegistry | None = None,
         plugin_state_store: PluginStateStore | None = None,
         executable_registry: ExecutablePathRegistry | None = None,
+        mesh_scene_adapter_factory: Callable[[], Any] | None = None,
         **legacy_kwargs: object,
     ) -> None:
         if QtCore is None or QtGui is None or QtWidgets is None:
@@ -136,6 +138,9 @@ class MainWindow(_BaseMainWindow):
         self.result_viewer: object | None = None
         self.plot_viewer_dialog: object | None = None
         self.plot_viewer: object | None = None
+        self.mesh_viewer_dialog: object | None = None
+        self.mesh_viewer: object | None = None
+        self._mesh_scene_adapter_factory = mesh_scene_adapter_factory
         self.result_catalog: object | None = None
         self.last_figure_dataset: object | None = None
         self.last_result_datasets: tuple[object, ...] = ()
@@ -187,6 +192,9 @@ class MainWindow(_BaseMainWindow):
                     action.triggered.connect(self.open_chm_property_dialog)
                 elif action_title == "Cantera 0D Reactor...":
                     action.triggered.connect(self.open_chm_reactor_dialog)
+                elif action_title == "3D Mesh Preview":
+                    action.setObjectName("oswActionOpenMeshViewer")
+                    action.triggered.connect(self.open_mesh_viewer)
                 else:
                     action.triggered.connect(
                         lambda _checked=False, label=action_title: self._placeholder_action(label)
@@ -1104,6 +1112,49 @@ class MainWindow(_BaseMainWindow):
         self.plot_viewer_dialog.raise_()
         self.plot_viewer_dialog.activateWindow()
         return self.plot_viewer_dialog
+
+    def open_mesh_viewer(self, _checked: bool = False) -> object:
+        """Open the 3D mesh preview dialog without executing external tools.
+
+        The panel renders only through its injected scene adapter (a fake in
+        tests, the panel's lazy PyVista-backed default in production), so this
+        seam introduces no solver execution and no import-time PyVista.
+        """
+
+        from osw.gui.widgets.mesh_viewer_panel import build_mesh_viewer_panel
+
+        if self.mesh_viewer_dialog is None:
+            self.mesh_viewer_dialog = QtWidgets.QDialog(self)
+            self.mesh_viewer_dialog.setObjectName("oswMeshViewerDialog")
+            self.mesh_viewer_dialog.setWindowTitle("3D Mesh Preview")
+            layout = QtWidgets.QVBoxLayout(self.mesh_viewer_dialog)
+            adapter = (
+                self._mesh_scene_adapter_factory()
+                if self._mesh_scene_adapter_factory is not None
+                else None
+            )
+            self.mesh_viewer = build_mesh_viewer_panel(
+                self.mesh_viewer_dialog, scene_adapter=adapter
+            )
+            layout.addWidget(self.mesh_viewer)
+            if hasattr(self.mesh_viewer, "set_theme_tokens"):
+                self.mesh_viewer.set_theme_tokens(self.theme_manager.current_tokens)
+        self.mesh_viewer_dialog.show()
+        self.mesh_viewer_dialog.raise_()
+        self.mesh_viewer_dialog.activateWindow()
+        return self.mesh_viewer_dialog
+
+    def load_mesh_into_viewer(self, mesh: object, *, mesh_ref: str = "") -> object:
+        """Show the mesh preview dialog and hand it an already-built mesh.
+
+        This receives MeshData that existing import/workflow state already
+        produced; it neither generates, parses, nor converts meshes.
+        """
+
+        self.open_mesh_viewer()
+        if self.mesh_viewer is not None and hasattr(self.mesh_viewer, "set_mesh"):
+            self.mesh_viewer.set_mesh(mesh, mesh_ref=mesh_ref)
+        return self.mesh_viewer_dialog
 
     def _on_plugin_state_changed(self, _plugin_id: str, _enabled: bool) -> None:
         self.run_plugin_health_check(log=False)
