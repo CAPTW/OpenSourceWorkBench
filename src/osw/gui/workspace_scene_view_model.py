@@ -1,0 +1,218 @@
+"""Qt-free view-model helpers for the 3D workspace mesh viewer panel.
+
+This module maps :class:`~osw.mesh.mesh_model.MeshData` / ``MeshInfo`` onto the
+reviewed post-level scene shell (``SceneInputRef``, ``SceneViewState``,
+``SceneScreenshotRecord``). It imports no GUI toolkit and no rendering package:
+mapping is pure, and rendering is delegated to an injected scene adapter so the
+helpers stay unit-testable without PySide6.
+
+Rendering stays optional and lazy. The default adapter reaches PyVista only
+through :mod:`osw.post.pyvista_scene`, which loads the package on demand; a
+missing PyVista surfaces a friendly status instead of a crash. A local scene
+screenshot is artifact metadata only -- it is not a release asset and not
+validation evidence. This module runs no external process and no solver.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+from dataclasses import dataclass, field
+from typing import Any, Protocol, runtime_checkable
+
+from osw.mesh.mesh_model import MeshData, MeshInfo
+from osw.post.pyvista_scene import (
+    PyVistaSceneConfig,
+    build_scene_state,
+    export_screenshot_record,
+)
+from osw.post.scene_model import (
+    SceneInputRef,
+    SceneRenderOptions,
+    SceneScreenshotRecord,
+    SceneViewState,
+)
+
+_MEMORY_SOURCE = "<memory>"
+
+
+def mesh_input_ref(
+    mesh_ref: str | None,
+    selection_ids: Sequence[str] = (),
+) -> SceneInputRef:
+    """Build a mesh-sourced :class:`SceneInputRef` (``source_kind='mesh'``)."""
+    return SceneInputRef(
+        source_kind="mesh",
+        mesh_ref=mesh_ref or None,
+        selection_ids=tuple(str(item) for item in selection_ids),
+    )
+
+
+def scene_view_state_from_toggles(
+    *,
+    show_surface: bool = True,
+    show_edges: bool = False,
+    show_axes: bool = True,
+    show_grid: bool = False,
+    selected_selection_ids: Sequence[str] = (),
+) -> SceneViewState:
+    """Build a :class:`SceneViewState` from simple render toggles."""
+    return SceneViewState(
+        render_options=SceneRenderOptions(
+            show_surface=bool(show_surface),
+            show_edges=bool(show_edges),
+            show_axes=bool(show_axes),
+            show_grid=bool(show_grid),
+        ),
+        selected_selection_ids=tuple(str(item) for item in selected_selection_ids),
+    )
+
+
+def mesh_summary_rows(mesh: MeshData | None) -> tuple[tuple[str, str], ...]:
+    """Return label/value display rows summarizing a mesh (no PyVista needed)."""
+    if mesh is None:
+        return (("Mesh", "No mesh loaded."),)
+    info: MeshInfo = mesh.info(source=_MEMORY_SOURCE, mesh_format="mesh")
+    cell_types = ", ".join(info.cell_types) or "none"
+    bounds = info.bounds
+    return (
+        ("Nodes", str(info.node_count)),
+        ("Elements", str(info.element_count)),
+        ("Cell types", cell_types),
+        ("Bounds min", _format_point(bounds.minimum)),
+        ("Bounds max", _format_point(bounds.maximum)),
+    )
+
+
+@dataclass
+class MeshViewerState:
+    """Transient GUI state for the mesh viewer panel; never persisted."""
+
+    mesh: MeshData | None = None
+    mesh_ref: str = ""
+    scene_input: SceneInputRef | None = None
+    scene_state: SceneViewState = field(default_factory=SceneViewState)
+    selected_selection_ids: tuple[str, ...] = ()
+    summary_rows: tuple[tuple[str, str], ...] = ()
+    status_message: str = ""
+    error_message: str | None = None
+    warning_messages: tuple[str, ...] = ()
+    pyvista_available: bool | None = None
+    screenshot_record: SceneScreenshotRecord | None = None
+
+
+@runtime_checkable
+class SceneAdapterProtocol(Protocol):
+    """Injection seam for mesh preview and screenshot-record capture.
+
+    Implementations must not run any external process or solver. The default
+    implementation renders (when asked) only through the optional PyVista
+    bridge; tests inject a recording fake so no live rendering is required.
+    """
+
+    def load_mesh(
+        self,
+        mesh: MeshData,
+        scene_input: SceneInputRef,
+        scene_state: SceneViewState,
+    ) -> Any:
+        ...
+
+    def set_view_state(self, scene_state: SceneViewState) -> None:
+        ...
+
+    def export_screenshot_record(
+        self,
+        path: str,
+        *,
+        record_id: str,
+        scene_state: SceneViewState,
+        mesh: MeshData,
+        mesh_ref: str | None = None,
+        selection_ids: Sequence[str] = (),
+        caption: str | None = None,
+        created_by: str | None = None,
+    ) -> SceneScreenshotRecord:
+        ...
+
+
+class DefaultSceneAdapter:
+    """Scene adapter backed by the optional PyVista scene bridge.
+
+    PyVista stays optional and lazy: nothing here imports the ``pyvista``
+    package at import time -- :mod:`osw.post.pyvista_scene` loads it on demand,
+    and a fake module/loader can be injected for tests. ``load_mesh`` builds the
+    PyVista-free summary state only (a live plotter is deferred to a later
+    slice), so previewing a mesh never requires PyVista. Only
+    ``export_screenshot_record`` reaches a real renderer, and a missing PyVista
+    raises the friendly ``PyVistaUnavailableError`` for the panel to present.
+    """
+
+    def __init__(
+        self,
+        *,
+        pyvista_module: Any | None = None,
+        loader: Any | None = None,
+    ) -> None:
+        self._pyvista_module = pyvista_module
+        self._loader = loader
+        self._scene_input: SceneInputRef | None = None
+        self._scene_state = SceneViewState()
+
+    def load_mesh(
+        self,
+        mesh: MeshData,
+        scene_input: SceneInputRef,
+        scene_state: SceneViewState,
+    ) -> Any:
+        self._scene_input = scene_input
+        self._scene_state = scene_state
+        config = PyVistaSceneConfig(**scene_state.render_options.to_pyvista_config_dict())
+        return build_scene_state(mesh, config=config, rendered=False)
+
+    def set_view_state(self, scene_state: SceneViewState) -> None:
+        self._scene_state = scene_state
+
+    def export_screenshot_record(
+        self,
+        path: str,
+        *,
+        record_id: str,
+        scene_state: SceneViewState,
+        mesh: MeshData,
+        mesh_ref: str | None = None,
+        selection_ids: Sequence[str] = (),
+        caption: str | None = None,
+        created_by: str | None = None,
+    ) -> SceneScreenshotRecord:
+        return export_screenshot_record(
+            mesh,
+            path,
+            record_id=record_id,
+            scene_state=scene_state,
+            caption=caption,
+            mesh_ref=mesh_ref,
+            selection_ids=selection_ids,
+            created_by=created_by,
+            pyvista_module=self._pyvista_module,
+            loader=self._loader,
+        )
+
+
+def summary_rows_to_text(rows: Sequence[tuple[str, str]]) -> str:
+    """Render label/value rows as a multi-line summary string."""
+    return "\n".join(f"{label}: {value}" for label, value in rows)
+
+
+def _format_point(point: Sequence[float]) -> str:
+    return "(" + ", ".join(f"{float(value):.6g}" for value in point) + ")"
+
+
+__all__ = [
+    "DefaultSceneAdapter",
+    "MeshViewerState",
+    "SceneAdapterProtocol",
+    "mesh_input_ref",
+    "mesh_summary_rows",
+    "scene_view_state_from_toggles",
+    "summary_rows_to_text",
+]
