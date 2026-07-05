@@ -57,6 +57,14 @@ from osw.core.project_schema import (
     load_project,
 )
 from osw.core.run_manager import RunManager
+from osw.core.selection import (
+    BoundaryTargetRef,
+    EntityKind,
+    NamedSelection,
+    SelectionMode,
+    SelectionState,
+    SelectionTargetRef,
+)
 from osw.core.units import Quantity, UnitSystem
 from osw.core.validation import (
     ProjectSchemaError,
@@ -79,8 +87,10 @@ __all__ = [
     "BoundaryCurveKind",
     "BoundaryCurveSource",
     "BoundaryCurveSourceTrace",
+    "BoundaryTargetRef",
     "CurveAxis",
     "CurveInterpolation",
+    "EntityKind",
     "DiagnosticMessage",
     "DiagnosticReport",
     "DiagnosticSeverity",
@@ -107,6 +117,10 @@ __all__ = [
     "ResultRef",
     "RunManager",
     "ScriptRef",
+    "SelectionMode",
+    "SelectionState",
+    "SelectionTargetRef",
+    "NamedSelection",
     "SolverConfig",
     "ThermalProperties",
     "UnitSystem",

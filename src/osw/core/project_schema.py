@@ -10,6 +10,12 @@ from typing import Any
 
 from .boundary_curve import BoundaryCurve
 from .materials import Material, MaterialDB, builtin_materials
+from .selection import (
+    BoundaryTargetRef,
+    NamedSelection,
+    coerce_boundary_target_ref,
+    coerce_named_selections,
+)
 from .units import UnitSystem
 from .validation import ProjectSchemaError, ValidationReport
 
@@ -291,6 +297,7 @@ class BoundaryCondition:
     metadata: dict[str, Any]
     kind: str
     values: dict[str, Any]
+    target_ref: BoundaryTargetRef | None
 
     def __init__(
         self,
@@ -305,6 +312,7 @@ class BoundaryCondition:
         *,
         kind: str = "",
         values: Mapping[str, Any] | None = None,
+        target_ref: BoundaryTargetRef | Mapping[str, Any] | None = None,
     ) -> None:
         resolved_type = str(type or kind)
         object.__setattr__(self, "name", str(name))
@@ -317,9 +325,10 @@ class BoundaryCondition:
         object.__setattr__(self, "metadata", dict(metadata or {}))
         object.__setattr__(self, "kind", str(kind or resolved_type))
         object.__setattr__(self, "values", dict(values or {}))
+        object.__setattr__(self, "target_ref", coerce_boundary_target_ref(target_ref))
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "name": self.name,
             "type": self.type,
             "value": self.value,
@@ -331,6 +340,11 @@ class BoundaryCondition:
             "kind": self.kind,
             "values": dict(self.values),
         }
+        # Emit the optional structured target reference only when present so
+        # existing legacy boundary conditions serialize byte-identically.
+        if self.target_ref is not None:
+            payload["target_ref"] = self.target_ref.to_dict()
+        return payload
 
     @classmethod
     def from_dict(cls, data: object) -> BoundaryCondition:
@@ -348,6 +362,7 @@ class BoundaryCondition:
             metadata=dict(data.get("metadata", {})),
             kind=str(data.get("kind", "")),
             values=dict(data.get("values", {})),
+            target_ref=data.get("target_ref"),
         )
 
 
@@ -647,6 +662,7 @@ class Project:
     schema_version: str
     plugins: list[PluginRef]
     warnings: list[ProjectWarning]
+    selections: list[NamedSelection]
 
     def __init__(
         self,
@@ -671,6 +687,7 @@ class Project:
         script_refs: Sequence[ScriptRef] | None = None,
         result_refs: Sequence[ResultRef] | None = None,
         report_config: ReportConfig | None = None,
+        selections: Sequence[NamedSelection] | None = None,
     ) -> None:
         object.__setattr__(self, "metadata", metadata)
         object.__setattr__(self, "units", unit_system or units or UnitSystem.si())
@@ -686,6 +703,7 @@ class Project:
         object.__setattr__(self, "schema_version", str(schema_version))
         object.__setattr__(self, "plugins", list(plugins or []))
         object.__setattr__(self, "warnings", list(warnings or []))
+        object.__setattr__(self, "selections", coerce_named_selections(selections))
 
     @property
     def unit_system(self) -> UnitSystem:
@@ -725,7 +743,7 @@ class Project:
         mesh_payload = [item.to_dict() for item in self.meshes]
         script_payload = [item.to_dict() for item in self.scripts]
         result_payload = [item.to_dict() for item in self.results]
-        return {
+        payload: dict[str, Any] = {
             "schema_version": self.schema_version,
             "metadata": self.metadata.to_dict(),
             "units": unit_payload,
@@ -746,6 +764,11 @@ class Project:
             "plugins": [item.to_dict() for item in self.plugins],
             "warnings": [item.to_dict() for item in self.warnings],
         }
+        # Emit 3D-workspace named selections only when present so existing
+        # projects serialize byte-identically (additive, schema 0.1).
+        if self.selections:
+            payload["selections"] = [item.to_dict() for item in self.selections]
+        return payload
 
     @classmethod
     def from_dict(cls, data: object) -> Project:
@@ -783,6 +806,9 @@ class Project:
                 plugins=[PluginRef.from_dict(item) for item in migrated.get("plugins", [])],
                 warnings=[
                     ProjectWarning.from_dict(item) for item in migrated.get("warnings", [])
+                ],
+                selections=[
+                    NamedSelection.from_dict(item) for item in migrated.get("selections", [])
                 ],
             )
         except (TypeError, ValueError) as exc:
@@ -843,6 +869,8 @@ def migrate_project_data(data: Mapping[str, Any]) -> dict[str, Any]:
         migrated["physics"] = [migrated["physics"]]
     if "solvers" not in migrated and "solver_config" in migrated:
         migrated["solvers"] = [migrated["solver_config"]]
+    if "selections" not in migrated:
+        migrated["selections"] = []
     return migrated
 
 
@@ -863,6 +891,18 @@ def _validate_project_references(project: Project, report: ValidationReport) -> 
     boundary_curves_by_id = {
         curve.curve_id: curve for curve in project.boundary_curves if curve.curve_id
     }
+
+    selection_ids: set[str] = set()
+    for index, selection in enumerate(project.selections):
+        selection_path = f"selections[{index}]"
+        report.extend(selection.validate(path=selection_path))
+        if selection.id:
+            if selection.id in selection_ids:
+                report.add_error(
+                    f"{selection_path}.id",
+                    f"Duplicate named selection id: {selection.id}",
+                )
+            selection_ids.add(selection.id)
 
     for index, geometry in enumerate(project.geometry):
         suffix = Path(geometry.path).suffix.lower()
@@ -924,6 +964,16 @@ def _validate_project_references(project: Project, report: ValidationReport) -> 
                         (
                             f"Boundary condition type {boundary.type or boundary.kind!r} "
                             f"may not match curve kind {curve.kind!r}."
+                        ),
+                    )
+            target_ref = boundary.target_ref
+            if target_ref is not None and target_ref.selection_id:
+                if target_ref.selection_id not in selection_ids:
+                    report.add_warning(
+                        f"{boundary_path}.target_ref.selection_id",
+                        (
+                            "Boundary condition references missing selection id: "
+                            f"{target_ref.selection_id}"
                         ),
                     )
         if setup.solver_config is not None:
