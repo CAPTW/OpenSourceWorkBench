@@ -442,6 +442,7 @@ class MainWindow(_BaseMainWindow):
 
         operation = self.workflow_session.import_path(path)
         self._apply_workflow_operation(operation)
+        self._store_workflow_mesh_for_viewer(operation)
         return operation
 
     def run_workflow(self, _checked: bool = False) -> object:
@@ -613,20 +614,48 @@ class MainWindow(_BaseMainWindow):
         self._store_imported_mesh_for_viewer(mesh)
         return True
 
-    def _store_imported_mesh_for_viewer(self, mesh: object) -> None:
+    def _store_imported_mesh_for_viewer(self, mesh: object, *, mesh_ref: str | None = None) -> None:
         """Record the latest imported mesh for the 3D preview (latest wins).
 
         Stores an already-built ``MeshData`` and a stable ``mesh_ref`` and, if the
-        preview panel already exists, refreshes its content in place. It does not
-        open/raise the dialog on import (populate-on-open handles the first user
-        open) and it runs no rendering, generation, parsing, or conversion.
+        preview panel already exists, refreshes its content in place. When
+        ``mesh_ref`` is not supplied it is derived from the mesh object's id/name
+        (the meshio ``MeshModel`` path); callers with a bare ``MeshData`` pass an
+        explicit ``mesh_ref`` (e.g. the workflow item id). It does not open/raise
+        the dialog on import (populate-on-open handles the first user open) and it
+        runs no rendering, generation, parsing, or conversion.
         """
 
         mesh_data = mesh.to_mesh_data() if hasattr(mesh, "to_mesh_data") else mesh
+        resolved_ref = (
+            mesh_ref
+            if mesh_ref is not None
+            else (getattr(mesh, "id", "") or getattr(mesh, "name", ""))
+        )
         self.last_imported_mesh_data = mesh_data
-        self.last_imported_mesh_ref = getattr(mesh, "id", "") or getattr(mesh, "name", "") or None
+        self.last_imported_mesh_ref = resolved_ref or None
         if self.mesh_viewer is not None and hasattr(self.mesh_viewer, "set_mesh"):
             self.mesh_viewer.set_mesh(mesh_data, mesh_ref=self.last_imported_mesh_ref or "")
+
+    def _store_workflow_mesh_for_viewer(self, operation: object) -> None:
+        """Feed the latest imported mesh item into the 3D preview (general import).
+
+        For a general file-import operation, the last item carrying an already-built
+        ``MeshData`` is handed to the preview using its stable ``item_id`` as the
+        mesh reference. Non-mesh items (``mesh_data`` is ``None`` -- geometry,
+        script, data) are ignored, so those imports never feed or clobber the
+        viewer. This does not open/raise the dialog and runs no rendering,
+        generation, parsing, or conversion.
+        """
+
+        latest = None
+        for item in getattr(operation, "items", ()) or ():
+            if getattr(item, "mesh_data", None) is not None:
+                latest = item
+        if latest is not None:
+            self._store_imported_mesh_for_viewer(
+                latest.mesh_data, mesh_ref=getattr(latest, "item_id", None)
+            )
 
     def preview_script_file(self, path: str | Path, *, show_dialog: bool = False) -> bool:
         """Preview a MATLAB/Octave script and attach its ScriptRef metadata.
