@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
 from osw.core.demo_project import create_heatsink_flow_demo_project
@@ -104,11 +105,60 @@ class SelectedMeshContext:
     payload: Mapping[str, str] | None = None
 
 
+@dataclass(frozen=True)
+class MetadataMeshLoadState:
+    """Transient GUI-only state for an explicit metadata MeshRef load."""
+
+    operation_id: int
+    mesh_ref: str
+    label: str
+    selected_path: Path
+    payload: Mapping[str, str]
+    status: str
+    message: str
+    diagnostics: tuple[str, ...] = ()
+    cancel_requested: bool = False
+
+
 ResultMeshBindingTargetSelector = Callable[
     [Sequence[ResultMeshBindingTargetCandidate]], object | None
 ]
 MeshRefLoadReader = Callable[[str | Path], object]
 MeshRefLoadFilePicker = Callable[[], str | Path | None]
+
+
+if QtCore is not None:
+
+    class _MetadataMeshLoadWorker(QtCore.QObject):  # type: ignore[misc]
+        """Run the injected mesh reader away from the GUI thread."""
+
+        finished = QtCore.Signal(int, object)
+
+        def __init__(
+            self,
+            operation_id: int,
+            path: Path,
+            reader: MeshRefLoadReader,
+        ) -> None:
+            super().__init__()
+            self._operation_id = operation_id
+            self._path = path
+            self._reader = reader
+
+        @QtCore.Slot()
+        def run(self) -> None:
+            try:
+                result = self._reader(self._path)
+            except Exception as exc:  # pragma: no cover - defensive seam
+                result = SimpleNamespace(
+                    mesh=None,
+                    diagnostics=(f"MeshData load failed: {exc}",),
+                    format="",
+                )
+            self.finished.emit(self._operation_id, result)
+
+else:
+    _MetadataMeshLoadWorker = None
 
 
 class MainWindow(_BaseMainWindow):
@@ -129,6 +179,7 @@ class MainWindow(_BaseMainWindow):
         result_mesh_binding_target_selector: ResultMeshBindingTargetSelector | None = None,
         metadata_mesh_reader: MeshRefLoadReader | None = None,
         metadata_mesh_file_picker: MeshRefLoadFilePicker | None = None,
+        metadata_mesh_load_async: bool | None = None,
         **legacy_kwargs: object,
     ) -> None:
         if QtCore is None or QtGui is None or QtWidgets is None:
@@ -183,6 +234,15 @@ class MainWindow(_BaseMainWindow):
         self._metadata_mesh_file_picker = (
             metadata_mesh_file_picker or self._choose_metadata_mesh_file
         )
+        self._metadata_mesh_load_async = (
+            metadata_mesh_reader is None
+            if metadata_mesh_load_async is None
+            else bool(metadata_mesh_load_async)
+        )
+        self._metadata_mesh_load_next_id = 0
+        self._metadata_mesh_load_state: MetadataMeshLoadState | None = None
+        self._metadata_mesh_load_thread: object | None = None
+        self._metadata_mesh_load_worker: object | None = None
         self.last_imported_mesh_data: object | None = None
         self.last_imported_mesh_ref: str | None = None
         self.selected_mesh_context: SelectedMeshContext | None = None
@@ -545,6 +605,19 @@ class MainWindow(_BaseMainWindow):
         reader seam and updates only transient GUI preview state.
         """
 
+        if self._metadata_mesh_load_in_flight():
+            state = self._metadata_mesh_load_state
+            target = ""
+            if state is not None:
+                target = state.label or state.mesh_ref
+            return self._show_metadata_mesh_load_status(
+                f"MeshData load is already in progress for '{target or 'selected mesh'}'.",
+                (
+                    "Wait for the current load to finish or request cancellation "
+                    "before starting another mesh load.",
+                ),
+            )
+
         current = self.project_tree.currentItem()
         if current is None:
             return self._show_metadata_mesh_load_status(
@@ -584,7 +657,142 @@ class MainWindow(_BaseMainWindow):
             self._show_selected_mesh_context_status(context)
             return False
 
-        result = self._metadata_mesh_reader(selected_path)
+        state = self._begin_metadata_mesh_load(
+            mesh_ref=mesh_ref,
+            label=label,
+            payload=payload,
+            selected_path=selected_path,
+        )
+        if self._metadata_mesh_load_async:
+            self._start_metadata_mesh_load_worker(state)
+            return True
+
+        result = self._read_metadata_mesh_for_operation(selected_path)
+        return self._finish_metadata_mesh_load(state.operation_id, result)
+
+    def cancel_selected_project_tree_mesh_load(self) -> bool:
+        """Request cooperative cancellation before committing loaded MeshData."""
+
+        state = self._metadata_mesh_load_state
+        if state is None or not self._metadata_mesh_load_in_flight():
+            return self._show_metadata_mesh_load_status(
+                "No metadata mesh load is in progress."
+            )
+        if state.cancel_requested:
+            target = state.label or state.mesh_ref
+            return self._show_metadata_mesh_load_status(
+                f"MeshData load cancellation is already requested for '{target}'.",
+                state.diagnostics,
+            )
+
+        canceled = replace(
+            state,
+            status="cancel_requested",
+            cancel_requested=True,
+            message=(
+                f"Cancel requested for mesh data load '{state.label or state.mesh_ref}'."
+            ),
+            diagnostics=(
+                "The active mesh will remain unchanged when the current read returns.",
+            ),
+        )
+        self._metadata_mesh_load_state = canceled
+        self._show_metadata_mesh_load_status(canceled.message, canceled.diagnostics)
+        return True
+
+    def _begin_metadata_mesh_load(
+        self,
+        *,
+        mesh_ref: str,
+        label: str,
+        payload: Mapping[str, str],
+        selected_path: Path,
+    ) -> MetadataMeshLoadState:
+        self._metadata_mesh_load_next_id += 1
+        operation_id = self._metadata_mesh_load_next_id
+        state = MetadataMeshLoadState(
+            operation_id=operation_id,
+            mesh_ref=mesh_ref,
+            label=label,
+            selected_path=selected_path,
+            payload=dict(payload),
+            status="loading",
+            message=f"Loading mesh data for project tree mesh '{label or mesh_ref}'...",
+            diagnostics=("Progress is indeterminate; large mesh reads may take time.",),
+        )
+        self._metadata_mesh_load_state = state
+        self._set_metadata_mesh_load_action_enabled(False)
+        self._show_metadata_mesh_load_status(state.message, state.diagnostics)
+        return state
+
+    def _start_metadata_mesh_load_worker(self, state: MetadataMeshLoadState) -> None:
+        if QtCore is None or _MetadataMeshLoadWorker is None:
+            result = self._read_metadata_mesh_for_operation(state.selected_path)
+            self._finish_metadata_mesh_load(state.operation_id, result)
+            return
+
+        thread = QtCore.QThread(self)
+        worker = _MetadataMeshLoadWorker(
+            state.operation_id,
+            state.selected_path,
+            self._metadata_mesh_reader,
+        )
+        worker.moveToThread(thread)
+        thread.started.connect(worker.run)
+        worker.finished.connect(self._finish_metadata_mesh_load)
+        worker.finished.connect(lambda *_args: thread.quit())
+        worker.finished.connect(lambda *_args: worker.deleteLater())
+        thread.finished.connect(thread.deleteLater)
+        thread.finished.connect(
+            lambda _op=state.operation_id: self._clear_metadata_mesh_worker(_op)
+        )
+        self._metadata_mesh_load_thread = thread
+        self._metadata_mesh_load_worker = worker
+        thread.start()
+
+    def _read_metadata_mesh_for_operation(self, selected_path: Path) -> object:
+        try:
+            return self._metadata_mesh_reader(selected_path)
+        except Exception as exc:  # pragma: no cover - defensive GUI seam
+            return SimpleNamespace(
+                mesh=None,
+                diagnostics=(f"MeshData load failed: {exc}",),
+                format="",
+            )
+
+    def _finish_metadata_mesh_load(self, operation_id: int, result: object) -> bool:
+        state = self._metadata_mesh_load_state
+        if state is None or state.operation_id != operation_id:
+            return False
+
+        if state.cancel_requested:
+            return self._complete_canceled_metadata_mesh_load(state)
+
+        if self._current_project_tree_mesh_ref() != state.mesh_ref:
+            stale = replace(
+                state,
+                status="stale",
+                message=(
+                    "Loaded mesh was not made active because selected project-tree "
+                    "mesh changed."
+                ),
+                diagnostics=(
+                    f"Original MeshRef: {state.mesh_ref}",
+                    "The active mesh was left unchanged.",
+                ),
+            )
+            self._metadata_mesh_load_state = stale
+            self._set_metadata_mesh_load_action_enabled(True)
+            return self._show_metadata_mesh_load_status(
+                stale.message,
+                stale.diagnostics,
+            )
+
+        self._set_metadata_mesh_load_action_enabled(True)
+        mesh_ref = state.mesh_ref
+        label = state.label
+        payload = state.payload
+        selected_path = state.selected_path
         mesh = getattr(result, "mesh", None)
         if mesh is None:
             diagnostics = _mesh_import_diagnostics(result)
@@ -599,6 +807,12 @@ class MainWindow(_BaseMainWindow):
                 payload=payload,
             )
             self.selected_mesh_context = context
+            self._metadata_mesh_load_state = replace(
+                state,
+                status="failed",
+                message=context.diagnostics[0],
+                diagnostics=context.diagnostics,
+            )
             self._show_selected_mesh_context_status(context)
             return False
 
@@ -616,6 +830,12 @@ class MainWindow(_BaseMainWindow):
                 payload=payload,
             )
             self.selected_mesh_context = context
+            self._metadata_mesh_load_state = replace(
+                state,
+                status="failed",
+                message=mismatch_diagnostics[0],
+                diagnostics=mismatch_diagnostics,
+            )
             self._show_selected_mesh_context_status(context)
             return False
 
@@ -637,8 +857,60 @@ class MainWindow(_BaseMainWindow):
             payload=loaded_payload,
         )
         self.selected_mesh_context = context
+        self._metadata_mesh_load_state = replace(
+            state,
+            status="succeeded",
+            message=f"Loaded project tree mesh '{label or mesh_ref}' for 3D preview.",
+            diagnostics=context.diagnostics,
+        )
         self._apply_selected_mesh_context_to_viewer(context)
         return True
+
+    def _complete_canceled_metadata_mesh_load(
+        self,
+        state: MetadataMeshLoadState,
+    ) -> bool:
+        canceled = replace(
+            state,
+            status="canceled",
+            message="MeshData load was canceled; the active mesh was not changed.",
+            diagnostics=(
+                "Cancel was requested before the loaded MeshData could be committed.",
+            ),
+        )
+        self._metadata_mesh_load_state = canceled
+        self._set_metadata_mesh_load_action_enabled(True)
+        return self._show_metadata_mesh_load_status(
+            canceled.message,
+            canceled.diagnostics,
+        )
+
+    def _metadata_mesh_load_in_flight(self) -> bool:
+        state = self._metadata_mesh_load_state
+        return state is not None and state.status in {"loading", "cancel_requested"}
+
+    def _clear_metadata_mesh_worker(self, operation_id: int) -> None:
+        state = self._metadata_mesh_load_state
+        if state is None or state.operation_id == operation_id:
+            self._metadata_mesh_load_thread = None
+            self._metadata_mesh_load_worker = None
+
+    def _set_metadata_mesh_load_action_enabled(self, enabled: bool) -> None:
+        action = self.menu_actions.get("Load mesh data for selected mesh...")
+        if action is not None and hasattr(action, "setEnabled"):
+            action.setEnabled(enabled)
+
+    def _current_project_tree_mesh_ref(self) -> str:
+        current = self.project_tree.currentItem()
+        if current is None:
+            return ""
+        kind = str(current.data(0, QtCore.Qt.ItemDataRole.UserRole) or "")
+        icon_key = str(current.data(0, QtCore.Qt.ItemDataRole.UserRole + 1) or "")
+        payload = self._project_tree_item_payload(current)
+        if not _is_project_tree_mesh_item(kind, icon_key, payload):
+            return ""
+        label = str(current.text(0) or "")
+        return _selected_mesh_ref(payload, label)
 
     def _metadata_mesh_load_path(
         self,
