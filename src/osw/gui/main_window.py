@@ -47,6 +47,7 @@ SHELL_MENU_ACTIONS = {
         "Import MATLAB/Octave Script",
         "Import MATLAB MAT Data",
         "3D Mesh Preview",
+        "Load mesh data for selected mesh...",
     ),
     "Plugins": ("Plugin Manager", "Refresh Plugins", "Plugin Health Check", "Preferences"),
     "Run": (
@@ -106,6 +107,8 @@ class SelectedMeshContext:
 ResultMeshBindingTargetSelector = Callable[
     [Sequence[ResultMeshBindingTargetCandidate]], object | None
 ]
+MeshRefLoadReader = Callable[[str | Path], object]
+MeshRefLoadFilePicker = Callable[[], str | Path | None]
 
 
 class MainWindow(_BaseMainWindow):
@@ -124,6 +127,8 @@ class MainWindow(_BaseMainWindow):
         mesh_scene_adapter_factory: Callable[[], Any] | None = None,
         result_mesh_binding_confirmation: Callable[[str], bool] | None = None,
         result_mesh_binding_target_selector: ResultMeshBindingTargetSelector | None = None,
+        metadata_mesh_reader: MeshRefLoadReader | None = None,
+        metadata_mesh_file_picker: MeshRefLoadFilePicker | None = None,
         **legacy_kwargs: object,
     ) -> None:
         if QtCore is None or QtGui is None or QtWidgets is None:
@@ -174,6 +179,10 @@ class MainWindow(_BaseMainWindow):
         self._mesh_scene_adapter_factory = mesh_scene_adapter_factory
         self._result_mesh_binding_confirmation = result_mesh_binding_confirmation
         self._result_mesh_binding_target_selector = result_mesh_binding_target_selector
+        self._metadata_mesh_reader = metadata_mesh_reader or self._read_metadata_mesh
+        self._metadata_mesh_file_picker = (
+            metadata_mesh_file_picker or self._choose_metadata_mesh_file
+        )
         self.last_imported_mesh_data: object | None = None
         self.last_imported_mesh_ref: str | None = None
         self.selected_mesh_context: SelectedMeshContext | None = None
@@ -232,6 +241,9 @@ class MainWindow(_BaseMainWindow):
                 elif action_title == "3D Mesh Preview":
                     action.setObjectName("oswActionOpenMeshViewer")
                     action.triggered.connect(self.open_mesh_viewer)
+                elif action_title == "Load mesh data for selected mesh...":
+                    action.setObjectName("oswActionLoadSelectedMeshData")
+                    action.triggered.connect(self.load_selected_project_tree_mesh_data)
                 else:
                     action.triggered.connect(
                         lambda _checked=False, label=action_title: self._placeholder_action(label)
@@ -505,16 +517,174 @@ class MainWindow(_BaseMainWindow):
             )
             diagnostics = context.diagnostics
         else:
-            message = (
-                f"Selected project tree mesh '{context.label or context.mesh_ref}' "
-                "for 3D preview."
-            )
-            diagnostics = ()
+            if context.source == "project_tree_load":
+                message = (
+                    f"Loaded project tree mesh '{context.label or context.mesh_ref}' "
+                    "for 3D preview."
+                )
+            else:
+                message = (
+                    f"Selected project tree mesh '{context.label or context.mesh_ref}' "
+                    "for 3D preview."
+                )
+            diagnostics = context.diagnostics
         if self.mesh_viewer is not None and hasattr(
             self.mesh_viewer, "show_active_mesh_status"
         ):
             self.mesh_viewer.show_active_mesh_status(message, diagnostics)
         self._placeholder_action(message)
+
+    def load_selected_project_tree_mesh_data(
+        self,
+        path: str | Path | None = None,
+    ) -> bool:
+        """Explicitly load MeshData for the selected project-tree MeshRef.
+
+        Passive project-tree selection stays diagnostic-only. This route reads a
+        user-selected or payload-provided neutral mesh file through a non-throwing
+        reader seam and updates only transient GUI preview state.
+        """
+
+        current = self.project_tree.currentItem()
+        if current is None:
+            return self._show_metadata_mesh_load_status(
+                "Select a project-tree mesh before loading mesh data."
+            )
+
+        kind = str(current.data(0, QtCore.Qt.ItemDataRole.UserRole) or "")
+        icon_key = str(current.data(0, QtCore.Qt.ItemDataRole.UserRole + 1) or "")
+        payload = self._project_tree_item_payload(current)
+        if not _is_project_tree_mesh_item(kind, icon_key, payload):
+            return self._show_metadata_mesh_load_status(
+                "Select a mesh row before loading MeshData for 3D preview."
+            )
+
+        label = str(current.text(0) or "")
+        mesh_ref = _selected_mesh_ref(payload, label)
+        if not mesh_ref:
+            return self._show_metadata_mesh_load_status(
+                "Selected mesh row has no stable mesh ref; MeshData was not loaded."
+            )
+
+        source_path = _metadata_mesh_source_path(payload)
+        selected_path = self._metadata_mesh_load_path(
+            explicit_path=path,
+            source_path=source_path,
+        )
+        if selected_path is None:
+            diagnostics = _metadata_mesh_missing_path_diagnostics(source_path)
+            context = SelectedMeshContext(
+                mesh_ref=mesh_ref,
+                label=label,
+                source="project_tree",
+                diagnostics=diagnostics,
+                payload=payload,
+            )
+            self.selected_mesh_context = context
+            self._show_selected_mesh_context_status(context)
+            return False
+
+        result = self._metadata_mesh_reader(selected_path)
+        mesh = getattr(result, "mesh", None)
+        if mesh is None:
+            diagnostics = _mesh_import_diagnostics(result)
+            context = SelectedMeshContext(
+                mesh_ref=mesh_ref,
+                label=label,
+                source="project_tree",
+                diagnostics=(
+                    f"Could not load MeshData for project tree mesh '{label or mesh_ref}'.",
+                    *diagnostics,
+                ),
+                payload=payload,
+            )
+            self.selected_mesh_context = context
+            self._show_selected_mesh_context_status(context)
+            return False
+
+        mismatch_diagnostics = _metadata_mesh_mismatch_diagnostics(
+            payload,
+            selected_path,
+            result,
+        )
+        if mismatch_diagnostics:
+            context = SelectedMeshContext(
+                mesh_ref=mesh_ref,
+                label=label,
+                source="project_tree",
+                diagnostics=mismatch_diagnostics,
+                payload=payload,
+            )
+            self.selected_mesh_context = context
+            self._show_selected_mesh_context_status(context)
+            return False
+
+        mesh_data = mesh.to_mesh_data() if hasattr(mesh, "to_mesh_data") else mesh
+        loaded_payload = {**payload, "loaded_path": str(selected_path)}
+        aliases = (
+            mesh_ref,
+            label,
+            str(selected_path),
+            *payload.values(),
+        )
+        self._register_mesh_data_for_viewer(mesh_data, aliases)
+        context = SelectedMeshContext(
+            mesh_ref=mesh_ref,
+            label=label,
+            source="project_tree_load",
+            mesh=mesh_data,
+            diagnostics=_mesh_import_diagnostics(result),
+            payload=loaded_payload,
+        )
+        self.selected_mesh_context = context
+        self._apply_selected_mesh_context_to_viewer(context)
+        return True
+
+    def _metadata_mesh_load_path(
+        self,
+        *,
+        explicit_path: str | Path | None,
+        source_path: str,
+    ) -> Path | None:
+        if explicit_path not in (None, ""):
+            return Path(explicit_path)
+        if source_path:
+            candidate = Path(source_path)
+            if candidate.is_absolute():
+                return candidate
+        picked = self._metadata_mesh_file_picker()
+        if picked in (None, ""):
+            return None
+        return Path(picked)
+
+    def _choose_metadata_mesh_file(self) -> str | None:
+        selected, _selected_filter = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            "Load mesh data for selected mesh",
+            "",
+            "Mesh files (*.msh *.inp *.bdf *.nas *.fem *.su2 *.vtk *.vtu "
+            "*.xdmf *.xmf *.cgns *.med);;All files (*)",
+        )
+        text = str(selected or "").strip()
+        return text or None
+
+    def _read_metadata_mesh(self, path: str | Path) -> object:
+        from osw.mesh.meshio_bridge import read_mesh
+
+        return read_mesh(path)
+
+    def _show_metadata_mesh_load_status(
+        self,
+        message: str,
+        diagnostics: Sequence[str] = (),
+    ) -> bool:
+        if self.mesh_viewer is not None and hasattr(
+            self.mesh_viewer,
+            "show_active_mesh_status",
+        ):
+            self.mesh_viewer.show_active_mesh_status(message, diagnostics)
+        self._placeholder_action(message)
+        return False
 
     def open_preferences(self) -> None:
         from osw.gui.dialogs.preferences_dialog import PreferencesDialog
@@ -2076,6 +2246,81 @@ def _mesh_ref_aliases(values: Sequence[object]) -> tuple[str, ...]:
                 seen.add(path_name)
                 aliases.append(path_name)
     return tuple(aliases)
+
+
+def _metadata_mesh_source_path(payload: Mapping[str, str]) -> str:
+    return str(
+        payload.get("path")
+        or payload.get("source_path")
+        or ""
+    ).strip()
+
+
+def _metadata_mesh_missing_path_diagnostics(source_path: str) -> tuple[str, ...]:
+    if source_path:
+        return (
+            f"Stored mesh path '{source_path}' is not an absolute load path. "
+            "Choose the mesh file explicitly before loading MeshData.",
+            "MeshData load was canceled; the active mesh was not changed.",
+        )
+    return (
+        "No source path is stored for the selected MeshRef. "
+        "Choose a mesh file explicitly before loading MeshData.",
+        "MeshData load was canceled; the active mesh was not changed.",
+    )
+
+
+def _mesh_import_diagnostics(result: object) -> tuple[str, ...]:
+    diagnostics = getattr(result, "diagnostics", None)
+    if diagnostics is None:
+        return ()
+    if hasattr(diagnostics, "summary"):
+        summary = str(diagnostics.summary() or "").strip()
+        return (summary,) if summary else ()
+    if isinstance(diagnostics, Sequence) and not isinstance(diagnostics, str | bytes):
+        return tuple(str(item) for item in diagnostics if str(item).strip())
+    text = str(diagnostics or "").strip()
+    return (text,) if text else ()
+
+
+def _metadata_mesh_mismatch_diagnostics(
+    payload: Mapping[str, str],
+    selected_path: Path,
+    result: object,
+) -> tuple[str, ...]:
+    expected_path = _metadata_mesh_source_path(payload)
+    if expected_path and Path(expected_path).is_absolute():
+        if not _same_mesh_path(Path(expected_path), selected_path):
+            return (
+                "Loaded mesh path does not match the selected MeshRef source path.",
+                f"Selected MeshRef path: {expected_path}",
+                f"Loaded mesh path: {selected_path}",
+                "MeshData was not made active; choose the matching mesh file explicitly.",
+            )
+
+    expected_format = str(payload.get("format", "") or "").strip().lower().lstrip(".")
+    actual_format = str(getattr(result, "format", "") or "").strip().lower().lstrip(".")
+    if expected_format and actual_format and expected_format != actual_format:
+        return (
+            "Loaded mesh format does not match the selected MeshRef metadata.",
+            f"Selected MeshRef format: {expected_format}",
+            f"Loaded mesh format: {actual_format}",
+            "MeshData was not made active; choose the matching mesh file explicitly.",
+        )
+    return ()
+
+
+def _same_mesh_path(expected: Path, actual: Path) -> bool:
+    expected_text = str(expected)
+    actual_text = str(actual)
+    if expected_text == actual_text:
+        return True
+    if not (expected.is_absolute() and actual.is_absolute()):
+        return False
+    try:
+        return expected.resolve(strict=False) == actual.resolve(strict=False)
+    except OSError:
+        return expected == actual
 
 
 def _result_mesh_binding_confirmation_text(
