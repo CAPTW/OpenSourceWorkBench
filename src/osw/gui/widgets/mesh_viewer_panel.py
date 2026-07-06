@@ -25,6 +25,7 @@ from osw.gui.workspace_scene_view_model import (
 )
 from osw.mesh.mesh_model import MeshData
 from osw.post.pyvista_scene import PyVistaUnavailableError
+from osw.post.result_field_mapping import map_result_field_to_mesh, result_field_names
 from osw.post.scene_model import SceneScreenshotRecord
 
 try:
@@ -35,6 +36,7 @@ except ModuleNotFoundError:
 _BaseWidget: Any = QtWidgets.QWidget if QtWidgets is not None else object
 
 _NONE_FIELD = "(none)"
+_RESULT_PREFIX = "result: "
 _NO_MESH_TEXT = "No mesh loaded."
 _MESH_READY_TEXT = "Mesh loaded. Select 'Load mesh preview' to build the scene."
 _PREVIEW_LOADED_TEXT = "Mesh preview loaded."
@@ -60,6 +62,9 @@ class MeshViewerPanel(_BaseWidget):
         self.setObjectName("oswThreeDMeshViewerPanel")
         self._adapter: SceneAdapterProtocol = scene_adapter or DefaultSceneAdapter()
         self._state = MeshViewerState()
+        self._result_dataset: object | None = None
+        self._result_dataset_ref: str = ""
+        self._result_field_lookup: dict[str, object] = {}
 
         self.title_label = QtWidgets.QLabel("3D Mesh Preview", self)
         self.title_label.setObjectName("oswMeshViewerTitle")
@@ -156,6 +161,23 @@ class MeshViewerPanel(_BaseWidget):
         """Record selected NamedSelection ids for the next preview build."""
         self._state.selected_selection_ids = tuple(str(item) for item in selection_ids)
 
+    def set_result_dataset(self, result_dataset: object | None) -> None:
+        """Attach an already-built result dataset whose fields can color the mesh.
+
+        Its scalar fields are offered in the selector (namespaced ``result: <name>``)
+        and, on selection, mapped onto a MeshData overlay for the existing color-by
+        path. This consumes built values only -- no solver run, no artifact parse.
+        """
+        self._result_dataset = result_dataset
+        self._result_dataset_ref = str(getattr(result_dataset, "dataset_id", "") or "")
+        self._result_field_lookup = {
+            str(getattr(item, "name", "")): item
+            for item in getattr(result_dataset, "fields", ()) or ()
+            if getattr(item, "name", "")
+        }
+        self._populate_scalar_selector(self._state.mesh)
+        self._render_state()
+
     def clear_mesh(self) -> None:
         """Return the panel to its friendly empty state."""
         self._state = MeshViewerState(status_message=_NO_MESH_TEXT)
@@ -171,11 +193,15 @@ class MeshViewerPanel(_BaseWidget):
             self._render_state()
             return None
 
+        render_mesh, color_by, result_dataset_ref, field_id, field_warnings = (
+            self._resolve_color_source(mesh)
+        )
         scene_input = mesh_input_ref(
             self._state.mesh_ref,
             self._state.selected_selection_ids,
+            result_dataset_ref=result_dataset_ref,
+            field_id=field_id,
         )
-        color_by = self._selected_color_by()
         scene_state = scene_view_state_from_toggles(
             show_surface=self.surface_toggle.isChecked(),
             show_edges=self.edge_toggle.isChecked(),
@@ -187,14 +213,8 @@ class MeshViewerPanel(_BaseWidget):
         self._state.scene_input = scene_input
         self._state.scene_state = scene_state
 
-        # Friendly warning if the chosen scalar is not present on the mesh; the
-        # summary and preview still proceed (no crash, no rendering here).
-        field_warnings: tuple[str, ...] = ()
-        if color_by is not None and color_by not in mesh_scalar_field_names(mesh):
-            field_warnings = (f"Scalar field '{color_by}' is not present on the mesh.",)
-
         try:
-            result = self._adapter.load_mesh(mesh, scene_input, scene_state)
+            result = self._adapter.load_mesh(render_mesh, scene_input, scene_state)
         except PyVistaUnavailableError as exc:
             self._state.pyvista_available = False
             self._state.status_message = _PYVISTA_MISSING_TEXT
@@ -266,20 +286,48 @@ class MeshViewerPanel(_BaseWidget):
         self._render_state()
 
     def _populate_scalar_selector(self, mesh: MeshData | None) -> None:
-        """Fill the scalar selector with '(none)' + the mesh's field names."""
+        """Fill the scalar selector: '(none)' + mesh fields + namespaced result fields."""
         self.scalar_selector.blockSignals(True)
         self.scalar_selector.clear()
         self.scalar_selector.addItem(_NONE_FIELD)
         for name in mesh_scalar_field_names(mesh):
             self.scalar_selector.addItem(name)
+        for name in result_field_names(self._result_dataset):
+            self.scalar_selector.addItem(f"{_RESULT_PREFIX}{name}")
         self.scalar_selector.setCurrentIndex(0)
         self.scalar_selector.blockSignals(False)
 
-    def _selected_color_by(self) -> str | None:
+    def _resolve_color_source(
+        self, mesh: MeshData
+    ) -> tuple[MeshData, str | None, str | None, str | None, tuple[str, ...]]:
+        """Resolve the selection to (render_mesh, color_by, result_ref, field_id, warnings).
+
+        A mesh point/cell field colors the base mesh; a namespaced result field is
+        mapped onto an overlay MeshData (or, on mismatch, skipped with a friendly
+        warning). ``'(none)'`` colors nothing.
+        """
         selected = self.scalar_selector.currentText()
         if not selected or selected == _NONE_FIELD:
-            return None
-        return selected
+            return mesh, None, None, None, ()
+        if selected.startswith(_RESULT_PREFIX):
+            field_name = selected[len(_RESULT_PREFIX):]
+            result_field = self._result_field_lookup.get(field_name)
+            if result_field is None:
+                return mesh, None, None, None, (f"Result field '{field_name}' is not available.",)
+            mapping = map_result_field_to_mesh(mesh, result_field)
+            if not mapping.applied:
+                return mesh, None, None, None, mapping.diagnostics
+            return (
+                mapping.mesh_data,
+                mapping.field_name,
+                self._result_dataset_ref or None,
+                field_name,
+                (),
+            )
+        warnings: tuple[str, ...] = ()
+        if selected not in mesh_scalar_field_names(mesh):
+            warnings = (f"Scalar field '{selected}' is not present on the mesh.",)
+        return mesh, selected, None, None, warnings
 
     def _set_controls_enabled(self, enabled: bool) -> None:
         self.load_button.setEnabled(enabled)

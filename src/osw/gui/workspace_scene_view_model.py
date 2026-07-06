@@ -38,11 +38,21 @@ _MEMORY_SOURCE = "<memory>"
 def mesh_input_ref(
     mesh_ref: str | None,
     selection_ids: Sequence[str] = (),
+    *,
+    result_dataset_ref: str | None = None,
+    field_id: str | None = None,
 ) -> SceneInputRef:
-    """Build a mesh-sourced :class:`SceneInputRef` (``source_kind='mesh'``)."""
+    """Build a mesh-sourced :class:`SceneInputRef` (``source_kind='mesh'``).
+
+    ``result_dataset_ref``/``field_id`` optionally record the provenance of a
+    result field mapped onto the mesh as an overlay scalar (additive metadata;
+    the source kind stays ``'mesh'`` because the geometry is still the mesh).
+    """
     return SceneInputRef(
         source_kind="mesh",
         mesh_ref=mesh_ref or None,
+        result_dataset_ref=result_dataset_ref or None,
+        field_id=field_id or None,
         selection_ids=tuple(str(item) for item in selection_ids),
     )
 
