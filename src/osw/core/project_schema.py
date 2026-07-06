@@ -839,7 +839,17 @@ class Project:
     def load(cls, path: str | Path) -> Project:
         from .project_io import load_project
 
-        return load_project(path)
+        try:
+            return load_project(path)
+        except ProjectSchemaError as exc:
+            message = str(exc)
+            yaml_prefix = "Could not parse YAML project file"
+            if message.startswith(yaml_prefix):
+                detail = message.removeprefix(yaml_prefix).strip()
+                raise ProjectSchemaError(
+                    f"Could not parse project file: YAML parse error; {detail}"
+                ) from exc
+            raise
 
 
 def load_project(path: str | Path) -> Project:
