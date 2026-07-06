@@ -247,6 +247,16 @@ class MeshViewerPanel(_BaseWidget):
         self._state.warning_messages = tuple(str(item) for item in diagnostics)
         self._render_state()
 
+    def show_active_mesh_status(
+        self,
+        message: str,
+        diagnostics: Sequence[str] = (),
+    ) -> None:
+        """Display active-mesh selection diagnostics without changing the mesh."""
+        self._state.status_message = str(message)
+        self._state.warning_messages = tuple(str(item) for item in diagnostics)
+        self._render_state()
+
     def mark_result_mesh_binding_persisted(self, message: str = _PERSISTED_BINDING_TEXT) -> None:
         self.show_result_mesh_binding_status(message, persisted=True)
 

@@ -27,6 +27,7 @@ class ProjectTreeNode:
     kind: str = "file"
     icon_key: str = "file"
     complete: bool = False
+    data: tuple[tuple[str, str], ...] = field(default_factory=tuple)
     children: tuple[ProjectTreeNode, ...] = field(default_factory=tuple)
 
 
@@ -157,8 +158,10 @@ def _project_to_tree_node(project: Project) -> ProjectTreeNode:
                 children=tuple(
                     ProjectTreeNode(
                         _ref_label(ref),
+                        kind="mesh_ref",
                         icon_key="mesh_file",
                         complete=_mesh_is_complete(ref),
+                        data=_mesh_ref_payload(ref),
                     )
                     for ref in project.mesh_refs
                 ),
@@ -229,6 +232,24 @@ def _mesh_is_complete(ref: object) -> bool:
     label = _ref_label(ref)
     status = str(getattr(ref, "status", "") or "").casefold()
     return label == "mesh.msh" or status in {"complete", "completed"}
+
+
+def _mesh_ref_payload(ref: object) -> tuple[tuple[str, str], ...]:
+    payload: dict[str, str] = {"source": "project_mesh_ref"}
+    for key in ("id", "ref_id", "name", "path", "format", "status"):
+        value = str(getattr(ref, key, "") or "").strip()
+        if value:
+            payload[key] = value
+    mesh_ref = (
+        payload.get("id")
+        or payload.get("ref_id")
+        or payload.get("path")
+        or payload.get("name")
+        or ""
+    )
+    if mesh_ref:
+        payload["mesh_ref"] = mesh_ref
+    return tuple(payload.items())
 
 
 def _physics_nodes(project: Project) -> list[ProjectTreeNode]:
@@ -392,6 +413,18 @@ class ProjectTreePanel(_BaseWidget):
             item = item.parent()
         return list(reversed(path))
 
+    def item_payload(self, item: object | None) -> dict[str, str]:
+        """Return stable tree-item metadata stored outside the display label."""
+        if item is None:
+            return {}
+        payload = item.data(0, QtCore.Qt.ItemDataRole.UserRole + 2)
+        if not isinstance(payload, dict):
+            return {}
+        return {str(key): str(value) for key, value in payload.items()}
+
+    def selected_item_payload(self) -> dict[str, str]:
+        return self.item_payload(self.tree.currentItem())
+
     def filter_tree(self, text: str) -> None:
         query = text.strip().casefold()
         for top_index in range(self.tree.topLevelItemCount()):
@@ -463,6 +496,8 @@ class ProjectTreePanel(_BaseWidget):
         item = QtWidgets.QTreeWidgetItem([node.label, "✓" if node.complete else ""])
         item.setData(0, QtCore.Qt.ItemDataRole.UserRole, node.kind)
         item.setData(0, QtCore.Qt.ItemDataRole.UserRole + 1, node.icon_key)
+        if node.data:
+            item.setData(0, QtCore.Qt.ItemDataRole.UserRole + 2, dict(node.data))
         item.setIcon(0, self._icon_cache.get(node.icon_key, self._icon_cache["file"]))
         if node.kind in {"project", "group", "run"}:
             font = item.font(0)

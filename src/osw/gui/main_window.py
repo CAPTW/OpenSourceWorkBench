@@ -91,6 +91,18 @@ class ResultMeshBindingTargetCandidate:
     diagnostics: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True)
+class SelectedMeshContext:
+    """Transient GUI-only active mesh context selected from project navigation."""
+
+    mesh_ref: str
+    label: str
+    source: str
+    mesh: object | None = None
+    diagnostics: tuple[str, ...] = ()
+    payload: Mapping[str, str] | None = None
+
+
 ResultMeshBindingTargetSelector = Callable[
     [Sequence[ResultMeshBindingTargetCandidate]], object | None
 ]
@@ -164,6 +176,8 @@ class MainWindow(_BaseMainWindow):
         self._result_mesh_binding_target_selector = result_mesh_binding_target_selector
         self.last_imported_mesh_data: object | None = None
         self.last_imported_mesh_ref: str | None = None
+        self.selected_mesh_context: SelectedMeshContext | None = None
+        self._mesh_data_by_ref: dict[str, object] = {}
         self.result_catalog: object | None = None
         self.last_figure_dataset: object | None = None
         self.last_result_datasets: tuple[object, ...] = ()
@@ -377,6 +391,130 @@ class MainWindow(_BaseMainWindow):
     def _on_project_tree_selection_changed(self, current: object, _previous: object) -> None:
         if current is not None and hasattr(self.properties_panel, "set_node_selection"):
             self.properties_panel.set_node_selection(current.text(0))
+        self._handle_project_tree_mesh_selection(current)
+
+    def _handle_project_tree_mesh_selection(self, current: object | None) -> None:
+        if current is None:
+            return
+        kind = str(current.data(0, QtCore.Qt.ItemDataRole.UserRole) or "")
+        icon_key = str(current.data(0, QtCore.Qt.ItemDataRole.UserRole + 1) or "")
+        payload = self._project_tree_item_payload(current)
+        if not _is_project_tree_mesh_item(kind, icon_key, payload):
+            return
+
+        label = str(current.text(0) or "")
+        mesh_ref = _selected_mesh_ref(payload, label)
+        mesh = self._mesh_data_for_project_tree_payload(payload, label)
+        if mesh is None:
+            diagnostic = (
+                f"Project tree mesh '{label or mesh_ref}' is registered but no "
+                "in-memory MeshData is available for 3D preview."
+            )
+            context = SelectedMeshContext(
+                mesh_ref=mesh_ref,
+                label=label,
+                source="project_tree",
+                diagnostics=(diagnostic,),
+                payload=payload,
+            )
+            self.selected_mesh_context = context
+            self._show_selected_mesh_context_status(context)
+            return
+
+        context = SelectedMeshContext(
+            mesh_ref=mesh_ref,
+            label=label,
+            source="project_tree",
+            mesh=mesh,
+            payload=payload,
+        )
+        self.selected_mesh_context = context
+        self._apply_selected_mesh_context_to_viewer(context)
+
+    def _project_tree_item_payload(self, item: object) -> dict[str, str]:
+        if hasattr(self.project_tree_panel, "item_payload"):
+            return self.project_tree_panel.item_payload(item)
+        payload = item.data(0, QtCore.Qt.ItemDataRole.UserRole + 2)
+        if not isinstance(payload, dict):
+            return {}
+        return {str(key): str(value) for key, value in payload.items()}
+
+    def _mesh_data_for_project_tree_payload(
+        self,
+        payload: Mapping[str, str],
+        label: str,
+    ) -> object | None:
+        for alias in _mesh_ref_aliases((*payload.values(), label)):
+            mesh = self._mesh_data_by_ref.get(alias)
+            if mesh is not None:
+                return mesh
+        return None
+
+    def _register_mesh_data_for_viewer(
+        self,
+        mesh_data: object,
+        aliases: Sequence[str],
+    ) -> None:
+        for alias in _mesh_ref_aliases(aliases):
+            self._mesh_data_by_ref[alias] = mesh_data
+
+    def _refresh_selected_mesh_context_from_aliases(
+        self,
+        mesh_data: object,
+        aliases: Sequence[str],
+    ) -> SelectedMeshContext | None:
+        context = self.selected_mesh_context
+        if context is None:
+            return None
+        alias_set = set(_mesh_ref_aliases(aliases))
+        context_aliases = set(
+            _mesh_ref_aliases(
+                (
+                    context.mesh_ref,
+                    context.label,
+                    *(context.payload or {}).values(),
+                )
+            )
+        )
+        if not alias_set.intersection(context_aliases):
+            return context
+        refreshed = SelectedMeshContext(
+            mesh_ref=context.mesh_ref,
+            label=context.label,
+            source=context.source,
+            mesh=mesh_data,
+            payload=context.payload,
+        )
+        self.selected_mesh_context = refreshed
+        return refreshed
+
+    def _apply_selected_mesh_context_to_viewer(self, context: SelectedMeshContext) -> None:
+        if context.mesh is not None and self.mesh_viewer is not None and hasattr(
+            self.mesh_viewer, "set_mesh"
+        ):
+            self.mesh_viewer.set_mesh(context.mesh, mesh_ref=context.mesh_ref)
+            self._sync_mesh_viewer_result_datasets()
+        self._show_selected_mesh_context_status(context)
+
+    def _show_selected_mesh_context_status(self, context: SelectedMeshContext) -> None:
+        if context.mesh is None:
+            message = (
+                context.diagnostics[0]
+                if context.diagnostics
+                else f"Project tree mesh '{context.label}' is metadata-only."
+            )
+            diagnostics = context.diagnostics
+        else:
+            message = (
+                f"Selected project tree mesh '{context.label or context.mesh_ref}' "
+                "for 3D preview."
+            )
+            diagnostics = ()
+        if self.mesh_viewer is not None and hasattr(
+            self.mesh_viewer, "show_active_mesh_status"
+        ):
+            self.mesh_viewer.show_active_mesh_status(message, diagnostics)
+        self._placeholder_action(message)
 
     def open_preferences(self) -> None:
         from osw.gui.dialogs.preferences_dialog import PreferencesDialog
@@ -653,11 +791,20 @@ class MainWindow(_BaseMainWindow):
             if mesh_ref is not None
             else (getattr(mesh, "id", "") or getattr(mesh, "name", ""))
         )
+        aliases = _mesh_aliases_for_imported_mesh(mesh, resolved_ref)
+        self._register_mesh_data_for_viewer(mesh_data, aliases)
+        selected_context = self._refresh_selected_mesh_context_from_aliases(
+            mesh_data,
+            aliases,
+        )
         self.last_imported_mesh_data = mesh_data
         self.last_imported_mesh_ref = resolved_ref or None
         if self.mesh_viewer is not None and hasattr(self.mesh_viewer, "set_mesh"):
-            self.mesh_viewer.set_mesh(mesh_data, mesh_ref=self.last_imported_mesh_ref or "")
-            self._sync_mesh_viewer_result_datasets()
+            if selected_context is not None:
+                self._apply_selected_mesh_context_to_viewer(selected_context)
+            else:
+                self.mesh_viewer.set_mesh(mesh_data, mesh_ref=self.last_imported_mesh_ref or "")
+                self._sync_mesh_viewer_result_datasets()
 
     def _store_workflow_mesh_for_viewer(self, operation: object) -> None:
         """Feed the latest imported mesh item into the 3D preview (general import).
@@ -1220,24 +1367,34 @@ class MainWindow(_BaseMainWindow):
         return self.mesh_viewer_dialog
 
     def _populate_mesh_viewer_from_latest(self) -> None:
-        """Show the latest imported mesh when the preview panel has none yet.
+        """Show selected or latest imported mesh when the panel has none yet.
 
         Runs on open so the first open after an import displays that mesh, but it
         never clobbers a mesh the panel already holds (a manual load or a prior
         refresh), keeping ``latest wins`` idempotent.
         """
 
+        context = self.selected_mesh_context
         if (
             self.mesh_viewer is not None
-            and self.last_imported_mesh_data is not None
             and hasattr(self.mesh_viewer, "set_mesh")
             and hasattr(self.mesh_viewer, "current_state")
             and self.mesh_viewer.current_state().mesh is None
         ):
+            if context is not None:
+                self._apply_selected_mesh_context_to_viewer(context)
+                return
+            if self.last_imported_mesh_data is None:
+                self._sync_mesh_viewer_result_datasets()
+                return
             self.mesh_viewer.set_mesh(
                 self.last_imported_mesh_data,
                 mesh_ref=self.last_imported_mesh_ref or "",
             )
+            if hasattr(self.mesh_viewer, "show_active_mesh_status"):
+                self.mesh_viewer.show_active_mesh_status(
+                    "Loaded latest imported mesh for 3D preview."
+                )
         self._sync_mesh_viewer_result_datasets()
 
     def load_mesh_into_viewer(self, mesh: object, *, mesh_ref: str = "") -> object:
@@ -1861,6 +2018,64 @@ def _mesh_counts(mesh: object) -> tuple[int | None, int | None]:
     except (TypeError, ValueError):
         return node_count, None
     return node_count, cell_count
+
+
+def _is_project_tree_mesh_item(
+    kind: str,
+    icon_key: str,
+    payload: Mapping[str, str],
+) -> bool:
+    return kind == "mesh_ref" or (icon_key == "mesh_file" and bool(payload.get("mesh_ref")))
+
+
+def _selected_mesh_ref(payload: Mapping[str, str], label: str) -> str:
+    return (
+        str(
+            payload.get("mesh_ref")
+            or payload.get("id")
+            or payload.get("ref_id")
+            or payload.get("path")
+            or payload.get("name")
+            or label
+            or ""
+        )
+        .strip()
+    )
+
+
+def _mesh_aliases_for_imported_mesh(mesh: object, explicit_ref: object) -> tuple[str, ...]:
+    values: list[object] = [
+        explicit_ref,
+        getattr(mesh, "id", ""),
+        getattr(mesh, "ref_id", ""),
+        getattr(mesh, "name", ""),
+        getattr(mesh, "path", ""),
+        getattr(mesh, "source_path", ""),
+    ]
+    info = getattr(mesh, "info", None)
+    if info is not None:
+        values.extend(
+            (
+                getattr(info, "source", ""),
+                getattr(info, "source_path", ""),
+            )
+        )
+    return _mesh_ref_aliases(values)
+
+
+def _mesh_ref_aliases(values: Sequence[object]) -> tuple[str, ...]:
+    aliases: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value or "").strip()
+        if text and text not in seen:
+            seen.add(text)
+            aliases.append(text)
+            path_name = Path(text).name
+            if path_name and path_name not in seen:
+                seen.add(path_name)
+                aliases.append(path_name)
+    return tuple(aliases)
 
 
 def _result_mesh_binding_confirmation_text(
