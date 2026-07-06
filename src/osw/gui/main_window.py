@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -93,6 +93,7 @@ class MainWindow(_BaseMainWindow):
         plugin_state_store: PluginStateStore | None = None,
         executable_registry: ExecutablePathRegistry | None = None,
         mesh_scene_adapter_factory: Callable[[], Any] | None = None,
+        result_mesh_binding_confirmation: Callable[[str], bool] | None = None,
         **legacy_kwargs: object,
     ) -> None:
         if QtCore is None or QtGui is None or QtWidgets is None:
@@ -141,6 +142,7 @@ class MainWindow(_BaseMainWindow):
         self.mesh_viewer_dialog: object | None = None
         self.mesh_viewer: object | None = None
         self._mesh_scene_adapter_factory = mesh_scene_adapter_factory
+        self._result_mesh_binding_confirmation = result_mesh_binding_confirmation
         self.last_imported_mesh_data: object | None = None
         self.last_imported_mesh_ref: str | None = None
         self.result_catalog: object | None = None
@@ -1185,6 +1187,10 @@ class MainWindow(_BaseMainWindow):
             self.mesh_viewer = build_mesh_viewer_panel(
                 self.mesh_viewer_dialog, scene_adapter=adapter
             )
+            if hasattr(self.mesh_viewer, "set_bind_result_callback"):
+                self.mesh_viewer.set_bind_result_callback(
+                    self.persist_mesh_viewer_result_binding
+                )
             layout.addWidget(self.mesh_viewer)
             if hasattr(self.mesh_viewer, "set_theme_tokens"):
                 self.mesh_viewer.set_theme_tokens(self.theme_manager.current_tokens)
@@ -1255,6 +1261,210 @@ class MainWindow(_BaseMainWindow):
             if getattr(dataset, "fields", ())
         )
 
+    def persist_mesh_viewer_result_binding(self) -> bool:
+        """Persist one confirmed result/mesh binding into Project result metadata."""
+        if self.mesh_viewer is None or not hasattr(self.mesh_viewer, "current_state"):
+            return self._show_result_mesh_binding_status(
+                "Open the 3D Mesh Preview before binding a result to a mesh."
+            )
+
+        state = self.mesh_viewer.current_state()
+        mesh = getattr(state, "mesh", None)
+        mesh_ref = str(getattr(state, "mesh_ref", "") or "").strip()
+        if mesh is None:
+            return self._show_result_mesh_binding_status(
+                "No active mesh is loaded; result/mesh binding was not persisted."
+            )
+        if not mesh_ref:
+            return self._show_result_mesh_binding_status(
+                "Active mesh ref is required before result/mesh binding can be persisted."
+            )
+
+        result_dataset = (
+            self.mesh_viewer.current_result_dataset()
+            if hasattr(self.mesh_viewer, "current_result_dataset")
+            else None
+        )
+        if result_dataset is None:
+            return self._show_result_mesh_binding_status(
+                "No result dataset is staged for this mesh; binding was not persisted."
+            )
+
+        field_id = (
+            self.mesh_viewer.selected_result_field_id()
+            if hasattr(self.mesh_viewer, "selected_result_field_id")
+            else None
+        )
+        if not field_id:
+            return self._show_result_mesh_binding_status(
+                "Select a result field before persisting the result/mesh binding."
+            )
+
+        target_candidates = self._result_ref_candidates_for_dataset(result_dataset)
+        if not target_candidates:
+            dataset_id = _dataset_identifier(result_dataset)
+            return self._show_result_mesh_binding_status(
+                "No persisted ResultRef target matches staged ResultDataset "
+                f"'{dataset_id}'. Binding was not persisted."
+            )
+        if len(target_candidates) > 1:
+            dataset_id = _dataset_identifier(result_dataset)
+            return self._show_result_mesh_binding_status(
+                "Multiple ResultRef entries match staged ResultDataset "
+                f"'{dataset_id}'; explicit selection is required before binding."
+            )
+
+        target_index, target_ref = target_candidates[0]
+        node_count, cell_count = _mesh_counts(mesh)
+        existing_diagnostics = self._existing_result_binding_diagnostics(
+            target_ref,
+            active_mesh_ref=mesh_ref,
+            node_count=node_count,
+            cell_count=cell_count,
+        )
+        if existing_diagnostics:
+            return self._show_result_mesh_binding_status(
+                "Existing result/mesh binding metadata is stale or malformed; "
+                "binding was not persisted.",
+                existing_diagnostics,
+            )
+
+        dataset_id = _dataset_identifier(result_dataset)
+        confirmation_text = _result_mesh_binding_confirmation_text(
+            result_ref=target_ref,
+            result_dataset_id=dataset_id,
+            mesh_ref=mesh_ref,
+            field_id=field_id,
+            node_count=node_count,
+            cell_count=cell_count,
+        )
+        if not self._confirm_result_mesh_binding(confirmation_text):
+            return self._show_result_mesh_binding_status(
+                "Result/mesh binding was not persisted because confirmation was cancelled."
+            )
+
+        from osw.core.result_mesh_binding import bridge_result_dataset_mesh_binding
+
+        proposal_metadata = getattr(result_dataset, "metadata", {}) or {}
+        if not isinstance(proposal_metadata, Mapping):
+            proposal_metadata = {}
+        bridge = bridge_result_dataset_mesh_binding(
+            target_ref,
+            result_dataset_id=dataset_id,
+            mesh_ref=mesh_ref,
+            field_id=field_id,
+            node_count=node_count,
+            cell_count=cell_count,
+            proposal_metadata=proposal_metadata,
+            active_mesh_ref=mesh_ref,
+            require_field_id=True,
+        )
+        if not bridge.valid:
+            return self._show_result_mesh_binding_status(
+                "Result/mesh binding metadata was not persisted.",
+                bridge.diagnostics,
+            )
+
+        self.set_project(
+            _project_with_replaced_result_ref(
+                self.current_project,
+                target_index,
+                bridge.result_ref,
+            )
+        )
+        message = (
+            "Persisted result/mesh binding metadata for result "
+            f"'{getattr(target_ref, 'id', '')}' on mesh '{mesh_ref}' field '{field_id}'."
+        )
+        if self.mesh_viewer is not None and hasattr(
+            self.mesh_viewer, "mark_result_mesh_binding_persisted"
+        ):
+            self.mesh_viewer.mark_result_mesh_binding_persisted(message)
+        self._placeholder_action(message)
+        return True
+
+    def _show_result_mesh_binding_status(
+        self,
+        message: str,
+        diagnostics: Sequence[str] = (),
+    ) -> bool:
+        if self.mesh_viewer is not None and hasattr(
+            self.mesh_viewer, "show_result_mesh_binding_status"
+        ):
+            self.mesh_viewer.show_result_mesh_binding_status(message, diagnostics)
+        self._placeholder_action(message)
+        return False
+
+    def _confirm_result_mesh_binding(self, message: str) -> bool:
+        if self._result_mesh_binding_confirmation is not None:
+            return bool(self._result_mesh_binding_confirmation(message))
+        result = QtWidgets.QMessageBox.question(
+            self,
+            "Bind result to active mesh",
+            message,
+            QtWidgets.QMessageBox.StandardButton.Yes
+            | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.No,
+        )
+        return result == QtWidgets.QMessageBox.StandardButton.Yes
+
+    def _result_ref_candidates_for_dataset(
+        self,
+        result_dataset: object,
+    ) -> list[tuple[int, object]]:
+        dataset_id = _dataset_identifier(result_dataset)
+        if not dataset_id:
+            return []
+        exact = [
+            (index, result_ref)
+            for index, result_ref in enumerate(self.current_project.results)
+            if dataset_id
+            in {str(getattr(result_ref, "id", "")), str(getattr(result_ref, "ref_id", ""))}
+        ]
+        if exact:
+            return exact
+
+        metadata_matches = [
+            (index, result_ref)
+            for index, result_ref in enumerate(self.current_project.results)
+            if _result_ref_metadata_matches_dataset(result_ref, dataset_id)
+        ]
+        if metadata_matches:
+            return metadata_matches
+
+        dataset_source = str(getattr(result_dataset, "source", "") or "").strip()
+        if not dataset_source:
+            return []
+        return [
+            (index, result_ref)
+            for index, result_ref in enumerate(self.current_project.results)
+            if _result_ref_source_matches_dataset(result_ref, dataset_source)
+        ]
+
+    def _existing_result_binding_diagnostics(
+        self,
+        result_ref: object,
+        *,
+        active_mesh_ref: str,
+        node_count: int | None,
+        cell_count: int | None,
+    ) -> tuple[str, ...]:
+        from osw.core.result_mesh_binding import (
+            MESH_BINDING_METADATA_KEY,
+            check_result_mesh_binding,
+        )
+
+        metadata = getattr(result_ref, "metadata", {}) or {}
+        if not isinstance(metadata, Mapping) or MESH_BINDING_METADATA_KEY not in metadata:
+            return ()
+        check = check_result_mesh_binding(
+            metadata,
+            active_mesh_ref=active_mesh_ref,
+            node_count=node_count,
+            cell_count=cell_count,
+        )
+        return () if check.valid else tuple(check.diagnostics)
+
     def _on_plugin_state_changed(self, _plugin_id: str, _enabled: bool) -> None:
         self.run_plugin_health_check(log=False)
 
@@ -1317,6 +1527,32 @@ def _project_with_mesh_ref(project: Project, mesh_ref: object) -> Project:
     )
 
 
+def _project_with_replaced_result_ref(
+    project: Project,
+    result_index: int,
+    result_ref: object,
+) -> Project:
+    results = list(project.results)
+    results[result_index] = result_ref
+    return Project(
+        metadata=project.metadata,
+        units=project.units,
+        materials=project.materials,
+        geometry=project.geometry,
+        meshes=project.meshes,
+        scripts=project.scripts,
+        boundary_curves=project.boundary_curves,
+        physics=project.physics,
+        solvers=project.solvers,
+        results=results,
+        report=project.report,
+        schema_version=project.schema_version,
+        plugins=project.plugins,
+        warnings=project.warnings,
+        selections=project.selections,
+    )
+
+
 def _project_with_script_ref(project: Project, script_ref: object) -> Project:
     scripts = [
         script
@@ -1365,6 +1601,80 @@ def _project_with_boundary_curve(project: Project, curve: object) -> Project:
         schema_version=project.schema_version,
         plugins=project.plugins,
         warnings=project.warnings,
+    )
+
+
+def _dataset_identifier(result_dataset: object) -> str:
+    return str(getattr(result_dataset, "dataset_id", "") or "").strip()
+
+
+def _result_ref_metadata_matches_dataset(result_ref: object, dataset_id: str) -> bool:
+    metadata = getattr(result_ref, "metadata", {}) or {}
+    if not isinstance(metadata, Mapping):
+        return False
+    return any(
+        str(metadata.get(key, "") or "").strip() == dataset_id
+        for key in ("result_dataset_id", "dataset_id")
+    )
+
+
+def _result_ref_source_matches_dataset(result_ref: object, dataset_source: str) -> bool:
+    if str(getattr(result_ref, "path", "") or "").strip() == dataset_source:
+        return True
+    metadata = getattr(result_ref, "metadata", {}) or {}
+    if not isinstance(metadata, Mapping):
+        return False
+    return any(
+        str(metadata.get(key, "") or "").strip() == dataset_source
+        for key in ("source", "source_path", "result_source")
+    )
+
+
+def _mesh_counts(mesh: object) -> tuple[int | None, int | None]:
+    points = getattr(mesh, "points", None)
+    try:
+        node_count = len(points) if points is not None else None
+    except TypeError:
+        node_count = None
+
+    cells = getattr(mesh, "cells", None)
+    if cells is None:
+        return node_count, None
+    cell_count = 0
+    try:
+        for block in cells:
+            count = getattr(block, "count", None)
+            if count is not None:
+                cell_count += int(count)
+            else:
+                cell_count += len(getattr(block, "data", ()) or ())
+    except (TypeError, ValueError):
+        return node_count, None
+    return node_count, cell_count
+
+
+def _result_mesh_binding_confirmation_text(
+    *,
+    result_ref: object,
+    result_dataset_id: str,
+    mesh_ref: str,
+    field_id: str,
+    node_count: int | None,
+    cell_count: int | None,
+) -> str:
+    signature = (
+        f"nodes={node_count}, cells={cell_count}"
+        if node_count is not None and cell_count is not None
+        else "mesh count signature unavailable"
+    )
+    return (
+        "Persist result/mesh binding metadata?\n\n"
+        f"ResultRef: {getattr(result_ref, 'id', '')}\n"
+        f"ResultDataset: {result_dataset_id}\n"
+        f"Mesh: {mesh_ref}\n"
+        f"Field: {field_id}\n"
+        f"Signature: {signature}\n\n"
+        "This updates project metadata only and does not save the project file."
     )
 
 

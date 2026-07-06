@@ -10,7 +10,7 @@ validation evidence. The panel exposes no direct backend-execution control.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
@@ -50,6 +50,11 @@ _NO_RESULT_DATASETS_TEXT = "No result datasets are available for this mesh."
 _AMBIGUOUS_RESULT_DATASETS_TEXT = (
     "Multiple result datasets could match this mesh; choose one explicitly."
 )
+_NO_STAGED_BINDING_TEXT = "No result dataset is staged for persisted binding."
+_BINDING_HANDLER_MISSING_TEXT = (
+    "Persisted binding requires a MainWindow confirmation handler."
+)
+_PERSISTED_BINDING_TEXT = "Persisted result/mesh binding metadata."
 _MESH_REF_METADATA_KEYS = (
     "mesh_ref",
     "source_mesh_ref",
@@ -78,6 +83,9 @@ class MeshViewerPanel(_BaseWidget):
         self._result_dataset: object | None = None
         self._result_dataset_ref: str = ""
         self._result_field_lookup: dict[str, object] = {}
+        self._bind_result_callback: Callable[[], object] | None = None
+        self._binding_status_message = _NO_STAGED_BINDING_TEXT
+        self._binding_persisted = False
 
         self.title_label = QtWidgets.QLabel("3D Mesh Preview", self)
         self.title_label.setObjectName("oswMeshViewerTitle")
@@ -111,6 +119,14 @@ class MeshViewerPanel(_BaseWidget):
         self.load_button.setObjectName("oswMeshViewerLoadButton")
         self.capture_button = QtWidgets.QPushButton("Capture scene metadata", self)
         self.capture_button.setObjectName("oswMeshViewerCaptureButton")
+        self.bind_result_button = QtWidgets.QPushButton(
+            "Bind result to active mesh...", self
+        )
+        self.bind_result_button.setObjectName("oswMeshViewerBindResultButton")
+
+        self.binding_status_label = QtWidgets.QLabel(_NO_STAGED_BINDING_TEXT, self)
+        self.binding_status_label.setObjectName("oswMeshViewerBindingStatus")
+        self.binding_status_label.setWordWrap(True)
 
         self.status_label = QtWidgets.QLabel(_NO_MESH_TEXT, self)
         self.status_label.setObjectName("oswMeshViewerStatus")
@@ -134,6 +150,7 @@ class MeshViewerPanel(_BaseWidget):
         buttons = QtWidgets.QHBoxLayout()
         buttons.addWidget(self.load_button)
         buttons.addWidget(self.capture_button)
+        buttons.addWidget(self.bind_result_button)
         buttons.addStretch(1)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -145,12 +162,19 @@ class MeshViewerPanel(_BaseWidget):
         layout.addLayout(toggles)
         layout.addLayout(fields)
         layout.addLayout(buttons)
+        layout.addWidget(self.binding_status_label)
         layout.addWidget(self.status_label)
         layout.addWidget(self.diagnostics_list)
 
         self.load_button.clicked.connect(lambda _checked=False: self.load_mesh_preview())
         self.capture_button.clicked.connect(
             lambda _checked=False: self._on_capture_requested()
+        )
+        self.bind_result_button.clicked.connect(
+            lambda _checked=False: self._on_bind_result_requested()
+        )
+        self.scalar_selector.currentTextChanged.connect(
+            lambda _text: self._on_scalar_selection_changed()
         )
         self._set_controls_enabled(False)
         self._render_state()
@@ -168,6 +192,7 @@ class MeshViewerPanel(_BaseWidget):
         )
         self._populate_scalar_selector(mesh)
         self._set_controls_enabled(True)
+        self._refresh_binding_status()
         self._render_state()
 
     def set_selected_selection_ids(self, selection_ids: object) -> None:
@@ -189,7 +214,41 @@ class MeshViewerPanel(_BaseWidget):
             if getattr(item, "name", "")
         }
         self._populate_scalar_selector(self._state.mesh)
+        self._refresh_binding_status()
         self._render_state()
+
+    def set_bind_result_callback(self, callback: Callable[[], object] | None) -> None:
+        """Connect the panel action to a MainWindow-owned confirmation flow."""
+        self._bind_result_callback = callback
+
+    def current_result_dataset(self) -> object | None:
+        return self._result_dataset
+
+    def current_result_dataset_id(self) -> str:
+        return self._result_dataset_ref
+
+    def selected_result_field_id(self) -> str | None:
+        selected = self.scalar_selector.currentText()
+        if selected.startswith(_RESULT_PREFIX):
+            return selected[len(_RESULT_PREFIX):] or None
+        return None
+
+    def show_result_mesh_binding_status(
+        self,
+        message: str,
+        diagnostics: Sequence[str] = (),
+        *,
+        persisted: bool = False,
+    ) -> None:
+        """Display persistence diagnostics without mutating project data."""
+        self._binding_persisted = persisted
+        self._binding_status_message = str(message)
+        self._state.status_message = str(message)
+        self._state.warning_messages = tuple(str(item) for item in diagnostics)
+        self._render_state()
+
+    def mark_result_mesh_binding_persisted(self, message: str = _PERSISTED_BINDING_TEXT) -> None:
+        self.show_result_mesh_binding_status(message, persisted=True)
 
     def set_result_dataset_candidates(self, result_datasets: object) -> object | None:
         """Associate a safe in-memory result dataset candidate with the active mesh.
@@ -252,6 +311,7 @@ class MeshViewerPanel(_BaseWidget):
         self._state = MeshViewerState(status_message=_NO_MESH_TEXT)
         self._populate_scalar_selector(None)
         self._set_controls_enabled(False)
+        self._refresh_binding_status()
         self._render_state()
 
     def load_mesh_preview(self) -> Any:
@@ -354,6 +414,40 @@ class MeshViewerPanel(_BaseWidget):
         )
         self._render_state()
 
+    def _on_bind_result_requested(self) -> None:
+        if self._bind_result_callback is None:
+            self.show_result_mesh_binding_status(_BINDING_HANDLER_MISSING_TEXT)
+            return
+        self._bind_result_callback()
+
+    def _on_scalar_selection_changed(self) -> None:
+        if self._result_dataset is None:
+            return
+        self._refresh_binding_status()
+        self._render_state()
+
+    def _refresh_binding_status(self) -> None:
+        self._binding_persisted = False
+        mesh = self._state.mesh
+        if mesh is None:
+            self._binding_status_message = _NO_ACTIVE_MESH_TEXT
+            return
+        if self._result_dataset is None:
+            self._binding_status_message = _NO_STAGED_BINDING_TEXT
+            return
+        dataset_id = self._result_dataset_ref or _dataset_id(self._result_dataset)
+        mesh_ref = self._state.mesh_ref or "(unspecified)"
+        field_id = self.selected_result_field_id()
+        field_text = (
+            f" field '{field_id}'"
+            if field_id
+            else "; select a result field before persisting"
+        )
+        self._binding_status_message = (
+            f"Result dataset '{dataset_id}' is staged for active mesh '{mesh_ref}'"
+            f"{field_text}. Binding is not persisted."
+        )
+
     def _populate_scalar_selector(self, mesh: MeshData | None) -> None:
         """Fill the scalar selector: '(none)' + mesh fields + namespaced result fields."""
         current = self.scalar_selector.currentText()
@@ -451,6 +545,7 @@ class MeshViewerPanel(_BaseWidget):
     def _set_controls_enabled(self, enabled: bool) -> None:
         self.load_button.setEnabled(enabled)
         self.capture_button.setEnabled(enabled)
+        self.bind_result_button.setEnabled(enabled and self._result_dataset is not None)
 
     def _render_state(self) -> None:
         has_mesh = self._state.mesh is not None
@@ -460,6 +555,8 @@ class MeshViewerPanel(_BaseWidget):
             self.summary_label.setText(_NO_MESH_TEXT)
         self.empty_state.setVisible(not has_mesh)
         self.status_label.setText(self._state.status_message or _NO_MESH_TEXT)
+        self.binding_status_label.setText(self._binding_status_message)
+        self.bind_result_button.setEnabled(has_mesh and self._result_dataset is not None)
 
         self.diagnostics_list.clear()
         for warning in self._state.warning_messages:
