@@ -29,13 +29,15 @@ def _node_field(name: str = "temp", *, ids=(0, 1, 2), comp: str = "value") -> Re
 
 
 def test_node_field_maps_to_point_data_overlay() -> None:
-    result = map_result_field_to_mesh(_mesh(), _node_field("temp"))
+    mesh = _mesh()
+    result = map_result_field_to_mesh(mesh, _node_field("temp"))
     assert isinstance(result, ResultFieldMapping)
     assert result.applied is True
     assert result.location == "point"
     assert result.field_name == "temp"
     assert result.mesh_data.point_data["temp"] == (0.0, 10.0, 20.0)
     assert "temp" not in result.mesh_data.cell_data
+    assert "temp" not in mesh.point_data
 
 
 def test_cell_field_maps_to_cell_data_overlay() -> None:
@@ -57,10 +59,64 @@ def test_one_based_entity_ids_align() -> None:
 
 
 def test_length_mismatch_is_not_applied_and_does_not_fabricate() -> None:
-    result = map_result_field_to_mesh(_mesh(), _node_field("temp", ids=(0, 1)))
+    mesh = _mesh()
+    result = map_result_field_to_mesh(mesh, _node_field("temp", ids=(0, 1)))
     assert result.applied is False
     assert result.diagnostics and "not applied" in result.diagnostics[0]
     # No fabricated array added; overlay equals the input mesh (no 'temp' key).
+    assert "temp" not in result.mesh_data.point_data
+    assert "temp" not in mesh.point_data
+
+
+def test_raw_row_count_mismatch_rejects_duplicate_collapse() -> None:
+    field = ResultField(
+        name="temp",
+        location="node",
+        components=("value",),
+        rows=(
+            ResultRow(0, {"value": 0.0}),
+            ResultRow(1, {"value": 10.0}),
+            ResultRow(2, {"value": 20.0}),
+            ResultRow(2, {"value": 999.0}),
+        ),
+    )
+    result = map_result_field_to_mesh(_mesh(), field)
+    assert result.applied is False
+    assert "4 rows" in result.diagnostics[0]
+    assert "3 nodes" in result.diagnostics[0]
+    assert "temp" not in result.mesh_data.point_data
+
+
+def test_duplicate_entity_ids_are_rejected() -> None:
+    field = ResultField(
+        name="temp",
+        location="node",
+        components=("value",),
+        rows=(
+            ResultRow(0, {"value": 0.0}),
+            ResultRow(1, {"value": 10.0}),
+            ResultRow(1, {"value": 999.0}),
+        ),
+    )
+    result = map_result_field_to_mesh(_mesh(), field)
+    assert result.applied is False
+    assert "duplicate entity ID" in result.diagnostics[0]
+    assert "temp" not in result.mesh_data.point_data
+
+
+def test_duplicate_entity_ids_cannot_overwrite_values() -> None:
+    field = ResultField(
+        name="temp",
+        location="node",
+        components=("value",),
+        rows=(
+            ResultRow(0, {"value": 0.0}),
+            ResultRow(1, {"value": 10.0}),
+            ResultRow(1, {"value": 999.0}),
+        ),
+    )
+    result = map_result_field_to_mesh(_mesh(), field)
+    assert result.applied is False
     assert "temp" not in result.mesh_data.point_data
 
 
@@ -89,6 +145,40 @@ def test_missing_component_in_a_row_is_not_applied() -> None:
     result = map_result_field_to_mesh(_mesh(), field)
     assert result.applied is False
     assert "missing" in result.diagnostics[0]
+
+
+def test_non_coercible_entity_id_is_not_applied() -> None:
+    field = ResultField(
+        name="temp",
+        location="node",
+        components=("value",),
+        rows=(
+            ResultRow(0, {"value": 0.0}),
+            ResultRow("node-a", {"value": 10.0}),
+            ResultRow(2, {"value": 20.0}),
+        ),
+    )
+    result = map_result_field_to_mesh(_mesh(), field)
+    assert result.applied is False
+    assert "entity_id" in result.diagnostics[0]
+    assert "not applied" in result.diagnostics[0]
+
+
+def test_non_coercible_component_value_is_not_applied() -> None:
+    field = ResultField(
+        name="temp",
+        location="node",
+        components=("value",),
+        rows=(
+            ResultRow(0, {"value": 0.0}),
+            ResultRow(1, {"value": "hot"}),
+            ResultRow(2, {"value": 20.0}),
+        ),
+    )
+    result = map_result_field_to_mesh(_mesh(), field)
+    assert result.applied is False
+    assert "non-numeric value" in result.diagnostics[0]
+    assert "not applied" in result.diagnostics[0]
 
 
 def test_component_selection() -> None:

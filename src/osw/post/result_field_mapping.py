@@ -12,6 +12,7 @@ the values do not align to the mesh.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from osw.core.result_dataset import ResultField
@@ -87,9 +88,46 @@ def map_result_field_to_mesh(
     target = info.node_count if location == "point" else info.element_count
     entity_label = "nodes" if location == "point" else "cells"
 
+    rows = tuple(getattr(result_field, "rows", ()) or ())
+    if target == 0 or len(rows) != target:
+        return _not_applied(
+            mesh_data,
+            name,
+            location,
+            f"Result field '{name}' has {len(rows)} rows but the mesh has "
+            f"{target} {entity_label}; not applied.",
+        )
+
     by_id: dict[int, float] = {}
-    for row in getattr(result_field, "rows", ()) or ():
+    for row in rows:
+        try:
+            entity_id = int(getattr(row, "entity_id", 0))
+        except (TypeError, ValueError):
+            return _not_applied(
+                mesh_data,
+                name,
+                location,
+                f"Result field '{name}' has an entity_id that is not an integer; "
+                "not applied.",
+            )
+
+        if entity_id in by_id:
+            return _not_applied(
+                mesh_data,
+                name,
+                location,
+                f"Result field '{name}' contains duplicate entity ID {entity_id}; "
+                "not applied.",
+            )
+
         values = getattr(row, "values", {}) or {}
+        if not isinstance(values, Mapping):
+            return _not_applied(
+                mesh_data,
+                name,
+                location,
+                f"Result field '{name}' row values are not a mapping; not applied.",
+            )
         if chosen not in values:
             return _not_applied(
                 mesh_data,
@@ -98,16 +136,17 @@ def map_result_field_to_mesh(
                 f"Result field '{name}' component '{chosen}' is missing from some rows; "
                 "not applied.",
             )
-        by_id[int(getattr(row, "entity_id", 0))] = float(values[chosen])
 
-    if target == 0 or len(by_id) != target:
-        return _not_applied(
-            mesh_data,
-            name,
-            location,
-            f"Result field '{name}' has {len(by_id)} values but the mesh has "
-            f"{target} {entity_label}; not applied.",
-        )
+        try:
+            by_id[entity_id] = float(values[chosen])
+        except (TypeError, ValueError):
+            return _not_applied(
+                mesh_data,
+                name,
+                location,
+                f"Result field '{name}' component '{chosen}' has a non-numeric value "
+                f"for entity ID {entity_id}; not applied.",
+            )
 
     offset = _contiguous_offset(by_id, target)
     if offset is None:
