@@ -99,6 +99,25 @@ def test_check_rejects_malformed_binding_metadata_with_diagnostic() -> None:
     assert any("malformed" in diagnostic.lower() for diagnostic in result.diagnostics)
 
 
+def test_check_rejects_malformed_diagnostics_payload_with_diagnostic() -> None:
+    result = check_result_mesh_binding(
+        {
+            MESH_BINDING_METADATA_KEY: {
+                "schema": RESULT_MESH_BINDING_SCHEMA,
+                "mesh_ref": "mesh-1",
+                "result_dataset_id": "dataset-1",
+                "diagnostics": 5,
+            },
+        },
+        active_mesh_ref="mesh-1",
+    )
+
+    assert result.valid is False
+    assert result.binding is None
+    assert any("malformed" in diagnostic.lower() for diagnostic in result.diagnostics)
+    assert any("diagnostics" in diagnostic.lower() for diagnostic in result.diagnostics)
+
+
 def test_check_reports_active_mesh_ref_mismatch_as_stale() -> None:
     binding = ResultMeshBinding(mesh_ref="mesh-1", result_dataset_id="dataset-1")
 

@@ -29,6 +29,21 @@ def _coerce_optional_count(value: object, *, field_name: str) -> int | None:
     return count
 
 
+def _coerce_diagnostics(value: object) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if isinstance(value, str):
+        return (value,)
+    if isinstance(value, Mapping):
+        msg = "diagnostics must be a sequence of messages."
+        raise ValueError(msg)
+    try:
+        return tuple(str(diagnostic) for diagnostic in value)
+    except TypeError as exc:
+        msg = "diagnostics must be a sequence of messages."
+        raise ValueError(msg) from exc
+
+
 @dataclass(frozen=True)
 class ResultMeshSignature:
     """Small optional mesh fingerprint stored with a result binding."""
@@ -99,7 +114,7 @@ class ResultMeshBinding:
         object.__setattr__(
             self,
             "diagnostics",
-            tuple(str(diagnostic) for diagnostic in self.diagnostics),
+            _coerce_diagnostics(self.diagnostics),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -129,9 +144,6 @@ class ResultMeshBinding:
                 f"{schema!r}; expected {RESULT_MESH_BINDING_SCHEMA!r}."
             )
             raise ValueError(msg)
-        diagnostics = data.get("diagnostics", ())
-        if isinstance(diagnostics, str):
-            diagnostics = (diagnostics,)
         return cls(
             mesh_ref=str(data.get("mesh_ref", "")),
             result_dataset_id=str(data.get("result_dataset_id", "")),
@@ -141,7 +153,7 @@ class ResultMeshBinding:
             ),
             status=str(data.get("status", DEFAULT_BINDING_STATUS)),
             mesh_signature=ResultMeshSignature.from_dict(data.get("mesh_signature")),
-            diagnostics=tuple(diagnostics),
+            diagnostics=_coerce_diagnostics(data.get("diagnostics", ())),
         )
 
 
@@ -260,7 +272,7 @@ def _binding_from_input(
     if isinstance(binding_or_metadata, Mapping) and "schema" in binding_or_metadata:
         try:
             return ResultMeshBinding.from_dict(binding_or_metadata), ()
-        except ValueError as exc:
+        except (TypeError, ValueError) as exc:
             return None, (f"Malformed result mesh binding metadata: {exc}",)
     return _binding_from_metadata(binding_or_metadata)
 
@@ -279,5 +291,5 @@ def _binding_from_metadata(
         return None, ("Malformed result mesh binding metadata: expected a mapping.",)
     try:
         return ResultMeshBinding.from_dict(payload), ()
-    except ValueError as exc:
+    except (TypeError, ValueError) as exc:
         return None, (f"Malformed result mesh binding metadata: {exc}",)
