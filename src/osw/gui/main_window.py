@@ -636,6 +636,7 @@ class MainWindow(_BaseMainWindow):
         self.last_imported_mesh_ref = resolved_ref or None
         if self.mesh_viewer is not None and hasattr(self.mesh_viewer, "set_mesh"):
             self.mesh_viewer.set_mesh(mesh_data, mesh_ref=self.last_imported_mesh_ref or "")
+            self._sync_mesh_viewer_result_datasets()
 
     def _store_workflow_mesh_for_viewer(self, operation: object) -> None:
         """Feed the latest imported mesh item into the 3D preview (general import).
@@ -1094,6 +1095,7 @@ class MainWindow(_BaseMainWindow):
                 metadata=getattr(catalog, "metadata", {}),
             )
         self.set_result_catalog(catalog)
+        self._sync_mesh_viewer_result_datasets()
 
     def refresh_results_from_project(self, *, update_report: bool = True) -> object:
         """Refresh the result catalog from project summaries and cached datasets."""
@@ -1211,6 +1213,7 @@ class MainWindow(_BaseMainWindow):
                 self.last_imported_mesh_data,
                 mesh_ref=self.last_imported_mesh_ref or "",
             )
+        self._sync_mesh_viewer_result_datasets()
 
     def load_mesh_into_viewer(self, mesh: object, *, mesh_ref: str = "") -> object:
         """Show the mesh preview dialog and hand it an already-built mesh.
@@ -1222,7 +1225,35 @@ class MainWindow(_BaseMainWindow):
         self.open_mesh_viewer()
         if self.mesh_viewer is not None and hasattr(self.mesh_viewer, "set_mesh"):
             self.mesh_viewer.set_mesh(mesh, mesh_ref=mesh_ref)
+            self._sync_mesh_viewer_result_datasets()
         return self.mesh_viewer_dialog
+
+    def _sync_mesh_viewer_result_datasets(self) -> None:
+        """Offer already-built result datasets to the 3D mesh preview panel.
+
+        This is a GUI hand-off only. It does not open the viewer, parse artifacts,
+        run solvers, generate/convert meshes, or render; the panel decides whether
+        one in-memory dataset is safe to associate with its active mesh.
+        """
+
+        if self.mesh_viewer is None or not hasattr(
+            self.mesh_viewer, "set_result_dataset_candidates"
+        ):
+            return
+        self.mesh_viewer.set_result_dataset_candidates(
+            self._mesh_viewer_result_dataset_candidates()
+        )
+
+    def _mesh_viewer_result_dataset_candidates(self) -> tuple[object, ...]:
+        if self.last_result_datasets:
+            return tuple(self.last_result_datasets)
+        if self.result_catalog is None:
+            return ()
+        return tuple(
+            dataset
+            for dataset in getattr(self.result_catalog, "datasets", ()) or ()
+            if getattr(dataset, "fields", ())
+        )
 
     def _on_plugin_state_changed(self, _plugin_id: str, _enabled: bool) -> None:
         self.run_plugin_health_check(log=False)

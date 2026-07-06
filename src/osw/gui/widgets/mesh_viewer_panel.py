@@ -10,6 +10,7 @@ validation evidence. The panel exposes no direct backend-execution control.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
@@ -43,6 +44,18 @@ _PREVIEW_LOADED_TEXT = "Mesh preview loaded."
 _CAPTURED_TEXT = "Captured scene metadata."
 _PYVISTA_MISSING_TEXT = (
     "PyVista unavailable -- install the visualization extra to render 3D scenes."
+)
+_NO_ACTIVE_MESH_TEXT = "No active mesh is loaded; result fields were not associated."
+_NO_RESULT_DATASETS_TEXT = "No result datasets are available for this mesh."
+_AMBIGUOUS_RESULT_DATASETS_TEXT = (
+    "Multiple result datasets could match this mesh; choose one explicitly."
+)
+_MESH_REF_METADATA_KEYS = (
+    "mesh_ref",
+    "source_mesh_ref",
+    "source_mesh_id",
+    "mesh_id",
+    "workflow_item_id",
 )
 
 
@@ -178,6 +191,62 @@ class MeshViewerPanel(_BaseWidget):
         self._populate_scalar_selector(self._state.mesh)
         self._render_state()
 
+    def set_result_dataset_candidates(self, result_datasets: object) -> object | None:
+        """Associate a safe in-memory result dataset candidate with the active mesh.
+
+        This is the first auto-association route for the 3D workspace. It consumes
+        already-built datasets only: exact mesh-ref metadata wins; otherwise a
+        single unambiguous compatible candidate may be staged. Ambiguous or
+        incompatible candidates stay diagnostic-first and do not run solvers,
+        parse artifacts, generate meshes, convert meshes, or render.
+        """
+
+        mesh = self._state.mesh
+        datasets = _candidate_datasets(result_datasets)
+        if mesh is None:
+            return self._clear_result_dataset_association(_NO_ACTIVE_MESH_TEXT)
+        if not datasets:
+            return self._clear_result_dataset_association(_NO_RESULT_DATASETS_TEXT)
+
+        mesh_ref = self._state.mesh_ref
+        exact_matches = (
+            tuple(
+                dataset
+                for dataset in datasets
+                if mesh_ref and mesh_ref in _dataset_mesh_refs(dataset)
+            )
+            if mesh_ref
+            else ()
+        )
+        if exact_matches:
+            return self._associate_from_exact_matches(mesh, mesh_ref, exact_matches)
+
+        if len(datasets) > 1:
+            return self._clear_result_dataset_association(_AMBIGUOUS_RESULT_DATASETS_TEXT)
+
+        dataset = datasets[0]
+        dataset_refs = _dataset_mesh_refs(dataset)
+        if dataset_refs:
+            dataset_id = _dataset_id(dataset)
+            active = mesh_ref or "(unspecified)"
+            refs = ", ".join(dataset_refs)
+            return self._clear_result_dataset_association(
+                f"Result dataset '{dataset_id}' refers to mesh '{refs}' but the "
+                f"active mesh is '{active}'."
+            )
+
+        field_name, diagnostics = _first_compatible_result_field(mesh, dataset)
+        if field_name is None:
+            return self._clear_result_dataset_association(
+                _no_matching_field_message(dataset), diagnostics
+            )
+        dataset_id = _dataset_id(dataset)
+        return self._apply_result_dataset_association(
+            dataset,
+            f"Staged result dataset '{dataset_id}' for active mesh "
+            f"'{mesh_ref or '(unspecified)'}'.",
+        )
+
     def clear_mesh(self) -> None:
         """Return the panel to its friendly empty state."""
         self._state = MeshViewerState(status_message=_NO_MESH_TEXT)
@@ -287,15 +356,65 @@ class MeshViewerPanel(_BaseWidget):
 
     def _populate_scalar_selector(self, mesh: MeshData | None) -> None:
         """Fill the scalar selector: '(none)' + mesh fields + namespaced result fields."""
+        current = self.scalar_selector.currentText()
         self.scalar_selector.blockSignals(True)
         self.scalar_selector.clear()
-        self.scalar_selector.addItem(_NONE_FIELD)
+        items = [_NONE_FIELD]
         for name in mesh_scalar_field_names(mesh):
-            self.scalar_selector.addItem(name)
+            items.append(name)
         for name in result_field_names(self._result_dataset):
-            self.scalar_selector.addItem(f"{_RESULT_PREFIX}{name}")
-        self.scalar_selector.setCurrentIndex(0)
+            items.append(f"{_RESULT_PREFIX}{name}")
+        self.scalar_selector.addItems(items)
+        self.scalar_selector.setCurrentText(current if current in items else _NONE_FIELD)
         self.scalar_selector.blockSignals(False)
+
+    def _associate_from_exact_matches(
+        self, mesh: MeshData, mesh_ref: str, datasets: tuple[object, ...]
+    ) -> object | None:
+        compatible: list[object] = []
+        diagnostics: list[str] = []
+        for dataset in datasets:
+            field_name, field_diagnostics = _first_compatible_result_field(mesh, dataset)
+            if field_name is not None:
+                compatible.append(dataset)
+            else:
+                diagnostics.extend(field_diagnostics)
+
+        if len(compatible) == 1:
+            dataset = compatible[0]
+            dataset_id = _dataset_id(dataset)
+            return self._apply_result_dataset_association(
+                dataset,
+                f"Associated result dataset '{dataset_id}' with active mesh '{mesh_ref}'.",
+            )
+        if len(compatible) > 1:
+            return self._clear_result_dataset_association(_AMBIGUOUS_RESULT_DATASETS_TEXT)
+        return self._clear_result_dataset_association(
+            _no_matching_field_message(datasets[0]), tuple(diagnostics)
+        )
+
+    def _apply_result_dataset_association(
+        self,
+        result_dataset: object,
+        status_message: str,
+        diagnostics: Sequence[str] = (),
+    ) -> object:
+        self.set_result_dataset(result_dataset)
+        self._state.status_message = status_message
+        self._state.warning_messages = tuple(str(item) for item in diagnostics)
+        self._render_state()
+        return result_dataset
+
+    def _clear_result_dataset_association(
+        self,
+        status_message: str,
+        diagnostics: Sequence[str] = (),
+    ) -> None:
+        self.set_result_dataset(None)
+        self._state.status_message = status_message
+        self._state.warning_messages = tuple(str(item) for item in diagnostics)
+        self._render_state()
+        return None
 
     def _resolve_color_source(
         self, mesh: MeshData
@@ -354,3 +473,61 @@ def build_mesh_viewer_panel(
 ) -> object:
     """Factory mirroring the other GUI widget builders."""
     return MeshViewerPanel(parent, scene_adapter=scene_adapter)
+
+
+def _candidate_datasets(result_datasets: object) -> tuple[object, ...]:
+    if result_datasets is None:
+        return ()
+    datasets = getattr(result_datasets, "datasets", result_datasets)
+    if isinstance(datasets, (str, bytes)):
+        return ()
+    try:
+        return tuple(item for item in datasets if item is not None)
+    except TypeError:
+        return (datasets,)
+
+
+def _dataset_id(result_dataset: object) -> str:
+    return str(getattr(result_dataset, "dataset_id", "") or "result")
+
+
+def _dataset_mesh_refs(result_dataset: object) -> tuple[str, ...]:
+    metadata = getattr(result_dataset, "metadata", {}) or {}
+    if not isinstance(metadata, Mapping):
+        return ()
+    refs: list[str] = []
+    seen: set[str] = set()
+    for key in _MESH_REF_METADATA_KEYS:
+        value = metadata.get(key)
+        values = value if isinstance(value, (list, tuple, set, frozenset)) else (value,)
+        for item in values:
+            text = str(item or "").strip()
+            if text and text not in seen:
+                seen.add(text)
+                refs.append(text)
+    return tuple(refs)
+
+
+def _first_compatible_result_field(
+    mesh: MeshData, result_dataset: object
+) -> tuple[str | None, tuple[str, ...]]:
+    diagnostics: list[str] = []
+    fields = tuple(getattr(result_dataset, "fields", ()) or ())
+    if not fields:
+        return None, (_no_matching_field_message(result_dataset),)
+    for field in fields:
+        name = str(getattr(field, "name", "") or "")
+        if not name:
+            continue
+        mapping = map_result_field_to_mesh(mesh, field)
+        if mapping.applied:
+            return name, ()
+        diagnostics.extend(mapping.diagnostics)
+    return None, tuple(diagnostics) or (_no_matching_field_message(result_dataset),)
+
+
+def _no_matching_field_message(result_dataset: object) -> str:
+    return (
+        f"Result dataset '{_dataset_id(result_dataset)}' has no scalar field "
+        "matching the active mesh node/cell count."
+    )
