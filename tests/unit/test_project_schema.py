@@ -21,6 +21,12 @@ from osw.core.project_schema import (
     SolverConfig,
     load_project,
 )
+from osw.core.result_mesh_binding import (
+    MESH_BINDING_METADATA_KEY,
+    SOURCE_MESH_REF_METADATA_KEY,
+    bridge_result_dataset_mesh_binding,
+    result_mesh_binding_from_metadata,
+)
 from osw.core.units import Quantity, UnitSystem
 from osw.core.validation import validate_project
 
@@ -98,6 +104,38 @@ def test_mesh_ref_round_trips_mesh_info_summary(tmp_path: Path) -> None:
 
     assert loaded.mesh_refs[0].mesh_info is not None
     assert loaded.mesh_refs[0].mesh_info["cell_types"] == ["triangle"]
+
+
+def test_project_round_trip_preserves_bridge_result_mesh_binding_without_schema_bump() -> None:
+    ref = ResultRef(
+        ref_id="result-1",
+        path="results/field.json",
+        kind="result_dataset",
+        metadata={"keep": "unchanged"},
+    )
+    bridge = bridge_result_dataset_mesh_binding(
+        ref,
+        result_dataset_id="dataset-1",
+        mesh_ref="mesh-1",
+        field_id="temperature",
+        node_count=4,
+        cell_count=1,
+    )
+    assert bridge.valid is True
+    project = Project(metadata=ProjectMetadata(name="binding bridge"), results=[bridge.result_ref])
+
+    restored = Project.from_dict(project.to_dict())
+    metadata = restored.results[0].metadata
+
+    assert restored.schema_version == "0.1"
+    assert metadata["keep"] == "unchanged"
+    assert metadata[SOURCE_MESH_REF_METADATA_KEY] == "mesh-1"
+    assert MESH_BINDING_METADATA_KEY in metadata
+    binding = result_mesh_binding_from_metadata(metadata)
+    assert binding is not None
+    assert binding.mesh_ref == "mesh-1"
+    assert binding.result_dataset_id == "dataset-1"
+    assert binding.field_id == "temperature"
 
 
 def test_project_yaml_round_trip(tmp_path: Path) -> None:

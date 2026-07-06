@@ -13,6 +13,13 @@ MESH_BINDING_METADATA_KEY = "mesh_binding"
 SOURCE_MESH_REF_METADATA_KEY = "source_mesh_ref"
 DEFAULT_ASSOCIATION_POLICY = "explicit_user_confirmed"
 DEFAULT_BINDING_STATUS = "bound"
+PROPOSAL_MESH_REF_METADATA_KEYS = (
+    "mesh_ref",
+    SOURCE_MESH_REF_METADATA_KEY,
+    "source_mesh_id",
+    "mesh_id",
+    "workflow_item_id",
+)
 
 
 def _coerce_optional_count(value: object, *, field_name: str) -> int | None:
@@ -167,6 +174,16 @@ class ResultMeshBindingCheck:
     diagnostics: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True)
+class ResultMeshBindingBridgeResult:
+    """Result of preparing a persisted binding without mutating project state."""
+
+    result_ref: ResultRef
+    binding: ResultMeshBinding | None
+    valid: bool
+    diagnostics: tuple[str, ...] = ()
+
+
 def result_ref_with_mesh_binding(
     result_ref: ResultRef,
     binding: ResultMeshBinding,
@@ -185,6 +202,104 @@ def result_ref_with_mesh_binding(
         role=result_ref.role,
         kind=result_ref.kind,
         metadata=metadata,
+    )
+
+
+def bridge_result_dataset_mesh_binding(
+    result_ref: ResultRef,
+    *,
+    result_dataset_id: str | None,
+    mesh_ref: str | None = None,
+    field_id: str | None = None,
+    association_policy: str = DEFAULT_ASSOCIATION_POLICY,
+    status: str = DEFAULT_BINDING_STATUS,
+    node_count: int | None = None,
+    cell_count: int | None = None,
+    proposal_metadata: Mapping[str, Any] | None = None,
+    active_mesh_ref: str | None = None,
+    require_field_id: bool = False,
+    require_mesh_signature: bool = False,
+) -> ResultMeshBindingBridgeResult:
+    """Prepare a ResultRef copy with persisted mesh binding metadata.
+
+    ``proposal_metadata`` is a read-only compatibility input, typically copied
+    from an in-memory ResultDataset. The returned ResultRef is the only object
+    carrying durable binding metadata; the input ResultRef, proposal metadata,
+    and ResultDataset owner remain untouched.
+    """
+
+    errors: list[str] = []
+    caveats: list[str] = []
+
+    dataset_id = str(result_dataset_id or "").strip()
+    if not dataset_id:
+        errors.append("Result mesh binding is missing a result dataset id.")
+
+    resolved_mesh_ref, proposal_diagnostics = _resolve_binding_mesh_ref(
+        mesh_ref,
+        proposal_metadata,
+    )
+    errors.extend(proposal_diagnostics)
+    if not resolved_mesh_ref:
+        errors.append(
+            "Result mesh binding is missing a mesh ref; select a mesh before persisting."
+        )
+
+    resolved_field_id = str(field_id or "").strip()
+    if require_field_id and not resolved_field_id:
+        errors.append(
+            "Result mesh binding is missing a field id; select a result field before persisting."
+        )
+
+    try:
+        signature = ResultMeshSignature(node_count=node_count, cell_count=cell_count)
+    except ValueError as exc:
+        errors.append(f"Malformed mesh count signature: {exc}")
+        signature = ResultMeshSignature()
+
+    if not signature.has_counts:
+        message = "Mesh count signature was not provided; stale detection is limited."
+        if require_mesh_signature:
+            errors.append(message)
+        else:
+            caveats.append(message)
+
+    if errors:
+        return ResultMeshBindingBridgeResult(
+            result_ref=result_ref,
+            binding=None,
+            valid=False,
+            diagnostics=tuple(errors + caveats),
+        )
+
+    binding = ResultMeshBinding(
+        mesh_ref=resolved_mesh_ref,
+        result_dataset_id=dataset_id,
+        field_id=resolved_field_id,
+        association_policy=association_policy,
+        status=status,
+        mesh_signature=signature,
+        diagnostics=tuple(caveats),
+    )
+    check = check_result_mesh_binding(
+        binding,
+        active_mesh_ref=active_mesh_ref,
+        node_count=node_count,
+        cell_count=cell_count,
+    )
+    if not check.valid:
+        return ResultMeshBindingBridgeResult(
+            result_ref=result_ref,
+            binding=None,
+            valid=False,
+            diagnostics=tuple(check.diagnostics + tuple(caveats)),
+        )
+
+    return ResultMeshBindingBridgeResult(
+        result_ref=result_ref_with_mesh_binding(result_ref, binding),
+        binding=binding,
+        valid=True,
+        diagnostics=tuple(caveats),
     )
 
 
@@ -293,3 +408,51 @@ def _binding_from_metadata(
         return ResultMeshBinding.from_dict(payload), ()
     except (TypeError, ValueError) as exc:
         return None, (f"Malformed result mesh binding metadata: {exc}",)
+
+
+def _resolve_binding_mesh_ref(
+    mesh_ref: str | None,
+    proposal_metadata: Mapping[str, Any] | None,
+) -> tuple[str, tuple[str, ...]]:
+    explicit_ref = str(mesh_ref or "").strip()
+    proposal_refs, diagnostics = _proposal_mesh_refs(proposal_metadata)
+    if diagnostics:
+        return explicit_ref, diagnostics
+    if len(proposal_refs) > 1:
+        refs = ", ".join(repr(item) for item in proposal_refs)
+        return explicit_ref, (
+            "Ambiguous ResultDataset proposal metadata contains multiple mesh refs: "
+            f"{refs}.",
+        )
+    if proposal_refs:
+        proposal_ref = proposal_refs[0]
+        if explicit_ref and explicit_ref != proposal_ref:
+            return explicit_ref, (
+                "ResultDataset proposal metadata mesh ref "
+                f"{proposal_ref!r} does not match explicit mesh ref {explicit_ref!r}.",
+            )
+        return proposal_ref, ()
+    return explicit_ref, ()
+
+
+def _proposal_mesh_refs(
+    proposal_metadata: Mapping[str, Any] | None,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    if proposal_metadata is None:
+        return (), ()
+    if not isinstance(proposal_metadata, Mapping):
+        return (), ("Malformed ResultDataset proposal metadata: expected a mapping.",)
+
+    refs: list[str] = []
+    seen: set[str] = set()
+    for key in PROPOSAL_MESH_REF_METADATA_KEYS:
+        if key not in proposal_metadata:
+            continue
+        value = proposal_metadata.get(key)
+        values = value if isinstance(value, (list, tuple, set, frozenset)) else (value,)
+        for item in values:
+            text = str(item or "").strip()
+            if text and text not in seen:
+                seen.add(text)
+                refs.append(text)
+    return tuple(refs), ()
