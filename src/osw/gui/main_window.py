@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -79,6 +80,22 @@ LAYOUT_OBJECT_NAMES = {
 _BaseMainWindow: Any = QtWidgets.QMainWindow if QtWidgets is not None else object
 
 
+@dataclass(frozen=True)
+class ResultMeshBindingTargetCandidate:
+    """A non-mutating persisted ResultRef target option for result/mesh binding."""
+
+    index: int
+    result_ref: object
+    reason: str
+    label: str
+    diagnostics: tuple[str, ...] = ()
+
+
+ResultMeshBindingTargetSelector = Callable[
+    [Sequence[ResultMeshBindingTargetCandidate]], object | None
+]
+
+
 class MainWindow(_BaseMainWindow):
     """OSW desktop visual shell with placeholder engineering workbench regions."""
 
@@ -94,6 +111,7 @@ class MainWindow(_BaseMainWindow):
         executable_registry: ExecutablePathRegistry | None = None,
         mesh_scene_adapter_factory: Callable[[], Any] | None = None,
         result_mesh_binding_confirmation: Callable[[str], bool] | None = None,
+        result_mesh_binding_target_selector: ResultMeshBindingTargetSelector | None = None,
         **legacy_kwargs: object,
     ) -> None:
         if QtCore is None or QtGui is None or QtWidgets is None:
@@ -143,6 +161,7 @@ class MainWindow(_BaseMainWindow):
         self.mesh_viewer: object | None = None
         self._mesh_scene_adapter_factory = mesh_scene_adapter_factory
         self._result_mesh_binding_confirmation = result_mesh_binding_confirmation
+        self._result_mesh_binding_target_selector = result_mesh_binding_target_selector
         self.last_imported_mesh_data: object | None = None
         self.last_imported_mesh_ref: str | None = None
         self.result_catalog: object | None = None
@@ -1308,13 +1327,20 @@ class MainWindow(_BaseMainWindow):
                 f"'{dataset_id}'. Binding was not persisted."
             )
         if len(target_candidates) > 1:
-            dataset_id = _dataset_identifier(result_dataset)
-            return self._show_result_mesh_binding_status(
-                "Multiple ResultRef entries match staged ResultDataset "
-                f"'{dataset_id}'; explicit selection is required before binding."
+            target_candidate, selection_diagnostics = (
+                self._select_result_mesh_binding_target(target_candidates)
             )
+            if target_candidate is None:
+                return self._show_result_mesh_binding_status(
+                    "Result/mesh binding was not persisted because target selection "
+                    "was cancelled.",
+                    selection_diagnostics,
+                )
+        else:
+            target_candidate = target_candidates[0]
 
-        target_index, target_ref = target_candidates[0]
+        target_index = target_candidate.index
+        target_ref = target_candidate.result_ref
         node_count, cell_count = _mesh_counts(mesh)
         existing_diagnostics = self._existing_result_binding_diagnostics(
             target_ref,
@@ -1374,7 +1400,8 @@ class MainWindow(_BaseMainWindow):
         )
         message = (
             "Persisted result/mesh binding metadata for result "
-            f"'{getattr(target_ref, 'id', '')}' on mesh '{mesh_ref}' field '{field_id}'."
+            f"'{_result_ref_display_id(target_ref)}' on mesh '{mesh_ref}' "
+            f"field '{field_id}'."
         )
         if self.mesh_viewer is not None and hasattr(
             self.mesh_viewer, "mark_result_mesh_binding_persisted"
@@ -1408,15 +1435,65 @@ class MainWindow(_BaseMainWindow):
         )
         return result == QtWidgets.QMessageBox.StandardButton.Yes
 
+    def _select_result_mesh_binding_target(
+        self,
+        candidates: Sequence[ResultMeshBindingTargetCandidate],
+    ) -> tuple[ResultMeshBindingTargetCandidate | None, tuple[str, ...]]:
+        dataset_hint = (
+            "Multiple persisted ResultRef targets match the staged ResultDataset; "
+            "select one target before binding confirmation."
+        )
+        if self._result_mesh_binding_target_selector is not None:
+            try:
+                selection = self._result_mesh_binding_target_selector(tuple(candidates))
+            except (TypeError, ValueError) as exc:
+                return None, (f"ResultRef target selection failed: {exc}",)
+            selected = _candidate_from_target_selection(selection, candidates)
+            if selected is None:
+                return None, (
+                    dataset_hint,
+                    "No ResultRef target was selected.",
+                    *tuple(candidate.label for candidate in candidates),
+                )
+            return selected, ()
+
+        labels = [candidate.label for candidate in candidates]
+        selected_label, accepted = QtWidgets.QInputDialog.getItem(
+            self,
+            "Select result binding target",
+            "Select the persisted ResultRef target to bind after confirmation:",
+            labels,
+            0,
+            False,
+        )
+        if not accepted:
+            return None, (
+                dataset_hint,
+                "ResultRef target selection was cancelled.",
+                *tuple(labels),
+            )
+        try:
+            selected_index = labels.index(selected_label)
+        except ValueError:
+            return None, (
+                dataset_hint,
+                "Selected ResultRef target is no longer available.",
+            )
+        return candidates[selected_index], ()
+
     def _result_ref_candidates_for_dataset(
         self,
         result_dataset: object,
-    ) -> list[tuple[int, object]]:
+    ) -> list[ResultMeshBindingTargetCandidate]:
         dataset_id = _dataset_identifier(result_dataset)
         if not dataset_id:
             return []
         exact = [
-            (index, result_ref)
+            _result_mesh_binding_target_candidate(
+                index,
+                result_ref,
+                reason="exact id/ref_id match",
+            )
             for index, result_ref in enumerate(self.current_project.results)
             if dataset_id
             in {str(getattr(result_ref, "id", "")), str(getattr(result_ref, "ref_id", ""))}
@@ -1425,7 +1502,11 @@ class MainWindow(_BaseMainWindow):
             return exact
 
         metadata_matches = [
-            (index, result_ref)
+            _result_mesh_binding_target_candidate(
+                index,
+                result_ref,
+                reason="metadata match",
+            )
             for index, result_ref in enumerate(self.current_project.results)
             if _result_ref_metadata_matches_dataset(result_ref, dataset_id)
         ]
@@ -1436,7 +1517,11 @@ class MainWindow(_BaseMainWindow):
         if not dataset_source:
             return []
         return [
-            (index, result_ref)
+            _result_mesh_binding_target_candidate(
+                index,
+                result_ref,
+                reason="source/path match",
+            )
             for index, result_ref in enumerate(self.current_project.results)
             if _result_ref_source_matches_dataset(result_ref, dataset_source)
         ]
@@ -1606,6 +1691,131 @@ def _project_with_boundary_curve(project: Project, curve: object) -> Project:
 
 def _dataset_identifier(result_dataset: object) -> str:
     return str(getattr(result_dataset, "dataset_id", "") or "").strip()
+
+
+def _candidate_from_target_selection(
+    selection: object | None,
+    candidates: Sequence[ResultMeshBindingTargetCandidate],
+) -> ResultMeshBindingTargetCandidate | None:
+    if selection is None:
+        return None
+    if isinstance(selection, ResultMeshBindingTargetCandidate):
+        return selection if selection in candidates else None
+    try:
+        selected_index = int(selection)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if 0 <= selected_index < len(candidates):
+        return candidates[selected_index]
+    project_index_matches = [
+        candidate for candidate in candidates if candidate.index == selected_index
+    ]
+    if len(project_index_matches) == 1:
+        return project_index_matches[0]
+    return None
+
+
+def _result_mesh_binding_target_candidate(
+    index: int,
+    result_ref: object,
+    *,
+    reason: str,
+) -> ResultMeshBindingTargetCandidate:
+    diagnostics = _result_ref_target_diagnostics(result_ref)
+    return ResultMeshBindingTargetCandidate(
+        index=index,
+        result_ref=result_ref,
+        reason=reason,
+        label=_result_mesh_binding_target_label(
+            index=index,
+            result_ref=result_ref,
+            reason=reason,
+            diagnostics=diagnostics,
+        ),
+        diagnostics=diagnostics,
+    )
+
+
+def _result_mesh_binding_target_label(
+    *,
+    index: int,
+    result_ref: object,
+    reason: str,
+    diagnostics: Sequence[str] = (),
+) -> str:
+    display_id = _result_ref_display_id(result_ref) or "(unnamed)"
+    ref_id = str(getattr(result_ref, "ref_id", "") or "").strip()
+    path = _result_ref_source_hint(result_ref) or "(no source/path)"
+    kind = str(getattr(result_ref, "kind", "") or "").strip() or "(unknown kind)"
+    binding_state = _result_ref_binding_state(result_ref)
+    source_mesh_ref = _result_ref_metadata_text(result_ref, "source_mesh_ref")
+    source_mesh = (
+        f"source_mesh_ref={source_mesh_ref}"
+        if source_mesh_ref
+        else "source_mesh_ref=(none)"
+    )
+    diagnostic_text = (
+        f"; diagnostics={'; '.join(diagnostics)}" if diagnostics else ""
+    )
+    ref_text = f"; ref_id={ref_id}" if ref_id and ref_id != display_id else ""
+    return (
+        f"{reason}: result[{index}] id={display_id}{ref_text}; path={path}; "
+        f"kind={kind}; {source_mesh}; {binding_state}{diagnostic_text}"
+    )
+
+
+def _result_ref_display_id(result_ref: object) -> str:
+    return str(
+        getattr(result_ref, "id", "")
+        or getattr(result_ref, "ref_id", "")
+        or getattr(result_ref, "path", "")
+        or ""
+    ).strip()
+
+
+def _result_ref_source_hint(result_ref: object) -> str:
+    path = str(getattr(result_ref, "path", "") or "").strip()
+    if path:
+        return path
+    metadata = getattr(result_ref, "metadata", {}) or {}
+    if not isinstance(metadata, Mapping):
+        return ""
+    for key in ("source", "source_path", "result_source"):
+        value = str(metadata.get(key, "") or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _result_ref_metadata_text(result_ref: object, key: str) -> str:
+    metadata = getattr(result_ref, "metadata", {}) or {}
+    if not isinstance(metadata, Mapping):
+        return ""
+    return str(metadata.get(key, "") or "").strip()
+
+
+def _result_ref_binding_state(result_ref: object) -> str:
+    metadata = getattr(result_ref, "metadata", {}) or {}
+    if not isinstance(metadata, Mapping):
+        return "binding=metadata unavailable"
+    binding = metadata.get("mesh_binding")
+    if not isinstance(binding, Mapping):
+        return "binding=none"
+    mesh_ref = str(binding.get("mesh_ref", "") or "").strip() or "(unknown mesh)"
+    field_id = str(binding.get("field_id", "") or "").strip() or "(no field)"
+    return f"binding=mesh:{mesh_ref}, field:{field_id}"
+
+
+def _result_ref_target_diagnostics(result_ref: object) -> tuple[str, ...]:
+    metadata = getattr(result_ref, "metadata", {}) or {}
+    if not isinstance(metadata, Mapping):
+        return ("ResultRef metadata is not a mapping.",)
+    binding = metadata.get("mesh_binding")
+    if binding is None:
+        return ()
+    if not isinstance(binding, Mapping):
+        return ("Existing mesh_binding metadata is malformed.",)
+    return ()
 
 
 def _result_ref_metadata_matches_dataset(result_ref: object, dataset_id: str) -> bool:

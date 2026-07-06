@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import importlib.util
 import os
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from types import SimpleNamespace
 
 import pytest
@@ -126,6 +126,7 @@ def _window(
     app: object,
     project: Project | None = None,
     confirm: bool | None = True,
+    selector: Callable[[Sequence[object]], object | None] | None = None,
 ) -> tuple[object, list[str]]:
     from osw.gui.main_window import MainWindow
 
@@ -140,8 +141,20 @@ def _window(
         project=project or _project(_result_ref()),
         mesh_scene_adapter_factory=RecordingSceneAdapter,
         result_mesh_binding_confirmation=_confirm,
+        result_mesh_binding_target_selector=selector,
     )
     return window, confirmations
+
+
+def _recording_selector(
+    recorded: list[tuple[object, ...]],
+    selection: object | None,
+) -> Callable[[Sequence[object]], object | None]:
+    def _select(candidates: Sequence[object]) -> object | None:
+        recorded.append(tuple(candidates))
+        return selection
+
+    return _select
 
 
 def _stage_dataset(window: object, dataset: ResultDataset | None = None) -> ResultDataset:
@@ -292,10 +305,17 @@ def test_exact_result_ref_match_wins_over_metadata_match(app: object) -> None:
     del app
 
 
-def test_multiple_metadata_result_ref_matches_block_without_confirmation(app: object) -> None:
+def test_multiple_metadata_result_ref_matches_require_explicit_selection(
+    app: object,
+) -> None:
     first = _result_ref("first", metadata={"result_dataset_id": "rd-1"})
     second = _result_ref("second", metadata={"dataset_id": "rd-1"})
-    window, confirmations = _window(app=app, project=_project(first, second))
+    selections: list[tuple[object, ...]] = []
+    window, confirmations = _window(
+        app=app,
+        project=_project(first, second),
+        selector=_recording_selector(selections, None),
+    )
     _stage_dataset(window)
     _select_result_field(window)
 
@@ -303,26 +323,153 @@ def test_multiple_metadata_result_ref_matches_block_without_confirmation(app: ob
 
     assert persisted is False
     assert confirmations == []
-    assert "Multiple ResultRef entries" in window.mesh_viewer.binding_status_label.text()
+    assert len(selections) == 1
+    assert len(selections[0]) == 2
+    labels = [candidate.label for candidate in selections[0]]
+    assert all("metadata match" in label for label in labels)
+    assert any("id=first" in label for label in labels)
+    assert any("id=second" in label for label in labels)
+    assert "target selection was cancelled" in window.mesh_viewer.binding_status_label.text()
+    assert any(
+        "No ResultRef target was selected" in item
+        for item in _diagnostics(window.mesh_viewer)
+    )
     assert MESH_BINDING_METADATA_KEY not in first.metadata
     assert MESH_BINDING_METADATA_KEY not in second.metadata
     del app
 
 
-def test_duplicate_exact_result_refs_block_without_confirmation(app: object) -> None:
+def test_duplicate_exact_result_refs_can_select_one_before_confirmation(
+    app: object,
+) -> None:
     first = _result_ref("rd-1")
     second = _result_ref("rd-1", metadata={"label": "duplicate"})
-    window, confirmations = _window(app=app, project=_project(first, second))
+    selections: list[tuple[object, ...]] = []
+    window, confirmations = _window(
+        app=app,
+        project=_project(first, second),
+        selector=_recording_selector(selections, 1),
+    )
+    dataset = _stage_dataset(window)
+    original_metadata = dict(dataset.metadata)
+    _select_result_field(window)
+
+    persisted = window.persist_mesh_viewer_result_binding()
+
+    assert persisted is True
+    assert len(selections) == 1
+    assert len(confirmations) == 1
+    assert len(window.current_project.results) == 2
+    assert window.current_project.results[0] is first
+    updated = window.current_project.results[1]
+    assert updated is not second
+    assert updated.metadata["label"] == "duplicate"
+    assert updated.metadata["source_mesh_ref"] == "mesh-1"
+    assert updated.metadata["mesh_binding"]["result_dataset_id"] == "rd-1"
+    assert MESH_BINDING_METADATA_KEY not in first.metadata
+    assert second.metadata == {"label": "duplicate"}
+    assert dataset.metadata == original_metadata
+    del app
+
+
+def test_selected_target_then_rejected_confirmation_leaves_project_unchanged(
+    app: object,
+) -> None:
+    first = _result_ref("first", metadata={"result_dataset_id": "rd-1"})
+    second = _result_ref("second", metadata={"dataset_id": "rd-1"})
+    selections: list[tuple[object, ...]] = []
+    window, confirmations = _window(
+        app=app,
+        project=_project(first, second),
+        confirm=False,
+        selector=_recording_selector(selections, 0),
+    )
     _stage_dataset(window)
     _select_result_field(window)
 
     persisted = window.persist_mesh_viewer_result_binding()
 
     assert persisted is False
-    assert confirmations == []
-    assert "Multiple ResultRef entries" in window.mesh_viewer.binding_status_label.text()
+    assert len(selections) == 1
+    assert len(confirmations) == 1
+    assert window.current_project.results[0] is first
+    assert window.current_project.results[1] is second
     assert MESH_BINDING_METADATA_KEY not in first.metadata
     assert MESH_BINDING_METADATA_KEY not in second.metadata
+    assert "confirmation was cancelled" in window.mesh_viewer.binding_status_label.text()
+    del app
+
+
+def test_source_path_candidates_can_be_shown_and_selected(app: object) -> None:
+    first = _result_ref("first", metadata={"source": "rd-1.json"})
+    second = _result_ref("second", metadata={"source_path": "rd-1.json"})
+    selections: list[tuple[object, ...]] = []
+    window, confirmations = _window(
+        app=app,
+        project=_project(first, second),
+        selector=_recording_selector(selections, 1),
+    )
+    dataset = _stage_dataset(window)
+    original_metadata = dict(dataset.metadata)
+    _select_result_field(window)
+
+    persisted = window.persist_mesh_viewer_result_binding()
+
+    assert persisted is True
+    assert len(selections) == 1
+    labels = [candidate.label for candidate in selections[0]]
+    assert all("source/path match" in label for label in labels)
+    assert any("id=first" in label for label in labels)
+    assert any("id=second" in label for label in labels)
+    assert len(confirmations) == 1
+    assert window.current_project.results[0] is first
+    updated = window.current_project.results[1]
+    assert updated is not second
+    assert updated.metadata["source_path"] == "rd-1.json"
+    assert updated.metadata["source_mesh_ref"] == "mesh-1"
+    assert updated.metadata["mesh_binding"]["field_id"] == "stress"
+    assert MESH_BINDING_METADATA_KEY not in first.metadata
+    assert second.metadata == {"source_path": "rd-1.json"}
+    assert dataset.metadata == original_metadata
+    del app
+
+
+def test_stale_selected_multi_target_candidate_surfaces_without_mutation(
+    app: object,
+) -> None:
+    stale_binding = ResultMeshBinding(
+        mesh_ref="mesh-2",
+        result_dataset_id="rd-1",
+        field_id="stress",
+        mesh_signature={"node_count": 3, "cell_count": 1},
+    )
+    first = _result_ref(
+        "first",
+        metadata={
+            "result_dataset_id": "rd-1",
+            "mesh_binding": stale_binding.to_dict(),
+        },
+    )
+    second = _result_ref("second", metadata={"dataset_id": "rd-1"})
+    selections: list[tuple[object, ...]] = []
+    window, confirmations = _window(
+        app=app,
+        project=_project(first, second),
+        selector=_recording_selector(selections, 0),
+    )
+    _stage_dataset(window)
+    _select_result_field(window)
+
+    persisted = window.persist_mesh_viewer_result_binding()
+
+    assert persisted is False
+    assert len(selections) == 1
+    assert confirmations == []
+    assert window.current_project.results[0] is first
+    assert window.current_project.results[1] is second
+    assert MESH_BINDING_METADATA_KEY in first.metadata
+    assert MESH_BINDING_METADATA_KEY not in second.metadata
+    assert any("active mesh" in item for item in _diagnostics(window.mesh_viewer))
     del app
 
 
