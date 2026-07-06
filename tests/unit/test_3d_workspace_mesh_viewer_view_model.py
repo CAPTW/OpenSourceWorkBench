@@ -12,6 +12,7 @@ from osw.gui.workspace_scene_view_model import (
     DefaultSceneAdapter,
     MeshViewerState,
     mesh_input_ref,
+    mesh_scalar_field_names,
     mesh_summary_rows,
     scene_view_state_from_toggles,
     summary_rows_to_text,
@@ -25,6 +26,15 @@ def _mesh() -> MeshData:
     return MeshData(
         points=((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)),
         cells=(MeshCellBlock("triangle", [[0, 1, 2]]),),
+    )
+
+
+def _mesh_with_fields() -> MeshData:
+    return MeshData(
+        points=((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)),
+        cells=(MeshCellBlock("triangle", [[0, 1, 2]]),),
+        point_data={"temperature": (1.0, 2.0, 3.0), "pressure": (4.0, 5.0, 6.0)},
+        cell_data={"region": (7.0,)},
     )
 
 
@@ -101,3 +111,29 @@ def test_mesh_viewer_state_defaults_are_transient() -> None:
     assert state.mesh is None
     assert state.screenshot_record is None
     assert isinstance(state.scene_state, SceneViewState)
+
+
+def test_mesh_scalar_field_names_lists_point_then_cell_fields() -> None:
+    names = mesh_scalar_field_names(_mesh_with_fields())
+    assert names == ("temperature", "pressure", "region")
+
+
+def test_mesh_scalar_field_names_empty_when_no_fields_or_no_mesh() -> None:
+    assert mesh_scalar_field_names(_mesh()) == ()
+    assert mesh_scalar_field_names(None) == ()
+
+
+def test_scene_view_state_from_toggles_binds_color_by() -> None:
+    state = scene_view_state_from_toggles(color_by="temperature")
+    assert state.render_options.color_by == "temperature"
+    assert state.scalar_field_id == "temperature"
+    # color_by maps to the scene shell's PyVistaSceneConfig scalar_field.
+    assert state.render_options.to_pyvista_config_dict()["scalar_field"] == "temperature"
+
+
+def test_scene_view_state_from_toggles_no_color_by_is_none() -> None:
+    state = scene_view_state_from_toggles(color_by=None)
+    assert state.render_options.color_by is None
+    assert state.scalar_field_id is None
+    state_blank = scene_view_state_from_toggles(color_by="")
+    assert state_blank.render_options.color_by is None

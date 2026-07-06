@@ -53,18 +53,47 @@ def scene_view_state_from_toggles(
     show_edges: bool = False,
     show_axes: bool = True,
     show_grid: bool = False,
+    color_by: str | None = None,
     selected_selection_ids: Sequence[str] = (),
 ) -> SceneViewState:
-    """Build a :class:`SceneViewState` from simple render toggles."""
+    """Build a :class:`SceneViewState` from simple render toggles.
+
+    ``color_by`` is the scalar field name to color the mesh by (or ``None`` for
+    no coloring); it is recorded on ``SceneRenderOptions.color_by`` (which the
+    scene shell maps to ``PyVistaSceneConfig.scalar_field``) and on
+    ``SceneViewState.scalar_field_id``.
+    """
+    resolved_color_by = color_by or None
     return SceneViewState(
         render_options=SceneRenderOptions(
             show_surface=bool(show_surface),
             show_edges=bool(show_edges),
             show_axes=bool(show_axes),
             show_grid=bool(show_grid),
+            color_by=resolved_color_by,
         ),
+        scalar_field_id=resolved_color_by,
         selected_selection_ids=tuple(str(item) for item in selected_selection_ids),
     )
+
+
+def mesh_scalar_field_names(mesh: MeshData | None) -> tuple[str, ...]:
+    """Return the mesh's colorable scalar field names (no PyVista needed).
+
+    Combines ``point_data`` and ``cell_data`` array names (order preserved,
+    de-duplicated). ``field_data`` is global metadata, not a per-node/cell
+    scalar, so it is excluded. Returns ``()`` when there is no mesh or no fields.
+    """
+    if mesh is None:
+        return ()
+    info: MeshInfo = mesh.info(source=_MEMORY_SOURCE, mesh_format="mesh")
+    names: list[str] = []
+    seen: set[str] = set()
+    for name in (*info.point_data_names, *info.cell_data_names):
+        if name not in seen:
+            seen.add(name)
+            names.append(name)
+    return tuple(names)
 
 
 def mesh_summary_rows(mesh: MeshData | None) -> tuple[tuple[str, str], ...]:
@@ -212,6 +241,7 @@ __all__ = [
     "MeshViewerState",
     "SceneAdapterProtocol",
     "mesh_input_ref",
+    "mesh_scalar_field_names",
     "mesh_summary_rows",
     "scene_view_state_from_toggles",
     "summary_rows_to_text",

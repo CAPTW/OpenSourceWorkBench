@@ -18,6 +18,7 @@ from osw.gui.workspace_scene_view_model import (
     MeshViewerState,
     SceneAdapterProtocol,
     mesh_input_ref,
+    mesh_scalar_field_names,
     mesh_summary_rows,
     scene_view_state_from_toggles,
     summary_rows_to_text,
@@ -33,6 +34,7 @@ except ModuleNotFoundError:
 
 _BaseWidget: Any = QtWidgets.QWidget if QtWidgets is not None else object
 
+_NONE_FIELD = "(none)"
 _NO_MESH_TEXT = "No mesh loaded."
 _MESH_READY_TEXT = "Mesh loaded. Select 'Load mesh preview' to build the scene."
 _PREVIEW_LOADED_TEXT = "Mesh preview loaded."
@@ -81,6 +83,12 @@ class MeshViewerPanel(_BaseWidget):
         self.grid_toggle = QtWidgets.QCheckBox("Grid", self)
         self.grid_toggle.setObjectName("gridToggle")
 
+        self.scalar_label = QtWidgets.QLabel("Color by:", self)
+        self.scalar_label.setObjectName("oswMeshViewerScalarLabel")
+        self.scalar_selector = QtWidgets.QComboBox(self)
+        self.scalar_selector.setObjectName("oswMeshViewerScalarSelector")
+        self.scalar_selector.addItem(_NONE_FIELD)
+
         self.load_button = QtWidgets.QPushButton("Load mesh preview", self)
         self.load_button.setObjectName("oswMeshViewerLoadButton")
         self.capture_button = QtWidgets.QPushButton("Capture scene metadata", self)
@@ -100,6 +108,11 @@ class MeshViewerPanel(_BaseWidget):
         toggles.addWidget(self.grid_toggle)
         toggles.addStretch(1)
 
+        fields = QtWidgets.QHBoxLayout()
+        fields.addWidget(self.scalar_label)
+        fields.addWidget(self.scalar_selector)
+        fields.addStretch(1)
+
         buttons = QtWidgets.QHBoxLayout()
         buttons.addWidget(self.load_button)
         buttons.addWidget(self.capture_button)
@@ -112,6 +125,7 @@ class MeshViewerPanel(_BaseWidget):
         layout.addWidget(self.summary_label)
         layout.addWidget(self.empty_state)
         layout.addLayout(toggles)
+        layout.addLayout(fields)
         layout.addLayout(buttons)
         layout.addWidget(self.status_label)
         layout.addWidget(self.diagnostics_list)
@@ -134,6 +148,7 @@ class MeshViewerPanel(_BaseWidget):
             summary_rows=mesh_summary_rows(mesh),
             status_message=_MESH_READY_TEXT,
         )
+        self._populate_scalar_selector(mesh)
         self._set_controls_enabled(True)
         self._render_state()
 
@@ -144,6 +159,7 @@ class MeshViewerPanel(_BaseWidget):
     def clear_mesh(self) -> None:
         """Return the panel to its friendly empty state."""
         self._state = MeshViewerState(status_message=_NO_MESH_TEXT)
+        self._populate_scalar_selector(None)
         self._set_controls_enabled(False)
         self._render_state()
 
@@ -159,28 +175,39 @@ class MeshViewerPanel(_BaseWidget):
             self._state.mesh_ref,
             self._state.selected_selection_ids,
         )
+        color_by = self._selected_color_by()
         scene_state = scene_view_state_from_toggles(
             show_surface=self.surface_toggle.isChecked(),
             show_edges=self.edge_toggle.isChecked(),
             show_axes=self.axis_toggle.isChecked(),
             show_grid=self.grid_toggle.isChecked(),
+            color_by=color_by,
             selected_selection_ids=self._state.selected_selection_ids,
         )
         self._state.scene_input = scene_input
         self._state.scene_state = scene_state
+
+        # Friendly warning if the chosen scalar is not present on the mesh; the
+        # summary and preview still proceed (no crash, no rendering here).
+        field_warnings: tuple[str, ...] = ()
+        if color_by is not None and color_by not in mesh_scalar_field_names(mesh):
+            field_warnings = (f"Scalar field '{color_by}' is not present on the mesh.",)
 
         try:
             result = self._adapter.load_mesh(mesh, scene_input, scene_state)
         except PyVistaUnavailableError as exc:
             self._state.pyvista_available = False
             self._state.status_message = _PYVISTA_MISSING_TEXT
-            self._state.warning_messages = (str(exc),)
+            self._state.warning_messages = (str(exc), *field_warnings)
             self._render_state()
             return None
 
         self._state.pyvista_available = True
         self._state.status_message = _PREVIEW_LOADED_TEXT
-        self._state.warning_messages = tuple(getattr(result, "warnings", ()) or ())
+        self._state.warning_messages = (
+            *tuple(getattr(result, "warnings", ()) or ()),
+            *field_warnings,
+        )
         self._render_state()
         return result
 
@@ -237,6 +264,22 @@ class MeshViewerPanel(_BaseWidget):
             "Capture requires a target path from the caller."
         )
         self._render_state()
+
+    def _populate_scalar_selector(self, mesh: MeshData | None) -> None:
+        """Fill the scalar selector with '(none)' + the mesh's field names."""
+        self.scalar_selector.blockSignals(True)
+        self.scalar_selector.clear()
+        self.scalar_selector.addItem(_NONE_FIELD)
+        for name in mesh_scalar_field_names(mesh):
+            self.scalar_selector.addItem(name)
+        self.scalar_selector.setCurrentIndex(0)
+        self.scalar_selector.blockSignals(False)
+
+    def _selected_color_by(self) -> str | None:
+        selected = self.scalar_selector.currentText()
+        if not selected or selected == _NONE_FIELD:
+            return None
+        return selected
 
     def _set_controls_enabled(self, enabled: bool) -> None:
         self.load_button.setEnabled(enabled)
