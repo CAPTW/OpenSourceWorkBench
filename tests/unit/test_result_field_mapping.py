@@ -164,6 +164,58 @@ def test_non_coercible_entity_id_is_not_applied() -> None:
     assert "not applied" in result.diagnostics[0]
 
 
+def test_non_finite_positive_entity_id_is_not_applied() -> None:
+    mesh = _mesh()
+    field = ResultField(
+        name="temp",
+        location="node",
+        components=("value",),
+        rows=(
+            ResultRow(0, {"value": 0.0}),
+            ResultRow(float("inf"), {"value": 10.0}),
+            ResultRow(2, {"value": 20.0}),
+        ),
+    )
+    result = map_result_field_to_mesh(mesh, field)
+    assert result.applied is False
+    assert "finite integer" in result.diagnostics[0]
+    assert "not applied" in result.diagnostics[0]
+    assert "temp" not in result.mesh_data.point_data
+    assert "temp" not in mesh.point_data
+
+
+def test_non_finite_negative_entity_id_is_not_applied() -> None:
+    field = ResultField(
+        name="temp",
+        location="node",
+        components=("value",),
+        rows=(
+            ResultRow(0, {"value": 0.0}),
+            ResultRow(float("-inf"), {"value": 10.0}),
+            ResultRow(2, {"value": 20.0}),
+        ),
+    )
+    result = map_result_field_to_mesh(_mesh(), field)
+    assert result.applied is False
+    assert "finite integer" in result.diagnostics[0]
+
+
+def test_nan_entity_id_is_not_applied() -> None:
+    field = ResultField(
+        name="temp",
+        location="node",
+        components=("value",),
+        rows=(
+            ResultRow(0, {"value": 0.0}),
+            ResultRow(float("nan"), {"value": 10.0}),
+            ResultRow(2, {"value": 20.0}),
+        ),
+    )
+    result = map_result_field_to_mesh(_mesh(), field)
+    assert result.applied is False
+    assert "finite integer" in result.diagnostics[0]
+
+
 def test_non_coercible_component_value_is_not_applied() -> None:
     field = ResultField(
         name="temp",

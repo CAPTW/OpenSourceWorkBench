@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from math import isfinite
 
 from osw.core.result_dataset import ResultField
 from osw.mesh.mesh_model import MeshData
@@ -100,14 +101,13 @@ def map_result_field_to_mesh(
 
     by_id: dict[int, float] = {}
     for row in rows:
-        try:
-            entity_id = int(getattr(row, "entity_id", 0))
-        except (TypeError, ValueError):
+        entity_id = _coerce_entity_id(getattr(row, "entity_id", 0))
+        if entity_id is None:
             return _not_applied(
                 mesh_data,
                 name,
                 location,
-                f"Result field '{name}' has an entity_id that is not an integer; "
+                f"Result field '{name}' has an entity_id that is not a finite integer; "
                 "not applied.",
             )
 
@@ -182,6 +182,15 @@ def _choose_component(components: tuple[str, ...], component: str | None) -> str
     if "magnitude" in components:
         return "magnitude"
     return components[0] if components else None
+
+
+def _coerce_entity_id(value: object) -> int | None:
+    if isinstance(value, float) and not isfinite(value):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
 
 
 def _contiguous_offset(by_id: dict[int, float], target: int) -> int | None:
