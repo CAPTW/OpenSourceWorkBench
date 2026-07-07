@@ -14,6 +14,7 @@ from osw.gui.workspace_scene_view_model import (
     mesh_input_ref,
     mesh_scalar_field_names,
     mesh_summary_rows,
+    mesh_vector_field_names,
     scene_view_state_from_toggles,
     summary_rows_to_text,
 )
@@ -35,6 +36,18 @@ def _mesh_with_fields() -> MeshData:
         cells=(MeshCellBlock("triangle", [[0, 1, 2]]),),
         point_data={"temperature": (1.0, 2.0, 3.0), "pressure": (4.0, 5.0, 6.0)},
         cell_data={"region": (7.0,)},
+    )
+
+
+def _mesh_with_vector_field() -> MeshData:
+    return MeshData(
+        points=((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)),
+        cells=(MeshCellBlock("triangle", [[0, 1, 2]]),),
+        point_data={
+            "temperature": (1.0, 2.0, 3.0),
+            "velocity": ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)),
+        },
+        cell_data={"force": ((1.0, 2.0, 3.0),)},
     )
 
 
@@ -137,3 +150,27 @@ def test_scene_view_state_from_toggles_no_color_by_is_none() -> None:
     assert state.scalar_field_id is None
     state_blank = scene_view_state_from_toggles(color_by="")
     assert state_blank.render_options.color_by is None
+
+
+def test_mesh_scalar_field_names_excludes_vector_arrays() -> None:
+    names = mesh_scalar_field_names(_mesh_with_vector_field())
+    assert names == ("temperature",)
+
+
+def test_mesh_vector_field_names_lists_point_then_cell_vectors() -> None:
+    names = mesh_vector_field_names(_mesh_with_vector_field())
+    assert names == ("velocity", "force")
+
+
+def test_scene_view_state_from_toggles_records_glyph_options() -> None:
+    state = scene_view_state_from_toggles(
+        glyph_enabled=True,
+        glyph_vector_field="velocity",
+        glyph_scale=1.5,
+        glyph_max_count=25,
+    )
+
+    assert state.glyph_options.enabled is True
+    assert state.glyph_options.vector_field == "velocity"
+    assert state.glyph_options.scale == 1.5
+    assert state.glyph_options.max_glyph_count == 25

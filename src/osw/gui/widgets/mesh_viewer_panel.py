@@ -21,12 +21,17 @@ from osw.gui.workspace_scene_view_model import (
     mesh_input_ref,
     mesh_scalar_field_names,
     mesh_summary_rows,
+    mesh_vector_field_names,
     scene_view_state_from_toggles,
     summary_rows_to_text,
 )
 from osw.mesh.mesh_model import MeshData
 from osw.post.pyvista_scene import PyVistaUnavailableError
-from osw.post.result_field_mapping import map_result_field_to_mesh, result_field_names
+from osw.post.result_field_mapping import (
+    map_result_field_to_mesh,
+    map_result_vector_field_to_mesh,
+    result_field_names,
+)
 from osw.post.scene_model import SceneScreenshotRecord
 
 try:
@@ -38,6 +43,8 @@ _BaseWidget: Any = QtWidgets.QWidget if QtWidgets is not None else object
 
 _NONE_FIELD = "(none)"
 _RESULT_PREFIX = "result: "
+_RESULT_VECTOR_PREFIX = "result vector: "
+_NO_VECTOR_FIELD = "(none)"
 _NO_MESH_TEXT = "No mesh loaded."
 _MESH_READY_TEXT = "Mesh loaded. Select 'Load mesh preview' to build the scene."
 _PREVIEW_LOADED_TEXT = "Mesh preview loaded."
@@ -54,6 +61,8 @@ _NO_STAGED_BINDING_TEXT = "No result dataset is staged for persisted binding."
 _BINDING_HANDLER_MISSING_TEXT = (
     "Persisted binding requires a MainWindow confirmation handler."
 )
+_NO_VECTOR_FIELDS_TEXT = "No compatible vector fields are available for glyph preview."
+_NO_VECTOR_FIELD_SELECTED_TEXT = "No compatible vector field is selected for glyph preview."
 _PERSISTED_BINDING_TEXT = "Persisted result/mesh binding metadata."
 _MESH_REF_METADATA_KEYS = (
     "mesh_ref",
@@ -83,6 +92,7 @@ class MeshViewerPanel(_BaseWidget):
         self._result_dataset: object | None = None
         self._result_dataset_ref: str = ""
         self._result_field_lookup: dict[str, object] = {}
+        self._result_vector_field_lookup: dict[str, object] = {}
         self._bind_result_callback: Callable[[], object] | None = None
         self._binding_status_message = _NO_STAGED_BINDING_TEXT
         self._binding_persisted = False
@@ -114,6 +124,24 @@ class MeshViewerPanel(_BaseWidget):
         self.scalar_selector = QtWidgets.QComboBox(self)
         self.scalar_selector.setObjectName("oswMeshViewerScalarSelector")
         self.scalar_selector.addItem(_NONE_FIELD)
+
+        self.vector_label = QtWidgets.QLabel("Vector glyphs:", self)
+        self.vector_label.setObjectName("oswMeshViewerVectorLabel")
+        self.vector_selector = QtWidgets.QComboBox(self)
+        self.vector_selector.setObjectName("oswMeshViewerVectorSelector")
+        self.vector_selector.addItem(_NO_VECTOR_FIELD)
+        self.glyph_toggle = QtWidgets.QCheckBox("Glyphs", self)
+        self.glyph_toggle.setObjectName("oswMeshViewerGlyphToggle")
+        self.glyph_scale_input = QtWidgets.QDoubleSpinBox(self)
+        self.glyph_scale_input.setObjectName("oswMeshViewerGlyphScale")
+        self.glyph_scale_input.setRange(0.01, 1000.0)
+        self.glyph_scale_input.setDecimals(3)
+        self.glyph_scale_input.setSingleStep(0.25)
+        self.glyph_scale_input.setValue(1.0)
+        self.glyph_max_count_input = QtWidgets.QSpinBox(self)
+        self.glyph_max_count_input.setObjectName("oswMeshViewerGlyphMaxCount")
+        self.glyph_max_count_input.setRange(0, 100000)
+        self.glyph_max_count_input.setSpecialValueText("all")
 
         self.load_button = QtWidgets.QPushButton("Load mesh preview", self)
         self.load_button.setObjectName("oswMeshViewerLoadButton")
@@ -147,6 +175,16 @@ class MeshViewerPanel(_BaseWidget):
         fields.addWidget(self.scalar_selector)
         fields.addStretch(1)
 
+        vector_fields = QtWidgets.QHBoxLayout()
+        vector_fields.addWidget(self.vector_label)
+        vector_fields.addWidget(self.vector_selector)
+        vector_fields.addWidget(self.glyph_toggle)
+        vector_fields.addWidget(QtWidgets.QLabel("Scale:", self))
+        vector_fields.addWidget(self.glyph_scale_input)
+        vector_fields.addWidget(QtWidgets.QLabel("Max:", self))
+        vector_fields.addWidget(self.glyph_max_count_input)
+        vector_fields.addStretch(1)
+
         buttons = QtWidgets.QHBoxLayout()
         buttons.addWidget(self.load_button)
         buttons.addWidget(self.capture_button)
@@ -161,6 +199,7 @@ class MeshViewerPanel(_BaseWidget):
         layout.addWidget(self.empty_state)
         layout.addLayout(toggles)
         layout.addLayout(fields)
+        layout.addLayout(vector_fields)
         layout.addLayout(buttons)
         layout.addWidget(self.binding_status_label)
         layout.addWidget(self.status_label)
@@ -175,6 +214,18 @@ class MeshViewerPanel(_BaseWidget):
         )
         self.scalar_selector.currentTextChanged.connect(
             lambda _text: self._on_scalar_selection_changed()
+        )
+        self.vector_selector.currentTextChanged.connect(
+            lambda _text: self._on_vector_glyph_controls_changed()
+        )
+        self.glyph_toggle.toggled.connect(
+            lambda _checked=False: self._on_vector_glyph_controls_changed()
+        )
+        self.glyph_scale_input.valueChanged.connect(
+            lambda _value=0.0: self._on_vector_glyph_controls_changed()
+        )
+        self.glyph_max_count_input.valueChanged.connect(
+            lambda _value=0: self._on_vector_glyph_controls_changed()
         )
         self._set_controls_enabled(False)
         self._render_state()
@@ -191,6 +242,7 @@ class MeshViewerPanel(_BaseWidget):
             status_message=_MESH_READY_TEXT,
         )
         self._populate_scalar_selector(mesh)
+        self._populate_vector_selector(mesh)
         self._set_controls_enabled(True)
         self._refresh_binding_status()
         self._render_state()
@@ -213,7 +265,9 @@ class MeshViewerPanel(_BaseWidget):
             for item in getattr(result_dataset, "fields", ()) or ()
             if getattr(item, "name", "")
         }
+        self._result_vector_field_lookup = dict(self._result_field_lookup)
         self._populate_scalar_selector(self._state.mesh)
+        self._populate_vector_selector(self._state.mesh)
         self._refresh_binding_status()
         self._render_state()
 
@@ -320,6 +374,7 @@ class MeshViewerPanel(_BaseWidget):
         """Return the panel to its friendly empty state."""
         self._state = MeshViewerState(status_message=_NO_MESH_TEXT)
         self._populate_scalar_selector(None)
+        self._populate_vector_selector(None)
         self._set_controls_enabled(False)
         self._refresh_binding_status()
         self._render_state()
@@ -335,6 +390,7 @@ class MeshViewerPanel(_BaseWidget):
         render_mesh, color_by, result_dataset_ref, field_id, field_warnings = (
             self._resolve_color_source(mesh)
         )
+        render_mesh, glyph_field, glyph_warnings = self._resolve_glyph_source(render_mesh)
         scene_input = mesh_input_ref(
             self._state.mesh_ref,
             self._state.selected_selection_ids,
@@ -347,6 +403,10 @@ class MeshViewerPanel(_BaseWidget):
             show_axes=self.axis_toggle.isChecked(),
             show_grid=self.grid_toggle.isChecked(),
             color_by=color_by,
+            glyph_enabled=self.glyph_toggle.isChecked(),
+            glyph_vector_field=glyph_field,
+            glyph_scale=float(self.glyph_scale_input.value()),
+            glyph_max_count=self._selected_glyph_max_count(),
             selected_selection_ids=self._state.selected_selection_ids,
         )
         self._state.scene_input = scene_input
@@ -357,7 +417,7 @@ class MeshViewerPanel(_BaseWidget):
         except PyVistaUnavailableError as exc:
             self._state.pyvista_available = False
             self._state.status_message = _PYVISTA_MISSING_TEXT
-            self._state.warning_messages = (str(exc), *field_warnings)
+            self._state.warning_messages = (str(exc), *field_warnings, *glyph_warnings)
             self._render_state()
             return None
 
@@ -366,6 +426,7 @@ class MeshViewerPanel(_BaseWidget):
         self._state.warning_messages = (
             *tuple(getattr(result, "warnings", ()) or ()),
             *field_warnings,
+            *glyph_warnings,
         )
         self._render_state()
         return result
@@ -436,6 +497,10 @@ class MeshViewerPanel(_BaseWidget):
         self._refresh_binding_status()
         self._render_state()
 
+    def _on_vector_glyph_controls_changed(self) -> None:
+        self._set_vector_controls_enabled(self._state.mesh is not None)
+        self._render_state()
+
     def _refresh_binding_status(self) -> None:
         self._binding_persisted = False
         mesh = self._state.mesh
@@ -471,6 +536,30 @@ class MeshViewerPanel(_BaseWidget):
         self.scalar_selector.addItems(items)
         self.scalar_selector.setCurrentText(current if current in items else _NONE_FIELD)
         self.scalar_selector.blockSignals(False)
+
+    def _populate_vector_selector(self, mesh: MeshData | None) -> None:
+        """Fill vector selector from existing mesh arrays and compatible result fields."""
+        current = self.vector_selector.currentText()
+        self.vector_selector.blockSignals(True)
+        self.vector_selector.clear()
+        items = [_NO_VECTOR_FIELD]
+        for name in mesh_vector_field_names(mesh):
+            items.append(name)
+        if mesh is not None and self._result_dataset is not None:
+            for name in result_field_names(self._result_dataset):
+                mapping = map_result_vector_field_to_mesh(
+                    mesh,
+                    self._result_dataset,
+                    field=name,
+                )
+                if mapping.applied:
+                    items.append(f"{_RESULT_VECTOR_PREFIX}{name}")
+        self.vector_selector.addItems(items)
+        self.vector_selector.setCurrentText(
+            current if current in items else _NO_VECTOR_FIELD
+        )
+        self.vector_selector.blockSignals(False)
+        self._set_vector_controls_enabled(mesh is not None)
 
     def _associate_from_exact_matches(
         self, mesh: MeshData, mesh_ref: str, datasets: tuple[object, ...]
@@ -552,10 +641,61 @@ class MeshViewerPanel(_BaseWidget):
             warnings = (f"Scalar field '{selected}' is not present on the mesh.",)
         return mesh, selected, None, None, warnings
 
+    def _resolve_glyph_source(
+        self, mesh: MeshData
+    ) -> tuple[MeshData, str | None, tuple[str, ...]]:
+        """Resolve the selected vector source to a render mesh plus glyph field."""
+        if not self.glyph_toggle.isChecked():
+            return mesh, None, ()
+
+        selected = self.vector_selector.currentText()
+        if not selected or selected == _NO_VECTOR_FIELD:
+            return mesh, None, (_NO_VECTOR_FIELD_SELECTED_TEXT,)
+
+        if selected.startswith(_RESULT_VECTOR_PREFIX):
+            field_name = selected[len(_RESULT_VECTOR_PREFIX):]
+            result_field = self._result_vector_field_lookup.get(field_name)
+            if result_field is None or self._result_dataset is None:
+                return (
+                    mesh,
+                    None,
+                    (f"Result vector field '{field_name}' is not available.",),
+                )
+            mapping = map_result_vector_field_to_mesh(
+                mesh,
+                self._result_dataset,
+                field=field_name,
+            )
+            if not mapping.applied:
+                return mesh, None, mapping.diagnostics
+            return mapping.mesh_data, mapping.field_name, ()
+
+        if selected not in mesh_vector_field_names(mesh):
+            return mesh, None, (f"Vector field '{selected}' is not present on the mesh.",)
+        return mesh, selected, ()
+
+    def _selected_glyph_max_count(self) -> int | None:
+        value = int(self.glyph_max_count_input.value())
+        return value if value > 0 else None
+
     def _set_controls_enabled(self, enabled: bool) -> None:
         self.load_button.setEnabled(enabled)
         self.capture_button.setEnabled(enabled)
         self.bind_result_button.setEnabled(enabled and self._result_dataset is not None)
+        self._set_vector_controls_enabled(enabled)
+
+    def _set_vector_controls_enabled(self, enabled: bool) -> None:
+        has_vector_options = self.vector_selector.count() > 1
+        selected = self.vector_selector.currentText()
+        glyph_available = (
+            enabled and has_vector_options and selected not in ("", _NO_VECTOR_FIELD)
+        )
+        self.vector_selector.setEnabled(enabled and has_vector_options)
+        self.glyph_toggle.setEnabled(glyph_available)
+        self.glyph_scale_input.setEnabled(glyph_available and self.glyph_toggle.isChecked())
+        self.glyph_max_count_input.setEnabled(
+            glyph_available and self.glyph_toggle.isChecked()
+        )
 
     def _render_state(self) -> None:
         has_mesh = self._state.mesh is not None

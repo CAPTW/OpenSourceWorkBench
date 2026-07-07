@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from math import isfinite
 from typing import Any, Protocol, runtime_checkable
 
 from osw.mesh.mesh_model import MeshData, MeshInfo
@@ -26,6 +27,7 @@ from osw.post.pyvista_scene import (
     export_screenshot_record,
 )
 from osw.post.scene_model import (
+    SceneGlyphOptions,
     SceneInputRef,
     SceneRenderOptions,
     SceneScreenshotRecord,
@@ -64,6 +66,10 @@ def scene_view_state_from_toggles(
     show_axes: bool = True,
     show_grid: bool = False,
     color_by: str | None = None,
+    glyph_enabled: bool = False,
+    glyph_vector_field: str | None = None,
+    glyph_scale: float = 1.0,
+    glyph_max_count: int | None = None,
     selected_selection_ids: Sequence[str] = (),
 ) -> SceneViewState:
     """Build a :class:`SceneViewState` from simple render toggles.
@@ -74,6 +80,7 @@ def scene_view_state_from_toggles(
     ``SceneViewState.scalar_field_id``.
     """
     resolved_color_by = color_by or None
+    resolved_vector_field = glyph_vector_field or None
     return SceneViewState(
         render_options=SceneRenderOptions(
             show_surface=bool(show_surface),
@@ -81,6 +88,12 @@ def scene_view_state_from_toggles(
             show_axes=bool(show_axes),
             show_grid=bool(show_grid),
             color_by=resolved_color_by,
+        ),
+        glyph_options=SceneGlyphOptions(
+            enabled=bool(glyph_enabled and resolved_vector_field),
+            vector_field=resolved_vector_field if glyph_enabled else None,
+            scale=glyph_scale,
+            max_glyph_count=glyph_max_count,
         ),
         scalar_field_id=resolved_color_by,
         selected_selection_ids=tuple(str(item) for item in selected_selection_ids),
@@ -96,13 +109,31 @@ def mesh_scalar_field_names(mesh: MeshData | None) -> tuple[str, ...]:
     """
     if mesh is None:
         return ()
-    info: MeshInfo = mesh.info(source=_MEMORY_SOURCE, mesh_format="mesh")
     names: list[str] = []
     seen: set[str] = set()
-    for name in (*info.point_data_names, *info.cell_data_names):
-        if name not in seen:
-            seen.add(name)
-            names.append(name)
+    for data_map in (mesh.point_data, mesh.cell_data):
+        for name, values in data_map.items():
+            if _is_vector_array(values):
+                continue
+            if name not in seen:
+                seen.add(name)
+                names.append(name)
+    return tuple(names)
+
+
+def mesh_vector_field_names(mesh: MeshData | None) -> tuple[str, ...]:
+    """Return compatible per-node/cell 3-component vector array names."""
+    if mesh is None:
+        return ()
+    names: list[str] = []
+    seen: set[str] = set()
+    for data_map in (mesh.point_data, mesh.cell_data):
+        for name, values in data_map.items():
+            if not _is_vector_array(values):
+                continue
+            if name not in seen:
+                seen.add(name)
+                names.append(name)
     return tuple(names)
 
 
@@ -246,6 +277,31 @@ def _format_point(point: Sequence[float]) -> str:
     return "(" + ", ".join(f"{float(value):.6g}" for value in point) + ")"
 
 
+def _tuple_or_none(value: object) -> tuple[object, ...] | None:
+    if isinstance(value, (str, bytes)):
+        return None
+    try:
+        return tuple(value)  # type: ignore[arg-type]
+    except TypeError:
+        return None
+
+
+def _is_vector_array(values: object) -> bool:
+    rows = _tuple_or_none(values)
+    if not rows:
+        return False
+    for row in rows:
+        components = _tuple_or_none(row)
+        if components is None or len(components) != 3:
+            return False
+        try:
+            if not all(isfinite(float(component)) for component in components):
+                return False
+        except (TypeError, ValueError, OverflowError):
+            return False
+    return True
+
+
 __all__ = [
     "DefaultSceneAdapter",
     "MeshViewerState",
@@ -253,6 +309,7 @@ __all__ = [
     "mesh_input_ref",
     "mesh_scalar_field_names",
     "mesh_summary_rows",
+    "mesh_vector_field_names",
     "scene_view_state_from_toggles",
     "summary_rows_to_text",
 ]

@@ -43,6 +43,14 @@ def _optional_float(value: object) -> float | None:
     return None if value is None else float(value)
 
 
+def _positive_float(value: object) -> float:
+    number = float(value)
+    if not (isfinite(number) and number > 0.0):
+        msg = "Scene positive value must be finite and positive."
+        raise ValueError(msg)
+    return number
+
+
 def _optional_size(value: object) -> tuple[int, int] | None:
     if value is None:
         return None
@@ -214,11 +222,76 @@ class SceneRenderOptions:
 
 
 @dataclass(frozen=True)
+class SceneGlyphOptions:
+    """Preview-only vector glyph request state; not a live-render guarantee."""
+
+    enabled: bool = False
+    vector_field: str | None = None
+    scale: float = 1.0
+    max_glyph_count: int | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        max_count = self.max_glyph_count
+        object.__setattr__(self, "enabled", bool(self.enabled))
+        object.__setattr__(self, "vector_field", _optional_str(self.vector_field))
+        object.__setattr__(self, "scale", _positive_float(self.scale))
+        object.__setattr__(
+            self,
+            "max_glyph_count",
+            int(max_count) if max_count not in (None, "") else None,
+        )
+        object.__setattr__(self, "metadata", _string_dict(self.metadata))
+        if self.max_glyph_count is not None and self.max_glyph_count <= 0:
+            msg = "Scene glyph max count must be positive when provided."
+            raise ValueError(msg)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "enabled": self.enabled,
+            "vector_field": self.vector_field,
+            "scale": self.scale,
+            "max_glyph_count": self.max_glyph_count,
+            "metadata": dict(self.metadata),
+        }
+
+    @classmethod
+    def from_dict(cls, data: object) -> SceneGlyphOptions:
+        if not isinstance(data, Mapping):
+            msg = "SceneGlyphOptions data must be a mapping."
+            raise TypeError(msg)
+        return cls(
+            enabled=bool(data.get("enabled", False)),
+            vector_field=data.get("vector_field"),
+            scale=data.get("scale", 1.0),
+            max_glyph_count=data.get("max_glyph_count"),
+            metadata=_string_dict(data.get("metadata", {})),
+        )
+
+    def validate(self, *, path: str = "glyph_options") -> ValidationReport:
+        report = ValidationReport()
+        if self.enabled and not self.vector_field:
+            report.add_error(
+                f"{path}.vector_field",
+                "Glyph preview requires a selected vector field.",
+            )
+        if not (isfinite(self.scale) and self.scale > 0.0):
+            report.add_error(f"{path}.scale", "Glyph scale must be finite and positive.")
+        if self.max_glyph_count is not None and self.max_glyph_count <= 0:
+            report.add_error(
+                f"{path}.max_glyph_count",
+                "Glyph max count must be positive when provided.",
+            )
+        return report
+
+
+@dataclass(frozen=True)
 class SceneViewState:
     """Serializable 3D workspace view state."""
 
     camera: SceneCameraState = field(default_factory=SceneCameraState)
     render_options: SceneRenderOptions = field(default_factory=SceneRenderOptions)
+    glyph_options: SceneGlyphOptions = field(default_factory=SceneGlyphOptions)
     selected_selection_ids: tuple[str, ...] = ()
     scalar_field_id: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -226,6 +299,7 @@ class SceneViewState:
     def __post_init__(self) -> None:
         object.__setattr__(self, "camera", _coerce_camera(self.camera))
         object.__setattr__(self, "render_options", _coerce_render_options(self.render_options))
+        object.__setattr__(self, "glyph_options", _coerce_glyph_options(self.glyph_options))
         object.__setattr__(self, "selected_selection_ids", _str_tuple(self.selected_selection_ids))
         object.__setattr__(self, "scalar_field_id", _optional_str(self.scalar_field_id))
         object.__setattr__(self, "metadata", _string_dict(self.metadata))
@@ -234,6 +308,7 @@ class SceneViewState:
         return {
             "camera": self.camera.to_dict(),
             "render_options": self.render_options.to_dict(),
+            "glyph_options": self.glyph_options.to_dict(),
             "selected_selection_ids": list(self.selected_selection_ids),
             "scalar_field_id": self.scalar_field_id,
             "metadata": dict(self.metadata),
@@ -247,6 +322,7 @@ class SceneViewState:
         return cls(
             camera=_coerce_camera(data.get("camera", {})),
             render_options=_coerce_render_options(data.get("render_options", {})),
+            glyph_options=_coerce_glyph_options(data.get("glyph_options", {})),
             selected_selection_ids=_str_tuple(data.get("selected_selection_ids", ())),
             scalar_field_id=data.get("scalar_field_id"),
             metadata=_string_dict(data.get("metadata", {})),
@@ -256,6 +332,7 @@ class SceneViewState:
         report = ValidationReport()
         report.extend(self.camera.validate(path=f"{path}.camera"))
         report.extend(self.render_options.validate(path=f"{path}.render_options"))
+        report.extend(self.glyph_options.validate(path=f"{path}.glyph_options"))
         return report
 
 
@@ -403,6 +480,15 @@ def _coerce_render_options(value: object) -> SceneRenderOptions:
     raise TypeError(msg)
 
 
+def _coerce_glyph_options(value: object) -> SceneGlyphOptions:
+    if isinstance(value, SceneGlyphOptions):
+        return value
+    if isinstance(value, Mapping):
+        return SceneGlyphOptions.from_dict(value)
+    msg = "Scene glyph options must be a SceneGlyphOptions or mapping."
+    raise TypeError(msg)
+
+
 def _coerce_view_state(value: object) -> SceneViewState:
     if isinstance(value, SceneViewState):
         return value
@@ -440,6 +526,7 @@ def build_screenshot_record(
 
 __all__ = [
     "SceneCameraState",
+    "SceneGlyphOptions",
     "SceneInputRef",
     "SceneRenderOptions",
     "SceneScreenshotRecord",
