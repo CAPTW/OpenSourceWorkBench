@@ -537,6 +537,26 @@ def test_vector_mapping_rejects_non_finite_component_values_and_does_not_mutate(
     assert "result_vector:U" not in mesh.point_data
 
 
+def test_vector_mapping_rejects_oversized_component_values_without_raising() -> None:
+    mesh = _mesh()
+    field = _vector_field("U")
+    bad_rows = (
+        ResultRow(0, {"Ux": 0.0, "Uy": 1.0, "Uz": 2.0}),
+        ResultRow(1, {"Ux": 10**10000, "Uy": 2.0, "Uz": 3.0}),
+        ResultRow(2, {"Ux": 2.0, "Uy": 3.0, "Uz": 4.0}),
+    )
+    bad_field = ResultField(
+        name=field.name, location=field.location, components=field.components, rows=bad_rows
+    )
+
+    result = map_result_vector_field_to_mesh(mesh, bad_field)
+
+    assert result.applied is False
+    assert "non-numeric or non-finite value" in result.diagnostics[0]
+    assert "result_vector:U" not in result.mesh_data.point_data
+    assert "result_vector:U" not in mesh.point_data
+
+
 def test_vector_mapping_rejects_unsupported_location() -> None:
     result = map_result_vector_field_to_mesh(_mesh(), _vector_field("U", location="face"))
 

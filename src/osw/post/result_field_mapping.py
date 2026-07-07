@@ -481,7 +481,7 @@ def _coerce_vector_entity_id(value: object) -> int | None:
 def _coerce_finite_float(value: object) -> float | None:
     try:
         number = float(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
     return number if isfinite(number) else None
 
