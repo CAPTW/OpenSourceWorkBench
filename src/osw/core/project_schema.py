@@ -10,6 +10,7 @@ from typing import Any
 
 from .boundary_curve import BoundaryCurve
 from .materials import Material, MaterialDB, builtin_materials
+from .report_asset import ReportScreenshotAsset, coerce_report_screenshots
 from .selection import (
     BoundaryTargetRef,
     NamedSelection,
@@ -663,6 +664,7 @@ class Project:
     plugins: list[PluginRef]
     warnings: list[ProjectWarning]
     selections: list[NamedSelection]
+    report_screenshots: list[ReportScreenshotAsset]
 
     def __init__(
         self,
@@ -688,6 +690,7 @@ class Project:
         result_refs: Sequence[ResultRef] | None = None,
         report_config: ReportConfig | None = None,
         selections: Sequence[NamedSelection] | None = None,
+        report_screenshots: Sequence[ReportScreenshotAsset] | None = None,
     ) -> None:
         object.__setattr__(self, "metadata", metadata)
         object.__setattr__(self, "units", unit_system or units or UnitSystem.si())
@@ -704,6 +707,9 @@ class Project:
         object.__setattr__(self, "plugins", list(plugins or []))
         object.__setattr__(self, "warnings", list(warnings or []))
         object.__setattr__(self, "selections", coerce_named_selections(selections))
+        object.__setattr__(
+            self, "report_screenshots", coerce_report_screenshots(report_screenshots)
+        )
 
     @property
     def unit_system(self) -> UnitSystem:
@@ -768,6 +774,12 @@ class Project:
         # projects serialize byte-identically (additive, schema 0.1).
         if self.selections:
             payload["selections"] = [item.to_dict() for item in self.selections]
+        # Additive schema 0.1: emit report screenshots only when present so
+        # projects without them serialize byte-identically to existing output.
+        if self.report_screenshots:
+            payload["report_screenshots"] = [
+                item.to_dict() for item in self.report_screenshots
+            ]
         return payload
 
     @classmethod
@@ -809,6 +821,10 @@ class Project:
                 ],
                 selections=[
                     NamedSelection.from_dict(item) for item in migrated.get("selections", [])
+                ],
+                report_screenshots=[
+                    ReportScreenshotAsset.from_dict(item)
+                    for item in migrated.get("report_screenshots", [])
                 ],
             )
         except (TypeError, ValueError) as exc:
@@ -881,6 +897,8 @@ def migrate_project_data(data: Mapping[str, Any]) -> dict[str, Any]:
         migrated["solvers"] = [migrated["solver_config"]]
     if "selections" not in migrated:
         migrated["selections"] = []
+    if "report_screenshots" not in migrated:
+        migrated["report_screenshots"] = []
     return migrated
 
 

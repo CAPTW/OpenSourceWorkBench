@@ -1137,7 +1137,7 @@ class MainWindow(_BaseMainWindow):
             warnings=tuple(getattr(self.workflow_session, "warnings", ())),
         )
         return self._add_scene_screenshot_preview_section(
-            summary, scene_screenshot_records=self._scene_screenshot_candidates
+            summary, scene_screenshot_records=self._report_scene_screenshots()
         )
 
     def _add_scene_screenshot_preview_section(
@@ -1249,7 +1249,7 @@ class MainWindow(_BaseMainWindow):
                 *_result_tables_from_datasets(self._result_datasets_for_report()),
                 *tuple(getattr(self.workflow_session, "result_tables", ())),
             ),
-            scene_screenshots=self._scene_screenshot_candidates,
+            scene_screenshots=self._report_scene_screenshots(),
             warnings=tuple(getattr(self.workflow_session, "warnings", ())),
         )
         if hasattr(self.properties_panel.report_preview_panel, "set_report_summary"):
@@ -1894,6 +1894,10 @@ class MainWindow(_BaseMainWindow):
                 self.mesh_viewer.set_remove_scene_screenshot_callback(
                     self.remove_scene_screenshot_candidate
                 )
+            if hasattr(self.mesh_viewer, "set_persist_scene_screenshots_callback"):
+                self.mesh_viewer.set_persist_scene_screenshots_callback(
+                    self.persist_staged_scene_screenshots
+                )
             layout.addWidget(self.mesh_viewer)
             if hasattr(self.mesh_viewer, "set_theme_tokens"):
                 self.mesh_viewer.set_theme_tokens(self.theme_manager.current_tokens)
@@ -1970,6 +1974,62 @@ class MainWindow(_BaseMainWindow):
             self.mesh_viewer, "refresh_scene_screenshot_status"
         ):
             self.mesh_viewer.refresh_scene_screenshot_status()
+
+    def _report_scene_screenshots(self) -> tuple[SceneScreenshotRecord, ...]:
+        """Combine transient staged and persisted project scene screenshots.
+
+        Transient staged candidates take priority; persisted project report
+        assets (converted back into records) are appended and de-duplicated by
+        id. Transient-only sessions are unchanged, while persisted assets surface
+        after a project reload.
+        """
+        from osw.post.report_model import report_asset_to_scene_screenshot
+
+        records = list(self._scene_screenshot_candidates)
+        seen = {record.id for record in records if record.id}
+        for asset in getattr(self.current_project, "report_screenshots", ()) or ():
+            record = report_asset_to_scene_screenshot(asset)
+            if record.id and record.id in seen:
+                continue
+            if record.id:
+                seen.add(record.id)
+            records.append(record)
+        return tuple(records)
+
+    def persist_staged_scene_screenshots(self) -> int:
+        """Persist staged scene screenshots into project report assets (opt-in).
+
+        User-triggered only. Bridges the transient candidates into core
+        ``ReportScreenshotAsset`` records and merges them into the current
+        project's ``report_screenshots`` (local paths only; no image bytes
+        copied, no project auto-save). Returns the number persisted, 0 when
+        nothing is staged, or -1 when the confirmation is declined. Transient
+        candidates are preserved.
+        """
+        candidates = self._scene_screenshot_candidates
+        if not candidates:
+            return 0
+        if not self._confirm_persist_scene_screenshots(len(candidates)):
+            return -1
+        from osw.post.report_model import scene_screenshots_to_report_assets
+
+        assets = scene_screenshots_to_report_assets(candidates)
+        self.set_project(_project_with_report_screenshots(self.current_project, assets))
+        return len(assets)
+
+    def _confirm_persist_scene_screenshots(self, count: int) -> bool:
+        """Confirm persisting staged screenshots; overridable seam for tests."""
+        if QtWidgets is None:
+            return True
+        answer = QtWidgets.QMessageBox.question(
+            self,
+            "Persist scene screenshot report assets",
+            (
+                "Persist staged scene screenshots as project report assets? "
+                "Image files are not copied; local paths are stored."
+            ),
+        )
+        return answer == QtWidgets.QMessageBox.StandardButton.Yes
 
     def capture_scene_screenshot_to_report_candidates(self) -> SceneScreenshotRecord | None:
         """Capture an active viewer scene screenshot into report candidates."""
@@ -2393,6 +2453,41 @@ def _action_object_name(action_title: str) -> str:
     return f"action{words}"
 
 
+def _project_with_report_screenshots(project: Project, assets: object) -> Project:
+    """Return a copy of ``project`` merging ``assets`` into report_screenshots.
+
+    Existing persisted assets are kept unless superseded by a new asset with the
+    same id (new wins). All other project fields, including named selections, are
+    preserved. Only the transient candidate list feeds this; no image bytes are
+    copied and no project file is saved.
+    """
+    new_assets = tuple(assets or ())
+    new_ids = {getattr(asset, "id", "") for asset in new_assets}
+    kept = [
+        asset
+        for asset in getattr(project, "report_screenshots", ()) or ()
+        if getattr(asset, "id", "") not in new_ids
+    ]
+    return Project(
+        metadata=project.metadata,
+        units=project.units,
+        materials=project.materials,
+        geometry=project.geometry,
+        meshes=project.meshes,
+        scripts=project.scripts,
+        boundary_curves=project.boundary_curves,
+        physics=project.physics,
+        solvers=project.solvers,
+        results=project.results,
+        report=project.report,
+        schema_version=project.schema_version,
+        plugins=project.plugins,
+        warnings=project.warnings,
+        selections=project.selections,
+        report_screenshots=[*kept, *new_assets],
+    )
+
+
 def _project_with_mesh_ref(project: Project, mesh_ref: object) -> Project:
     meshes = [
         mesh
@@ -2416,6 +2511,8 @@ def _project_with_mesh_ref(project: Project, mesh_ref: object) -> Project:
         schema_version=project.schema_version,
         plugins=project.plugins,
         warnings=project.warnings,
+        selections=project.selections,
+        report_screenshots=project.report_screenshots,
     )
 
 
@@ -2442,6 +2539,7 @@ def _project_with_replaced_result_ref(
         plugins=project.plugins,
         warnings=project.warnings,
         selections=project.selections,
+        report_screenshots=project.report_screenshots,
     )
 
 
@@ -2468,6 +2566,8 @@ def _project_with_script_ref(project: Project, script_ref: object) -> Project:
         schema_version=project.schema_version,
         plugins=project.plugins,
         warnings=project.warnings,
+        selections=project.selections,
+        report_screenshots=project.report_screenshots,
     )
 
 
@@ -2493,6 +2593,8 @@ def _project_with_boundary_curve(project: Project, curve: object) -> Project:
         schema_version=project.schema_version,
         plugins=project.plugins,
         warnings=project.warnings,
+        selections=project.selections,
+        report_screenshots=project.report_screenshots,
     )
 
 

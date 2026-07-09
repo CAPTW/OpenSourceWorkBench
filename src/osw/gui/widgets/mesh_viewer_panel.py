@@ -75,6 +75,11 @@ _CAPTION_UPDATED_TEXT = "Updated staged scene screenshot caption."
 _SCREENSHOT_REMOVED_TEXT = "Removed staged scene screenshot."
 _EDIT_CAPTION_PROMPT_TITLE = "Edit scene screenshot caption"
 _EDIT_CAPTION_PROMPT_LABEL = "Caption:"
+_PERSIST_HANDLER_MISSING_TEXT = (
+    "Persist staged screenshots is not wired to the main window."
+)
+_NO_SCREENSHOTS_TO_PERSIST_TEXT = "No staged scene screenshots to persist."
+_SCREENSHOTS_PERSISTED_TEMPLATE = "Persisted {count} scene screenshot report asset(s)."
 _PYVISTA_MISSING_TEXT = (
     "PyVista unavailable -- install the visualization extra to render 3D scenes."
 )
@@ -131,6 +136,7 @@ class MeshViewerPanel(_BaseWidget):
             Callable[[str, str], bool] | None
         ) = None
         self._remove_scene_screenshot_callback: Callable[[str], bool] | None = None
+        self._persist_scene_screenshots_callback: Callable[[], object] | None = None
         self._binding_status_message = _NO_STAGED_BINDING_TEXT
         self._binding_persisted = False
 
@@ -223,6 +229,13 @@ class MeshViewerPanel(_BaseWidget):
         )
         self.remove_screenshot_button.setObjectName("oswMeshViewerRemoveScreenshotButton")
         self.remove_screenshot_button.setEnabled(False)
+        self.persist_screenshots_button = QtWidgets.QPushButton(
+            "Persist staged screenshots with project...", self
+        )
+        self.persist_screenshots_button.setObjectName(
+            "oswMeshViewerPersistScreenshotsButton"
+        )
+        self.persist_screenshots_button.setEnabled(False)
 
         toggles = QtWidgets.QHBoxLayout()
         toggles.addWidget(self.surface_toggle)
@@ -275,6 +288,7 @@ class MeshViewerPanel(_BaseWidget):
         screenshot_actions_row = QtWidgets.QHBoxLayout()
         screenshot_actions_row.addWidget(self.edit_caption_button)
         screenshot_actions_row.addWidget(self.remove_screenshot_button)
+        screenshot_actions_row.addWidget(self.persist_screenshots_button)
         screenshot_actions_row.addStretch(1)
         layout.addLayout(screenshot_actions_row)
         layout.addWidget(self.screenshot_caveat_label)
@@ -293,6 +307,9 @@ class MeshViewerPanel(_BaseWidget):
         )
         self.remove_screenshot_button.clicked.connect(
             lambda _checked=False: self._on_remove_screenshot_requested()
+        )
+        self.persist_screenshots_button.clicked.connect(
+            lambda _checked=False: self._on_persist_screenshots_requested()
         )
         self.staged_screenshots_list.currentRowChanged.connect(
             lambda _row=-1: self._update_screenshot_action_buttons()
@@ -399,6 +416,13 @@ class MeshViewerPanel(_BaseWidget):
     ) -> None:
         """Connect the per-record remove action to a MainWindow-owned flow."""
         self._remove_scene_screenshot_callback = callback
+        self._render_screenshot_status()
+
+    def set_persist_scene_screenshots_callback(
+        self, callback: Callable[[], object] | None
+    ) -> None:
+        """Connect the persist action to a MainWindow-owned opt-in flow."""
+        self._persist_scene_screenshots_callback = callback
         self._render_screenshot_status()
 
     def refresh_scene_screenshot_status(self) -> None:
@@ -678,6 +702,9 @@ class MeshViewerPanel(_BaseWidget):
         self.remove_screenshot_button.setEnabled(
             has_selection and self._remove_scene_screenshot_callback is not None
         )
+        self.persist_screenshots_button.setEnabled(
+            count > 0 and self._persist_scene_screenshots_callback is not None
+        )
 
     def _selected_staged_record(self) -> SceneScreenshotRecord | None:
         records = self._staged_scene_screenshots()
@@ -745,6 +772,20 @@ class MeshViewerPanel(_BaseWidget):
         self._state.status_message = (
             _SCREENSHOT_REMOVED_TEXT if removed else _UNIDENTIFIED_SCREENSHOT_TEXT
         )
+        self._render_state()
+
+    def _on_persist_screenshots_requested(self) -> None:
+        if self._persist_scene_screenshots_callback is None:
+            self._state.status_message = _PERSIST_HANDLER_MISSING_TEXT
+            self._render_state()
+            return
+        result = self._persist_scene_screenshots_callback()
+        count = int(result) if result is not None else 0
+        if count > 0:
+            self._state.status_message = _SCREENSHOTS_PERSISTED_TEMPLATE.format(count=count)
+        elif count == 0:
+            self._state.status_message = _NO_SCREENSHOTS_TO_PERSIST_TEXT
+        # A negative count means the confirmation was declined; keep the status.
         self._render_state()
 
     def _on_bind_result_requested(self) -> None:

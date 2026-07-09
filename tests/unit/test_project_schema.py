@@ -21,6 +21,10 @@ from osw.core.project_schema import (
     SolverConfig,
     load_project,
 )
+from osw.core.report_asset import (
+    REPORT_SCREENSHOT_ASSET_CAVEAT,
+    ReportScreenshotAsset,
+)
 from osw.core.result_mesh_binding import (
     MESH_BINDING_METADATA_KEY,
     SOURCE_MESH_REF_METADATA_KEY,
@@ -340,3 +344,86 @@ def test_boundary_condition_accepts_project_schema_fields() -> None:
 
     assert boundary.kind == "Velocity Inlet"
     assert boundary.to_dict()["value"] == "3.0 m/s"
+
+
+def _screenshot_asset(asset_id: str = "shot-1") -> ReportScreenshotAsset:
+    return ReportScreenshotAsset(
+        id=asset_id,
+        path="scenes/iso.png",
+        caption="Iso view",
+        mesh_ref="mesh-1",
+        result_dataset_ref="rd-1",
+        field_id="temperature",
+        selection_ids=("sel-a",),
+        scene_state={"camera": {"view_preset": "iso"}},
+        glyph_options={"enabled": True, "vector_field": "U"},
+        metadata={"created_by": "mesh-viewer"},
+    )
+
+
+def test_report_screenshot_asset_serializes_deterministically() -> None:
+    asset = _screenshot_asset()
+
+    loaded = ReportScreenshotAsset.from_dict(asset.to_dict())
+
+    assert loaded == asset
+    # Persisted screenshots are never release assets or validation evidence.
+    assert asset.metadata["is_release_asset"] is False
+    assert asset.metadata["is_validation_evidence"] is False
+    assert asset.metadata["artifact_caveat"] == REPORT_SCREENSHOT_ASSET_CAVEAT
+    # Caveat flags are forced even if a payload claims otherwise.
+    tampered = asset.to_dict()
+    tampered["metadata"]["is_release_asset"] = True
+    assert ReportScreenshotAsset.from_dict(tampered).metadata["is_release_asset"] is False
+
+
+def test_project_report_screenshots_round_trip() -> None:
+    project = Project(
+        metadata=ProjectMetadata(name="Report assets"),
+        report_screenshots=[_screenshot_asset("shot-1"), _screenshot_asset("shot-2")],
+    )
+
+    loaded = Project.from_dict(project.to_dict())
+
+    assert loaded.report_screenshots == project.report_screenshots
+    assert [asset.id for asset in loaded.report_screenshots] == ["shot-1", "shot-2"]
+    assert loaded.report_screenshots[0].caption == "Iso view"
+    assert loaded.report_screenshots[0].mesh_ref == "mesh-1"
+
+
+def test_project_without_report_screenshots_is_byte_identical() -> None:
+    project = Project(metadata=ProjectMetadata(name="No assets"))
+    payload = project.to_dict()
+
+    # Additive at schema 0.1: the key is omitted when empty (byte-identical).
+    assert "report_screenshots" not in payload
+    assert project.schema_version == "0.1"
+    assert project.report_screenshots == []
+
+
+def test_old_project_without_report_screenshots_field_loads() -> None:
+    payload = Project(metadata=ProjectMetadata(name="Legacy")).to_dict()
+    payload.pop("report_screenshots", None)  # simulate a pre-field project file
+
+    loaded = Project.from_dict(payload)
+
+    assert loaded.report_screenshots == []
+    assert loaded.schema_version == "0.1"
+
+
+def test_report_screenshots_do_not_bump_schema_version() -> None:
+    project = Project(
+        metadata=ProjectMetadata(name="Report assets"),
+        report_screenshots=[_screenshot_asset()],
+    )
+
+    assert project.schema_version == "0.1"
+    assert project.to_dict()["schema_version"] == "0.1"
+
+
+def test_core_report_asset_module_is_post_and_render_free() -> None:
+    import osw.core.report_asset as module
+
+    source = Path(module.__file__).read_text(encoding="utf-8")
+    for banned in ("import osw.post", "from osw.post", "import pyvista", "import vtk"):
+        assert banned not in source

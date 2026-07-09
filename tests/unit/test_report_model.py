@@ -15,6 +15,8 @@ from osw.post.report_model import (
     ReportSection,
     ReportSummary,
     ReportTable,
+    report_asset_to_scene_screenshot,
+    scene_screenshot_to_report_asset,
     scene_screenshot_to_report_figure,
     scene_screenshots_to_report_figures,
 )
@@ -185,3 +187,33 @@ def test_scene_screenshots_to_report_figures_bridges_all() -> None:
 
     assert [figure.figure_id for figure in figures] == ["shot-1", "shot-2"]
     assert scene_screenshots_to_report_figures(()) == ()
+
+
+def test_scene_screenshot_report_asset_bridge_round_trips() -> None:
+    record = _full_screenshot_record("scenes/iso.png")
+
+    asset = scene_screenshot_to_report_asset(record)
+
+    assert asset.id == "shot-1"
+    assert asset.path == "scenes/iso.png"
+    assert asset.caption == "Iso temperature view"
+    assert asset.mesh_ref == "mesh-1"
+    assert asset.result_dataset_ref == "rd-1"
+    assert asset.field_id == "temperature"
+    assert asset.selection_ids == ("sel-a", "sel-b")
+    assert asset.glyph_options["vector_field"] == "U"
+    # Persisted asset is never a release asset / validation evidence.
+    assert asset.metadata["is_release_asset"] is False
+    assert asset.metadata["is_validation_evidence"] is False
+
+    back = report_asset_to_scene_screenshot(asset)
+
+    assert back.id == record.id
+    assert back.path == record.path
+    assert back.caption == record.caption
+    assert back.mesh_ref == record.mesh_ref
+    assert back.dataset_ref == record.dataset_ref
+    assert back.selection_ids == record.selection_ids
+    assert back.created_by == record.created_by
+    assert back.scene_state.glyph_options.vector_field == "U"
+    assert back.scene_state.scalar_field_id == "temperature"

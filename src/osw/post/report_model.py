@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from osw.core.diagnostics import DiagnosticReport
-from osw.post.scene_model import SceneScreenshotRecord
+from osw.core.report_asset import ReportScreenshotAsset
+from osw.post.scene_model import SceneScreenshotRecord, SceneViewState
 
 if TYPE_CHECKING:
     from osw.core.project_schema import Project
@@ -284,6 +285,69 @@ def scene_screenshots_to_report_figures(
 ) -> tuple[ReportFigure, ...]:
     """Bridge many ``SceneScreenshotRecord`` values into report figures."""
     return tuple(scene_screenshot_to_report_figure(record) for record in records)
+
+
+def scene_screenshot_to_report_asset(record: SceneScreenshotRecord) -> ReportScreenshotAsset:
+    """Bridge a transient ``SceneScreenshotRecord`` into a core ``ReportScreenshotAsset``.
+
+    Runs outside core so ProjectSchema stays post-independent. Provenance and the
+    local-artifact caveat are preserved; ``scene_state``/``glyph_options`` are
+    serialized to opaque dicts. No image bytes are copied -- only the local path.
+    """
+    scene = record.scene_state
+    glyph = scene.glyph_options
+    metadata = dict(record.metadata)
+    if record.created_by and "created_by" not in metadata:
+        metadata["created_by"] = record.created_by
+    return ReportScreenshotAsset(
+        id=record.id,
+        path=record.path,
+        caption=record.caption or "",
+        mesh_ref=record.mesh_ref or "",
+        result_dataset_ref=record.dataset_ref or "",
+        field_id=scene.scalar_field_id or scene.render_options.color_by or "",
+        selection_ids=tuple(record.selection_ids) or tuple(scene.selected_selection_ids),
+        scene_state=scene.to_dict(),
+        glyph_options=glyph.to_dict(),
+        metadata=metadata,
+    )
+
+
+def scene_screenshots_to_report_assets(
+    records: Iterable[SceneScreenshotRecord],
+) -> tuple[ReportScreenshotAsset, ...]:
+    """Bridge many ``SceneScreenshotRecord`` values into core report assets."""
+    return tuple(scene_screenshot_to_report_asset(record) for record in records)
+
+
+def report_asset_to_scene_screenshot(asset: ReportScreenshotAsset) -> SceneScreenshotRecord:
+    """Bridge a persisted core ``ReportScreenshotAsset`` back into a record.
+
+    Reconstructs the post-layer ``SceneViewState`` from the opaque ``scene_state``
+    dict so the persisted asset feeds the existing report screenshot bridge for
+    preview/export.
+    """
+    scene_state = (
+        SceneViewState.from_dict(asset.scene_state) if asset.scene_state else SceneViewState()
+    )
+    return SceneScreenshotRecord(
+        id=asset.id,
+        path=asset.path,
+        caption=asset.caption or None,
+        scene_state=scene_state,
+        dataset_ref=asset.result_dataset_ref or None,
+        mesh_ref=asset.mesh_ref or None,
+        selection_ids=asset.selection_ids,
+        created_by=asset.metadata.get("created_by"),
+        metadata=dict(asset.metadata),
+    )
+
+
+def report_assets_to_scene_screenshots(
+    assets: Iterable[ReportScreenshotAsset],
+) -> tuple[SceneScreenshotRecord, ...]:
+    """Bridge many persisted core report assets back into records."""
+    return tuple(report_asset_to_scene_screenshot(asset) for asset in assets)
 
 
 @dataclass(frozen=True)
