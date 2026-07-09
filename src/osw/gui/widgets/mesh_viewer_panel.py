@@ -49,6 +49,10 @@ _NO_MESH_TEXT = "No mesh loaded."
 _MESH_READY_TEXT = "Mesh loaded. Select 'Load mesh preview' to build the scene."
 _PREVIEW_LOADED_TEXT = "Mesh preview loaded."
 _CAPTURED_TEXT = "Captured scene metadata."
+_CAPTURE_SCREENSHOT_STAGED_TEXT = "Captured scene screenshot and staged for report export."
+_CAPTURE_SCREENSHOT_HANDLER_MISSING_TEXT = (
+    "Scene screenshot capture action is not wired to the main window."
+)
 _PYVISTA_MISSING_TEXT = (
     "PyVista unavailable -- install the visualization extra to render 3D scenes."
 )
@@ -94,6 +98,9 @@ class MeshViewerPanel(_BaseWidget):
         self._result_field_lookup: dict[str, object] = {}
         self._result_vector_field_lookup: dict[str, object] = {}
         self._bind_result_callback: Callable[[], object] | None = None
+        self._capture_scene_screenshot_callback: (
+            Callable[[], SceneScreenshotRecord | None] | None
+        ) = None
         self._binding_status_message = _NO_STAGED_BINDING_TEXT
         self._binding_persisted = False
 
@@ -145,7 +152,9 @@ class MeshViewerPanel(_BaseWidget):
 
         self.load_button = QtWidgets.QPushButton("Load mesh preview", self)
         self.load_button.setObjectName("oswMeshViewerLoadButton")
-        self.capture_button = QtWidgets.QPushButton("Capture scene metadata", self)
+        self.capture_button = QtWidgets.QPushButton(
+            "Add scene screenshot to report...", self
+        )
         self.capture_button.setObjectName("oswMeshViewerCaptureButton")
         self.bind_result_button = QtWidgets.QPushButton(
             "Bind result to active mesh...", self
@@ -274,6 +283,12 @@ class MeshViewerPanel(_BaseWidget):
     def set_bind_result_callback(self, callback: Callable[[], object] | None) -> None:
         """Connect the panel action to a MainWindow-owned confirmation flow."""
         self._bind_result_callback = callback
+
+    def set_capture_scene_screenshot_callback(
+        self, callback: Callable[[], SceneScreenshotRecord | None] | None
+    ) -> None:
+        """Connect the capture button to a MainWindow-owned flow."""
+        self._capture_scene_screenshot_callback = callback
 
     def current_result_dataset(self) -> object | None:
         return self._result_dataset
@@ -479,10 +494,20 @@ class MeshViewerPanel(_BaseWidget):
     # -- internal helpers ---------------------------------------------------
 
     def _on_capture_requested(self) -> None:
-        # The button cannot supply a target path; a caller drives the export.
-        self._state.status_message = (
-            "Capture requires a target path from the caller."
-        )
+        if self._capture_scene_screenshot_callback is None:
+            self._state.status_message = _CAPTURE_SCREENSHOT_HANDLER_MISSING_TEXT
+            self._render_state()
+            return
+
+        record = self._capture_scene_screenshot_callback()
+        if record is None:
+            if not self._state.status_message:
+                self._state.status_message = _CAPTURED_TEXT
+            self._render_state()
+            return
+
+        self._state.screenshot_record = record
+        self._state.status_message = _CAPTURE_SCREENSHOT_STAGED_TEXT
         self._render_state()
 
     def _on_bind_result_requested(self) -> None:

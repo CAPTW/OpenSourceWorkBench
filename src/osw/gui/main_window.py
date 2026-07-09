@@ -21,6 +21,8 @@ from osw.plugins.state import PluginStateStore
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QApplication
 
+    from osw.post.scene_model import SceneScreenshotRecord
+
 try:
     from PySide6 import QtCore, QtGui, QtWidgets
 except ModuleNotFoundError:
@@ -250,6 +252,7 @@ class MainWindow(_BaseMainWindow):
         self.result_catalog: object | None = None
         self.last_figure_dataset: object | None = None
         self.last_result_datasets: tuple[object, ...] = ()
+        self._scene_screenshot_candidates: tuple[SceneScreenshotRecord, ...] = ()
         self.preferences_dialog: object | None = None
         self.toolbar_actions: dict[str, object] = {}
         self.menu_actions: dict[str, object] = {}
@@ -1175,6 +1178,7 @@ class MainWindow(_BaseMainWindow):
                 *_result_tables_from_datasets(self._result_datasets_for_report()),
                 *tuple(getattr(self.workflow_session, "result_tables", ())),
             ),
+            scene_screenshots=self._scene_screenshot_candidates,
             warnings=tuple(getattr(self.workflow_session, "warnings", ())),
         )
         if hasattr(self.properties_panel.report_preview_panel, "set_report_summary"):
@@ -1799,6 +1803,10 @@ class MainWindow(_BaseMainWindow):
                 self.mesh_viewer.set_bind_result_callback(
                     self.persist_mesh_viewer_result_binding
                 )
+            if hasattr(self.mesh_viewer, "set_capture_scene_screenshot_callback"):
+                self.mesh_viewer.set_capture_scene_screenshot_callback(
+                    self.capture_scene_screenshot_to_report_candidates
+                )
             layout.addWidget(self.mesh_viewer)
             if hasattr(self.mesh_viewer, "set_theme_tokens"):
                 self.mesh_viewer.set_theme_tokens(self.theme_manager.current_tokens)
@@ -1807,6 +1815,52 @@ class MainWindow(_BaseMainWindow):
         self.mesh_viewer_dialog.raise_()
         self.mesh_viewer_dialog.activateWindow()
         return self.mesh_viewer_dialog
+
+    def scene_screenshot_candidates(self) -> tuple[SceneScreenshotRecord, ...]:
+        """Return transient report-ready scene screenshot records."""
+        return self._scene_screenshot_candidates
+
+    def clear_scene_screenshot_candidates(self) -> None:
+        """Clear transient scene screenshot candidate records for report export."""
+        self._scene_screenshot_candidates = ()
+
+    def capture_scene_screenshot_to_report_candidates(self) -> SceneScreenshotRecord | None:
+        """Capture an active viewer scene screenshot into report candidates."""
+        if self.mesh_viewer is None:
+            return None
+
+        path = self._pick_scene_screenshot_target_path()
+        if not path:
+            return None
+
+        record = self.mesh_viewer.capture_scene_metadata(
+            path,
+            record_id=self._next_scene_screenshot_record_id(),
+            created_by="mesh-viewer",
+        )
+        if record is None:
+            return None
+        self._scene_screenshot_candidates = (
+            *self._scene_screenshot_candidates,
+            record,
+        )
+        return record
+
+    def _pick_scene_screenshot_target_path(self) -> str | None:
+        """Resolve user-confirmed target path for report scene screenshot capture."""
+        if QtWidgets is None:
+            return None
+        selected, _selected_filter = QtWidgets.QFileDialog.getSaveFileName(
+            self,
+            "Add scene screenshot to report...",
+            "",
+            "Image Files (*.png *.jpg *.jpeg *.webp *.gif);;All Files (*.*)",
+        )
+        return selected or None
+
+    def _next_scene_screenshot_record_id(self) -> str:
+        """Generate deterministic IDs for transient session screenshot records."""
+        return f"scene-screenshot-{len(self._scene_screenshot_candidates) + 1}"
 
     def _populate_mesh_viewer_from_latest(self) -> None:
         """Show selected or latest imported mesh when the panel has none yet.
