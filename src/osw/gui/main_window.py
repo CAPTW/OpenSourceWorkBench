@@ -253,6 +253,7 @@ class MainWindow(_BaseMainWindow):
         self.last_figure_dataset: object | None = None
         self.last_result_datasets: tuple[object, ...] = ()
         self._scene_screenshot_candidates: tuple[SceneScreenshotRecord, ...] = ()
+        self._scene_screenshot_counter: int = 0
         self.preferences_dialog: object | None = None
         self.toolbar_actions: dict[str, object] = {}
         self.menu_actions: dict[str, object] = {}
@@ -1885,6 +1886,14 @@ class MainWindow(_BaseMainWindow):
                 self.mesh_viewer.set_clear_scene_screenshots_callback(
                     self.clear_scene_screenshots_from_viewer
                 )
+            if hasattr(self.mesh_viewer, "set_edit_scene_screenshot_caption_callback"):
+                self.mesh_viewer.set_edit_scene_screenshot_caption_callback(
+                    self.update_scene_screenshot_caption
+                )
+            if hasattr(self.mesh_viewer, "set_remove_scene_screenshot_callback"):
+                self.mesh_viewer.set_remove_scene_screenshot_callback(
+                    self.remove_scene_screenshot_candidate
+                )
             layout.addWidget(self.mesh_viewer)
             if hasattr(self.mesh_viewer, "set_theme_tokens"):
                 self.mesh_viewer.set_theme_tokens(self.theme_manager.current_tokens)
@@ -1911,6 +1920,52 @@ class MainWindow(_BaseMainWindow):
         ResultDataset, result binding, mesh, or project-file state is mutated.
         """
         self.clear_scene_screenshot_candidates()
+        self._refresh_scene_screenshot_viewer()
+
+    def update_scene_screenshot_caption(self, record_id: str, caption: str | None) -> bool:
+        """Update one staged screenshot record's caption (transient immutable replace).
+
+        Returns True when a record matched. The frozen ``SceneScreenshotRecord``
+        is replaced with a copy carrying the new caption; every other field is
+        preserved. Only the transient candidate list is affected -- no
+        ProjectSchema / ResultDataset / result binding / mesh mutation and no
+        project auto-save.
+        """
+        target = str(record_id)
+        updated = False
+        rebuilt: list[SceneScreenshotRecord] = []
+        for record in self._scene_screenshot_candidates:
+            if not updated and str(getattr(record, "id", "")) == target:
+                rebuilt.append(replace(record, caption=caption))
+                updated = True
+            else:
+                rebuilt.append(record)
+        if updated:
+            self._scene_screenshot_candidates = tuple(rebuilt)
+            self._refresh_scene_screenshot_viewer()
+        return updated
+
+    def remove_scene_screenshot_candidate(self, record_id: str) -> bool:
+        """Remove one staged screenshot record by id (transient); keep the rest.
+
+        Returns True when a record was removed. Monotonic ids make the match
+        unique, so exactly one record is dropped. Bulk clear behavior is
+        unchanged; only the transient candidate list is affected.
+        """
+        target = str(record_id)
+        remaining = tuple(
+            record
+            for record in self._scene_screenshot_candidates
+            if str(getattr(record, "id", "")) != target
+        )
+        if len(remaining) == len(self._scene_screenshot_candidates):
+            return False
+        self._scene_screenshot_candidates = remaining
+        self._refresh_scene_screenshot_viewer()
+        return True
+
+    def _refresh_scene_screenshot_viewer(self) -> None:
+        """Refresh the mesh viewer's staged screenshot status, if present."""
         if self.mesh_viewer is not None and hasattr(
             self.mesh_viewer, "refresh_scene_screenshot_status"
         ):
@@ -1951,8 +2006,15 @@ class MainWindow(_BaseMainWindow):
         return selected or None
 
     def _next_scene_screenshot_record_id(self) -> str:
-        """Generate deterministic IDs for transient session screenshot records."""
-        return f"scene-screenshot-{len(self._scene_screenshot_candidates) + 1}"
+        """Allocate a session-monotonic id so removal never yields a duplicate.
+
+        A monotonic counter (never decremented on removal or bulk clear)
+        guarantees that capturing after a per-record removal cannot reuse an
+        existing id. Append-only sessions still read scene-screenshot-1, -2, ...,
+        preserving existing behavior.
+        """
+        self._scene_screenshot_counter += 1
+        return f"scene-screenshot-{self._scene_screenshot_counter}"
 
     def _populate_mesh_viewer_from_latest(self) -> None:
         """Show selected or latest imported mesh when the panel has none yet.

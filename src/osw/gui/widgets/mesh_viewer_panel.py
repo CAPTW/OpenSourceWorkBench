@@ -63,6 +63,18 @@ _SCREENSHOT_ARTIFACT_CAVEAT_TEXT = (
     "Scene screenshots are local report artifacts only; they are not validation "
     "evidence or release assets."
 )
+_EDIT_CAPTION_HANDLER_MISSING_TEXT = (
+    "Edit scene screenshot caption is not wired to the main window."
+)
+_REMOVE_SCREENSHOT_HANDLER_MISSING_TEXT = (
+    "Remove staged screenshot is not wired to the main window."
+)
+_NO_SCREENSHOT_SELECTED_TEXT = "Select a staged scene screenshot first."
+_UNIDENTIFIED_SCREENSHOT_TEXT = "Could not identify the selected staged screenshot."
+_CAPTION_UPDATED_TEXT = "Updated staged scene screenshot caption."
+_SCREENSHOT_REMOVED_TEXT = "Removed staged scene screenshot."
+_EDIT_CAPTION_PROMPT_TITLE = "Edit scene screenshot caption"
+_EDIT_CAPTION_PROMPT_LABEL = "Caption:"
 _PYVISTA_MISSING_TEXT = (
     "PyVista unavailable -- install the visualization extra to render 3D scenes."
 )
@@ -115,6 +127,10 @@ class MeshViewerPanel(_BaseWidget):
             Callable[[], Sequence[SceneScreenshotRecord]] | None
         ) = None
         self._clear_scene_screenshots_callback: Callable[[], None] | None = None
+        self._edit_scene_screenshot_caption_callback: (
+            Callable[[str, str], bool] | None
+        ) = None
+        self._remove_scene_screenshot_callback: Callable[[str], bool] | None = None
         self._binding_status_message = _NO_STAGED_BINDING_TEXT
         self._binding_persisted = False
 
@@ -199,6 +215,14 @@ class MeshViewerPanel(_BaseWidget):
         self.screenshot_caveat_label = QtWidgets.QLabel(_SCREENSHOT_ARTIFACT_CAVEAT_TEXT, self)
         self.screenshot_caveat_label.setObjectName("oswMeshViewerScreenshotCaveat")
         self.screenshot_caveat_label.setWordWrap(True)
+        self.edit_caption_button = QtWidgets.QPushButton("Edit caption...", self)
+        self.edit_caption_button.setObjectName("oswMeshViewerEditCaptionButton")
+        self.edit_caption_button.setEnabled(False)
+        self.remove_screenshot_button = QtWidgets.QPushButton(
+            "Remove selected screenshot", self
+        )
+        self.remove_screenshot_button.setObjectName("oswMeshViewerRemoveScreenshotButton")
+        self.remove_screenshot_button.setEnabled(False)
 
         toggles = QtWidgets.QHBoxLayout()
         toggles.addWidget(self.surface_toggle)
@@ -247,6 +271,12 @@ class MeshViewerPanel(_BaseWidget):
         screenshots_row.addWidget(self.clear_screenshots_button)
         layout.addLayout(screenshots_row)
         layout.addWidget(self.staged_screenshots_list)
+
+        screenshot_actions_row = QtWidgets.QHBoxLayout()
+        screenshot_actions_row.addWidget(self.edit_caption_button)
+        screenshot_actions_row.addWidget(self.remove_screenshot_button)
+        screenshot_actions_row.addStretch(1)
+        layout.addLayout(screenshot_actions_row)
         layout.addWidget(self.screenshot_caveat_label)
 
         layout.addWidget(self.diagnostics_list)
@@ -257,6 +287,15 @@ class MeshViewerPanel(_BaseWidget):
         )
         self.clear_screenshots_button.clicked.connect(
             lambda _checked=False: self._on_clear_screenshots_requested()
+        )
+        self.edit_caption_button.clicked.connect(
+            lambda _checked=False: self._on_edit_caption_requested()
+        )
+        self.remove_screenshot_button.clicked.connect(
+            lambda _checked=False: self._on_remove_screenshot_requested()
+        )
+        self.staged_screenshots_list.currentRowChanged.connect(
+            lambda _row=-1: self._update_screenshot_action_buttons()
         )
         self.bind_result_button.clicked.connect(
             lambda _checked=False: self._on_bind_result_requested()
@@ -346,6 +385,20 @@ class MeshViewerPanel(_BaseWidget):
     ) -> None:
         """Connect the clear action to a MainWindow-owned clear flow."""
         self._clear_scene_screenshots_callback = callback
+        self._render_screenshot_status()
+
+    def set_edit_scene_screenshot_caption_callback(
+        self, callback: Callable[[str, str], bool] | None
+    ) -> None:
+        """Connect the caption-edit action to a MainWindow-owned flow."""
+        self._edit_scene_screenshot_caption_callback = callback
+        self._render_screenshot_status()
+
+    def set_remove_scene_screenshot_callback(
+        self, callback: Callable[[str], bool] | None
+    ) -> None:
+        """Connect the per-record remove action to a MainWindow-owned flow."""
+        self._remove_scene_screenshot_callback = callback
         self._render_screenshot_status()
 
     def refresh_scene_screenshot_status(self) -> None:
@@ -600,12 +653,99 @@ class MeshViewerPanel(_BaseWidget):
             self.screenshot_status_label.setText(
                 _STAGED_SCREENSHOTS_COUNT_TEMPLATE.format(count=count)
             )
+        # Preserve the current selection across the list rebuild so the
+        # edit/remove controls stay usable; block signals so the rebuild does
+        # not recurse through currentRowChanged.
+        previous_row = self.staged_screenshots_list.currentRow()
+        self.staged_screenshots_list.blockSignals(True)
         self.staged_screenshots_list.clear()
         for row in _staged_screenshot_rows(records):
             self.staged_screenshots_list.addItem(row)
+        if 0 <= previous_row < count:
+            self.staged_screenshots_list.setCurrentRow(previous_row)
+        self.staged_screenshots_list.blockSignals(False)
+        self._update_screenshot_action_buttons()
+
+    def _update_screenshot_action_buttons(self) -> None:
+        count = len(self._staged_scene_screenshots())
+        has_selection = self._selected_staged_record() is not None
         self.clear_screenshots_button.setEnabled(
             count > 0 and self._clear_scene_screenshots_callback is not None
         )
+        self.edit_caption_button.setEnabled(
+            has_selection and self._edit_scene_screenshot_caption_callback is not None
+        )
+        self.remove_screenshot_button.setEnabled(
+            has_selection and self._remove_scene_screenshot_callback is not None
+        )
+
+    def _selected_staged_record(self) -> SceneScreenshotRecord | None:
+        records = self._staged_scene_screenshots()
+        row = self.staged_screenshots_list.currentRow()
+        if 0 <= row < len(records):
+            return records[row]
+        return None
+
+    def _prompt_scene_screenshot_caption(self, current: str) -> str | None:
+        """Prompt for a caption; return the new text or None if cancelled.
+
+        Overridable seam so tests drive caption editing without a live modal.
+        """
+        text, accepted = QtWidgets.QInputDialog.getText(
+            self,
+            _EDIT_CAPTION_PROMPT_TITLE,
+            _EDIT_CAPTION_PROMPT_LABEL,
+            text=current,
+        )
+        return text if accepted else None
+
+    def _on_edit_caption_requested(self) -> None:
+        if self._edit_scene_screenshot_caption_callback is None:
+            self._state.status_message = _EDIT_CAPTION_HANDLER_MISSING_TEXT
+            self._render_state()
+            return
+        record = self._selected_staged_record()
+        if record is None:
+            self._state.status_message = _NO_SCREENSHOT_SELECTED_TEXT
+            self._render_state()
+            return
+        record_id = str(getattr(record, "id", "") or "")
+        if not record_id:
+            self._state.status_message = _UNIDENTIFIED_SCREENSHOT_TEXT
+            self._render_state()
+            return
+        current = str(getattr(record, "caption", "") or "")
+        new_caption = self._prompt_scene_screenshot_caption(current)
+        if new_caption is None:
+            return
+        updated = bool(
+            self._edit_scene_screenshot_caption_callback(record_id, new_caption)
+        )
+        self._state.status_message = (
+            _CAPTION_UPDATED_TEXT if updated else _UNIDENTIFIED_SCREENSHOT_TEXT
+        )
+        self._render_state()
+
+    def _on_remove_screenshot_requested(self) -> None:
+        if self._remove_scene_screenshot_callback is None:
+            self._state.status_message = _REMOVE_SCREENSHOT_HANDLER_MISSING_TEXT
+            self._render_state()
+            return
+        record = self._selected_staged_record()
+        if record is None:
+            self._state.status_message = _NO_SCREENSHOT_SELECTED_TEXT
+            self._render_state()
+            return
+        record_id = str(getattr(record, "id", "") or "")
+        if not record_id:
+            self._state.status_message = _UNIDENTIFIED_SCREENSHOT_TEXT
+            self._render_state()
+            return
+        removed = bool(self._remove_scene_screenshot_callback(record_id))
+        self._state.status_message = (
+            _SCREENSHOT_REMOVED_TEXT if removed else _UNIDENTIFIED_SCREENSHOT_TEXT
+        )
+        self._render_state()
 
     def _on_bind_result_requested(self) -> None:
         if self._bind_result_callback is None:
