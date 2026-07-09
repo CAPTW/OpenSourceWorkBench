@@ -1121,7 +1121,7 @@ class MainWindow(_BaseMainWindow):
             if self.last_figure_dataset is not None
             else ()
         )
-        return build_report_summary(
+        summary = build_report_summary(
             self.current_project,
             figure_datasets=(
                 *figure_datasets,
@@ -1134,6 +1134,76 @@ class MainWindow(_BaseMainWindow):
                 *tuple(getattr(self.workflow_session, "result_tables", ())),
             ),
             warnings=tuple(getattr(self.workflow_session, "warnings", ())),
+        )
+        return self._add_scene_screenshot_preview_section(
+            summary, scene_screenshot_records=self._scene_screenshot_candidates
+        )
+
+    def _add_scene_screenshot_preview_section(
+        self,
+        summary: object,
+        *,
+        scene_screenshot_records: Sequence[object],
+    ) -> object:
+        """Attach staged screenshot sections to preview summary without mutating figures."""
+
+        candidates = tuple(scene_screenshot_records)
+        if not candidates:
+            return summary
+
+        from osw.post.report_generator import (
+            _scene_screenshot_provenance_lines,
+            _scene_screenshot_warning,
+        )
+        from osw.post.report_model import ReportSection, scene_screenshots_to_report_figures
+
+        figures = scene_screenshots_to_report_figures(candidates)
+        if not figures:
+            return summary
+
+        content_blocks: list[str] = []
+        for figure in figures:
+            caption = figure.caption or figure.title or figure.figure_id
+            content_blocks.append(f"{figure.figure_id}: {caption}")
+            screenshot_path = str(figure.primary_path or "")
+            if screenshot_path:
+                screenshot_format = figure.format.lower() if figure.format else ""
+                if screenshot_format and screenshot_format not in {
+                    "png",
+                    "jpg",
+                    "jpeg",
+                    "svg",
+                    "gif",
+                    "webp",
+                }:
+                    content_blocks.append(
+                        f"Scene screenshot artifact ({figure.format}): "
+                        f"{screenshot_path}"
+                    )
+                else:
+                    content_blocks.append(f"Image path: {Path(screenshot_path)}")
+            else:
+                content_blocks.append("Image path: (no image path)")
+
+            warning = _scene_screenshot_warning(figure)
+            if warning:
+                content_blocks.append(warning)
+            content_blocks.extend(_scene_screenshot_provenance_lines(figure.metadata))
+            caveat = figure.metadata.get("artifact_caveat")
+            if caveat:
+                content_blocks.append(str(caveat))
+
+        if not content_blocks:
+            return summary
+
+        screenshot_section = ReportSection(
+            section_id="scene-screenshots",
+            title="3D Scene Screenshots",
+            content_blocks=content_blocks,
+        )
+        return replace(
+            summary,
+            sections=(*tuple(getattr(summary, "sections", ())), screenshot_section),
         )
 
     def generate_report_preview(self, _checked: bool = False, *, log: bool = True) -> object:
