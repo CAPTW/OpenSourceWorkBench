@@ -1807,6 +1807,14 @@ class MainWindow(_BaseMainWindow):
                 self.mesh_viewer.set_capture_scene_screenshot_callback(
                     self.capture_scene_screenshot_to_report_candidates
                 )
+            if hasattr(self.mesh_viewer, "set_scene_screenshot_candidates_provider"):
+                self.mesh_viewer.set_scene_screenshot_candidates_provider(
+                    self.scene_screenshot_candidates
+                )
+            if hasattr(self.mesh_viewer, "set_clear_scene_screenshots_callback"):
+                self.mesh_viewer.set_clear_scene_screenshots_callback(
+                    self.clear_scene_screenshots_from_viewer
+                )
             layout.addWidget(self.mesh_viewer)
             if hasattr(self.mesh_viewer, "set_theme_tokens"):
                 self.mesh_viewer.set_theme_tokens(self.theme_manager.current_tokens)
@@ -1823,6 +1831,20 @@ class MainWindow(_BaseMainWindow):
     def clear_scene_screenshot_candidates(self) -> None:
         """Clear transient scene screenshot candidate records for report export."""
         self._scene_screenshot_candidates = ()
+
+    def clear_scene_screenshots_from_viewer(self) -> None:
+        """Clear transient staged scene screenshots and refresh the viewer status.
+
+        Owned by MainWindow so the mesh viewer panel drives the clear action
+        through an injected callback without owning candidate storage. Only the
+        transient in-session candidate list is affected; no ProjectSchema,
+        ResultDataset, result binding, mesh, or project-file state is mutated.
+        """
+        self.clear_scene_screenshot_candidates()
+        if self.mesh_viewer is not None and hasattr(
+            self.mesh_viewer, "refresh_scene_screenshot_status"
+        ):
+            self.mesh_viewer.refresh_scene_screenshot_status()
 
     def capture_scene_screenshot_to_report_candidates(self) -> SceneScreenshotRecord | None:
         """Capture an active viewer scene screenshot into report candidates."""

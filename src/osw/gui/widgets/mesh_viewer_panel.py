@@ -53,6 +53,16 @@ _CAPTURE_SCREENSHOT_STAGED_TEXT = "Captured scene screenshot and staged for repo
 _CAPTURE_SCREENSHOT_HANDLER_MISSING_TEXT = (
     "Scene screenshot capture action is not wired to the main window."
 )
+_NO_STAGED_SCREENSHOTS_TEXT = "No scene screenshots staged for the next report export."
+_STAGED_SCREENSHOTS_COUNT_TEMPLATE = "Report screenshots staged: {count}"
+_CLEARED_SCREENSHOTS_TEXT = "Cleared staged scene screenshots."
+_CLEAR_SCREENSHOTS_HANDLER_MISSING_TEXT = (
+    "Clear staged screenshots is not wired to the main window."
+)
+_SCREENSHOT_ARTIFACT_CAVEAT_TEXT = (
+    "Scene screenshots are local report artifacts only; they are not validation "
+    "evidence or release assets."
+)
 _PYVISTA_MISSING_TEXT = (
     "PyVista unavailable -- install the visualization extra to render 3D scenes."
 )
@@ -101,6 +111,10 @@ class MeshViewerPanel(_BaseWidget):
         self._capture_scene_screenshot_callback: (
             Callable[[], SceneScreenshotRecord | None] | None
         ) = None
+        self._scene_screenshot_candidates_provider: (
+            Callable[[], Sequence[SceneScreenshotRecord]] | None
+        ) = None
+        self._clear_scene_screenshots_callback: Callable[[], None] | None = None
         self._binding_status_message = _NO_STAGED_BINDING_TEXT
         self._binding_persisted = False
 
@@ -172,6 +186,20 @@ class MeshViewerPanel(_BaseWidget):
         self.diagnostics_list = QtWidgets.QListWidget(self)
         self.diagnostics_list.setObjectName("oswMeshViewerDiagnostics")
 
+        self.screenshot_status_label = QtWidgets.QLabel(_NO_STAGED_SCREENSHOTS_TEXT, self)
+        self.screenshot_status_label.setObjectName("oswMeshViewerScreenshotStatus")
+        self.screenshot_status_label.setWordWrap(True)
+        self.staged_screenshots_list = QtWidgets.QListWidget(self)
+        self.staged_screenshots_list.setObjectName("oswMeshViewerStagedScreenshots")
+        self.clear_screenshots_button = QtWidgets.QPushButton(
+            "Clear staged screenshots", self
+        )
+        self.clear_screenshots_button.setObjectName("oswMeshViewerClearScreenshotsButton")
+        self.clear_screenshots_button.setEnabled(False)
+        self.screenshot_caveat_label = QtWidgets.QLabel(_SCREENSHOT_ARTIFACT_CAVEAT_TEXT, self)
+        self.screenshot_caveat_label.setObjectName("oswMeshViewerScreenshotCaveat")
+        self.screenshot_caveat_label.setWordWrap(True)
+
         toggles = QtWidgets.QHBoxLayout()
         toggles.addWidget(self.surface_toggle)
         toggles.addWidget(self.edge_toggle)
@@ -212,11 +240,23 @@ class MeshViewerPanel(_BaseWidget):
         layout.addLayout(buttons)
         layout.addWidget(self.binding_status_label)
         layout.addWidget(self.status_label)
+
+        screenshots_row = QtWidgets.QHBoxLayout()
+        screenshots_row.addWidget(self.screenshot_status_label)
+        screenshots_row.addStretch(1)
+        screenshots_row.addWidget(self.clear_screenshots_button)
+        layout.addLayout(screenshots_row)
+        layout.addWidget(self.staged_screenshots_list)
+        layout.addWidget(self.screenshot_caveat_label)
+
         layout.addWidget(self.diagnostics_list)
 
         self.load_button.clicked.connect(lambda _checked=False: self.load_mesh_preview())
         self.capture_button.clicked.connect(
             lambda _checked=False: self._on_capture_requested()
+        )
+        self.clear_screenshots_button.clicked.connect(
+            lambda _checked=False: self._on_clear_screenshots_requested()
         )
         self.bind_result_button.clicked.connect(
             lambda _checked=False: self._on_bind_result_requested()
@@ -289,6 +329,28 @@ class MeshViewerPanel(_BaseWidget):
     ) -> None:
         """Connect the capture button to a MainWindow-owned flow."""
         self._capture_scene_screenshot_callback = callback
+
+    def set_scene_screenshot_candidates_provider(
+        self, provider: Callable[[], Sequence[SceneScreenshotRecord]] | None
+    ) -> None:
+        """Connect a MainWindow-owned provider of staged screenshot candidates.
+
+        The panel reads the current staged records through this provider; it does
+        not own or store candidate state.
+        """
+        self._scene_screenshot_candidates_provider = provider
+        self._render_screenshot_status()
+
+    def set_clear_scene_screenshots_callback(
+        self, callback: Callable[[], None] | None
+    ) -> None:
+        """Connect the clear action to a MainWindow-owned clear flow."""
+        self._clear_scene_screenshots_callback = callback
+        self._render_screenshot_status()
+
+    def refresh_scene_screenshot_status(self) -> None:
+        """Refresh the staged screenshot count/list from the injected provider."""
+        self._render_screenshot_status()
 
     def current_result_dataset(self) -> object | None:
         return self._result_dataset
@@ -509,6 +571,41 @@ class MeshViewerPanel(_BaseWidget):
         self._state.screenshot_record = record
         self._state.status_message = _CAPTURE_SCREENSHOT_STAGED_TEXT
         self._render_state()
+
+    def _on_clear_screenshots_requested(self) -> None:
+        if self._clear_scene_screenshots_callback is None:
+            self._state.status_message = _CLEAR_SCREENSHOTS_HANDLER_MISSING_TEXT
+            self._render_state()
+            return
+        if not self._staged_scene_screenshots():
+            # Nothing staged to clear; keep the empty state friendly.
+            self._render_screenshot_status()
+            return
+        self._clear_scene_screenshots_callback()
+        self._state.status_message = _CLEARED_SCREENSHOTS_TEXT
+        self._render_state()
+
+    def _staged_scene_screenshots(self) -> tuple[SceneScreenshotRecord, ...]:
+        provider = self._scene_screenshot_candidates_provider
+        if provider is None:
+            return ()
+        return tuple(provider() or ())
+
+    def _render_screenshot_status(self) -> None:
+        records = self._staged_scene_screenshots()
+        count = len(records)
+        if count == 0:
+            self.screenshot_status_label.setText(_NO_STAGED_SCREENSHOTS_TEXT)
+        else:
+            self.screenshot_status_label.setText(
+                _STAGED_SCREENSHOTS_COUNT_TEMPLATE.format(count=count)
+            )
+        self.staged_screenshots_list.clear()
+        for row in _staged_screenshot_rows(records):
+            self.staged_screenshots_list.addItem(row)
+        self.clear_screenshots_button.setEnabled(
+            count > 0 and self._clear_scene_screenshots_callback is not None
+        )
 
     def _on_bind_result_requested(self) -> None:
         if self._bind_result_callback is None:
@@ -737,6 +834,8 @@ class MeshViewerPanel(_BaseWidget):
         for warning in self._state.warning_messages:
             self.diagnostics_list.addItem(warning)
 
+        self._render_screenshot_status()
+
 
 def build_mesh_viewer_panel(
     parent: object | None = None,
@@ -745,6 +844,20 @@ def build_mesh_viewer_panel(
 ) -> object:
     """Factory mirroring the other GUI widget builders."""
     return MeshViewerPanel(parent, scene_adapter=scene_adapter)
+
+
+def _staged_screenshot_rows(
+    records: Sequence[SceneScreenshotRecord],
+) -> tuple[str, ...]:
+    """Format staged screenshot records as deterministic display rows (pure)."""
+    rows: list[str] = []
+    for record in records:
+        record_id = str(getattr(record, "id", "") or "scene-screenshot")
+        caption = str(getattr(record, "caption", "") or "").strip() or "(no caption)"
+        path = str(getattr(record, "path", "") or "")
+        basename = path.replace("\\", "/").rsplit("/", 1)[-1] if path else "(no image path)"
+        rows.append(f"{record_id} - {caption} - {basename}")
+    return tuple(rows)
 
 
 def _candidate_datasets(result_datasets: object) -> tuple[object, ...]:
