@@ -164,3 +164,22 @@ def test_preview_handles_non_image_screenshot_artifact(app: object, tmp_path: Pa
         "scene screenshot artifact (tif)" in block.lower()
         for block in section.content_blocks
     )
+
+
+def test_preview_does_not_add_scene_screenshots_to_summary_figures(
+    app: object, tmp_path: Path
+) -> None:
+    window = _window(app=app, adapter=RecordingSceneAdapter(write_image=True))
+    window.load_mesh_into_viewer(_mesh(), mesh_ref="mesh-1")
+    baseline_summary = window.build_current_report_summary()
+    baseline_figure_count = len(baseline_summary.figures)
+
+    window._pick_scene_screenshot_target_path = lambda: str(tmp_path / "scene.png")
+    window.mesh_viewer.capture_button.click()
+    preview_summary = window.generate_report_preview()
+
+    assert len(preview_summary.figures) == baseline_figure_count
+    assert not any(
+        getattr(figure, "metadata", {}).get("kind") == "scene_screenshot"
+        for figure in preview_summary.figures
+    )
