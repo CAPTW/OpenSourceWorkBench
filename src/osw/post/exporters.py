@@ -13,6 +13,7 @@ from osw.post.report_generator import (
     render_report_markdown,
 )
 from osw.post.report_model import ReportBuildRequest, ReportFormat, ReportSummary
+from osw.post.scene_model import SceneScreenshotRecord
 
 
 def export_html_report(
@@ -23,10 +24,15 @@ def export_html_report(
     mesh_infos: Iterable[object] | None = None,
     result_tables: Iterable[object] | None = None,
     screenshots: Iterable[object] | None = None,
+    scene_screenshots: Iterable[SceneScreenshotRecord] | None = None,
     validation_report: ValidationReport | None = None,
     warnings: Iterable[str] | None = None,
 ) -> Path:
-    """Export the canonical OSW HTML report."""
+    """Export the canonical OSW HTML report.
+
+    ``scene_screenshots`` optionally carry local 3D-workspace screenshot records
+    (metadata plus a local image path). They stay local report artifacts only.
+    """
 
     return export_report_html(
         project,
@@ -35,6 +41,7 @@ def export_html_report(
         mesh_infos=mesh_infos,
         result_tables=result_tables,
         screenshots=screenshots,
+        scene_screenshots=scene_screenshots,
         validation_report=validation_report,
         warnings=warnings,
     )

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from osw.core.diagnostics import DiagnosticReport
+from osw.post.scene_model import SceneScreenshotRecord
 
 if TYPE_CHECKING:
     from osw.core.project_schema import Project
@@ -210,6 +211,79 @@ class ReportFigure:
             diagnostics=DiagnosticReport.from_dict(payload.get("diagnostics", {}) or {}),
             metadata=dict(payload.get("metadata", {}) or {}),
         )
+
+
+SCENE_SCREENSHOT_ARTIFACT_CAVEAT = (
+    "Scene screenshot is a local report artifact only; it is not validation "
+    "evidence and not a release asset."
+)
+
+
+def scene_screenshot_to_report_figure(record: SceneScreenshotRecord) -> ReportFigure:
+    """Bridge a local ``SceneScreenshotRecord`` into a report ``ReportFigure``.
+
+    The conversion is pure and filesystem-agnostic: it never renders, never runs
+    a solver, and never touches ProjectSchema. Scene provenance -- mesh ref,
+    result dataset ref, scalar field id, vector/glyph state, selections, camera,
+    and render options -- is preserved in the figure metadata alongside a
+    friendly caveat recording that the screenshot is a local report artifact
+    only (not validation evidence and not a release asset).
+
+    Whether the image file exists on disk is a report/export concern handled by
+    the renderer. A metadata-only record (no local path) is annotated with a
+    figure diagnostic warning so a missing image surfaces as a placeholder
+    rather than a crash.
+    """
+    scene = record.scene_state
+    glyph = scene.glyph_options
+    selection_ids = tuple(record.selection_ids) or tuple(scene.selected_selection_ids)
+    scalar_field_id = scene.scalar_field_id or scene.render_options.color_by
+    diagnostics = DiagnosticReport()
+    if not record.path:
+        diagnostics.add_warning(
+            "report-scene-screenshot-path-missing",
+            f"Scene screenshot {record.id or '<unnamed>'} has no local image path "
+            "(metadata only).",
+            hint=(
+                "Capture a local screenshot image, or keep the record as a "
+                "metadata-only report entry."
+            ),
+        )
+    metadata: dict[str, Any] = {
+        "kind": "scene_screenshot",
+        "screenshot_id": record.id,
+        "mesh_ref": record.mesh_ref,
+        "result_dataset_ref": record.dataset_ref,
+        "scalar_field_id": scalar_field_id,
+        "vector_field": glyph.vector_field,
+        "glyph_enabled": glyph.enabled,
+        "glyph_scale": glyph.scale,
+        "glyph_max_count": glyph.max_glyph_count,
+        "selection_ids": list(selection_ids),
+        "camera": scene.camera.to_dict(),
+        "render_options": scene.render_options.to_dict(),
+        "glyph_options": glyph.to_dict(),
+        "created_by": record.created_by,
+        "artifact_caveat": SCENE_SCREENSHOT_ARTIFACT_CAVEAT,
+        "is_release_asset": False,
+        "is_validation_evidence": False,
+        "scene_metadata": dict(record.metadata),
+    }
+    return ReportFigure(
+        figure_id=record.id or "scene-screenshot",
+        title=record.caption or record.id or "Scene screenshot",
+        image_path=record.path or None,
+        caption=record.caption or "",
+        diagnostics=diagnostics,
+        metadata=metadata,
+    )
+
+
+def scene_screenshots_to_report_figures(
+    records: Iterable[SceneScreenshotRecord],
+) -> tuple[ReportFigure, ...]:
+    """Bridge many ``SceneScreenshotRecord`` values into report figures."""
+    return tuple(scene_screenshot_to_report_figure(record) for record in records)
 
 
 @dataclass(frozen=True)

@@ -29,8 +29,19 @@ from osw.post.report_generator import (
     export_report_html,
     render_report_html,
     render_report_summary_html,
+    render_scene_screenshot_section,
 )
-from osw.post.report_model import ReportBuildRequest
+from osw.post.report_model import (
+    SCENE_SCREENSHOT_ARTIFACT_CAVEAT,
+    ReportBuildRequest,
+    scene_screenshots_to_report_figures,
+)
+from osw.post.scene_model import (
+    SceneGlyphOptions,
+    SceneRenderOptions,
+    SceneScreenshotRecord,
+    SceneViewState,
+)
 from osw.post.table_model import TablePreview
 from osw.scripts.mscript.figure_dataset import FigureDataset, FigureRecord
 from osw.solvers.coolprop.model import (
@@ -398,3 +409,203 @@ def test_summary_html_escapes_user_strings_and_handles_missing_image(tmp_path: P
     assert "&lt;Plot&gt;" in html
     assert "Figure artifact missing" in html
     assert "<Unsafe>" not in html
+
+
+def _scene_record(path: str, *, record_id: str = "shot-1") -> SceneScreenshotRecord:
+    return SceneScreenshotRecord(
+        id=record_id,
+        path=path,
+        caption="Iso temperature view",
+        scene_state=SceneViewState(
+            render_options=SceneRenderOptions(color_by="temperature"),
+            glyph_options=SceneGlyphOptions(enabled=True, vector_field="U", scale=2.0),
+            scalar_field_id="temperature",
+        ),
+        dataset_ref="rd-1",
+        mesh_ref="mesh-1",
+        selection_ids=("sel-a",),
+        created_by="mesh-viewer",
+    )
+
+
+def test_render_scene_screenshot_section_renders_available_image(tmp_path: Path) -> None:
+    image = tmp_path / "scene.png"
+    image.write_bytes(b"\x89PNG\r\n\x1a\n")
+    figures = scene_screenshots_to_report_figures([_scene_record(str(image))])
+
+    html = render_scene_screenshot_section(figures, output_path=tmp_path / "report.html")
+
+    assert "3D Scene Screenshots" in html
+    assert '<img src="scene.png"' in html
+    assert "Mesh ref: mesh-1" in html
+    assert "Result dataset ref: rd-1" in html
+    assert "Scalar field: temperature" in html
+    assert "Vector glyphs: U" in html
+    assert "Captured by: mesh-viewer" in html
+    assert SCENE_SCREENSHOT_ARTIFACT_CAVEAT in html
+    assert "Scene screenshot not available" not in html
+
+
+def test_render_scene_screenshot_section_missing_image_is_friendly(tmp_path: Path) -> None:
+    figures = scene_screenshots_to_report_figures(
+        [_scene_record(str(tmp_path / "missing.png"))]
+    )
+
+    html = render_scene_screenshot_section(figures, output_path=tmp_path / "report.html")
+
+    assert "Scene screenshot not available" in html
+    assert "missing.png" in html
+    assert "<img" not in html
+    # Provenance and caveat are still shown for a missing image.
+    assert "Mesh ref: mesh-1" in html
+    assert SCENE_SCREENSHOT_ARTIFACT_CAVEAT in html
+
+
+def test_render_scene_screenshot_section_links_existing_non_image_artifact(
+    tmp_path: Path,
+) -> None:
+    # A file that exists but is not an inline image format must be linked as an
+    # artifact, not mislabeled "not available".
+    artifact = tmp_path / "scene.tif"
+    artifact.write_bytes(b"II*\x00")
+    figures = scene_screenshots_to_report_figures([_scene_record(str(artifact))])
+
+    html = render_scene_screenshot_section(figures, output_path=tmp_path / "report.html")
+
+    assert 'href="scene.tif"' in html
+    assert "Scene screenshot artifact (TIF)" in html
+    assert "Scene screenshot not available" not in html
+    assert "<img" not in html
+
+
+def test_build_report_existing_non_image_scene_screenshot_emits_no_missing_warning(
+    tmp_path: Path,
+) -> None:
+    artifact = tmp_path / "scene.tif"
+    artifact.write_bytes(b"II*\x00")
+    output = tmp_path / "report.html"
+
+    result = build_report(
+        ReportBuildRequest(project=minimal_project(), output_path=output, format="html"),
+        scene_screenshots=[_scene_record(str(artifact))],
+    )
+
+    # The file exists, so no missing-screenshot warning or diagnostic is raised.
+    assert not any(
+        "Scene screenshot" in warning and "missing" in warning
+        for warning in result.summary.warnings
+    )
+    assert not any(
+        message.code == "report-scene-screenshot-missing"
+        for message in result.diagnostics.messages
+    )
+
+
+def test_render_scene_screenshot_section_metadata_only_placeholder() -> None:
+    figures = scene_screenshots_to_report_figures(
+        [SceneScreenshotRecord(id="meta-only", path="", caption="No image yet")]
+    )
+
+    html = render_scene_screenshot_section(figures)
+
+    assert "no local image path (metadata only)" in html
+    assert "<img" not in html
+
+
+def test_render_scene_screenshot_section_empty_returns_blank() -> None:
+    assert render_scene_screenshot_section(()) == ""
+
+
+def test_render_report_summary_html_unchanged_without_scene_screenshots(tmp_path: Path) -> None:
+    summary = build_report_summary(minimal_project())
+    output = tmp_path / "report.html"
+
+    baseline = render_report_summary_html(summary, output_path=output)
+    with_empty = render_report_summary_html(summary, output_path=output, scene_screenshots=())
+
+    assert baseline == with_empty
+    assert "3D Scene Screenshots" not in baseline
+
+
+def test_build_report_html_includes_scene_screenshots(tmp_path: Path) -> None:
+    image = tmp_path / "scene.png"
+    image.write_bytes(b"\x89PNG\r\n\x1a\n")
+    available = _scene_record(str(image), record_id="shot-available")
+    missing = _scene_record(str(tmp_path / "missing.png"), record_id="shot-missing")
+    output = tmp_path / "report.html"
+
+    result = build_report(
+        ReportBuildRequest(project=minimal_project(), output_path=output, format="html"),
+        scene_screenshots=[available, missing],
+    )
+    html = output.read_text(encoding="utf-8")
+
+    assert "3D Scene Screenshots" in html
+    assert '<img src="scene.png"' in html
+    assert "Scene screenshot not available" in html
+    # The missing screenshot surfaces as a report warning and a diagnostic.
+    assert any("Scene screenshot image missing" in warning for warning in result.summary.warnings)
+    assert any(
+        message.code == "report-scene-screenshot-missing"
+        for message in result.diagnostics.messages
+    )
+    # Provenance is recorded in the summary metadata for the JSON summary too.
+    scene_meta = result.summary.metadata["scene_screenshots"]
+    assert [entry["figure_id"] for entry in scene_meta] == ["shot-available", "shot-missing"]
+    assert scene_meta[0]["metadata"]["mesh_ref"] == "mesh-1"
+    assert scene_meta[0]["metadata"]["artifact_caveat"] == SCENE_SCREENSHOT_ARTIFACT_CAVEAT
+
+
+def test_build_report_json_summary_includes_scene_screenshots(tmp_path: Path) -> None:
+    image = tmp_path / "scene.png"
+    image.write_bytes(b"\x89PNG\r\n\x1a\n")
+    output = tmp_path / "summary.json"
+
+    build_report(
+        ReportBuildRequest(project=minimal_project(), output_path=output, format="json"),
+        scene_screenshots=[_scene_record(str(image))],
+    )
+    data = json.loads(output.read_text(encoding="utf-8"))
+
+    scene_meta = data["metadata"]["scene_screenshots"]
+    assert scene_meta[0]["metadata"]["scalar_field_id"] == "temperature"
+    assert scene_meta[0]["metadata"]["is_validation_evidence"] is False
+    assert scene_meta[0]["metadata"]["is_release_asset"] is False
+
+
+def test_build_report_without_scene_screenshots_has_no_scene_section(tmp_path: Path) -> None:
+    output = tmp_path / "report.html"
+    result = build_report(
+        ReportBuildRequest(project=minimal_project(), output_path=output, format="html")
+    )
+
+    assert "3D Scene Screenshots" not in output.read_text(encoding="utf-8")
+    assert "scene_screenshots" not in result.summary.metadata
+
+
+def test_export_report_html_threads_scene_screenshots(tmp_path: Path) -> None:
+    image = tmp_path / "scene.png"
+    image.write_bytes(b"\x89PNG\r\n\x1a\n")
+
+    output_path = export_report_html(
+        minimal_project(),
+        tmp_path / "report.html",
+        scene_screenshots=[_scene_record(str(image))],
+    )
+
+    html = output_path.read_text(encoding="utf-8")
+    assert "3D Scene Screenshots" in html
+    assert '<img src="scene.png"' in html
+
+
+def test_export_html_report_wrapper_threads_scene_screenshots(tmp_path: Path) -> None:
+    image = tmp_path / "scene.png"
+    image.write_bytes(b"\x89PNG\r\n\x1a\n")
+
+    output_path = export_html_report(
+        minimal_project(),
+        tmp_path,
+        scene_screenshots=[_scene_record(str(image))],
+    )
+
+    assert "3D Scene Screenshots" in output_path.read_text(encoding="utf-8")

@@ -6,6 +6,7 @@ from pathlib import Path
 from osw.core.demo_project import create_heatsink_flow_demo_project
 from osw.core.diagnostics import DiagnosticReport
 from osw.post.report_model import (
+    SCENE_SCREENSHOT_ARTIFACT_CAVEAT,
     ReportAsset,
     ReportBuildRequest,
     ReportBuildResult,
@@ -14,6 +15,14 @@ from osw.post.report_model import (
     ReportSection,
     ReportSummary,
     ReportTable,
+    scene_screenshot_to_report_figure,
+    scene_screenshots_to_report_figures,
+)
+from osw.post.scene_model import (
+    SceneGlyphOptions,
+    SceneRenderOptions,
+    SceneScreenshotRecord,
+    SceneViewState,
 )
 
 
@@ -73,3 +82,106 @@ def test_report_build_request_and_result_serialize(tmp_path: Path) -> None:
     assert request_payload["project"]["metadata"]["name"] == "HeatSink_Flow"
     assert loaded_result == result
     assert loaded_result.ok
+
+
+def _full_screenshot_record(path: str) -> SceneScreenshotRecord:
+    return SceneScreenshotRecord(
+        id="shot-1",
+        path=path,
+        caption="Iso temperature view",
+        scene_state=SceneViewState(
+            render_options=SceneRenderOptions(show_edges=True, color_by="temperature"),
+            glyph_options=SceneGlyphOptions(
+                enabled=True, vector_field="U", scale=2.5, max_glyph_count=50
+            ),
+            scalar_field_id="temperature",
+            selected_selection_ids=("sel-a",),
+        ),
+        dataset_ref="rd-1",
+        mesh_ref="mesh-1",
+        selection_ids=("sel-a", "sel-b"),
+        created_by="mesh-viewer",
+        metadata={"note": "captured for report"},
+    )
+
+
+def test_scene_screenshot_to_report_figure_preserves_provenance() -> None:
+    figure = scene_screenshot_to_report_figure(_full_screenshot_record("scenes/iso.png"))
+
+    assert figure.figure_id == "shot-1"
+    assert figure.title == "Iso temperature view"
+    assert figure.caption == "Iso temperature view"
+    assert figure.image_path == "scenes/iso.png"
+    assert figure.primary_path == "scenes/iso.png"
+    assert figure.format == "png"
+    # No filesystem check happens in the pure bridge, so no missing-path warning.
+    assert figure.diagnostics.warnings() == []
+
+    metadata = figure.metadata
+    assert metadata["kind"] == "scene_screenshot"
+    assert metadata["screenshot_id"] == "shot-1"
+    assert metadata["mesh_ref"] == "mesh-1"
+    assert metadata["result_dataset_ref"] == "rd-1"
+    assert metadata["scalar_field_id"] == "temperature"
+    assert metadata["vector_field"] == "U"
+    assert metadata["glyph_enabled"] is True
+    assert metadata["glyph_scale"] == 2.5
+    assert metadata["glyph_max_count"] == 50
+    # record.selection_ids takes priority over the scene view selection ids.
+    assert metadata["selection_ids"] == ["sel-a", "sel-b"]
+    assert metadata["render_options"]["show_edges"] is True
+    assert metadata["glyph_options"]["vector_field"] == "U"
+    assert metadata["created_by"] == "mesh-viewer"
+    assert metadata["scene_metadata"] == {"note": "captured for report"}
+    # Explicit local-artifact caveat and non-release / non-validation flags.
+    assert metadata["artifact_caveat"] == SCENE_SCREENSHOT_ARTIFACT_CAVEAT
+    assert metadata["is_release_asset"] is False
+    assert metadata["is_validation_evidence"] is False
+
+
+def test_scene_screenshot_report_figure_round_trips_through_dict() -> None:
+    figure = scene_screenshot_to_report_figure(_full_screenshot_record("scenes/iso.png"))
+
+    loaded = ReportFigure.from_dict(json.loads(json.dumps(figure.to_dict())))
+
+    assert loaded == figure
+
+
+def test_scene_screenshot_to_report_figure_metadata_only_warns() -> None:
+    record = SceneScreenshotRecord(id="meta-only", path="", caption="No image yet")
+
+    figure = scene_screenshot_to_report_figure(record)
+
+    assert figure.figure_id == "meta-only"
+    # ReportFigure normalizes an absent path to an empty string.
+    assert figure.image_path == ""
+    assert figure.primary_path == ""
+    warnings = figure.diagnostics.warnings()
+    assert len(warnings) == 1
+    assert warnings[0].code == "report-scene-screenshot-path-missing"
+    assert figure.metadata["glyph_enabled"] is False
+    assert figure.metadata["selection_ids"] == []
+
+
+def test_scene_screenshot_selection_ids_fall_back_to_scene_state() -> None:
+    record = SceneScreenshotRecord(
+        id="shot-3",
+        path="scenes/a.png",
+        scene_state=SceneViewState(selected_selection_ids=("scene-sel",)),
+    )
+
+    figure = scene_screenshot_to_report_figure(record)
+
+    assert figure.metadata["selection_ids"] == ["scene-sel"]
+
+
+def test_scene_screenshots_to_report_figures_bridges_all() -> None:
+    figures = scene_screenshots_to_report_figures(
+        [
+            _full_screenshot_record("scenes/iso.png"),
+            SceneScreenshotRecord(id="shot-2", path="scenes/top.png"),
+        ]
+    )
+
+    assert [figure.figure_id for figure in figures] == ["shot-1", "shot-2"]
+    assert scene_screenshots_to_report_figures(()) == ()

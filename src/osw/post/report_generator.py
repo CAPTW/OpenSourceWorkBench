@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import json
 import os
-from collections.abc import Iterable, Mapping
-from dataclasses import dataclass, field
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass, field, replace
 from html import escape
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from osw.core.diagnostics import DiagnosticReport
 from osw.core.project_schema import Project
@@ -19,8 +19,19 @@ from osw.post.report_model import (
     ReportFormat,
     ReportSection,
     ReportSummary,
+    scene_screenshots_to_report_figures,
 )
 from osw.post.report_sections import REPORT_KNOWN_LIMITATIONS, build_report_summary
+from osw.post.scene_model import SceneScreenshotRecord
+
+if TYPE_CHECKING:
+    # ``report_generator`` keeps a legacy local ``ReportFigure`` dataclass, so the
+    # richer report-model figure (produced by the scene-screenshot bridge) is
+    # aliased for annotations only -- it is never instantiated here.
+    from osw.post.report_model import ReportFigure as ReportModelFigure
+
+SCENE_SCREENSHOT_SECTION_ID = "scene-screenshots"
+_SCENE_SCREENSHOT_IMAGE_FORMATS = frozenset({"png", "jpg", "jpeg", "svg", "gif", "webp"})
 
 DEFAULT_REPORT_FILENAME = "report.html"
 DEFAULT_REPORT_LIMITATIONS = REPORT_KNOWN_LIMITATIONS
@@ -213,6 +224,7 @@ def export_report_html(
     mesh_infos: Iterable[object] | None = None,
     result_tables: Iterable[object] | None = None,
     screenshots: Iterable[object] | None = None,
+    scene_screenshots: Iterable[SceneScreenshotRecord] | None = None,
     validation_report: ValidationReport | None = None,
     sanity_report: ValidationReport | None = None,
     warnings: Iterable[str] | None = None,
@@ -223,6 +235,7 @@ def export_report_html(
         figure_datasets=figure_datasets,
         mesh_infos=mesh_infos,
         result_tables=result_tables,
+        scene_screenshots=scene_screenshots,
         validation_report=validation_report,
         sanity_report=sanity_report,
         warnings=warnings,
@@ -240,12 +253,21 @@ def build_report(
     plugin_health: Iterable[object] | Mapping[str, object] | None = None,
     run_results: Iterable[object] | None = None,
     result_tables: Iterable[object] | None = None,
+    scene_screenshots: Iterable[SceneScreenshotRecord] | None = None,
     validation_report: ValidationReport | None = None,
     sanity_report: ValidationReport | None = None,
     warnings: Iterable[str] | None = None,
     metadata: Mapping[str, Any] | None = None,
 ) -> ReportBuildResult:
-    """Build and write a deterministic report without executing tools."""
+    """Build and write a deterministic report without executing tools.
+
+    ``scene_screenshots`` are optional local ``SceneScreenshotRecord`` values
+    from the 3D workspace. They are bridged into report figures, rendered in a
+    dedicated HTML section (available images inline, missing paths as friendly
+    placeholders), and recorded in the summary metadata. They remain local
+    report artifacts only -- not validation evidence and not release assets --
+    and are never persisted to ProjectSchema.
+    """
 
     summary = build_report_summary(
         request.project,
@@ -262,6 +284,14 @@ def build_report(
     )
     if not request.include_known_limitations:
         summary = _summary_without_known_limitations(summary)
+    scene_figures = scene_screenshots_to_report_figures(scene_screenshots or ())
+    scene_warnings = tuple(
+        warning
+        for warning in (_scene_screenshot_warning(figure) for figure in scene_figures)
+        if warning
+    )
+    if scene_figures:
+        summary = _summary_with_scene_screenshots(summary, scene_figures, scene_warnings)
     output_path = _resolve_build_output_path(request)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     diagnostics = DiagnosticReport()
@@ -281,7 +311,11 @@ def build_report(
                 hint="Export HTML or Markdown without adding a mandatory PDF dependency.",
             )
         output_path.write_text(
-            render_report_summary_html(summary, output_path=output_path),
+            render_report_summary_html(
+                summary,
+                output_path=output_path,
+                scene_screenshots=scene_figures,
+            ),
             encoding="utf-8",
         )
     else:
@@ -289,6 +323,12 @@ def build_report(
             "report-format-unsupported",
             f"Unsupported report format: {request.format}",
             hint="Use html, markdown, or json_summary.",
+        )
+    for warning in scene_warnings:
+        diagnostics.add_warning(
+            "report-scene-screenshot-missing",
+            warning,
+            hint="Verify the local screenshot path or keep the record as metadata only.",
         )
     diagnostics.extend(summary.diagnostics)
     status = (
@@ -309,14 +349,20 @@ def render_report_summary_html(
     summary: ReportSummary,
     *,
     output_path: str | Path | None = None,
+    scene_screenshots: Sequence[ReportModelFigure] = (),
 ) -> str:
-    """Render a ReportSummary to deterministic standalone HTML."""
+    """Render a ReportSummary to deterministic standalone HTML.
+
+    ``scene_screenshots`` are report figures bridged from ``SceneScreenshotRecord``
+    values; when empty, the rendered HTML is byte-identical to the prior output.
+    """
 
     section_html = "\n".join(
         _render_summary_section(section, summary) for section in summary.sections
     )
     table_html = "\n".join(_render_summary_table(table) for table in summary.tables)
     figure_html = _render_summary_figures(summary, output_path=output_path)
+    scene_html = render_scene_screenshot_section(scene_screenshots, output_path=output_path)
     warnings = summary.warnings or ("No report warnings.",)
     return "\n".join(
         [
@@ -349,6 +395,7 @@ def render_report_summary_html(
             section_html,
             table_html,
             figure_html,
+            *([scene_html] if scene_html else []),
             "    <section id=\"report-warnings\">",
             "      <h2>Report Warnings</h2>",
             "      <ul>",
@@ -540,6 +587,123 @@ def _relative_report_href(path: str | Path, output_path: str | Path | None) -> s
         except ValueError:
             return str(source).replace("\\", "/")
     return str(source).replace("\\", "/")
+
+
+def render_scene_screenshot_section(
+    figures: Sequence[ReportModelFigure],
+    *,
+    output_path: str | Path | None = None,
+) -> str:
+    """Render report figures bridged from ``SceneScreenshotRecord`` values.
+
+    Available local images render as ``<img>`` referenced by a report-relative
+    href (the image is never copied into the report tree). Missing image paths
+    and metadata-only records render a friendly placeholder/warning instead of
+    failing. Scene provenance and the local-artifact caveat are shown as muted
+    captions. Returns ``""`` when there are no scene screenshots, so callers can
+    omit the section without changing surrounding output.
+    """
+    if not figures:
+        return ""
+    body: list[str] = [
+        f'    <section id="{SCENE_SCREENSHOT_SECTION_ID}">',
+        "      <h2>3D Scene Screenshots</h2>",
+    ]
+    for figure in figures:
+        metadata = dict(getattr(figure, "metadata", {}) or {})
+        caption = figure.caption or figure.title or figure.figure_id or "Scene screenshot"
+        body.extend(
+            [
+                "      <figure>",
+                f"        <figcaption>{escape(figure.figure_id)}: {escape(caption)}"
+                "</figcaption>",
+            ]
+        )
+        path = figure.primary_path
+        if not path:
+            body.append(
+                '        <p class="warning">Scene screenshot has no local image path '
+                "(metadata only).</p>"
+            )
+        elif not Path(path).exists():
+            body.append(
+                '        <p class="warning">Scene screenshot not available: '
+                f'{escape(path)}</p>'
+            )
+        elif figure.format in _SCENE_SCREENSHOT_IMAGE_FORMATS:
+            href = _relative_report_href(path, output_path)
+            body.append(f'        <img src="{escape(href)}" alt="{escape(caption)}">')
+        else:
+            # The file exists but is not an inline image format; link it as an
+            # artifact instead of mislabeling it "not available".
+            href = _relative_report_href(path, output_path)
+            label = figure.format.upper() or "artifact"
+            body.append(
+                f'        <p class="muted"><a href="{escape(href)}">'
+                f"Scene screenshot artifact ({escape(label)})</a></p>"
+            )
+        for line in _scene_screenshot_provenance_lines(metadata):
+            body.append(f'        <p class="muted">{escape(line)}</p>')
+        caveat = str(metadata.get("artifact_caveat") or "")
+        if caveat:
+            body.append(f'        <p class="muted">{escape(caveat)}</p>')
+        body.append("      </figure>")
+    body.append("    </section>")
+    return "\n".join(body)
+
+
+def _scene_screenshot_provenance_lines(metadata: Mapping[str, Any]) -> list[str]:
+    lines: list[str] = []
+    mesh_ref = metadata.get("mesh_ref")
+    if mesh_ref:
+        lines.append(f"Mesh ref: {mesh_ref}")
+    dataset_ref = metadata.get("result_dataset_ref")
+    if dataset_ref:
+        lines.append(f"Result dataset ref: {dataset_ref}")
+    scalar_field = metadata.get("scalar_field_id")
+    if scalar_field:
+        lines.append(f"Scalar field: {scalar_field}")
+    vector_field = metadata.get("vector_field")
+    if metadata.get("glyph_enabled"):
+        lines.append(f"Vector glyphs: {vector_field or 'vector field'}")
+    elif vector_field:
+        lines.append(f"Vector field (glyphs off): {vector_field}")
+    selection_ids = tuple(metadata.get("selection_ids") or ())
+    if selection_ids:
+        lines.append("Selections: " + ", ".join(str(item) for item in selection_ids))
+    created_by = metadata.get("created_by")
+    if created_by:
+        lines.append(f"Captured by: {created_by}")
+    return lines
+
+
+def _scene_screenshot_warning(figure: ReportModelFigure) -> str | None:
+    """Return a friendly warning for a missing/metadata-only scene screenshot."""
+    path = figure.primary_path
+    if not path:
+        return f"Scene screenshot has no local image path (metadata only): {figure.figure_id}"
+    if not Path(path).exists():
+        return f"Scene screenshot image missing: {path}"
+    return None
+
+
+def _summary_with_scene_screenshots(
+    summary: ReportSummary,
+    scene_figures: Sequence[ReportModelFigure],
+    scene_warnings: Sequence[str],
+) -> ReportSummary:
+    """Attach scene screenshot provenance and warnings to a report summary.
+
+    Scene screenshots are recorded under ``metadata['scene_screenshots']`` (so
+    the JSON summary carries their provenance) and their missing-image warnings
+    are appended to the report warnings. The dedicated HTML section is rendered
+    separately; scene screenshots are intentionally *not* mixed into
+    ``summary.figures`` to avoid double rendering in the figure section.
+    """
+    metadata = dict(summary.metadata)
+    metadata["scene_screenshots"] = [figure.to_dict() for figure in scene_figures]
+    warnings = (*summary.warnings, *scene_warnings)
+    return replace(summary, warnings=warnings, metadata=metadata)
 
 
 def _combined_validation_report(
