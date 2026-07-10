@@ -596,6 +596,47 @@ def test_relink_revalidates_after_confirmation(
     assert new_path.read_bytes() == b"new"
 
 
+def test_relink_revalidates_file_after_confirmation_before_project_replacement(
+    app: object, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    old_path = tmp_path / "old.png"
+    new_path = tmp_path / "new.png"
+    old_path.write_bytes(b"old")
+    new_path.write_bytes(b"new")
+    asset = _asset("shot-1", str(old_path), "Old", marker="a")
+    window = _window(app, [asset])
+    before = window.current_project
+    calls = _spy_set_project(window, monkeypatch)
+    original_is_file = Path.is_file
+    selected_path_checks: list[str] = []
+
+    def _selected_path_is_file(candidate: Path) -> bool:
+        if candidate == new_path:
+            selected_path_checks.append(str(candidate))
+            return len(selected_path_checks) == 1
+        return original_is_file(candidate)
+
+    monkeypatch.setattr(Path, "is_file", _selected_path_is_file)
+    monkeypatch.setattr(
+        window,
+        "_confirm_relink_persisted_report_screenshot",
+        lambda _asset, _path: True,
+    )
+
+    assert window.relink_persisted_report_screenshot(
+        _target(asset), str(new_path)
+    ) is False
+    assert selected_path_checks == [str(new_path), str(new_path)]
+    assert calls == []
+    assert window.current_project is before
+    assert window.current_project.report_screenshots == [asset]
+    assert window._last_persisted_report_screenshot_status == (
+        "Select an existing PNG, JPG, JPEG, WEBP, or GIF file."
+    )
+    assert old_path.read_bytes() == b"old"
+    assert new_path.read_bytes() == b"new"
+
+
 def test_duplicate_rows_remain_independently_manageable_and_first_still_wins(
     app: object, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

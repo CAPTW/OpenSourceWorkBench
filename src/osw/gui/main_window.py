@@ -2188,6 +2188,12 @@ class MainWindow(_BaseMainWindow):
             return self._show_persisted_report_screenshot_status(
                 "Persisted scene screenshot relink cancelled."
             )
+        if not candidate.is_file() or candidate.suffix.lower() not in (
+            _PERSISTED_SCREENSHOT_SUFFIXES
+        ):
+            return self._show_persisted_report_screenshot_status(
+                "Select an existing PNG, JPG, JPEG, WEBP, or GIF file."
+            )
 
         matched = self._validated_persisted_report_screenshot_target(target)
         if matched is None:
