@@ -11,6 +11,10 @@ from typing import TYPE_CHECKING, Any
 from osw.core.demo_project import create_heatsink_flow_demo_project
 from osw.core.executables import ExecutablePathRegistry
 from osw.core.project_schema import Project
+from osw.gui.project_document_context import (
+    ProjectDocumentContext,
+    ProjectDocumentOrigin,
+)
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
 from osw.gui.theme import ThemeManager
 from osw.gui.widgets.top_bar import ACTION_OBJECT_NAMES, TOP_BAR_ACTION_LABELS
@@ -135,6 +139,61 @@ ResultMeshBindingTargetSelector = Callable[
 ]
 MeshRefLoadReader = Callable[[str | Path], object]
 MeshRefLoadFilePicker = Callable[[], str | Path | None]
+ProjectFilePathPicker = Callable[[], str | Path | None]
+ProjectLoader = Callable[[str], Project]
+ProjectSaver = Callable[[Project, str], None]
+ProjectFileErrorReporter = Callable[[str], None]
+
+_DOCUMENT_DIALOG_ATTRIBUTES = (
+    "script_preview_dialog",
+    "mat_preview_dialog",
+    "boundary_curve_dialog",
+    "gmsh_mesh_dialog",
+    "calculix_deck_dialog",
+    "openfoam_template_dialog",
+    "chm_property_dialog",
+    "chm_reactor_dialog",
+    "result_viewer_dialog",
+    "plot_viewer_dialog",
+    "mesh_viewer_dialog",
+)
+_DOCUMENT_VIEWER_ATTRIBUTES = (
+    "result_viewer",
+    "plot_viewer",
+    "mesh_viewer",
+)
+_DOCUMENT_SURFACE_ATTRIBUTES = (
+    *_DOCUMENT_DIALOG_ATTRIBUTES,
+    *_DOCUMENT_VIEWER_ATTRIBUTES,
+)
+
+
+@dataclass(frozen=True)
+class _ProjectDocumentStateSnapshot:
+    project: Project
+    context: ProjectDocumentContext
+    document_binding_epoch: int
+    workflow_project: Project
+    workflow_items: object
+    workflow_mesh_infos: object
+    workflow_result_tables: object
+    workflow_figure_datasets: object
+    workflow_warnings: object
+    last_imported_mesh_data: object | None
+    last_imported_mesh_ref: str | None
+    selected_mesh_context: object | None
+    mesh_data_by_ref: object
+    result_catalog: object | None
+    last_figure_dataset: object | None
+    last_result_datasets: tuple[object, ...]
+    scene_screenshot_candidates: tuple[object, ...]
+    metadata_mesh_load_state: object | None
+    last_persisted_screenshot_status: str
+    run_log: str
+    monitor_warnings: tuple[str, ...]
+    monitor_progress: int
+    report_summary: object | None
+    document_surfaces: tuple[tuple[str, object | None], ...]
 
 
 if QtCore is not None:
@@ -190,6 +249,11 @@ class MainWindow(_BaseMainWindow):
         metadata_mesh_reader: MeshRefLoadReader | None = None,
         metadata_mesh_file_picker: MeshRefLoadFilePicker | None = None,
         metadata_mesh_load_async: bool | None = None,
+        project_open_path_picker: ProjectFilePathPicker | None = None,
+        project_save_path_picker: ProjectFilePathPicker | None = None,
+        project_loader: ProjectLoader | None = None,
+        project_saver: ProjectSaver | None = None,
+        project_error_reporter: ProjectFileErrorReporter | None = None,
         **legacy_kwargs: object,
     ) -> None:
         if QtCore is None or QtGui is None or QtWidgets is None:
@@ -203,6 +267,19 @@ class MainWindow(_BaseMainWindow):
 
         self.theme_manager = theme_manager or ThemeManager()
         self.current_project = project or create_heatsink_flow_demo_project()
+        self._project_document_context = ProjectDocumentContext()
+        self._document_binding_epoch = 0
+        self._project_open_path_picker = (
+            project_open_path_picker or self._choose_project_open_path
+        )
+        self._project_save_path_picker = (
+            project_save_path_picker or self._choose_project_save_path
+        )
+        self._project_loader = project_loader or self._load_project_file
+        self._project_saver = project_saver or self._save_project_file
+        self._project_error_reporter = (
+            project_error_reporter or self._show_project_file_error
+        )
         self.plugin_paths = tuple(Path(path) for path in plugin_paths)
         self.plugin_registry = plugin_registry or PluginRegistry()
         self.plugin_state_store = plugin_state_store or PluginStateStore()
@@ -290,6 +367,12 @@ class MainWindow(_BaseMainWindow):
                     action.triggered.connect(self.close)
                 elif action_title == "New Project":
                     action.triggered.connect(self.new_project)
+                elif action_title == "Open Project":
+                    action.triggered.connect(self.open_project)
+                elif action_title == "Save Project":
+                    action.triggered.connect(self.save_project)
+                elif action_title == "Save Project As":
+                    action.triggered.connect(self.save_project_as)
                 elif action_title == "Preferences":
                     action.triggered.connect(self.open_preferences)
                 elif action_title == "Plugin Manager":
@@ -381,12 +464,20 @@ class MainWindow(_BaseMainWindow):
         self.setCentralWidget(container)
 
     def _build_toolbar_actions(self) -> None:
+        lifecycle_handlers = {
+            "New": self.new_project,
+            "Open": self.open_project,
+            "Save": self.save_project,
+            "Save As": self.save_project_as,
+        }
         for title in TOOLBAR_ACTION_TITLES:
             action = QtGui.QAction(title, self)
             action.setObjectName(ACTION_OBJECT_NAMES[title])
             self.main_toolbar.addAction(action)
             self.toolbar_actions[title] = action
-            if title == "Preferences":
+            if title in lifecycle_handlers:
+                action.triggered.connect(lifecycle_handlers[title])
+            elif title == "Preferences":
                 self.preferences_action = action
                 action.triggered.connect(self.open_preferences)
             else:
@@ -468,6 +559,15 @@ class MainWindow(_BaseMainWindow):
     def _on_top_bar_action_triggered(self, label: str) -> None:
         if label == "New":
             self.new_project()
+            return
+        if label == "Open":
+            self.open_project()
+            return
+        if label == "Save":
+            self.save_project()
+            return
+        if label == "Save As":
+            self.save_project_as()
             return
         if label == "Preferences":
             self.open_preferences()
@@ -1111,6 +1211,328 @@ class MainWindow(_BaseMainWindow):
             section.setExpanded(True)
         root.setExpanded(True)
 
+    def project_document_context(self) -> ProjectDocumentContext:
+        """Return the immutable file context for this MainWindow document."""
+
+        return self._project_document_context
+
+    def current_project_file_path(self) -> str | None:
+        return self._project_document_context.project_file_path
+
+    def current_project_root(self) -> Path | None:
+        return self._project_document_context.project_root
+
+    def has_bound_project_file(self) -> bool:
+        return self._project_document_context.is_bound
+
+    def _capture_project_document_state(self) -> _ProjectDocumentStateSnapshot:
+        monitor = self.run_monitor.warnings_progress_panel
+        return _ProjectDocumentStateSnapshot(
+            project=self.current_project,
+            context=self._project_document_context,
+            document_binding_epoch=self._document_binding_epoch,
+            workflow_project=self.workflow_session.project,
+            workflow_items=self.workflow_session.items,
+            workflow_mesh_infos=self.workflow_session.mesh_infos,
+            workflow_result_tables=self.workflow_session.result_tables,
+            workflow_figure_datasets=self.workflow_session.figure_datasets,
+            workflow_warnings=self.workflow_session.warnings,
+            last_imported_mesh_data=self.last_imported_mesh_data,
+            last_imported_mesh_ref=self.last_imported_mesh_ref,
+            selected_mesh_context=self.selected_mesh_context,
+            mesh_data_by_ref=self._mesh_data_by_ref,
+            result_catalog=self.result_catalog,
+            last_figure_dataset=self.last_figure_dataset,
+            last_result_datasets=self.last_result_datasets,
+            scene_screenshot_candidates=tuple(self._scene_screenshot_candidates),
+            metadata_mesh_load_state=self._metadata_mesh_load_state,
+            last_persisted_screenshot_status=(
+                self._last_persisted_report_screenshot_status
+            ),
+            run_log=self.run_monitor.toPlainText(),
+            monitor_warnings=tuple(monitor.warning_messages()),
+            monitor_progress=monitor.progress_percent(),
+            report_summary=(
+                self.properties_panel.report_preview_panel.last_report_summary
+            ),
+            document_surfaces=tuple(
+                (name, getattr(self, name)) for name in _DOCUMENT_SURFACE_ATTRIBUTES
+            ),
+        )
+
+    def _reset_document_scoped_state(self) -> None:
+        """Clear state derived from the previous document before a replacement."""
+
+        self.workflow_session.items = {}
+        self.workflow_session.mesh_infos = []
+        self.workflow_session.result_tables = []
+        self.workflow_session.figure_datasets = []
+        self.workflow_session.warnings = []
+        self.last_imported_mesh_data = None
+        self.last_imported_mesh_ref = None
+        self.selected_mesh_context = None
+        self._mesh_data_by_ref = {}
+        self.result_catalog = None
+        self.last_figure_dataset = None
+        self.last_result_datasets = ()
+        self._scene_screenshot_candidates = ()
+        # Keep the session-monotonic screenshot counter so a document swap never
+        # reuses a transient record id within the same MainWindow.
+        self._metadata_mesh_load_state = None
+        self._last_persisted_report_screenshot_status = ""
+        self._set_metadata_mesh_load_action_enabled(True)
+        self.run_monitor.clear_log()
+        self.run_monitor.warnings_progress_panel.set_warnings([])
+        self.run_monitor.warnings_progress_panel.set_progress(0)
+
+    def _restore_project_document_state(
+        self,
+        snapshot: _ProjectDocumentStateSnapshot,
+    ) -> None:
+        """Restore the exact in-memory document snapshot after a failed commit."""
+
+        self.current_project = snapshot.project
+        self._project_document_context = snapshot.context
+        self._document_binding_epoch = snapshot.document_binding_epoch
+        self.workflow_session.project = snapshot.workflow_project
+        self.workflow_session.items = snapshot.workflow_items
+        self.workflow_session.mesh_infos = snapshot.workflow_mesh_infos
+        self.workflow_session.result_tables = snapshot.workflow_result_tables
+        self.workflow_session.figure_datasets = snapshot.workflow_figure_datasets
+        self.workflow_session.warnings = snapshot.workflow_warnings
+        self.last_imported_mesh_data = snapshot.last_imported_mesh_data
+        self.last_imported_mesh_ref = snapshot.last_imported_mesh_ref
+        self.selected_mesh_context = snapshot.selected_mesh_context
+        self._mesh_data_by_ref = snapshot.mesh_data_by_ref
+        self.result_catalog = snapshot.result_catalog
+        self.last_figure_dataset = snapshot.last_figure_dataset
+        self.last_result_datasets = snapshot.last_result_datasets
+        self._scene_screenshot_candidates = snapshot.scene_screenshot_candidates
+        self._metadata_mesh_load_state = snapshot.metadata_mesh_load_state
+        self._last_persisted_report_screenshot_status = (
+            snapshot.last_persisted_screenshot_status
+        )
+        for name, surface in snapshot.document_surfaces:
+            setattr(self, name, surface)
+        self.run_monitor.set_log_lines(snapshot.run_log.splitlines())
+        monitor = self.run_monitor.warnings_progress_panel
+        monitor.set_warnings(list(snapshot.monitor_warnings))
+        monitor.set_progress(snapshot.monitor_progress)
+        state = snapshot.metadata_mesh_load_state
+        in_flight = state is not None and getattr(state, "status", "") in {
+            "loading",
+            "cancel_requested",
+        }
+        self._set_metadata_mesh_load_action_enabled(not in_flight)
+
+        if hasattr(self.project_tree_panel, "set_project"):
+            self._attempt_document_surface_restore(
+                lambda: self.project_tree_panel.set_project(snapshot.project)
+            )
+        if hasattr(self.properties_panel, "set_project"):
+            self._attempt_document_surface_restore(
+                lambda: self.properties_panel.set_project(snapshot.project)
+            )
+        if self.result_viewer is not None and hasattr(
+            self.result_viewer, "set_result_catalog"
+        ):
+            self._attempt_document_surface_restore(
+                lambda: self.result_viewer.set_result_catalog(snapshot.result_catalog)
+            )
+        report_panel = self.properties_panel.report_preview_panel
+        if snapshot.report_summary is not None and hasattr(
+            report_panel, "set_report_summary"
+        ):
+            self._attempt_document_surface_restore(
+                lambda: report_panel.set_report_summary(snapshot.report_summary)
+            )
+        self._attempt_document_surface_restore(
+            self._refresh_persisted_report_screenshot_surfaces
+        )
+
+    def _attempt_document_surface_restore(self, callback: Callable[[], None]) -> None:
+        try:
+            callback()
+        except Exception:
+            # The authoritative Project/context/workflow snapshot is already
+            # restored. A persistently failing presentation surface must not
+            # turn the original operation into a second state mutation.
+            return
+
+    def _guard_document_callback(
+        self,
+        callback: Callable[..., object],
+        *,
+        stale_result: object | None = None,
+    ) -> Callable[..., object]:
+        """Ignore a document-bound callback after a successful New/Open."""
+
+        document_binding_epoch = self._document_binding_epoch
+
+        def guarded(*args: object, **kwargs: object) -> object | None:
+            if self._document_binding_epoch != document_binding_epoch:
+                return stale_result
+            return callback(*args, **kwargs)
+
+        return guarded
+
+    def _retire_document_bound_surfaces(self) -> None:
+        """Best-effort close document surfaces after an otherwise complete commit."""
+
+        for dialog_name in _DOCUMENT_DIALOG_ATTRIBUTES:
+            dialog = getattr(self, dialog_name)
+            if dialog is not None:
+                for method_name in ("hide", "close", "deleteLater"):
+                    method = getattr(dialog, method_name, None)
+                    if callable(method):
+                        try:
+                            method()
+                        except Exception:
+                            continue
+            setattr(self, dialog_name, None)
+        for viewer_name in _DOCUMENT_VIEWER_ATTRIBUTES:
+            setattr(self, viewer_name, None)
+
+    def _replace_project_document(
+        self,
+        project: Project,
+        *,
+        project_file_path: str | None,
+        origin: ProjectDocumentOrigin,
+        success_message: str,
+        failure_message: str,
+    ) -> bool:
+        snapshot = self._capture_project_document_state()
+        next_context = ProjectDocumentContext(
+            project_file_path=project_file_path,
+            origin=origin,
+            generation=snapshot.context.generation + 1,
+        )
+        try:
+            self._reset_document_scoped_state()
+            self._document_binding_epoch = snapshot.document_binding_epoch + 1
+            self._project_document_context = next_context
+            self.set_project(project)
+            self._placeholder_action(success_message)
+        except Exception:
+            self._restore_project_document_state(snapshot)
+            self._project_error_reporter(failure_message)
+            return False
+        # No failure-producing document mutation follows this best-effort final
+        # retirement step. Generation guards make late queued callbacks inert.
+        self._retire_document_bound_surfaces()
+        return True
+
+    def _choose_project_open_path(self) -> str | None:
+        selected, _selected_filter = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            "Open OSW Project",
+            "",
+            (
+                "OSW Project Files (*.osw.json *.json *.osw.yaml *.yaml *.yml);;"
+                "All Files (*)"
+            ),
+        )
+        return str(selected) if selected else None
+
+    def _choose_project_save_path(self) -> str | None:
+        selected, _selected_filter = QtWidgets.QFileDialog.getSaveFileName(
+            self,
+            "Save OSW Project As",
+            "",
+            (
+                "OSW Project Files (*.osw.json *.json *.osw.yaml *.yaml *.yml);;"
+                "All Files (*)"
+            ),
+        )
+        return str(selected) if selected else None
+
+    def _load_project_file(self, path: str) -> Project:
+        from osw.core.project_io import load_project
+
+        return load_project(path)
+
+    def _save_project_file(self, project: Project, path: str) -> None:
+        from osw.core.project_io import save_project
+
+        save_project(project, path)
+
+    def _show_project_file_error(self, message: str) -> None:
+        QtWidgets.QMessageBox.critical(self, "OSW Project", str(message))
+
+    def open_project(self, _checked: bool = False) -> bool:
+        selected = self._project_open_path_picker()
+        if selected in (None, ""):
+            return False
+        selected_path = str(selected)
+        try:
+            project = self._project_loader(selected_path)
+            if not isinstance(project, Project):
+                raise TypeError("Project loader did not return a Project")
+            validation = project.validate()
+            if validation.has_errors:
+                raise ValueError("Project validation failed")
+        except Exception:
+            self._project_error_reporter(
+                "Could not open the selected project. The current document was not changed."
+            )
+            return False
+
+        replaced = self._replace_project_document(
+            project,
+            project_file_path=selected_path,
+            origin=ProjectDocumentOrigin.OPENED,
+            success_message="Opened Project",
+            failure_message=(
+                "Could not display the selected project. "
+                "The current document was restored."
+            ),
+        )
+        return replaced
+
+    def save_project(self, _checked: bool = False) -> bool:
+        path = self.current_project_file_path()
+        if path is None:
+            return self.save_project_as()
+        try:
+            self._project_saver(self.current_project, path)
+        except Exception:
+            self._project_error_reporter(
+                "Could not save the current project. The document binding was not changed."
+            )
+            return False
+        self._placeholder_action("Saved Project")
+        return True
+
+    def save_project_as(self, _checked: bool = False) -> bool:
+        selected = self._project_save_path_picker()
+        if selected in (None, ""):
+            return False
+        selected_path = str(selected)
+        try:
+            self._project_saver(self.current_project, selected_path)
+        except Exception:
+            self._project_error_reporter(
+                "Could not save the current project. The document binding was not changed."
+            )
+            return False
+
+        prior_context = self._project_document_context
+        try:
+            self._project_document_context = ProjectDocumentContext(
+                project_file_path=selected_path,
+                origin=ProjectDocumentOrigin.SAVED_AS,
+                generation=prior_context.generation + 1,
+            )
+            self._placeholder_action("Saved Project As")
+        except Exception:
+            self._project_document_context = prior_context
+            self._project_error_reporter(
+                "The project was written, but its document binding could not be updated."
+            )
+            return False
+        return True
+
     def set_project(self, project: Project, *, sync_workflow: bool = True) -> None:
         self.current_project = project
         if sync_workflow and hasattr(self, "workflow_session"):
@@ -1268,11 +1690,26 @@ class MainWindow(_BaseMainWindow):
         self._placeholder_action(f"Exported report: {result.output_path}")
         return Path(result.output_path)
 
-    def new_project(self) -> None:
+    def new_project(self, _checked: bool = False) -> bool:
         """Reset to the curated demo project until full project creation is designed."""
 
-        self.set_project(create_heatsink_flow_demo_project())
-        self._placeholder_action("New Project")
+        try:
+            project = create_heatsink_flow_demo_project()
+        except Exception:
+            self._project_error_reporter(
+                "Could not create a new project. The current document was not changed."
+            )
+            return False
+        replaced = self._replace_project_document(
+            project,
+            project_file_path=None,
+            origin=ProjectDocumentOrigin.NEW,
+            success_message="New Project",
+            failure_message=(
+                "Could not display the new project. The current document was restored."
+            ),
+        )
+        return replaced
 
     def import_mesh_file(self, path: str | Path) -> bool:
         """Preview-import mesh metadata and attach it to the current project.
@@ -1408,9 +1845,13 @@ class MainWindow(_BaseMainWindow):
             )
             self._placeholder_action(f"Previewed script metadata: {getattr(preview, 'name', '')}")
 
-        dialog.previewAccepted.connect(_attach)
-        dialog.scriptRunCompleted.connect(self._on_script_run_completed)
-        dialog.figureDatasetReady.connect(self._on_figure_dataset_ready)
+        dialog.previewAccepted.connect(self._guard_document_callback(_attach))
+        dialog.scriptRunCompleted.connect(
+            self._guard_document_callback(self._on_script_run_completed)
+        )
+        dialog.figureDatasetReady.connect(
+            self._guard_document_callback(self._on_figure_dataset_ready)
+        )
         self.script_preview_dialog = dialog
         dialog.show()
         dialog.raise_()
@@ -1466,7 +1907,7 @@ class MainWindow(_BaseMainWindow):
                 f"Previewed MAT metadata: {Path(getattr(mat_result, 'source_path', '')).name}"
             )
 
-        dialog.matPreviewAccepted.connect(_attach)
+        dialog.matPreviewAccepted.connect(self._guard_document_callback(_attach))
         self.mat_preview_dialog = dialog
         dialog.show()
         dialog.raise_()
@@ -1498,7 +1939,9 @@ class MainWindow(_BaseMainWindow):
             parent=self,
             theme_tokens=self.theme_manager.current_tokens,
         )
-        dialog.boundaryCurveAccepted.connect(self.attach_boundary_curve_to_project)
+        dialog.boundaryCurveAccepted.connect(
+            self._guard_document_callback(self.attach_boundary_curve_to_project)
+        )
         self.boundary_curve_dialog = dialog
         dialog.show()
         dialog.raise_()
@@ -1562,14 +2005,16 @@ class MainWindow(_BaseMainWindow):
             result=result,
             theme_tokens=self.theme_manager.current_tokens,
         )
-        self.calculix_deck_dialog.deckWritten.connect(self._on_calculix_deck_written)
+        self.calculix_deck_dialog.deckWritten.connect(
+            self._guard_document_callback(self._on_calculix_deck_written)
+        )
         if hasattr(self.calculix_deck_dialog, "calculixRunCompleted"):
             self.calculix_deck_dialog.calculixRunCompleted.connect(
-                self._on_calculix_run_completed
+                self._guard_document_callback(self._on_calculix_run_completed)
             )
         if hasattr(self.calculix_deck_dialog, "calculixResultsParsed"):
             self.calculix_deck_dialog.calculixResultsParsed.connect(
-                self._on_calculix_results_parsed
+                self._guard_document_callback(self._on_calculix_results_parsed)
             )
         self.calculix_deck_dialog.show()
         self.calculix_deck_dialog.raise_()
@@ -1631,10 +2076,10 @@ class MainWindow(_BaseMainWindow):
                 theme_tokens=self.theme_manager.current_tokens,
             )
             self.openfoam_template_dialog.caseGenerated.connect(
-                self._on_openfoam_case_generated
+                self._guard_document_callback(self._on_openfoam_case_generated)
             )
             self.openfoam_template_dialog.openfoamRunCompleted.connect(
-                self._on_openfoam_run_completed
+                self._guard_document_callback(self._on_openfoam_run_completed)
             )
         else:
             self.openfoam_template_dialog.set_theme_tokens(self.theme_manager.current_tokens)
@@ -1684,8 +2129,12 @@ class MainWindow(_BaseMainWindow):
                 parent=self,
                 theme_tokens=self.theme_manager.current_tokens,
             )
-            self.chm_property_dialog.resultDatasetReady.connect(self._on_chm_dataset_ready)
-            self.chm_property_dialog.propertyCalculated.connect(self._on_chm_property_result)
+            self.chm_property_dialog.resultDatasetReady.connect(
+                self._guard_document_callback(self._on_chm_dataset_ready)
+            )
+            self.chm_property_dialog.propertyCalculated.connect(
+                self._guard_document_callback(self._on_chm_property_result)
+            )
         else:
             self.chm_property_dialog.set_theme_tokens(self.theme_manager.current_tokens)
         self.chm_property_dialog.show()
@@ -1703,8 +2152,12 @@ class MainWindow(_BaseMainWindow):
                 parent=self,
                 theme_tokens=self.theme_manager.current_tokens,
             )
-            self.chm_reactor_dialog.resultDatasetReady.connect(self._on_chm_dataset_ready)
-            self.chm_reactor_dialog.reactorRunCompleted.connect(self._on_chm_reactor_result)
+            self.chm_reactor_dialog.resultDatasetReady.connect(
+                self._guard_document_callback(self._on_chm_dataset_ready)
+            )
+            self.chm_reactor_dialog.reactorRunCompleted.connect(
+                self._guard_document_callback(self._on_chm_reactor_result)
+            )
         else:
             self.chm_reactor_dialog.set_theme_tokens(self.theme_manager.current_tokens)
         self.chm_reactor_dialog.show()
@@ -1883,42 +2336,67 @@ class MainWindow(_BaseMainWindow):
             )
             if hasattr(self.mesh_viewer, "set_bind_result_callback"):
                 self.mesh_viewer.set_bind_result_callback(
-                    self.persist_mesh_viewer_result_binding
+                    self._guard_document_callback(
+                        self.persist_mesh_viewer_result_binding,
+                        stale_result=False,
+                    )
                 )
             if hasattr(self.mesh_viewer, "set_capture_scene_screenshot_callback"):
                 self.mesh_viewer.set_capture_scene_screenshot_callback(
-                    self.capture_scene_screenshot_to_report_candidates
+                    self._guard_document_callback(
+                        self.capture_scene_screenshot_to_report_candidates
+                    )
                 )
             if hasattr(self.mesh_viewer, "set_scene_screenshot_candidates_provider"):
                 self.mesh_viewer.set_scene_screenshot_candidates_provider(
-                    self.scene_screenshot_candidates
+                    self._guard_document_callback(
+                        self.scene_screenshot_candidates,
+                        stale_result=(),
+                    )
                 )
             if hasattr(self.mesh_viewer, "set_clear_scene_screenshots_callback"):
                 self.mesh_viewer.set_clear_scene_screenshots_callback(
-                    self.clear_scene_screenshots_from_viewer
+                    self._guard_document_callback(
+                        self.clear_scene_screenshots_from_viewer,
+                        stale_result=0,
+                    )
                 )
             if hasattr(self.mesh_viewer, "set_edit_scene_screenshot_caption_callback"):
                 self.mesh_viewer.set_edit_scene_screenshot_caption_callback(
-                    self.update_scene_screenshot_caption
+                    self._guard_document_callback(
+                        self.update_scene_screenshot_caption,
+                        stale_result=False,
+                    )
                 )
             if hasattr(self.mesh_viewer, "set_remove_scene_screenshot_callback"):
                 self.mesh_viewer.set_remove_scene_screenshot_callback(
-                    self.remove_scene_screenshot_candidate
+                    self._guard_document_callback(
+                        self.remove_scene_screenshot_candidate,
+                        stale_result=False,
+                    )
                 )
             if hasattr(self.mesh_viewer, "set_persist_scene_screenshots_callback"):
                 self.mesh_viewer.set_persist_scene_screenshots_callback(
-                    self.persist_staged_scene_screenshots
+                    self._guard_document_callback(
+                        self.persist_staged_scene_screenshots,
+                        stale_result=0,
+                    )
                 )
             if hasattr(self.mesh_viewer, "set_persisted_report_screenshots_provider"):
                 self.mesh_viewer.set_persisted_report_screenshots_provider(
-                    self.persisted_report_screenshot_assets
+                    self._guard_document_callback(
+                        self.persisted_report_screenshot_assets,
+                        stale_result=(),
+                    )
                 )
             if hasattr(
                 self.mesh_viewer,
                 "set_open_persisted_report_screenshot_manager_callback",
             ):
                 self.mesh_viewer.set_open_persisted_report_screenshot_manager_callback(
-                    self.open_persisted_report_screenshot_manager
+                    self._guard_document_callback(
+                        self.open_persisted_report_screenshot_manager
+                    )
                 )
             layout.addWidget(self.mesh_viewer)
             if hasattr(self.mesh_viewer, "set_theme_tokens"):
