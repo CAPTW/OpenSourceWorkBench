@@ -80,6 +80,10 @@ _PERSIST_HANDLER_MISSING_TEXT = (
 )
 _NO_SCREENSHOTS_TO_PERSIST_TEXT = "No staged scene screenshots to persist."
 _SCREENSHOTS_PERSISTED_TEMPLATE = "Persisted {count} scene screenshot report asset(s)."
+_PERSISTED_SCREENSHOTS_COUNT_TEMPLATE = "Persisted report screenshots: {count}"
+_MANAGE_PERSISTED_HANDLER_MISSING_TEXT = (
+    "Persisted screenshot management is not wired to the main window."
+)
 _PYVISTA_MISSING_TEXT = (
     "PyVista unavailable -- install the visualization extra to render 3D scenes."
 )
@@ -137,6 +141,12 @@ class MeshViewerPanel(_BaseWidget):
         ) = None
         self._remove_scene_screenshot_callback: Callable[[str], bool] | None = None
         self._persist_scene_screenshots_callback: Callable[[], object] | None = None
+        self._persisted_report_screenshots_provider: (
+            Callable[[], Sequence[object]] | None
+        ) = None
+        self._open_persisted_report_screenshot_manager_callback: (
+            Callable[[], object] | None
+        ) = None
         self._binding_status_message = _NO_STAGED_BINDING_TEXT
         self._binding_persisted = False
 
@@ -236,6 +246,19 @@ class MeshViewerPanel(_BaseWidget):
             "oswMeshViewerPersistScreenshotsButton"
         )
         self.persist_screenshots_button.setEnabled(False)
+        self.persisted_screenshots_status_label = QtWidgets.QLabel(
+            _PERSISTED_SCREENSHOTS_COUNT_TEMPLATE.format(count=0), self
+        )
+        self.persisted_screenshots_status_label.setObjectName(
+            "oswMeshViewerPersistedScreenshotsStatus"
+        )
+        self.manage_persisted_screenshots_button = QtWidgets.QPushButton(
+            "Manage persisted report screenshots...", self
+        )
+        self.manage_persisted_screenshots_button.setObjectName(
+            "oswMeshViewerManagePersistedScreenshotsButton"
+        )
+        self.manage_persisted_screenshots_button.setEnabled(False)
 
         toggles = QtWidgets.QHBoxLayout()
         toggles.addWidget(self.surface_toggle)
@@ -291,6 +314,12 @@ class MeshViewerPanel(_BaseWidget):
         screenshot_actions_row.addWidget(self.persist_screenshots_button)
         screenshot_actions_row.addStretch(1)
         layout.addLayout(screenshot_actions_row)
+
+        persisted_screenshots_row = QtWidgets.QHBoxLayout()
+        persisted_screenshots_row.addWidget(self.persisted_screenshots_status_label)
+        persisted_screenshots_row.addStretch(1)
+        persisted_screenshots_row.addWidget(self.manage_persisted_screenshots_button)
+        layout.addLayout(persisted_screenshots_row)
         layout.addWidget(self.screenshot_caveat_label)
 
         layout.addWidget(self.diagnostics_list)
@@ -310,6 +339,9 @@ class MeshViewerPanel(_BaseWidget):
         )
         self.persist_screenshots_button.clicked.connect(
             lambda _checked=False: self._on_persist_screenshots_requested()
+        )
+        self.manage_persisted_screenshots_button.clicked.connect(
+            lambda _checked=False: self._on_manage_persisted_screenshots_requested()
         )
         self.staged_screenshots_list.currentRowChanged.connect(
             lambda _row=-1: self._update_screenshot_action_buttons()
@@ -424,6 +456,25 @@ class MeshViewerPanel(_BaseWidget):
         """Connect the persist action to a MainWindow-owned opt-in flow."""
         self._persist_scene_screenshots_callback = callback
         self._render_screenshot_status()
+
+    def set_persisted_report_screenshots_provider(
+        self, provider: Callable[[], Sequence[object]] | None
+    ) -> None:
+        """Connect the persisted count to the MainWindow-owned Project list."""
+        self._persisted_report_screenshots_provider = provider
+        self._render_screenshot_status()
+
+    def set_open_persisted_report_screenshot_manager_callback(
+        self, callback: Callable[[], object] | None
+    ) -> None:
+        """Connect the manager launcher to the MainWindow-owned dialog flow."""
+        self._open_persisted_report_screenshot_manager_callback = callback
+        self._render_screenshot_status()
+
+    def show_persisted_report_screenshot_status(self, message: str) -> None:
+        """Display MainWindow-owned persisted-record action diagnostics."""
+        self._state.status_message = str(message)
+        self._render_state()
 
     def refresh_scene_screenshot_status(self) -> None:
         """Refresh the staged screenshot count/list from the injected provider."""
@@ -688,6 +739,10 @@ class MeshViewerPanel(_BaseWidget):
         if 0 <= previous_row < count:
             self.staged_screenshots_list.setCurrentRow(previous_row)
         self.staged_screenshots_list.blockSignals(False)
+        persisted_count = len(self._persisted_report_screenshots())
+        self.persisted_screenshots_status_label.setText(
+            _PERSISTED_SCREENSHOTS_COUNT_TEMPLATE.format(count=persisted_count)
+        )
         self._update_screenshot_action_buttons()
 
     def _update_screenshot_action_buttons(self) -> None:
@@ -705,6 +760,16 @@ class MeshViewerPanel(_BaseWidget):
         self.persist_screenshots_button.setEnabled(
             count > 0 and self._persist_scene_screenshots_callback is not None
         )
+        self.manage_persisted_screenshots_button.setEnabled(
+            bool(self._persisted_report_screenshots())
+            and self._open_persisted_report_screenshot_manager_callback is not None
+        )
+
+    def _persisted_report_screenshots(self) -> tuple[object, ...]:
+        provider = self._persisted_report_screenshots_provider
+        if provider is None:
+            return ()
+        return tuple(provider() or ())
 
     def _selected_staged_record(self) -> SceneScreenshotRecord | None:
         records = self._staged_scene_screenshots()
@@ -787,6 +852,14 @@ class MeshViewerPanel(_BaseWidget):
             self._state.status_message = _NO_SCREENSHOTS_TO_PERSIST_TEXT
         # A negative count means the confirmation was declined; keep the status.
         self._render_state()
+
+    def _on_manage_persisted_screenshots_requested(self) -> None:
+        callback = self._open_persisted_report_screenshot_manager_callback
+        if callback is None:
+            self._state.status_message = _MANAGE_PERSISTED_HANDLER_MISSING_TEXT
+            self._render_state()
+            return
+        callback()
 
     def _on_bind_result_requested(self) -> None:
         if self._bind_result_callback is None:

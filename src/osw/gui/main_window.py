@@ -82,6 +82,14 @@ LAYOUT_OBJECT_NAMES = {
 }
 
 _BaseMainWindow: Any = QtWidgets.QMainWindow if QtWidgets is not None else object
+_PERSISTED_CAPTION_NOT_SUPPLIED = object()
+_PERSISTED_SCREENSHOT_STALE_TEXT = (
+    "The selected persisted screenshot is stale or no longer available."
+)
+_PERSISTED_SCREENSHOT_FILE_FILTER = (
+    "Image Files (*.png *.jpg *.jpeg *.webp *.gif)"
+)
+_PERSISTED_SCREENSHOT_SUFFIXES = frozenset({".png", ".jpg", ".jpeg", ".webp", ".gif"})
 
 
 @dataclass(frozen=True)
@@ -229,6 +237,8 @@ class MainWindow(_BaseMainWindow):
         self.plot_viewer: object | None = None
         self.mesh_viewer_dialog: object | None = None
         self.mesh_viewer: object | None = None
+        self.persisted_report_screenshot_manager: object | None = None
+        self._last_persisted_report_screenshot_status = ""
         self._mesh_scene_adapter_factory = mesh_scene_adapter_factory
         self._result_mesh_binding_confirmation = result_mesh_binding_confirmation
         self._result_mesh_binding_target_selector = result_mesh_binding_target_selector
@@ -1111,6 +1121,7 @@ class MainWindow(_BaseMainWindow):
             self.properties_panel.set_project(project)
         self.refresh_results_from_project(update_report=False)
         self.generate_report_preview(log=False)
+        self._refresh_persisted_report_screenshot_surfaces()
 
     def build_current_report_summary(self) -> object:
         """Build report summary data without executing tools."""
@@ -1898,6 +1909,17 @@ class MainWindow(_BaseMainWindow):
                 self.mesh_viewer.set_persist_scene_screenshots_callback(
                     self.persist_staged_scene_screenshots
                 )
+            if hasattr(self.mesh_viewer, "set_persisted_report_screenshots_provider"):
+                self.mesh_viewer.set_persisted_report_screenshots_provider(
+                    self.persisted_report_screenshot_assets
+                )
+            if hasattr(
+                self.mesh_viewer,
+                "set_open_persisted_report_screenshot_manager_callback",
+            ):
+                self.mesh_viewer.set_open_persisted_report_screenshot_manager_callback(
+                    self.open_persisted_report_screenshot_manager
+                )
             layout.addWidget(self.mesh_viewer)
             if hasattr(self.mesh_viewer, "set_theme_tokens"):
                 self.mesh_viewer.set_theme_tokens(self.theme_manager.current_tokens)
@@ -1910,6 +1932,15 @@ class MainWindow(_BaseMainWindow):
     def scene_screenshot_candidates(self) -> tuple[SceneScreenshotRecord, ...]:
         """Return transient report-ready scene screenshot records."""
         return self._scene_screenshot_candidates
+
+    def persisted_report_screenshot_assets(self) -> tuple[object, ...]:
+        """Return the current Project-owned persisted screenshot assets."""
+        return tuple(getattr(self.current_project, "report_screenshots", ()) or ())
+
+    def _transient_scene_screenshot_ids(self) -> tuple[str, ...]:
+        return tuple(
+            record.id for record in self._scene_screenshot_candidates if record.id
+        )
 
     def clear_scene_screenshot_candidates(self) -> None:
         """Clear transient scene screenshot candidate records for report export."""
@@ -2030,6 +2061,235 @@ class MainWindow(_BaseMainWindow):
             ),
         )
         return answer == QtWidgets.QMessageBox.StandardButton.Yes
+
+    def open_persisted_report_screenshot_manager(
+        self, _checked: bool = False
+    ) -> object:
+        """Open the persisted-only manager without transferring Project ownership."""
+        from osw.gui.widgets.persisted_report_screenshot_manager import (
+            PersistedReportScreenshotManager,
+        )
+
+        if self.persisted_report_screenshot_manager is None:
+            self.persisted_report_screenshot_manager = PersistedReportScreenshotManager(
+                self,
+                assets_provider=self.persisted_report_screenshot_assets,
+                transient_ids_provider=self._transient_scene_screenshot_ids,
+                edit_callback=self.update_persisted_report_screenshot_caption,
+                remove_callback=self.remove_persisted_report_screenshot,
+                relink_callback=self.relink_persisted_report_screenshot,
+            )
+        manager = self.persisted_report_screenshot_manager
+        manager.refresh_records()
+        manager.show()
+        manager.raise_()
+        manager.activateWindow()
+        return manager
+
+    def update_persisted_report_screenshot_caption(
+        self,
+        target: object,
+        caption: object = _PERSISTED_CAPTION_NOT_SUPPLIED,
+    ) -> bool:
+        """Replace one exact persisted caption after stale-target revalidation."""
+        matched = self._validated_persisted_report_screenshot_target(target)
+        if matched is None:
+            return self._show_persisted_report_screenshot_status(
+                _PERSISTED_SCREENSHOT_STALE_TEXT
+            )
+        _, asset = matched
+        if caption is _PERSISTED_CAPTION_NOT_SUPPLIED:
+            new_caption = self._prompt_persisted_report_screenshot_caption(asset.caption)
+            if new_caption is None:
+                return self._show_persisted_report_screenshot_status(
+                    "Persisted scene screenshot caption edit cancelled."
+                )
+        else:
+            new_caption = str(caption)
+
+        matched = self._validated_persisted_report_screenshot_target(target)
+        if matched is None:
+            return self._show_persisted_report_screenshot_status(
+                _PERSISTED_SCREENSHOT_STALE_TEXT
+            )
+        index, asset = matched
+        assets = list(self.persisted_report_screenshot_assets())
+        assets[index] = replace(asset, caption=new_caption)
+        self.set_project(
+            _project_replacing_report_screenshots(self.current_project, assets)
+        )
+        self._show_persisted_report_screenshot_status(
+            "Updated persisted scene screenshot caption."
+        )
+        return True
+
+    def remove_persisted_report_screenshot(self, target: object) -> bool:
+        """Remove one exact persisted metadata row without touching its file."""
+        matched = self._validated_persisted_report_screenshot_target(target)
+        if matched is None:
+            return self._show_persisted_report_screenshot_status(
+                _PERSISTED_SCREENSHOT_STALE_TEXT
+            )
+        _, asset = matched
+        if not self._confirm_remove_persisted_report_screenshot(asset):
+            return self._show_persisted_report_screenshot_status(
+                "Persisted scene screenshot removal cancelled."
+            )
+
+        matched = self._validated_persisted_report_screenshot_target(target)
+        if matched is None:
+            return self._show_persisted_report_screenshot_status(
+                _PERSISTED_SCREENSHOT_STALE_TEXT
+            )
+        index, _asset = matched
+        assets = list(self.persisted_report_screenshot_assets())
+        del assets[index]
+        self.set_project(
+            _project_replacing_report_screenshots(self.current_project, assets)
+        )
+        self._show_persisted_report_screenshot_status(
+            "Removed persisted scene screenshot record."
+        )
+        return True
+
+    def relink_persisted_report_screenshot(
+        self,
+        target: object,
+        selected_path: str | Path | None = None,
+    ) -> bool:
+        """Explicitly replace one stored path without copying or rewriting a file."""
+        matched = self._validated_persisted_report_screenshot_target(target)
+        if matched is None:
+            return self._show_persisted_report_screenshot_status(
+                _PERSISTED_SCREENSHOT_STALE_TEXT
+            )
+        _, asset = matched
+        selected = (
+            self._pick_persisted_report_screenshot_relink_path()
+            if selected_path is None
+            else str(selected_path)
+        )
+        if not selected:
+            return self._show_persisted_report_screenshot_status(
+                "Persisted scene screenshot relink cancelled."
+            )
+        if selected == asset.path:
+            return self._show_persisted_report_screenshot_status(
+                "The selected file is already linked to this screenshot."
+            )
+        candidate = Path(selected)
+        if not candidate.is_file() or candidate.suffix.lower() not in (
+            _PERSISTED_SCREENSHOT_SUFFIXES
+        ):
+            return self._show_persisted_report_screenshot_status(
+                "Select an existing PNG, JPG, JPEG, WEBP, or GIF file."
+            )
+        if not self._confirm_relink_persisted_report_screenshot(asset, selected):
+            return self._show_persisted_report_screenshot_status(
+                "Persisted scene screenshot relink cancelled."
+            )
+
+        matched = self._validated_persisted_report_screenshot_target(target)
+        if matched is None:
+            return self._show_persisted_report_screenshot_status(
+                _PERSISTED_SCREENSHOT_STALE_TEXT
+            )
+        index, asset = matched
+        assets = list(self.persisted_report_screenshot_assets())
+        assets[index] = replace(asset, path=selected)
+        self.set_project(
+            _project_replacing_report_screenshots(self.current_project, assets)
+        )
+        self._show_persisted_report_screenshot_status(
+            "Relinked persisted scene screenshot."
+        )
+        return True
+
+    def _validated_persisted_report_screenshot_target(
+        self, target: object
+    ) -> tuple[int, object] | None:
+        """Return the exact current asset only when index, id, and snapshot match."""
+        try:
+            index = int(target.index)
+        except (AttributeError, TypeError, ValueError):
+            return None
+        assets = self.persisted_report_screenshot_assets()
+        if index < 0 or index >= len(assets):
+            return None
+        asset = assets[index]
+        expected_id = str(getattr(target, "expected_id", ""))
+        expected_asset = getattr(target, "expected_asset", None)
+        if asset.id != expected_id or asset != expected_asset:
+            return None
+        return index, asset
+
+    def _prompt_persisted_report_screenshot_caption(self, current: str) -> str | None:
+        text, accepted = QtWidgets.QInputDialog.getText(
+            self,
+            "Edit persisted scene screenshot caption",
+            "Caption:",
+            text=current,
+        )
+        return str(text) if accepted else None
+
+    def _confirm_remove_persisted_report_screenshot(self, asset: object) -> bool:
+        answer = QtWidgets.QMessageBox.question(
+            self,
+            "Remove persisted scene screenshot",
+            (
+                "Only the project metadata record will be removed.\n"
+                "The referenced image file will not be deleted.\n\n"
+                f"Record: {getattr(asset, 'id', '') or '(missing id)'}"
+            ),
+            QtWidgets.QMessageBox.StandardButton.Yes
+            | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.No,
+        )
+        return answer == QtWidgets.QMessageBox.StandardButton.Yes
+
+    def _pick_persisted_report_screenshot_relink_path(self) -> str | None:
+        selected, _selected_filter = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            "Relink selected screenshot...",
+            "",
+            _PERSISTED_SCREENSHOT_FILE_FILTER,
+        )
+        return str(selected) if selected else None
+
+    def _confirm_relink_persisted_report_screenshot(
+        self, asset: object, selected_path: str
+    ) -> bool:
+        answer = QtWidgets.QMessageBox.question(
+            self,
+            "Relink persisted scene screenshot",
+            (
+                "Only the stored path will change. No file will be copied or moved, "
+                "and the local path will be stored as selected.\n\n"
+                f"Old path: {getattr(asset, 'path', '') or '(no image path)'}\n"
+                f"New path: {selected_path}"
+            ),
+            QtWidgets.QMessageBox.StandardButton.Yes
+            | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.No,
+        )
+        return answer == QtWidgets.QMessageBox.StandardButton.Yes
+
+    def _refresh_persisted_report_screenshot_surfaces(self) -> None:
+        self._refresh_scene_screenshot_viewer()
+        manager = self.persisted_report_screenshot_manager
+        if manager is not None and hasattr(manager, "refresh_records"):
+            manager.refresh_records()
+
+    def _show_persisted_report_screenshot_status(self, message: str) -> bool:
+        self._last_persisted_report_screenshot_status = str(message)
+        if self.mesh_viewer is not None and hasattr(
+            self.mesh_viewer, "show_persisted_report_screenshot_status"
+        ):
+            self.mesh_viewer.show_persisted_report_screenshot_status(message)
+        manager = self.persisted_report_screenshot_manager
+        if manager is not None and hasattr(manager, "show_status"):
+            manager.show_status(message)
+        return False
 
     def capture_scene_screenshot_to_report_candidates(self) -> SceneScreenshotRecord | None:
         """Capture an active viewer scene screenshot into report candidates."""
@@ -2468,6 +2728,13 @@ def _project_with_report_screenshots(project: Project, assets: object) -> Projec
         for asset in getattr(project, "report_screenshots", ()) or ()
         if getattr(asset, "id", "") not in new_ids
     ]
+    return _project_replacing_report_screenshots(project, [*kept, *new_assets])
+
+
+def _project_replacing_report_screenshots(
+    project: Project, assets: Sequence[object]
+) -> Project:
+    """Return a Project copy with the exact ordered screenshot asset list."""
     return Project(
         metadata=project.metadata,
         units=project.units,
@@ -2484,7 +2751,7 @@ def _project_with_report_screenshots(project: Project, assets: object) -> Projec
         plugins=project.plugins,
         warnings=project.warnings,
         selections=project.selections,
-        report_screenshots=[*kept, *new_assets],
+        report_screenshots=assets,
     )
 
 
