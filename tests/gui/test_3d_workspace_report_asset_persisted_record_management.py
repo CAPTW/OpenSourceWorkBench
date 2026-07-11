@@ -134,6 +134,26 @@ def _spy_set_project(window: object, monkeypatch: pytest.MonkeyPatch) -> list[Pr
     return calls
 
 
+def _controlled_tree_snapshot(
+    root: Path,
+) -> tuple[tuple[str, ...], tuple[str, ...], dict[str, bytes]]:
+    """Snapshot only a test-controlled tree, including paths, dirs, and bytes."""
+    entries = tuple(sorted(path.relative_to(root).as_posix() for path in root.rglob("*")))
+    directories = tuple(
+        sorted(
+            path.relative_to(root).as_posix()
+            for path in root.rglob("*")
+            if path.is_dir()
+        )
+    )
+    files = {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in root.rglob("*")
+        if path.is_file()
+    }
+    return entries, directories, files
+
+
 def test_panel_and_manager_keep_persisted_and_staged_rows_separate(
     app: object, tmp_path: Path
 ) -> None:
@@ -464,6 +484,13 @@ def test_remove_changes_metadata_only_and_never_deletes_file(
     second = _asset("second", str(second_path), "Keep me", marker="2")
     window = _window(app, [first, second])
     before_payload = window.current_project.to_dict()
+    before_tree = _controlled_tree_snapshot(tmp_path)
+    saves: list[tuple[object, ...]] = []
+    monkeypatch.setattr(
+        window,
+        "_project_saver",
+        lambda *args: saves.append(args),
+    )
     monkeypatch.setattr(
         window, "_confirm_remove_persisted_report_screenshot", lambda _asset: True
     )
@@ -480,6 +507,8 @@ def test_remove_changes_metadata_only_and_never_deletes_file(
     assert first_path.is_file()
     assert first_path.read_bytes() == b"first-bytes"
     assert second_path.read_bytes() == b"second-bytes"
+    assert _controlled_tree_snapshot(tmp_path) == before_tree
+    assert saves == []
     expected_payload = before_payload
     expected_payload["report_screenshots"] = [second.to_dict()]
     assert window.current_project.to_dict() == expected_payload
@@ -538,6 +567,13 @@ def test_relink_changes_one_path_verbatim_and_preserves_files_and_fields(
     second = _asset("second", str(tmp_path / "second.png"), "Keep", marker="2")
     window = _window(app, [first, second])
     before_payload = window.current_project.to_dict()
+    before_tree = _controlled_tree_snapshot(tmp_path)
+    saves: list[tuple[object, ...]] = []
+    monkeypatch.setattr(
+        window,
+        "_project_saver",
+        lambda *args: saves.append(args),
+    )
     monkeypatch.setattr(
         window,
         "_confirm_relink_persisted_report_screenshot",
@@ -554,6 +590,8 @@ def test_relink_changes_one_path_verbatim_and_preserves_files_and_fields(
     assert after[1] == second
     assert old_path.read_bytes() == b"old-bytes"
     assert new_path.read_bytes() == b"new-bytes"
+    assert _controlled_tree_snapshot(tmp_path) == before_tree
+    assert saves == []
     expected_payload = before_payload
     expected_payload["report_screenshots"][0]["path"] = selected
     assert window.current_project.to_dict() == expected_payload
@@ -622,6 +660,101 @@ def test_relink_updates_explicit_path_and_kind_atomically(
     assert replacement.caption == asset.caption
     assert replacement.metadata == asset.metadata
     assert window.current_project.schema_version == "0.2"
+
+
+@pytest.mark.parametrize(
+    ("current_kind", "expected_kind", "expected_sentence", "changes_kind"),
+    [
+        (None, None, "Path reference kind remains unmarked.", False),
+        (
+            ReportAssetPathKind.LEGACY_RAW,
+            ReportAssetPathKind.LEGACY_RAW,
+            "Path reference kind remains legacy_raw.",
+            False,
+        ),
+        (
+            ReportAssetPathKind.EXTERNAL_ABSOLUTE,
+            ReportAssetPathKind.EXTERNAL_ABSOLUTE,
+            "Path reference kind remains external_absolute.",
+            False,
+        ),
+        (
+            ReportAssetPathKind.PROJECT_RELATIVE,
+            ReportAssetPathKind.EXTERNAL_ABSOLUTE,
+            (
+                "Path reference kind will change from project_relative to "
+                "external_absolute."
+            ),
+            True,
+        ),
+    ],
+)
+def test_relink_confirmation_discloses_exact_path_kind_outcome(
+    app: object,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    current_kind: ReportAssetPathKind | None,
+    expected_kind: ReportAssetPathKind | None,
+    expected_sentence: str,
+    changes_kind: bool,
+) -> None:
+    assert QtWidgets is not None
+    old_path = (
+        "screenshots/old.png"
+        if current_kind is ReportAssetPathKind.PROJECT_RELATIVE
+        else str(tmp_path / "old.png")
+    )
+    new_path = tmp_path / "new.png"
+    new_path.write_bytes(b"new")
+    asset = _asset(
+        "shot-confirm",
+        old_path,
+        "Confirm relink",
+        marker="confirm",
+        path_kind=current_kind,
+    )
+    window = _window(app, [asset])
+    calls = _spy_set_project(window, monkeypatch)
+    questions: list[tuple[str, str]] = []
+
+    def _capture_question(
+        _parent: object,
+        title: str,
+        message: str,
+        *_args: object,
+    ) -> object:
+        questions.append((title, message))
+        return QtWidgets.QMessageBox.StandardButton.Yes
+
+    monkeypatch.setattr(QtWidgets.QMessageBox, "question", _capture_question)
+
+    assert window.relink_persisted_report_screenshot(
+        _target(asset), str(new_path)
+    )
+
+    assert len(questions) == 1
+    title, message = questions[0]
+    assert title == "Relink persisted scene screenshot"
+    assert expected_sentence in message
+    assert "may change" not in message
+    assert "No file will be copied or moved." in message
+    assert "Saving the Project remains a separate explicit action." in message
+    if changes_kind:
+        assert (
+            "The selected file will be stored as an external absolute reference."
+            in message
+        )
+    else:
+        assert "will change from" not in message
+    assert len(calls) == 1
+    replacement = window.current_project.report_screenshots[0]
+    assert replacement.path == str(new_path)
+    assert replacement.path_kind is expected_kind
+    assert replace(
+        replacement,
+        path=asset.path,
+        path_kind=current_kind,
+    ) == asset
 
 
 def test_modal_relink_uses_main_window_picker_and_confirmation(

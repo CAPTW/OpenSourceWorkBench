@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Iterator
 from dataclasses import replace
 from pathlib import Path
 
@@ -42,6 +43,82 @@ from osw.core.result_mesh_binding import (
 )
 from osw.core.units import Quantity, UnitSystem
 from osw.core.validation import validate_project
+
+# Frozen minimal version-dispatch seam from R0 at
+# db05475785a12a00d60476110b6ee9cd8574fe05 (the parent of edf62ec). The
+# post-gate return is deliberately reduced because R0 did not know screenshots.
+_HISTORICAL_R0_VERSION_GATE_SOURCE = """\
+CURRENT_SCHEMA_VERSION = "0.1"
+
+def historical_project_from_dict(data):
+    migrated = dict(data)
+    if "schema_version" not in migrated:
+        migrated["schema_version"] = CURRENT_SCHEMA_VERSION
+    if migrated.get("schema_version") == "0.0":
+        migrated["schema_version"] = CURRENT_SCHEMA_VERSION
+    schema_version = str(migrated.get("schema_version", CURRENT_SCHEMA_VERSION))
+    if schema_version != CURRENT_SCHEMA_VERSION:
+        raise ProjectSchemaError(
+            f"Unsupported OSW project schema version: {schema_version}"
+        )
+    return ()
+"""
+
+
+# Frozen minimal version-dispatch seam from R1 at
+# edf62ec521845d484d231a7d1b034e2c99e60d70. The post-gate expression models
+# the historical screenshot-path consumption that must remain unreachable.
+_HISTORICAL_R1_VERSION_GATE_SOURCE = """\
+CURRENT_SCHEMA_VERSION = "0.1"
+
+def historical_project_from_dict(data):
+    migrated = dict(data)
+    if "schema_version" not in migrated:
+        migrated["schema_version"] = CURRENT_SCHEMA_VERSION
+    if migrated.get("schema_version") == "0.0":
+        migrated["schema_version"] = CURRENT_SCHEMA_VERSION
+    schema_version = str(migrated.get("schema_version", CURRENT_SCHEMA_VERSION))
+    if schema_version != CURRENT_SCHEMA_VERSION:
+        raise ProjectSchemaError(
+            f"Unsupported OSW project schema version: {schema_version}"
+        )
+    return tuple(item["path"] for item in migrated.get("report_screenshots", ()))
+"""
+
+
+class _FrozenHistoricalProjectSchemaError(ValueError):
+    """Isolated stand-in for the historical ProjectSchemaError subclass."""
+
+
+class _NestedScreenshotPathSentinel:
+    """Explode if a historical fixture reaches nested screenshot consumption."""
+
+    def __init__(self) -> None:
+        self.access_count = 0
+        self._records = (
+            {
+                "id": "historical-project-relative",
+                "path": "screenshots/scene.png",
+                "path_kind": "project_relative",
+            },
+        )
+
+    def __iter__(self) -> Iterator[dict[str, str]]:
+        self.access_count += 1
+        raise AssertionError("historical reader consumed nested screenshot paths")
+
+
+def _load_frozen_historical_reader(source: str) -> object:
+    namespace: dict[str, object] = {
+        "__builtins__": {
+            "dict": dict,
+            "str": str,
+            "tuple": tuple,
+        },
+        "ProjectSchemaError": _FrozenHistoricalProjectSchemaError,
+    }
+    exec(source, namespace)  # noqa: S102 - intentionally isolated frozen fixture
+    return namespace["historical_project_from_dict"]
 
 
 def _sample_project() -> Project:
@@ -725,6 +802,55 @@ def test_unsupported_project_version_rejects_before_nested_asset_parsing() -> No
         )
 
     assert "ReportScreenshotAsset" not in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    ("generation", "provenance", "source"),
+    [
+        (
+            "R0",
+            "db05475785a12a00d60476110b6ee9cd8574fe05",
+            _HISTORICAL_R0_VERSION_GATE_SOURCE,
+        ),
+        (
+            "R1",
+            "edf62ec521845d484d231a7d1b034e2c99e60d70",
+            _HISTORICAL_R1_VERSION_GATE_SOURCE,
+        ),
+    ],
+    ids=("r0", "r1"),
+)
+def test_frozen_historical_reader_rejects_0_2_before_screenshot_consumption(
+    generation: str,
+    provenance: str,
+    source: str,
+) -> None:
+    assert generation in {"R0", "R1"}
+    assert len(provenance) == 40
+    assert "Project.from_dict" not in source
+    assert "import " not in source
+    assert "__import__" not in source
+    assert "subprocess" not in source
+    assert "socket" not in source
+    reader = _load_frozen_historical_reader(source)
+    assert callable(reader)
+    assert "Project" not in reader.__globals__
+    sentinel = _NestedScreenshotPathSentinel()
+    payload = {
+        "schema_version": "0.2",
+        "metadata": {"name": f"Historical {generation}"},
+        "report_screenshots": sentinel,
+    }
+
+    with pytest.raises(
+        _FrozenHistoricalProjectSchemaError,
+        match="Unsupported.*0.2",
+    ) as exc_info:
+        reader(payload)
+
+    assert type(exc_info.value) is _FrozenHistoricalProjectSchemaError
+    assert str(exc_info.value) == "Unsupported OSW project schema version: 0.2"
+    assert sentinel.access_count == 0
 
 
 def test_project_without_report_screenshots_is_byte_identical() -> None:

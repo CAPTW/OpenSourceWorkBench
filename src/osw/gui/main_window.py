@@ -105,6 +105,20 @@ def _relinked_report_screenshot_path_kind(
     return current
 
 
+def _relinked_report_screenshot_path_kind_confirmation(
+    current: ReportAssetPathKind | None,
+) -> str:
+    if current is None:
+        return "Path reference kind remains unmarked."
+    if current is ReportAssetPathKind.PROJECT_RELATIVE:
+        return (
+            "Path reference kind will change from project_relative to "
+            "external_absolute.\n"
+            "The selected file will be stored as an external absolute reference."
+        )
+    return f"Path reference kind remains {current.value}."
+
+
 @dataclass(frozen=True)
 class ResultMeshBindingTargetCandidate:
     """A non-mutating persisted ResultRef target option for result/mesh binding."""
@@ -2763,13 +2777,18 @@ class MainWindow(_BaseMainWindow):
     def _confirm_relink_persisted_report_screenshot(
         self, asset: object, selected_path: str
     ) -> bool:
+        path_kind_confirmation = _relinked_report_screenshot_path_kind_confirmation(
+            getattr(asset, "path_kind", None)
+        )
         answer = QtWidgets.QMessageBox.question(
             self,
             "Relink persisted scene screenshot",
             (
-                "Only the stored path reference will change. Its path kind will be "
-                "preserved or updated atomically. No file will be copied or moved, "
-                "and the local path will be stored as selected.\n\n"
+                "Only the stored path reference will change.\n"
+                f"{path_kind_confirmation}\n"
+                "No file will be copied or moved. Saving the Project remains a "
+                "separate explicit action.\n"
+                "The local path will be stored as selected.\n\n"
                 f"Old path: {getattr(asset, 'path', '') or '(no image path)'}\n"
                 f"New path: {selected_path}"
             ),
