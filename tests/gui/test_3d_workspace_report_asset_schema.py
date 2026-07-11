@@ -123,9 +123,33 @@ def test_persist_action_stores_report_assets_in_project(
     assert assets[0].path.endswith("scene.png")
     assert assets[0].metadata["is_release_asset"] is False
     assert assets[0].metadata["is_validation_evidence"] is False
+    assert assets[0].path_kind is None
+    assert "path_kind" not in assets[0].to_dict()
+    assert window.current_project.schema_version == "0.1"
     # Transient staged candidates are preserved.
     assert len(window.scene_screenshot_candidates()) == 1
     assert "persisted 1 scene screenshot" in window.mesh_viewer.status_label.text().lower()
+
+
+def test_current_persist_action_keeps_loaded_0_2_and_adds_unmarked_legacy_asset(
+    app: object,
+    tmp_path: Path,
+) -> None:
+    project = Project.from_dict(
+        {"schema_version": "0.2", "metadata": {"name": "Loaded 0.2"}}
+    )
+    window = _window(app=app, adapter=RecordingSceneAdapter(write_image=True))
+    window.set_project(project)
+    _capture(window, tmp_path)
+    window._confirm_persist_scene_screenshots = lambda count: True
+
+    window.persist_staged_scene_screenshots()
+
+    assert window.current_project.schema_version == "0.2"
+    assert len(window.current_project.report_screenshots) == 1
+    asset = window.current_project.report_screenshots[0]
+    assert asset.path_kind is None
+    assert "path_kind" not in asset.to_dict()
 
 
 def test_persist_is_friendly_noop_when_no_staged(app: object) -> None:

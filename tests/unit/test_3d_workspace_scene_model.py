@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from osw.core.report_asset import ReportAssetPathKind
 from osw.post.pyvista_scene import PyVistaSceneConfig
 from osw.post.scene_model import (
     SceneCameraState,
@@ -104,6 +105,92 @@ def test_scene_screenshot_record_roundtrip_and_required_fields() -> None:
     paths = {message.path for message in report.messages}
     assert any(path.endswith(".id") for path in paths)
     assert any(path.endswith(".path") for path in paths)
+
+
+def test_scene_screenshot_record_preserves_omitted_and_explicit_path_kind() -> None:
+    omitted = SceneScreenshotRecord(id="omitted", path="legacy.png")
+    explicit = SceneScreenshotRecord(
+        id="typed",
+        path="screenshots/scene.png",
+        path_kind=ReportAssetPathKind.PROJECT_RELATIVE,
+    )
+
+    assert omitted.path_kind is None
+    assert "path_kind" not in omitted.to_dict()
+    assert explicit.to_dict()["path_kind"] == "project_relative"
+    assert SceneScreenshotRecord.from_dict(explicit.to_dict()) == explicit
+
+
+def test_scene_screenshot_path_kind_does_not_shift_legacy_positional_caption() -> None:
+    record = SceneScreenshotRecord("shot", "legacy.png", "Caption")
+
+    assert record.path == "legacy.png"
+    assert record.caption == "Caption"
+    assert record.path_kind is None
+
+
+@pytest.mark.parametrize(
+    "bad_kind", ["", "unknown", "PROJECT_RELATIVE", True, 4, [], {}]
+)
+def test_scene_screenshot_record_direct_construction_rejects_bad_path_kind(
+    bad_kind: object,
+) -> None:
+    with pytest.raises((TypeError, ValueError), match="path_kind"):
+        SceneScreenshotRecord(
+            id="shot",
+            path="screenshots/scene.png",
+            path_kind=bad_kind,  # type: ignore[arg-type]
+        )
+
+
+@pytest.mark.parametrize(
+    "bad_kind", [None, True, 4, [], {}, "managed_project_asset"]
+)
+def test_scene_screenshot_record_from_dict_rejects_null_nonstring_and_reserved_kind(
+    bad_kind: object,
+) -> None:
+    payload = SceneScreenshotRecord(id="shot", path="legacy.png").to_dict()
+    payload["path_kind"] = bad_kind
+
+    with pytest.raises((TypeError, ValueError), match="path_kind|reserved"):
+        SceneScreenshotRecord.from_dict(payload)
+
+
+@pytest.mark.parametrize("bad_path", [None, True, 4, [], {}, "", "   "])
+def test_scene_screenshot_record_from_dict_rejects_malformed_explicit_path(
+    bad_path: object,
+) -> None:
+    payload = {
+        "id": "shot",
+        "path": bad_path,
+        "path_kind": "legacy_raw",
+    }
+
+    with pytest.raises((TypeError, ValueError), match="path"):
+        SceneScreenshotRecord.from_dict(payload)
+
+
+@pytest.mark.parametrize(
+    ("path_kind", "path"),
+    [
+        (ReportAssetPathKind.EXTERNAL_ABSOLUTE, "screenshots/scene.png"),
+        (ReportAssetPathKind.PROJECT_RELATIVE, "C:/captures/scene.png"),
+        (ReportAssetPathKind.LEGACY_RAW, "\x00bad.png"),
+    ],
+)
+def test_scene_screenshot_record_rejects_path_kind_shape_contradictions(
+    path_kind: ReportAssetPathKind,
+    path: str,
+) -> None:
+    with pytest.raises(ValueError, match="path"):
+        SceneScreenshotRecord(id="shot", path=path, path_kind=path_kind)
+
+
+def test_build_screenshot_record_remains_unmarked_legacy() -> None:
+    record = build_screenshot_record("captures/scene.png", record_id="shot")
+
+    assert record.path_kind is None
+    assert "path_kind" not in record.to_dict()
 
 
 def test_scene_input_ref_field_without_dataset_warns() -> None:

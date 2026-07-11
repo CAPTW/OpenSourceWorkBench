@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 from osw.core.demo_project import create_heatsink_flow_demo_project
 from osw.core.executables import ExecutablePathRegistry
 from osw.core.project_schema import Project
+from osw.core.report_asset import ReportAssetPathKind
 from osw.gui.project_document_context import (
     ProjectDocumentContext,
     ProjectDocumentOrigin,
@@ -94,6 +95,14 @@ _PERSISTED_SCREENSHOT_FILE_FILTER = (
     "Image Files (*.png *.jpg *.jpeg *.webp *.gif)"
 )
 _PERSISTED_SCREENSHOT_SUFFIXES = frozenset({".png", ".jpg", ".jpeg", ".webp", ".gif"})
+
+
+def _relinked_report_screenshot_path_kind(
+    current: ReportAssetPathKind | None,
+) -> ReportAssetPathKind | None:
+    if current is ReportAssetPathKind.PROJECT_RELATIVE:
+        return ReportAssetPathKind.EXTERNAL_ABSOLUTE
+    return current
 
 
 @dataclass(frozen=True)
@@ -2662,6 +2671,17 @@ class MainWindow(_BaseMainWindow):
             return self._show_persisted_report_screenshot_status(
                 "Select an existing PNG, JPG, JPEG, WEBP, or GIF file."
             )
+        replacement_kind = _relinked_report_screenshot_path_kind(asset.path_kind)
+        try:
+            replacement = replace(
+                asset,
+                path=selected,
+                path_kind=replacement_kind,
+            )
+        except (TypeError, ValueError):
+            return self._show_persisted_report_screenshot_status(
+                "The selected image path is incompatible with its path classification."
+            )
         if not self._confirm_relink_persisted_report_screenshot(asset, selected):
             return self._show_persisted_report_screenshot_status(
                 "Persisted scene screenshot relink cancelled."
@@ -2678,9 +2698,9 @@ class MainWindow(_BaseMainWindow):
             return self._show_persisted_report_screenshot_status(
                 _PERSISTED_SCREENSHOT_STALE_TEXT
             )
-        index, asset = matched
+        index, _asset = matched
         assets = list(self.persisted_report_screenshot_assets())
-        assets[index] = replace(asset, path=selected)
+        assets[index] = replacement
         self.set_project(
             _project_replacing_report_screenshots(self.current_project, assets)
         )
@@ -2747,7 +2767,8 @@ class MainWindow(_BaseMainWindow):
             self,
             "Relink persisted scene screenshot",
             (
-                "Only the stored path will change. No file will be copied or moved, "
+                "Only the stored path reference will change. Its path kind will be "
+                "preserved or updated atomically. No file will be copied or moved, "
                 "and the local path will be stored as selected.\n\n"
                 f"Old path: {getattr(asset, 'path', '') or '(no image path)'}\n"
                 f"New path: {selected_path}"

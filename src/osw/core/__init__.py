@@ -56,7 +56,7 @@ from osw.core.project_schema import (
     SolverConfig,
     load_project,
 )
-from osw.core.report_asset import ReportScreenshotAsset
+from osw.core.report_asset import ReportAssetPathKind, ReportScreenshotAsset
 from osw.core.run_manager import RunManager
 from osw.core.selection import (
     BoundaryTargetRef,
@@ -115,6 +115,7 @@ __all__ = [
     "ProjectWarning",
     "Quantity",
     "ReportConfig",
+    "ReportAssetPathKind",
     "ResultRef",
     "RunManager",
     "ScriptRef",

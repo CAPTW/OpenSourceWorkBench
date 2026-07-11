@@ -7,6 +7,7 @@ PyVista/VTK scene, runs a solver/parser/mesh tool, or saves a Project file.
 
 from __future__ import annotations
 
+import builtins
 import importlib.util
 import os
 from dataclasses import replace
@@ -15,8 +16,13 @@ from pathlib import Path
 import pytest
 
 from osw.core.demo_project import create_heatsink_flow_demo_project
-from osw.core.project_schema import CURRENT_SCHEMA_VERSION, Project, ProjectMetadata
-from osw.core.report_asset import ReportScreenshotAsset
+from osw.core.project_schema import (
+    CURRENT_SCHEMA_VERSION,
+    DEFAULT_PROJECT_SCHEMA_VERSION,
+    Project,
+    ProjectMetadata,
+)
+from osw.core.report_asset import ReportAssetPathKind, ReportScreenshotAsset
 from osw.post.scene_model import SceneScreenshotRecord
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -52,6 +58,7 @@ def _asset(
     caption: str,
     *,
     marker: str,
+    path_kind: ReportAssetPathKind | None = None,
 ) -> ReportScreenshotAsset:
     return ReportScreenshotAsset(
         id=record_id,
@@ -65,6 +72,7 @@ def _asset(
         glyph_options={"marker": marker, "enabled": True},
         diagnostics=(f"diagnostic-{marker}",),
         metadata={"marker": marker, "created_by": "test"},
+        path_kind=path_kind,
     )
 
 
@@ -72,6 +80,10 @@ def _project_with_assets(assets: list[ReportScreenshotAsset]) -> Project:
     from osw.gui.main_window import _project_replacing_report_screenshots
 
     base = create_heatsink_flow_demo_project()
+    if any(asset.path_kind is not None for asset in assets):
+        payload = base.to_dict()
+        payload["schema_version"] = "0.2"
+        base = Project.from_dict(payload)
     return _project_replacing_report_screenshots(base, assets)
 
 
@@ -216,6 +228,59 @@ def test_manager_states_report_paths_duplicates_and_shadowing(tmp_path: Path) ->
     shadowed = persisted_report_screenshot_states(assets, ("dup",))
     assert shadowed[0] == "available; shadowed by transient; duplicate id"
     assert shadowed[1] == "missing; shadowed by transient; duplicate id"
+
+
+@pytest.mark.parametrize(
+    ("path_kind", "stored_path", "expected_state"),
+    [
+        (
+            ReportAssetPathKind.LEGACY_RAW,
+            "legacy/../private.png",
+            "legacy_raw — explicit legacy/raw reference; availability not checked",
+        ),
+        (
+            ReportAssetPathKind.EXTERNAL_ABSOLUTE,
+            r"\\server\share\private.png",
+            "external_absolute; Unresolved — path resolver unavailable.",
+        ),
+        (
+            ReportAssetPathKind.PROJECT_RELATIVE,
+            "screenshots/private.png",
+            "project_relative; Unresolved — path resolver unavailable.",
+        ),
+    ],
+)
+def test_manager_states_do_not_probe_explicitly_classified_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    path_kind: ReportAssetPathKind,
+    stored_path: str,
+    expected_state: str,
+) -> None:
+    from osw.gui.widgets.persisted_report_screenshot_manager import (
+        persisted_report_screenshot_states,
+    )
+
+    def _unexpected_probe(*_args: object, **_kwargs: object) -> object:
+        pytest.fail(
+            "explicitly classified manager rows must not probe the filesystem"
+        )
+
+    for method_name in ("is_file", "exists", "stat", "resolve"):
+        monkeypatch.setattr(Path, method_name, _unexpected_probe)
+    monkeypatch.setattr(os.path, "realpath", _unexpected_probe)
+    monkeypatch.setattr(builtins, "open", _unexpected_probe)
+    asset = _asset(
+        "classified",
+        stored_path,
+        "Classified",
+        marker="classified",
+        path_kind=path_kind,
+    )
+
+    state = persisted_report_screenshot_states((asset,))[0]
+
+    assert state == expected_state
+    assert stored_path not in state
 
 
 @pytest.mark.parametrize("stale_kind", ["index", "id", "snapshot"])
@@ -484,6 +549,7 @@ def test_relink_changes_one_path_verbatim_and_preserves_files_and_fields(
     after = window.current_project.report_screenshots
     assert len(calls) == 1
     assert after[0].path == selected
+    assert after[0].path_kind is None
     assert replace(after[0], path=first.path) == first
     assert after[1] == second
     assert old_path.read_bytes() == b"old-bytes"
@@ -500,6 +566,62 @@ def test_relink_changes_one_path_verbatim_and_preserves_files_and_fields(
     html = output.read_text(encoding="utf-8")
     assert "new.PNG" in html
     assert "old.png" not in html
+
+
+@pytest.mark.parametrize(
+    ("current_kind", "expected_kind"),
+    [
+        (ReportAssetPathKind.LEGACY_RAW, ReportAssetPathKind.LEGACY_RAW),
+        (
+            ReportAssetPathKind.EXTERNAL_ABSOLUTE,
+            ReportAssetPathKind.EXTERNAL_ABSOLUTE,
+        ),
+        (
+            ReportAssetPathKind.PROJECT_RELATIVE,
+            ReportAssetPathKind.EXTERNAL_ABSOLUTE,
+        ),
+    ],
+)
+def test_relink_updates_explicit_path_and_kind_atomically(
+    app: object,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    current_kind: ReportAssetPathKind,
+    expected_kind: ReportAssetPathKind,
+) -> None:
+    new_path = tmp_path / "new.png"
+    new_path.write_bytes(b"new")
+    old_path = (
+        "screenshots/old.png"
+        if current_kind is ReportAssetPathKind.PROJECT_RELATIVE
+        else str(tmp_path / "old.png")
+    )
+    asset = _asset(
+        "shot-1",
+        old_path,
+        "Old",
+        marker="classified",
+        path_kind=current_kind,
+    )
+    window = _window(app, [asset])
+    calls = _spy_set_project(window, monkeypatch)
+    monkeypatch.setattr(
+        window,
+        "_confirm_relink_persisted_report_screenshot",
+        lambda _asset, _path: True,
+    )
+
+    assert window.relink_persisted_report_screenshot(
+        _target(asset), str(new_path)
+    )
+
+    assert len(calls) == 1
+    replacement = window.current_project.report_screenshots[0]
+    assert replacement.path == str(new_path)
+    assert replacement.path_kind is expected_kind
+    assert replacement.caption == asset.caption
+    assert replacement.metadata == asset.metadata
+    assert window.current_project.schema_version == "0.2"
 
 
 def test_modal_relink_uses_main_window_picker_and_confirmation(
@@ -743,7 +865,8 @@ def test_management_never_auto_saves_and_preserves_schema_compatibility(
     assert window.update_persisted_report_screenshot_caption(_target(asset), "Changed")
     assert saves == []
     assert window.current_project.schema_version == "0.1"
-    assert CURRENT_SCHEMA_VERSION == "0.1"
+    assert DEFAULT_PROJECT_SCHEMA_VERSION == "0.1"
+    assert CURRENT_SCHEMA_VERSION == "0.2"
 
     legacy_payload = Project(metadata=ProjectMetadata(name="Legacy")).to_dict()
     legacy_payload.pop("report_screenshots", None)

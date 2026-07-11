@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from osw.core.diagnostics import DiagnosticReport
-from osw.core.report_asset import ReportScreenshotAsset
+from osw.core.report_asset import ReportAssetPathKind, ReportScreenshotAsset
 from osw.post.scene_model import SceneScreenshotRecord, SceneViewState
 
 if TYPE_CHECKING:
@@ -240,7 +240,22 @@ def scene_screenshot_to_report_figure(record: SceneScreenshotRecord) -> ReportFi
     selection_ids = tuple(record.selection_ids) or tuple(scene.selected_selection_ids)
     scalar_field_id = scene.scalar_field_id or scene.render_options.color_by
     diagnostics = DiagnosticReport()
-    if not record.path:
+    path_kind = record.path_kind
+    unresolved_without_resolver = path_kind in {
+        ReportAssetPathKind.EXTERNAL_ABSOLUTE,
+        ReportAssetPathKind.PROJECT_RELATIVE,
+    }
+    if unresolved_without_resolver:
+        diagnostics.add_warning(
+            "report-scene-screenshot-path-unresolved-no-resolver",
+            f"Scene screenshot {record.id or '<unnamed>'} with path kind "
+            f"{path_kind.value} is unresolved because no path resolver is available.",
+            hint=(
+                "Keep this metadata-only report entry until an authorized path "
+                "resolver supplies an effective local path."
+            ),
+        )
+    elif not record.path:
         diagnostics.add_warning(
             "report-scene-screenshot-path-missing",
             f"Scene screenshot {record.id or '<unnamed>'} has no local image path "
@@ -270,10 +285,14 @@ def scene_screenshot_to_report_figure(record: SceneScreenshotRecord) -> ReportFi
         "is_validation_evidence": False,
         "scene_metadata": dict(record.metadata),
     }
+    if path_kind is not None:
+        metadata["path_kind"] = path_kind.value
+    if unresolved_without_resolver:
+        metadata["path_status"] = "unresolved_no_resolver"
     return ReportFigure(
         figure_id=record.id or "scene-screenshot",
         title=record.caption or record.id or "Scene screenshot",
-        image_path=record.path or None,
+        image_path=None if unresolved_without_resolver else record.path or None,
         caption=record.caption or "",
         diagnostics=diagnostics,
         metadata=metadata,
@@ -310,6 +329,7 @@ def scene_screenshot_to_report_asset(record: SceneScreenshotRecord) -> ReportScr
         scene_state=scene.to_dict(),
         glyph_options=glyph.to_dict(),
         metadata=metadata,
+        path_kind=record.path_kind,
     )
 
 
@@ -340,6 +360,7 @@ def report_asset_to_scene_screenshot(asset: ReportScreenshotAsset) -> SceneScree
         selection_ids=asset.selection_ids,
         created_by=asset.metadata.get("created_by"),
         metadata=dict(asset.metadata),
+        path_kind=asset.path_kind,
     )
 
 

@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from osw.core.report_asset import ReportScreenshotAsset
+from osw.core.report_asset import ReportAssetPathKind, ReportScreenshotAsset
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
 
 try:
@@ -239,7 +239,15 @@ def persisted_report_screenshot_states(
 
     states: list[str] = []
     for index, asset in enumerate(assets):
-        if not asset.path:
+        if asset.path_kind is ReportAssetPathKind.LEGACY_RAW:
+            path_state = (
+                "legacy_raw — explicit legacy/raw reference; availability not checked"
+            )
+        elif asset.path_kind is not None:
+            path_state = (
+                f"{asset.path_kind.value}; Unresolved — path resolver unavailable."
+            )
+        elif not asset.path:
             path_state = "no path"
         elif Path(asset.path).is_file():
             path_state = "available"

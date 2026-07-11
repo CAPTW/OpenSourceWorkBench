@@ -15,6 +15,11 @@ from dataclasses import dataclass, field
 from math import isfinite
 from typing import Any
 
+from osw.core.report_asset import (
+    ReportAssetPathKind,
+    coerce_report_asset_path_kind,
+    validate_report_asset_path,
+)
 from osw.core.validation import ValidationReport
 
 _KNOWN_VIEW_PRESETS = frozenset({"iso", "xy", "xz", "yz", "yx", "zx", "zy", "fit", "default"})
@@ -342,6 +347,7 @@ class SceneScreenshotRecord:
 
     id: str
     path: str
+    path_kind: ReportAssetPathKind | None = field(default=None, kw_only=True)
     caption: str | None = None
     scene_state: SceneViewState = field(default_factory=SceneViewState)
     dataset_ref: str | None = None
@@ -351,8 +357,19 @@ class SceneScreenshotRecord:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        path_kind = (
+            None
+            if self.path_kind is None
+            else coerce_report_asset_path_kind(self.path_kind)
+        )
         object.__setattr__(self, "id", str(self.id or ""))
-        object.__setattr__(self, "path", str(self.path or ""))
+        object.__setattr__(
+            self,
+            "path",
+            str(self.path or "")
+            if path_kind is None
+            else validate_report_asset_path(self.path, path_kind),
+        )
         object.__setattr__(self, "caption", _optional_str(self.caption))
         object.__setattr__(self, "scene_state", _coerce_view_state(self.scene_state))
         object.__setattr__(self, "dataset_ref", _optional_str(self.dataset_ref))
@@ -360,28 +377,43 @@ class SceneScreenshotRecord:
         object.__setattr__(self, "selection_ids", _str_tuple(self.selection_ids))
         object.__setattr__(self, "created_by", _optional_str(self.created_by))
         object.__setattr__(self, "metadata", _string_dict(self.metadata))
+        object.__setattr__(self, "path_kind", path_kind)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "id": self.id,
             "path": self.path,
-            "caption": self.caption,
-            "scene_state": self.scene_state.to_dict(),
-            "dataset_ref": self.dataset_ref,
-            "mesh_ref": self.mesh_ref,
-            "selection_ids": list(self.selection_ids),
-            "created_by": self.created_by,
-            "metadata": dict(self.metadata),
         }
+        if self.path_kind is not None:
+            payload["path_kind"] = self.path_kind.value
+        payload.update(
+            {
+                "caption": self.caption,
+                "scene_state": self.scene_state.to_dict(),
+                "dataset_ref": self.dataset_ref,
+                "mesh_ref": self.mesh_ref,
+                "selection_ids": list(self.selection_ids),
+                "created_by": self.created_by,
+                "metadata": dict(self.metadata),
+            }
+        )
+        return payload
 
     @classmethod
     def from_dict(cls, data: object) -> SceneScreenshotRecord:
         if not isinstance(data, Mapping):
             msg = "SceneScreenshotRecord data must be a mapping."
             raise TypeError(msg)
+        has_path_kind = "path_kind" in data
+        path_kind = (
+            coerce_report_asset_path_kind(data["path_kind"])
+            if has_path_kind
+            else None
+        )
+        path_value = data.get("path", "")
         return cls(
             id=str(data.get("id", "")),
-            path=str(data.get("path", "")),
+            path=path_value if has_path_kind else str(path_value),
             caption=data.get("caption"),
             scene_state=_coerce_view_state(data.get("scene_state", {})),
             dataset_ref=data.get("dataset_ref"),
@@ -389,6 +421,7 @@ class SceneScreenshotRecord:
             selection_ids=_str_tuple(data.get("selection_ids", ())),
             created_by=data.get("created_by"),
             metadata=_string_dict(data.get("metadata", {})),
+            path_kind=path_kind,
         )
 
     def validate(self, *, path: str = "scene_screenshot") -> ValidationReport:

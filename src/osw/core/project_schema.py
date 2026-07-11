@@ -20,7 +20,13 @@ from .selection import (
 from .units import UnitSystem
 from .validation import ProjectSchemaError, ValidationReport
 
-CURRENT_SCHEMA_VERSION = "0.1"
+LEGACY_PROJECT_SCHEMA_VERSION = "0.1"
+PATH_KIND_PROJECT_SCHEMA_VERSION = "0.2"
+CURRENT_SCHEMA_VERSION = PATH_KIND_PROJECT_SCHEMA_VERSION
+DEFAULT_PROJECT_SCHEMA_VERSION = LEGACY_PROJECT_SCHEMA_VERSION
+SUPPORTED_PROJECT_SCHEMA_VERSIONS = frozenset(
+    {LEGACY_PROJECT_SCHEMA_VERSION, PATH_KIND_PROJECT_SCHEMA_VERSION}
+)
 NATIVE_COMMERCIAL_CAD_EXTENSIONS = frozenset(
     {".sldprt", ".sldasm", ".catpart", ".catproduct", ".prt", ".asm"}
 )
@@ -679,7 +685,7 @@ class Project:
         solvers: Sequence[SolverConfig] | None = None,
         results: Sequence[ResultRef] | None = None,
         report: ReportConfig | None = None,
-        schema_version: str = CURRENT_SCHEMA_VERSION,
+        schema_version: str = DEFAULT_PROJECT_SCHEMA_VERSION,
         plugins: Sequence[PluginRef] | None = None,
         warnings: Sequence[ProjectWarning] | None = None,
         *,
@@ -692,6 +698,12 @@ class Project:
         selections: Sequence[NamedSelection] | None = None,
         report_screenshots: Sequence[ReportScreenshotAsset] | None = None,
     ) -> None:
+        schema_version_value = str(schema_version)
+        screenshot_assets = coerce_report_screenshots(report_screenshots)
+        _ensure_report_screenshot_path_kind_envelope(
+            schema_version_value,
+            screenshot_assets,
+        )
         object.__setattr__(self, "metadata", metadata)
         object.__setattr__(self, "units", unit_system or units or UnitSystem.si())
         object.__setattr__(self, "materials", list(materials or []))
@@ -703,13 +715,11 @@ class Project:
         object.__setattr__(self, "solvers", list(solvers or []))
         object.__setattr__(self, "results", list(result_refs or results or []))
         object.__setattr__(self, "report", report_config or report or ReportConfig())
-        object.__setattr__(self, "schema_version", str(schema_version))
+        object.__setattr__(self, "schema_version", schema_version_value)
         object.__setattr__(self, "plugins", list(plugins or []))
         object.__setattr__(self, "warnings", list(warnings or []))
         object.__setattr__(self, "selections", coerce_named_selections(selections))
-        object.__setattr__(
-            self, "report_screenshots", coerce_report_screenshots(report_screenshots)
-        )
+        object.__setattr__(self, "report_screenshots", screenshot_assets)
 
     @property
     def unit_system(self) -> UnitSystem:
@@ -744,6 +754,10 @@ class Project:
         return None
 
     def to_dict(self) -> dict[str, Any]:
+        _ensure_report_screenshot_path_kind_envelope(
+            self.schema_version,
+            self.report_screenshots,
+        )
         unit_payload = self.units.to_dict()
         geometry_payload = [item.to_dict() for item in self.geometry]
         mesh_payload = [item.to_dict() for item in self.meshes]
@@ -788,10 +802,18 @@ class Project:
             msg = "Project data must be a mapping."
             raise ProjectSchemaError(msg)
         migrated = migrate_project_data(data)
-        schema_version = str(migrated.get("schema_version", CURRENT_SCHEMA_VERSION))
-        if schema_version != CURRENT_SCHEMA_VERSION:
-            msg = f"Unsupported OSW project schema version: {schema_version}"
-            raise ProjectSchemaError(msg)
+        schema_version = str(
+            migrated.get("schema_version", DEFAULT_PROJECT_SCHEMA_VERSION)
+        )
+        _ensure_supported_project_schema_version(schema_version)
+        screenshot_payload = migrated.get("report_screenshots", [])
+        if (
+            schema_version == LEGACY_PROJECT_SCHEMA_VERSION
+            and _payload_has_explicit_report_screenshot_path_kind(screenshot_payload)
+        ):
+            raise ProjectSchemaError(
+                "Report screenshot path_kind requires Project schema version 0.2."
+            )
 
         units_defaulted = bool(migrated.get("_units_defaulted", False))
         units_data = migrated.get("units", UnitSystem.si().to_dict())
@@ -875,9 +897,9 @@ def load_project(path: str | Path) -> Project:
 def migrate_project_data(data: Mapping[str, Any]) -> dict[str, Any]:
     migrated = dict(data)
     if "schema_version" not in migrated:
-        migrated["schema_version"] = CURRENT_SCHEMA_VERSION
+        migrated["schema_version"] = DEFAULT_PROJECT_SCHEMA_VERSION
     if migrated.get("schema_version") == "0.0":
-        migrated["schema_version"] = CURRENT_SCHEMA_VERSION
+        migrated["schema_version"] = DEFAULT_PROJECT_SCHEMA_VERSION
     if "units" not in migrated and "unit_system" in migrated:
         migrated["units"] = migrated["unit_system"]
     if "units" not in migrated:
@@ -900,6 +922,30 @@ def migrate_project_data(data: Mapping[str, Any]) -> dict[str, Any]:
     if "report_screenshots" not in migrated:
         migrated["report_screenshots"] = []
     return migrated
+
+
+def _ensure_supported_project_schema_version(schema_version: str) -> None:
+    if schema_version not in SUPPORTED_PROJECT_SCHEMA_VERSIONS:
+        msg = f"Unsupported OSW project schema version: {schema_version}"
+        raise ProjectSchemaError(msg)
+
+
+def _ensure_report_screenshot_path_kind_envelope(
+    schema_version: str,
+    report_screenshots: Sequence[ReportScreenshotAsset],
+) -> None:
+    if schema_version == PATH_KIND_PROJECT_SCHEMA_VERSION:
+        return
+    if any(asset.path_kind is not None for asset in report_screenshots):
+        raise ProjectSchemaError(
+            "Report screenshot path_kind requires Project schema version 0.2."
+        )
+
+
+def _payload_has_explicit_report_screenshot_path_kind(value: object) -> bool:
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        return False
+    return any(isinstance(item, Mapping) and "path_kind" in item for item in value)
 
 
 def project_to_dict(project: Project) -> dict[str, Any]:
