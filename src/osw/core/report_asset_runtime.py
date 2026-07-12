@@ -23,6 +23,7 @@ _SUPPORTED_RASTER_SUFFIXES = frozenset({".png", ".jpg", ".jpeg", ".webp", ".gif"
 _URI_SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 _WINDOWS_DRIVE = re.compile(r"^[A-Za-z]:")
 _WINDOWS_DRIVE_ABSOLUTE = re.compile(r"^[A-Za-z]:[\\/]")
+_SAFE_ASSET_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _WINDOWS_RESERVED_NAMES = frozenset(
     {
         "CON",
@@ -33,7 +34,19 @@ _WINDOWS_RESERVED_NAMES = frozenset(
         *(f"LPT{number}" for number in range(1, 10)),
     }
 )
+_GENERIC_SAFE_ASSET_ID = "report-asset"
 _GENERIC_SAFE_BASENAME = "screenshot"
+_SAFE_CAVEATS = frozenset(
+    {
+        "canonical_containment_unverified",
+        "filesystem_not_checked",
+        "legacy_compatibility_preserved",
+        "lexical_only",
+    }
+)
+_SAFE_KIND_LABELS = frozenset(
+    {"omitted", "unsupported", *(kind.value for kind in ReportAssetPathKind)}
+)
 
 
 class PathFlavor(StrEnum):
@@ -139,7 +152,7 @@ class ReportAssetStatusMetadata:
     phase: ReportAssetResolutionPhase
     severity: ReportAssetResolutionSeverity
     retryable: bool
-    message: str
+    message: str = field(repr=False)
 
 
 _STATUS_METADATA: tuple[
@@ -360,9 +373,9 @@ def status_metadata(status: ReportAssetResolutionStatus) -> ReportAssetStatusMet
 class ReportAssetRuntimeIntent:
     """Strict runtime input preserving exact durable text and kind declaration."""
 
-    asset_id: str
+    asset_id: str = field(repr=False)
     stored_path: str = field(repr=False)
-    declared_kind: ReportAssetPathKind | str | None
+    declared_kind: ReportAssetPathKind | str | None = field(repr=False)
 
     def __post_init__(self) -> None:
         _require_string(self.asset_id, "asset_id")
@@ -384,7 +397,7 @@ class ReportAssetResolutionContext:
     context_generation: int
     document_token: str = field(repr=False)
     request_token: str = field(repr=False)
-    purpose: str
+    purpose: str = field(repr=False)
     consent_state: ConsentState = ConsentState.NOT_APPLICABLE
     consent_token: str | None = field(default=None, repr=False)
     record_fingerprint: str = field(default="", repr=False)
@@ -412,18 +425,18 @@ class ReportAssetResolutionContext:
 class ReportAssetResolutionDescriptor:
     """Runtime-only descriptor; private locators are never generally serialized."""
 
-    asset_id: str
-    declared_kind: ReportAssetPathKind | str | None
+    asset_id: str = field(repr=False)
+    declared_kind: ReportAssetPathKind | str | None = field(repr=False)
     path_flavor: PathFlavor
     portability: ReportAssetPortability
     location: ReportAssetLocation
     status: ReportAssetResolutionStatus
-    diagnostic_codes: tuple[str, ...]
-    diagnostic_messages: tuple[str, ...]
+    diagnostic_codes: tuple[str, ...] = field(repr=False)
+    diagnostic_messages: tuple[str, ...] = field(repr=False)
     context_generation: int
     document_token: str = field(repr=False)
     request_token: str = field(repr=False)
-    purpose: str
+    purpose: str = field(repr=False)
     consent_state: ConsentState
     consent_token: str | None = field(repr=False)
     record_fingerprint: str = field(repr=False)
@@ -433,7 +446,7 @@ class ReportAssetResolutionDescriptor:
     effective_path: str | None = field(repr=False)
     lexical_containment: LexicalContainment
     canonical_containment: CanonicalContainment
-    caveats: tuple[str, ...]
+    caveats: tuple[str, ...] = field(repr=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -452,11 +465,38 @@ class ReportAssetSafeView:
     portability: ReportAssetPortability
     location: ReportAssetLocation
     caveats: tuple[str, ...]
+    asset_id_redacted: bool = False
+
+    def __post_init__(self) -> None:
+        asset_id, redacted = _safe_asset_identifier(self.asset_id)
+        object.__setattr__(self, "asset_id", asset_id)
+        object.__setattr__(
+            self,
+            "asset_id_redacted",
+            redacted or self.asset_id_redacted is True,
+        )
+        object.__setattr__(self, "safe_basename", _safe_public_basename(self.safe_basename))
+        object.__setattr__(self, "declared_kind", _safe_public_kind_label(self.declared_kind))
+        if not isinstance(self.status, ReportAssetResolutionStatus):
+            raise TypeError("status must be a ReportAssetResolutionStatus")
+        if not isinstance(self.portability, ReportAssetPortability):
+            raise TypeError("portability must be a ReportAssetPortability")
+        if not isinstance(self.location, ReportAssetLocation):
+            raise TypeError("location must be a ReportAssetLocation")
+        metadata = status_metadata(self.status)
+        diagnostic_codes, diagnostic_messages = _safe_diagnostics(self.status)
+        object.__setattr__(self, "phase", metadata.phase)
+        object.__setattr__(self, "severity", metadata.severity)
+        object.__setattr__(self, "retryable", metadata.retryable)
+        object.__setattr__(self, "diagnostic_codes", diagnostic_codes)
+        object.__setattr__(self, "diagnostic_messages", diagnostic_messages)
+        object.__setattr__(self, "caveats", _safe_caveat_values(self.caveats))
 
     def to_mapping(self) -> dict[str, object]:
         """Return a one-way, JSON-shaped mapping containing no private locator."""
         return {
             "asset_id": self.asset_id,
+            "asset_id_redacted": self.asset_id_redacted,
             "safe_basename": self.safe_basename,
             "declared_kind": self.declared_kind,
             "status": self.status.value,
@@ -531,19 +571,22 @@ def report_asset_safe_view(
     if not isinstance(descriptor, ReportAssetResolutionDescriptor):
         raise TypeError("descriptor must be a ReportAssetResolutionDescriptor")
     metadata = status_metadata(descriptor.status)
+    asset_id, asset_id_redacted = _safe_asset_identifier(descriptor.asset_id)
+    diagnostic_codes, diagnostic_messages = _safe_diagnostics(descriptor.status)
     return ReportAssetSafeView(
-        asset_id=descriptor.asset_id,
+        asset_id=asset_id,
         safe_basename=_safe_basename(descriptor.stored_path or ""),
         declared_kind=_safe_kind_label(descriptor.declared_kind),
         status=descriptor.status,
         phase=metadata.phase,
         severity=metadata.severity,
         retryable=metadata.retryable,
-        diagnostic_codes=descriptor.diagnostic_codes,
-        diagnostic_messages=descriptor.diagnostic_messages,
+        diagnostic_codes=diagnostic_codes,
+        diagnostic_messages=diagnostic_messages,
         portability=descriptor.portability,
         location=descriptor.location,
-        caveats=descriptor.caveats,
+        caveats=_safe_caveat_values(descriptor.caveats),
+        asset_id_redacted=asset_id_redacted,
     )
 
 
@@ -885,6 +928,51 @@ def _safe_kind_label(value: ReportAssetPathKind | str | None) -> str:
         return coerce_report_asset_path_kind(value).value
     except (TypeError, ValueError):
         return "unsupported"
+
+
+def _safe_asset_identifier(value: object) -> tuple[str, bool]:
+    if isinstance(value, str) and _SAFE_ASSET_ID.fullmatch(value):
+        return value, False
+    return _GENERIC_SAFE_ASSET_ID, True
+
+
+def _safe_public_basename(value: object) -> str:
+    if not isinstance(value, str) or "/" in value or "\\" in value:
+        return _GENERIC_SAFE_BASENAME
+    if (
+        not value
+        or value in {".", ".."}
+        or _looks_like_uri(value)
+        or _has_control_character(value)
+        or _is_unsafe_windows_component(value)
+    ):
+        return _GENERIC_SAFE_BASENAME
+    return value
+
+
+def _safe_public_kind_label(value: object) -> str:
+    if isinstance(value, str) and value in _SAFE_KIND_LABELS:
+        return value
+    return "unsupported"
+
+
+def _safe_diagnostics(
+    status: ReportAssetResolutionStatus,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    metadata = status_metadata(status)
+    return (f"report_asset.{status.value}",), (metadata.message,)
+
+
+def _safe_caveat_values(value: object) -> tuple[str, ...]:
+    if not isinstance(value, tuple):
+        return ()
+    result: list[str] = []
+    seen: set[str] = set()
+    for caveat in value:
+        if caveat in _SAFE_CAVEATS and caveat not in seen:
+            result.append(caveat)
+            seen.add(caveat)
+    return tuple(result)
 
 
 def _has_control_character(value: str) -> bool:

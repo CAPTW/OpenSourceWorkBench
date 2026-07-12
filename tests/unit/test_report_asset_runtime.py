@@ -9,11 +9,12 @@ from __future__ import annotations
 import ast
 import builtins
 import inspect
+import json
 import os
 import shutil
 import socket
 import urllib.request
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, fields, replace
 from pathlib import Path
 
 import pytest
@@ -34,6 +35,7 @@ from osw.core.report_asset_runtime import (
     ReportAssetResolutionStatus,
     ReportAssetRuntimeIntent,
     ReportAssetSafeView,
+    ReportAssetStatusMetadata,
     evaluate_report_asset_runtime,
     report_asset_safe_view,
     status_metadata,
@@ -63,6 +65,42 @@ EXPECTED_STATUSES = {
     "unsupported_path_flavor",
     "unsafe_path_component",
 }
+
+WINDOWS_PRIVATE_PATH = r"C:\Users\ExampleUser\private\scene.png"
+POSIX_PRIVATE_PATH = "/home/example-user/private/scene.png"
+UNC_PRIVATE_PATH = r"\\example-server\secret-share\scene.png"
+URI_PRIVATE_PATH = "file:///home/example-user/private/scene.png"
+DEVICE_PRIVATE_PATH = r"\\?\C:\private\scene.png"
+DOCUMENT_TOKEN = "token-document-SECRET"
+REQUEST_TOKEN = "token-request-SECRET"
+CONSENT_TOKEN = "token-consent-SECRET"
+RECORD_FINGERPRINT = "fingerprint-SECRET"
+
+SENSITIVE_PATH_SENTINELS = (
+    WINDOWS_PRIVATE_PATH,
+    POSIX_PRIVATE_PATH,
+    UNC_PRIVATE_PATH,
+    URI_PRIVATE_PATH,
+    DEVICE_PRIVATE_PATH,
+)
+
+SENSITIVE_FRAGMENTS = (
+    "ExampleUser",
+    "example-user",
+    "example-server",
+    "secret-share",
+    "token-document-SECRET",
+    "token-request-SECRET",
+    "token-consent-SECRET",
+    "fingerprint-SECRET",
+)
+
+
+def assert_sensitive_values_absent(text: str, *values: str) -> None:
+    for value in values:
+        assert value not in text
+    for fragment in SENSITIVE_FRAGMENTS:
+        assert fragment not in text
 
 
 def _context(
@@ -123,21 +161,56 @@ def test_exact_status_vocabulary_and_metadata_are_stable() -> None:
     ).retryable
 
 
-@pytest.mark.parametrize(
-    "contract_type",
-    [
+def test_each_public_contract_dataclass_is_frozen_and_slotted() -> None:
+    metadata = status_metadata(ReportAssetResolutionStatus.LEGACY_NOT_RESOLVED)
+    intent = ReportAssetRuntimeIntent("asset-1", "scene.png", None)
+    context = _context()
+    descriptor = evaluate_report_asset_runtime(intent, context)
+    safe_view = report_asset_safe_view(descriptor)
+    instances: tuple[
+        tuple[
+            ReportAssetStatusMetadata
+            | ReportAssetRuntimeIntent
+            | ReportAssetResolutionContext
+            | ReportAssetResolutionDescriptor
+            | ReportAssetSafeView,
+            str,
+            object,
+        ],
+        ...,
+    ] = (
+        (metadata, "message", "changed"),
+        (intent, "asset_id", "changed"),
+        (context, "context_generation", 99),
+        (descriptor, "status", ReportAssetResolutionStatus.INVALID_INTENT),
+        (safe_view, "asset_id", "changed"),
+    )
+
+    for instance, attribute, replacement in instances:
+        assert "__slots__" in type(instance).__dict__
+        assert not hasattr(instance, "__dict__")
+        with pytest.raises(FrozenInstanceError):
+            setattr(instance, attribute, replacement)
+
+    for contract_type in (
+        ReportAssetStatusMetadata,
         ReportAssetRuntimeIntent,
         ReportAssetResolutionContext,
         ReportAssetResolutionDescriptor,
         ReportAssetSafeView,
-    ],
-)
-def test_contract_types_are_frozen_and_slotted(contract_type: type[object]) -> None:
-    assert "__slots__" in contract_type.__dict__
+    ):
+        for contract_field in fields(contract_type):
+            assert not isinstance(contract_field.default, (dict, list, set))
 
-    intent = ReportAssetRuntimeIntent("asset-1", "scene.png", None)
-    with pytest.raises(FrozenInstanceError):
-        intent.asset_id = "changed"  # type: ignore[misc]
+    for value in (
+        descriptor.diagnostic_codes,
+        descriptor.diagnostic_messages,
+        descriptor.caveats,
+        safe_view.diagnostic_codes,
+        safe_view.diagnostic_messages,
+        safe_view.caveats,
+    ):
+        assert isinstance(value, tuple)
 
 
 @pytest.mark.parametrize(
@@ -431,6 +504,178 @@ def test_safe_projection_contains_only_path_free_values(
     ):
         if private_value and private_value != safe_basename:
             assert private_value not in rendered
+
+
+@pytest.mark.parametrize("unsafe_asset_id", SENSITIVE_PATH_SENTINELS)
+def test_safe_view_redacts_path_authority_from_asset_id(
+    unsafe_asset_id: str,
+) -> None:
+    descriptor = evaluate_report_asset_runtime(
+        ReportAssetRuntimeIntent(
+            asset_id=unsafe_asset_id,
+            stored_path="screenshots/scene.png",
+            declared_kind=ReportAssetPathKind.PROJECT_RELATIVE,
+        ),
+        _context(root="/srv/project", flavor=PathFlavor.POSIX),
+    )
+
+    safe = report_asset_safe_view(descriptor)
+    mapping = safe.to_mapping()
+    rendered = repr(safe) + json.dumps(mapping, sort_keys=True)
+
+    assert safe.asset_id == "report-asset"
+    assert safe.asset_id_redacted is True
+    assert mapping["asset_id"] == "report-asset"
+    assert mapping["asset_id_redacted"] is True
+    assert_sensitive_values_absent(rendered, unsafe_asset_id)
+
+
+def test_safe_view_preserves_strict_safe_asset_id() -> None:
+    safe = report_asset_safe_view(_evaluate("scene.png", None))
+
+    assert safe.asset_id == "asset-1"
+    assert safe.asset_id_redacted is False
+    assert safe.to_mapping()["asset_id"] == "asset-1"
+
+
+@pytest.mark.parametrize(
+    "safe_asset_id",
+    ["A", "0", "shot-001", "shot_001", "shot.001", "a" * 128],
+)
+def test_safe_asset_identifier_grammar_preserves_only_valid_ids(
+    safe_asset_id: str,
+) -> None:
+    safe = report_asset_safe_view(
+        replace(_evaluate("scene.png", None), asset_id=safe_asset_id)
+    )
+
+    assert safe.asset_id == safe_asset_id
+    assert safe.asset_id_redacted is False
+
+
+@pytest.mark.parametrize(
+    "unsafe_asset_id",
+    [
+        "",
+        ".",
+        "..",
+        "-shot",
+        "_shot",
+        ".shot",
+        "shot id",
+        "shot/id",
+        r"shot\id",
+        "scheme:value",
+        "shót",
+        "a" * 129,
+        "shot\nid",
+    ],
+)
+def test_safe_asset_identifier_grammar_redacts_invalid_ids(
+    unsafe_asset_id: str,
+) -> None:
+    safe = report_asset_safe_view(
+        replace(_evaluate("scene.png", None), asset_id=unsafe_asset_id)
+    )
+
+    assert safe.asset_id == "report-asset"
+    assert safe.asset_id_redacted is True
+
+
+def test_safe_view_uses_closed_diagnostic_and_caveat_values() -> None:
+    descriptor = replace(
+        _evaluate("legacy/private.png", ReportAssetPathKind.LEGACY_RAW),
+        diagnostic_codes=(
+            f"unsafe:{WINDOWS_PRIVATE_PATH}",
+            "report_asset.legacy_not_resolved",
+        ),
+        diagnostic_messages=(POSIX_PRIVATE_PATH, UNC_PRIVATE_PATH),
+        caveats=(
+            URI_PRIVATE_PATH,
+            "filesystem_not_checked",
+            "filesystem_not_checked",
+            DEVICE_PRIVATE_PATH,
+        ),
+    )
+
+    safe = report_asset_safe_view(descriptor)
+    mapping = safe.to_mapping()
+    rendered = repr(safe) + json.dumps(mapping, sort_keys=True)
+
+    assert safe.diagnostic_codes == ("report_asset.legacy_not_resolved",)
+    assert safe.diagnostic_messages == (
+        status_metadata(ReportAssetResolutionStatus.LEGACY_NOT_RESOLVED).message,
+    )
+    assert safe.caveats == ("filesystem_not_checked",)
+    assert mapping["diagnostic_codes"] == ["report_asset.legacy_not_resolved"]
+    assert mapping["caveats"] == ["filesystem_not_checked"]
+    assert_sensitive_values_absent(rendered, *SENSITIVE_PATH_SENTINELS)
+
+    directly_constructed = ReportAssetSafeView(
+        asset_id=WINDOWS_PRIVATE_PATH,
+        safe_basename=UNC_PRIVATE_PATH,
+        declared_kind=URI_PRIVATE_PATH,
+        status=ReportAssetResolutionStatus.LEGACY_NOT_RESOLVED,
+        phase=ReportAssetResolutionPhase.FILESYSTEM,
+        severity=ReportAssetResolutionSeverity.WARNING,
+        retryable=True,
+        diagnostic_codes=(URI_PRIVATE_PATH,),
+        diagnostic_messages=(POSIX_PRIVATE_PATH,),
+        portability=ReportAssetPortability.LEGACY_OR_UNKNOWN,
+        location=ReportAssetLocation.UNRESOLVED,
+        caveats=(UNC_PRIVATE_PATH,),
+    )
+    direct_mapping = directly_constructed.to_mapping()
+    direct_rendered = repr(directly_constructed) + json.dumps(
+        direct_mapping, sort_keys=True
+    )
+
+    assert directly_constructed.asset_id == "report-asset"
+    assert directly_constructed.asset_id_redacted is True
+    assert directly_constructed.safe_basename == "screenshot"
+    assert directly_constructed.declared_kind == "unsupported"
+    assert directly_constructed.diagnostic_codes == (
+        "report_asset.legacy_not_resolved",
+    )
+    assert directly_constructed.caveats == ()
+    assert_sensitive_values_absent(direct_rendered, *SENSITIVE_PATH_SENTINELS)
+
+
+def test_descriptor_repr_redacts_path_like_unknown_declared_kind() -> None:
+    intent = ReportAssetRuntimeIntent(
+        asset_id=UNC_PRIVATE_PATH,
+        stored_path=WINDOWS_PRIVATE_PATH,
+        declared_kind=URI_PRIVATE_PATH,
+    )
+    context = ReportAssetResolutionContext(
+        project_root=POSIX_PRIVATE_PATH,
+        project_root_flavor=PathFlavor.POSIX,
+        context_generation=9,
+        document_token=DOCUMENT_TOKEN,
+        request_token=REQUEST_TOKEN,
+        purpose=DEVICE_PRIVATE_PATH,
+        consent_state=ConsentState.REQUIRED,
+        consent_token=CONSENT_TOKEN,
+        record_fingerprint=RECORD_FINGERPRINT,
+    )
+    descriptor = replace(
+        evaluate_report_asset_runtime(intent, context),
+        diagnostic_codes=(URI_PRIVATE_PATH,),
+        diagnostic_messages=(POSIX_PRIVATE_PATH,),
+        caveats=(UNC_PRIVATE_PATH,),
+        purpose=DEVICE_PRIVATE_PATH,
+    )
+
+    assert descriptor.status is ReportAssetResolutionStatus.UNSUPPORTED_KIND
+    rendered = repr(intent) + repr(context) + repr(descriptor)
+    assert_sensitive_values_absent(
+        rendered,
+        *SENSITIVE_PATH_SENTINELS,
+        DOCUMENT_TOKEN,
+        REQUEST_TOKEN,
+        CONSENT_TOKEN,
+        RECORD_FINGERPRINT,
+    )
 
 
 def test_descriptor_has_no_persistence_serializer_and_never_has_effective_path() -> None:
