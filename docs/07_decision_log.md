@@ -4267,3 +4267,36 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   evidence, bundled-solver support, native-Windows validation where evidence
   was WSL-scoped, or broad solver/science correctness. Package metadata remains
   `0.1.5rc1`; public prerelease remains `v0.1.5-rc1`.
+
+## ADR-0182: Report Asset Native Resolution Is Deferred And Retained
+
+- Status: Accepted as `DEFERRED_RETAINED`
+- Date: 2026-07-13
+- Context: The accepted policy outcome is `SELECT_CONTINUED_NATIVE_DEFERRAL`,
+  and the approved closure outcome is
+  `SELECT_NATIVE_DEFERRAL_CLOSURE_DOCUMENTATION_DESIGN`. The strict
+  zero-provider-contact-before-attestation invariant blocks trustworthy native
+  observation, while the existing schema, lexical, privacy, stale-binding,
+  relink, and unresolved-placeholder contracts remain useful within their
+  non-native boundaries.
+- Decision: **Native resolution: `DEFERRED_RETAINED`.** Production native
+  report-asset availability resolution is unsupported and unscheduled. The
+  native implementation and native-test allowlists remain empty. The canonical
+  claim boundary, exact wording, supported non-native workflow matrix,
+  unsupported native-fact matrix, retention treatment, legacy compatibility
+  caveat, and reopening criteria are recorded in [Report Asset Runtime Path
+  Native Deferral](experimental/report_asset_runtime_path_native_deferral.md).
+- Consequences: Unsupported is not a finding that a target is missing,
+  unreadable, unsafe, or nonexistent. Typed `external_absolute` and
+  `project_relative` records remain unresolved placeholders unless the user
+  explicitly relinks them or a separately authorized resolver exists. Legacy
+  compatibility paths remain outside the typed-resolver policy, may perform
+  filesystem checks, and are not certified provider-silent. This decision
+  neither removes nor expands legacy behavior. The runtime-contract and
+  path-kind branches/worktrees and local evidence remain retained reference
+  evidence, not implementation, validation, authorization, or a backup claim.
+- Reopening: **`DEFERRED_RETAINED` may be reopened only by a separately authorized gate after a qualifying trigger supplies new evidence or explicitly changes policy.** Qualifying triggers are new official platform documentation or a documented primitive that materially addresses the blocked invariant; an explicit decision to change the invariant; an authorized trusted-authority architecture with an owner, lifecycle, deployment model, and evidence plan; an authorized relaxed provider-contact policy with revised privacy, consent, claim, and threat boundaries; or a material new product requirement. Heuristics, one-machine success, `DRIVE_FIXED`, device or volume identifiers, repeated metadata checks, fake adapters, undefined helper processes, user consent treated as locality proof, available implementation time, or dislike of the unsupported message are insufficient. Until reopening succeeds, lexical handling remains distinct from filesystem facts, native availability remains unsupported, unresolved placeholders and explicit relink remain available, and legacy paths carry no provider-silence claim.
+- Next gate: The documentation update selects exactly
+  `OSW-3D_WORKSPACE_REPORT_ASSET_RUNTIME_PATH_RESOLVER_FILESYSTEM_SERVICE_NATIVE_DEFERRAL_TRACKED_DOCUMENTATION_REVIEW_AND_COMMIT_READINESS`.
+  It is a separately authorized read-only review-and-commit-readiness gate and
+  was not executed by this documentation update.

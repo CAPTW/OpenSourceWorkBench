@@ -6,6 +6,10 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### Report-Asset Native Deferral Documentation
+
+- **Report-asset native resolution status — `DEFERRED_RETAINED`.** OSW retains typed report-asset path intent, lexical validation/classification, path-private status projections, explicit relink behavior, and unresolved report placeholders. Native availability resolution remains unsupported and no native resolver, service, adapter, fake adapter, broker, or native test matrix was added. This status does not remove an existing supported native feature and does not mean a referenced asset is missing, unreadable, unsafe, or nonexistent. It makes no locality, containment, link-safety, provider-silence, sandboxing, or race-free claim; legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
+
 ### OpenFOAM Template v12 pFinal Fix Implementation
 
 - Added algorithm-aware OpenFOAM `pFinal` generation for PISO/`icoFoam` cases

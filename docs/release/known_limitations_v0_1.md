@@ -46,6 +46,10 @@ workflows, not during install or health checks.
 
 ## Deferred Work
 
+- **Native report-asset availability resolution is unsupported (`DEFERRED_RETAINED`).** OSW can preserve and lexically validate a typed path reference without accessing the filesystem, but it cannot establish existence, regular-file status, readability, locality, containment, link/reparse safety, provider silence, sandboxing, or race-free consumption. Typed unresolved references remain visible as placeholders and can be explicitly relinked. This limitation does not mean the referenced asset is missing, unreadable, unsafe, or nonexistent. Legacy compatibility behavior is separate and is not certified provider-silent.
+- This status documents an unsupported and unscheduled native boundary; it does
+  not remove a previously supported native feature. See [Report Asset Runtime
+  Path Native Deferral](../experimental/report_asset_runtime_path_native_deferral.md).
 - Full CalculiX FRD parser.
 - Full OpenFOAM field parser.
 - Vector glyphs, streamlines, and time animation.

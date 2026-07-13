@@ -18,6 +18,13 @@ Report models live in `osw.post.report_model`:
 
 All paths serialize as strings, and summaries are JSON-serializable.
 
+Typed `external_absolute` and `project_relative` screenshot records are bridged
+to deterministic `unresolved_no_resolver` figures. Their private locator is
+withheld from the report figure, and the figure retains metadata and a warning
+instead of claiming a successful native resolution.
+
+**Native availability resolution is unsupported (`DEFERRED_RETAINED`); this reference was not checked.** It may or may not exist or be readable. The report will keep an unresolved placeholder. You may use “Relink selected screenshot…” to explicitly choose a replacement reference; relinking is an existing compatibility action, changes project metadata only after confirmation, and does not prove locality, containment, link safety, provider silence, sandboxing, or race-free consumption. Saving the Project remains separate and explicit. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
+
 ## Section Builders
 
 `osw.post.report_sections.build_report_summary()` creates stable report
@@ -65,6 +72,9 @@ The GUI does not call subprocess APIs and does not run solvers or scripts.
 - Do not execute scripts, solvers, MATLAB, Octave, or external commands.
 - Do not load remote assets.
 - Warn on missing figure/image assets.
+- Do not turn typed lexical candidates or unresolved placeholders into native
+  existence, readability, locality, containment, link-safety, provider-silence,
+  sandboxing, or race-free claims.
 - Keep report outputs under `artifacts/report` or test temp directories unless
   explicitly exported elsewhere by the user.
 
@@ -76,6 +86,11 @@ The GUI does not call subprocess APIs and does not run solvers or scripts.
 - Missing optional dependencies are surfaced as diagnostics where available.
 - Solver adapter sections remain descriptive until bounded solver adapters are
   implemented.
+- **Native report-asset availability resolution is unsupported (`DEFERRED_RETAINED`).** OSW can preserve and lexically validate a typed path reference without accessing the filesystem, but it cannot establish existence, regular-file status, readability, locality, containment, link/reparse safety, provider silence, sandboxing, or race-free consumption. Typed unresolved references remain visible as placeholders and can be explicitly relinked. This limitation does not mean the referenced asset is missing, unreadable, unsafe, or nonexistent. Legacy compatibility behavior is separate and is not certified provider-silent.
+
+See [Report Asset Runtime Path Native
+Deferral](experimental/report_asset_runtime_path_native_deferral.md) for the
+canonical status and reopening criteria.
 
 ## Next Step
 

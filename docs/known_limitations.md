@@ -112,8 +112,14 @@ Import -> Configure -> Run or prepare -> Result -> Report
 
 ## Reporting And Validation
 
+- **Native report-asset availability resolution is unsupported (`DEFERRED_RETAINED`).** OSW can preserve and lexically validate a typed path reference without accessing the filesystem, but it cannot establish existence, regular-file status, readability, locality, containment, link/reparse safety, provider silence, sandboxing, or race-free consumption. Typed unresolved references remain visible as placeholders and can be explicitly relinked. This limitation does not mean the referenced asset is missing, unreadable, unsafe, or nonexistent. Legacy compatibility behavior is separate and is not certified provider-silent.
+- **Legacy compatibility paths are outside the typed-resolver `DEFERRED_RETAINED` native policy and are not certified provider-silent.** Their existing path checks or relink behavior may access the filesystem; lexical handling in the typed contract does not convert that behavior into proved filesystem facts. The absence of a new typed native resolver neither validates nor expands legacy behavior, and “unsupported” does not mean a legacy target is missing, unreadable, unsafe, or nonexistent. This closure neither removes nor expands legacy behavior. Any legacy-path security review requires its own authorized gate; explicit relink and unresolved-placeholder behavior remain available within their existing boundaries.
 - HTML reports summarize inputs, assumptions, units, warnings, result tables,
   figures, validation notes, and known limitations for the selected demo.
 - Report output does not certify a design or replace independent verification.
 - Any result without validation evidence should remain marked as preview,
   template, fixture-backed, or educational as appropriate.
+
+See [Report Asset Runtime Path Native
+Deferral](experimental/report_asset_runtime_path_native_deferral.md) for the
+complete native-fact matrix, retention policy, and reopening criteria.

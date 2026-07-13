@@ -154,12 +154,15 @@ diagnostics or skips rather than pretending a workflow succeeded.
 - No full OpenFOAM field parser.
 - No plugin signing, remote plugin marketplace, or dependency auto-install.
 - No MSI installer or code signing yet.
+- **Native report-asset availability resolution is unsupported (`DEFERRED_RETAINED`).** OSW can preserve and lexically validate a typed path reference without accessing the filesystem, but it cannot establish existence, regular-file status, readability, locality, containment, link/reparse safety, provider silence, sandboxing, or race-free consumption. Typed unresolved references remain visible as placeholders and can be explicitly relinked. This limitation does not mean the referenced asset is missing, unreadable, unsafe, or nonexistent. Legacy compatibility behavior is separate and is not certified provider-silent.
 - The GitHub Release for `v0.1.5-rc1` is a public prerelease with assets; it is
   not a stable production release, certification milestone, or bundled-solver
   distribution.
 
 See [Known Limitations For v0.1](docs/release/known_limitations_v0_1.md) for
-the full public scope note.
+the full public scope note and [Report Asset Runtime Path Native
+Deferral](docs/experimental/report_asset_runtime_path_native_deferral.md) for
+the canonical report-asset claim boundary.
 
 ## Release Status
 

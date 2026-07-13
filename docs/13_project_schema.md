@@ -14,6 +14,7 @@ The schema lives under `src/osw/core/` and includes:
 - `PhysicsSetup`, `BoundaryCondition`, and `SolverConfig`
 - `BoundaryCurve`, `CurveAxis`, and `BoundaryCurveSource`
 - `ResultRef`, `ReportConfig`, `PluginRef`, and `ProjectWarning`
+- `ReportScreenshotAsset` and `ReportAssetPathKind`
 
 Core modules do not import PySide6. GUI modules may import the core schema.
 
@@ -46,6 +47,20 @@ python -m osw.cli project-validate artifacts\demo_project.json
 
 These commands do not require PySide6 and do not run solvers.
 
+## Report Screenshot Path Intent
+
+Project schema `0.2` preserves an explicit report-screenshot `path_kind` for
+`legacy_raw`, `external_absolute`, and `project_relative` records;
+`managed_project_asset` remains reserved. Schema `0.1` and omitted
+`path_kind` values retain their legacy omission semantics. Serialization and
+round-trip preserve the stored path text and kind, but do not resolve a target.
+
+**Native resolution: `DEFERRED_RETAINED`.** OSW preserves typed report-asset path intent and performs schema round-trip, lexical validation, lexical classification, and path-private projection without filesystem access. Native report-asset availability resolution is unsupported. Typed `external_absolute` and `project_relative` references therefore remain unresolved and produce placeholders until the user explicitly relinks the record or a separately authorized resolver exists. “Unsupported” is not a finding that a referenced asset is missing, unreadable, unsafe, or nonexistent, and it is not a claim of locality, containment, link safety, provider silence, sandboxing, or race-free consumption. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
+
+See [Report Asset Runtime Path Native
+Deferral](experimental/report_asset_runtime_path_native_deferral.md) for the
+canonical native-fact and legacy compatibility boundaries.
+
 ## Validation
 
 Validation checks metadata, units, materials, boundary rows, solver tolerance,
@@ -59,6 +74,10 @@ interpolation, finite numeric values, missing unit metadata, monotonic x values
 for time/spatial profiles, and source traceability. Boundary conditions can
 reference a `curve_id`; ProjectSchema warns when the referenced curve is missing
 or when the curve kind appears inconsistent with the boundary type.
+
+Report screenshot validation is lexical only. It validates the declared kind
+and string form without establishing existence, file type, readability,
+locality, containment, provider silence, or any other filesystem fact.
 
 ## GUI Binding
 

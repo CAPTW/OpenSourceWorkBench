@@ -26,6 +26,11 @@ Current recommended sequence:
    solver/science correctness, or release-readiness.
 4. Plan GUI runner-boundary hardening as a later P1 gate; do not use docs status
    cleanup as permission for GUI direct solver execution.
+5. Review the complete report-asset native-deferral documentation diff through
+   `OSW-3D_WORKSPACE_REPORT_ASSET_RUNTIME_PATH_RESOLVER_FILESYSTEM_SERVICE_NATIVE_DEFERRAL_TRACKED_DOCUMENTATION_REVIEW_AND_COMMIT_READINESS`;
+   that selected gate is read-only and determines commit readiness only.
+
+**Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
 
 ## Track Links
 
@@ -34,6 +39,7 @@ Current recommended sequence:
 - [Live optional validation](live_optional_validation.md)
 - [Post-v0.1.5-rc1 next worktrack selection](post_v0_1_5_rc1_next_worktrack_selection.md)
 - [Next experimental line selection](next_experimental_line_selection.md)
+- [Report asset runtime path native deferral](../experimental/report_asset_runtime_path_native_deferral.md)
 - [Current development cycle](../development/current_cycle.md)
 
 ## Scope Reminder

@@ -1633,7 +1633,14 @@ Use this table before implementing any ambiguous request.
 | Stop | Secrets, destructive Git operations, industrial certification claims, GUI direct solver subprocess execution, native commercial CAD direct import, Simulink or `.mlapp`, full ANSYS clone, or full OpenFOAM UI. | Do not implement. Write a blocker or scope report. |
 | Park | Useful idea, but architecture is missing or risk is high: generalized solver execution, remote jobs, broad OpenFOAM case management, native CAD research, or advanced runner design. | Add a decision/risk note and create a future Task Card. |
 | Defer | Plausible after v0.1 but not needed for the eight demos: richer materials, more formats, GUI polish, parallel execution, nonlinear contact/plasticity, or advanced MATLAB compatibility. | Mark post-v0.1 and keep current diff focused. |
+| Defer | Native report-asset availability resolution remains `DEFERRED_RETAINED`; heuristics, fake adapters, undefined helper processes, or user consent treated as locality proof do not justify uplift. | Keep native implementation and native-test allowlists empty; require a qualifying trigger and separately authorized policy/architecture gate. |
 | Proceed | Directly supports one of the eight demos and can show Import -> Configure -> Run -> Result -> Report without violating non-goals. | Implement within the Task Card and add evidence. |
+
+**`DEFERRED_RETAINED` may be reopened only by a separately authorized gate after a qualifying trigger supplies new evidence or explicitly changes policy.** Qualifying triggers are new official platform documentation or a documented primitive that materially addresses the blocked invariant; an explicit decision to change the invariant; an authorized trusted-authority architecture with an owner, lifecycle, deployment model, and evidence plan; an authorized relaxed provider-contact policy with revised privacy, consent, claim, and threat boundaries; or a material new product requirement. Heuristics, one-machine success, `DRIVE_FIXED`, device or volume identifiers, repeated metadata checks, fake adapters, undefined helper processes, user consent treated as locality proof, available implementation time, or dislike of the unsupported message are insufficient. Until reopening succeeds, lexical handling remains distinct from filesystem facts, native availability remains unsupported, unresolved placeholders and explicit relink remain available, and legacy paths carry no provider-silence claim.
+
+See [Report Asset Runtime Path Native
+Deferral](experimental/report_asset_runtime_path_native_deferral.md) for the
+complete fact matrix and reopening evidence requirements.
 
 ## Success Path Criteria
 

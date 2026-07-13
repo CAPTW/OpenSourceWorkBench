@@ -45,6 +45,12 @@ release-readiness evidence.
 The current next-gate pointer is maintained in
 [Current roadmap pointer](roadmap/current.md).
 
+**Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
+
+The canonical boundary and objective reopening criteria are documented in
+[Report Asset Runtime Path Native
+Deferral](experimental/report_asset_runtime_path_native_deferral.md).
+
 ## Demo Mapping
 
 | Demo | User story | Roadmap item | v0.1 completion signal |
@@ -91,3 +97,5 @@ log entry moves them:
 - nonlinear contact/plasticity demos;
 - industrial certification, compliance, or production accuracy claims;
 - GUI-triggered direct external solver execution.
+- native report-asset availability resolution while its lifecycle remains
+  `DEFERRED_RETAINED`.
