@@ -2620,7 +2620,8 @@ def _safety_text() -> tuple[str, ...]:
         "User/plugin manifests remain untrusted by default.",
         "Built-ins remain authoritative by default.",
         "Skipped-missing optional validation remains skipped-missing.",
-        "Issues #6 through #11 remain open until a separate validation/issue gate.",
+        "GitHub state verified 2026-07-14: Issues #6 through #11 are closed with "
+        "bounded, issue-specific evidence.",
     )
 
 

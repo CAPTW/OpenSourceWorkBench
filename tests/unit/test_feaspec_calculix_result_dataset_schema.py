@@ -202,7 +202,10 @@ def test_schema_payload_exposes_companion_payloads(tmp_path: Path) -> None:
     assert "README_REVIEW_FIRST" in readme.content
     assert "No file writes occur" in readme.content
     assert "No solver execution is performed" in readme.content
-    assert "Issue #8 live CalculiX validation remains open" in readme.content
+    assert (
+        "GitHub state verified 2026-07-14: Issue #8 is closed after bounded WSL "
+        "CalculiX evidence; this workflow does not broaden that closure."
+    ) in readme.content
     assert readme.writes_files is False
 
 

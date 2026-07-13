@@ -13,9 +13,12 @@ documentation and QA-tooling hardening only.
 - `v0.1.5-rc1` is a public prerelease.
 - The post-public asset download audit passed.
 - The public release body note was corrected after the audit.
-- Live optional validation issues `#6` through `#11` remain open.
-- Issue `#8` remains `skipped-missing` because `ccx` was absent in the local
-  installed-only audit.
+- At this completed maintenance gate, live optional validation issues `#6`
+  through `#11` were still open, and `#8` was `skipped-missing` because `ccx`
+  was absent from the local installed-only audit.
+- Later issue-specific validation gates closed `#6` through `#11` with bounded,
+  environment-scoped evidence; those closures do not convert the earlier
+  `skipped-missing` result into a pass.
 
 ## Aggregate timeout behavior
 

@@ -834,7 +834,8 @@ def _safety_text(mapping: Mapping[str, object]) -> str:
         "No discovery, validation, solver execution, install, or uninstall.",
         "No reloadable bundle, export file, report file, copy, attachment, "
         "or output-folder action.",
-        "Issues #6 through #11 remain open.",
+        "GitHub state verified 2026-07-14: Issues #6 through #11 are closed with "
+        "bounded, issue-specific evidence.",
     )
     return "\n".join(fixed + supplied)
 

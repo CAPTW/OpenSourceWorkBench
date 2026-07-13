@@ -4232,7 +4232,10 @@ def _print_feaspec_calculix_result_import_write(
     print("Solver execution performed by this command: false")
     print("Artifact copying performed by this command: false")
     print("Issue/release/tag mutation performed: false")
-    print("Issue #8 remains separate and open.")
+    print(
+        "GitHub state verified 2026-07-14: Issue #8 is closed after bounded WSL "
+        "CalculiX evidence; this workflow does not broaden that closure."
+    )
     print("Planned files:")
     planned_files = record.get("planned_files", ())
     if isinstance(planned_files, Sequence) and planned_files:

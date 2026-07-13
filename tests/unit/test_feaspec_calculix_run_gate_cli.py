@@ -122,7 +122,10 @@ def test_cli_dry_run_exits_zero_and_writes_no_files(
     assert err == ""
     assert "installed-only" in out.lower()
     assert "Solver execution performed: false" in out
-    assert "Issue #8 remains open until a separate validation/closure gate" in out
+    assert (
+        "GitHub state verified 2026-07-14: Issue #8 is closed after bounded WSL "
+        "CalculiX evidence; this workflow does not broaden that closure."
+    ) in out
     assert not run_dir.exists()
 
 

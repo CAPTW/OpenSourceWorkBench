@@ -962,7 +962,8 @@ def _limitations() -> tuple[str, ...]:
         ".sta numerical parser, or .cvg numerical parser is implemented.",
         "No ResultDataset file is written by this model.",
         "No solver execution, solver adapter call, runner call, or external command is performed.",
-        "Issue #8 live CalculiX validation remains separate and open.",
+        "GitHub state verified 2026-07-14: Issue #8 is closed after bounded WSL "
+        "CalculiX evidence; this workflow does not broaden that closure.",
         "External CalculiX solvers are optional and not bundled.",
         "No industrial certification, compliance, production CAE, or accuracy claim.",
     )

@@ -977,7 +977,11 @@ def _project_schema_mutation_blockers() -> tuple[
         ("acknowledgements_expired", "acknowledgements expired"),
         ("raw_paths_unredacted", "raw paths unredacted"),
         ("secrets_tokens_api_keys_present", "secrets/tokens/API keys present"),
-        ("live_optional_validation_issues_open", "validation issues #6 through #11 unresolved"),
+        (
+            "bounded_optional_validation_closure_not_projectschema_authority",
+            "bounded issues #6 through #11 closure does not authorize "
+            "ProjectSchema mutation",
+        ),
         (
             "issue_release_certification_claims_present",
             "issue/release/certification claims present",
@@ -1324,7 +1328,8 @@ def _safety_text() -> tuple[str, ...]:
         "Boundary output is not certification.",
         "Persistence writes are not validation evidence.",
         "Skipped-missing remains skipped-missing.",
-        "Issues #6 through #11 remain live optional validation issues.",
+        "GitHub state verified 2026-07-14: Issues #6 through #11 are closed with "
+        "bounded, issue-specific evidence.",
         "Prepared-machine validation remains separate and supplied-only.",
     )
 

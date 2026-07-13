@@ -1191,7 +1191,8 @@ def _safety_text(
         "Persisted review record does not close issues or mutate releases.",
         "Trust label is not certification.",
         "Skipped-missing remains skipped-missing.",
-        "Issues #6 through #11 remain open.",
+        "GitHub state verified 2026-07-14: Issues #6 through #11 are closed with "
+        "bounded, issue-specific evidence.",
         "Prepared-machine validation remains separate.",
         "No target chooser is exposed.",
         "No writer bridge is exposed.",

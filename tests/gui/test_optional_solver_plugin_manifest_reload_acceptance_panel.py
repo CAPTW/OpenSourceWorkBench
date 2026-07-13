@@ -141,7 +141,10 @@ def test_lazy_export_inert_construction_and_initial_guidance() -> None:
         assert "No persisted state file access." in safety
         assert "No reader call." in safety
         assert "No CLI bridge." in safety
-        assert "Issues #6 through #11 remain open." in safety
+        assert (
+            "GitHub state verified 2026-07-14: Issues #6 through #11 are closed "
+            "with bounded, issue-specific evidence."
+        ) in safety
 
         panel.close()
         panel.deleteLater()

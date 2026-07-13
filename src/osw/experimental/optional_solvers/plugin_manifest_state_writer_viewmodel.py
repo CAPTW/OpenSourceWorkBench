@@ -2712,7 +2712,8 @@ def _safety_text() -> tuple[str, ...]:
         STATE_WRITER_NOT_AUTOMATIC_ACTIVATION_TEXT,
         TRUST_NOT_CERTIFICATION_TEXT,
         STATE_SCHEMA_NOT_PROJECT_SCHEMA_TEXT,
-        "Issues #6 through #11 remain live optional validation issues.",
+        "GitHub state verified 2026-07-14: Issues #6 through #11 are closed with "
+        "bounded, issue-specific evidence.",
     )
 
 

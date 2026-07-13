@@ -248,7 +248,8 @@ def _field_limitations() -> tuple[str, ...]:
         "Field Viewer does not execute solvers, scripts, or external commands.",
         "Full CalculiX FRD contour parsing is not implemented in this slice.",
         "OpenFOAM field parsing is not implemented in this slice.",
-        "Vector glyphs, streamlines, and animation remain deferred.",
+        "Field Viewer live vector-glyph rendering, streamlines, and animation "
+        "remain deferred; Mesh Viewer glyph controls/state are preview-only.",
     )
 
 

@@ -337,7 +337,11 @@ def test_copy_ready_summary_is_deterministic_without_clipboard(
     second = dialog.copy_ready_summary_text()
     assert first == second
     assert "FEASpec CalculiX ResultDataset write summary" in first
-    assert "Safety: no solver execution; no artifact copying" in first
+    assert (
+        "Safety: no solver execution; no artifact copying; GitHub state verified "
+        "2026-07-14: issue #8 is closed after bounded WSL CalculiX evidence, and "
+        "this workflow does not broaden that closure."
+    ) in first
 
 
 def test_disabled_reason_text_remains_clear(app: object, tmp_path: Path) -> None:

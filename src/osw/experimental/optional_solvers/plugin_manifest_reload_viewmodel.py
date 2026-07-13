@@ -1621,7 +1621,8 @@ def _safety_text() -> tuple[str, ...]:
         "Reload does not mutate ProjectSchema.",
         "Reload does not close issues or mutate releases.",
         "Reload does not certify manifests.",
-        "Issues #6 through #11 remain live optional validation issues.",
+        "GitHub state verified 2026-07-14: Issues #6 through #11 are closed with "
+        "bounded, issue-specific evidence.",
     )
 
 

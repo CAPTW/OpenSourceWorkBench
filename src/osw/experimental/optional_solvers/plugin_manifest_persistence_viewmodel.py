@@ -2178,7 +2178,9 @@ def _guidance_text() -> tuple[str, ...]:
         "Built-ins win by default; persisted state does not override them silently.",
         "Stale or missing sources require re-preview through a future explicit gate.",
         "Deactivation/reactivation history and historical validation evidence are retained.",
-        "Issues #6 through #11 remain open; skipped-missing remains skipped-missing.",
+        "GitHub state verified 2026-07-14: Issues #6 through #11 are closed with "
+        "bounded, issue-specific evidence; skipped-missing remains historical "
+        "non-pass evidence.",
     )
 
 

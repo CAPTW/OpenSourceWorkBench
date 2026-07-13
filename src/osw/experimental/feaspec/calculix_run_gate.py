@@ -566,8 +566,8 @@ def explain_calculix_run_result(result: FEASpecCalculiXRunResult) -> list[str]:
         "No issue closure was performed.",
         "Result import is a separate future gate.",
         (
-            "Issue #8 remains open until a separate validation/closure gate "
-            "confirms live installed CalculiX evidence."
+            "GitHub state verified 2026-07-14: Issue #8 is closed after bounded "
+            "WSL CalculiX evidence; this workflow does not broaden that closure."
         ),
         f"Solver execution performed: {str(result.solver_execution_performed).lower()}.",
     ]
@@ -1086,8 +1086,8 @@ def _limitations() -> tuple[str, ...]:
         "No release, tag, issue, or asset mutation is performed.",
         "External solvers remain optional and are not bundled.",
         (
-            "Issue #8 remains open until a separate validation/closure gate "
-            "confirms live installed CalculiX evidence."
+            "GitHub state verified 2026-07-14: Issue #8 is closed after bounded "
+            "WSL CalculiX evidence; this workflow does not broaden that closure."
         ),
         "No industrial certification, compliance, production CAE, or accuracy claim.",
     )

@@ -243,4 +243,7 @@ def test_safety_text_keeps_no_run_boundary(app: object, tmp_path: Path) -> None:
     assert "No artifact copying." in text
     assert "No directory creation during selection." in text
     assert "No solver execution." in text
-    assert "Issue #8 live CalculiX validation remains separate and open." in text
+    assert (
+        "GitHub state verified 2026-07-14: Issue #8 is closed after bounded WSL "
+        "CalculiX evidence; this workflow does not broaden that closure."
+    ) in text

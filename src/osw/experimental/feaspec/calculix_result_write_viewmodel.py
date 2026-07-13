@@ -656,7 +656,8 @@ def _safety_messages(
         ),
         FEASpecCalculiXResultWriteSafetyMessage(
             "FWVM_ISSUE_8_OPEN",
-            "Issue #8 live CalculiX validation remains separate and open.",
+            "GitHub state verified 2026-07-14: Issue #8 is closed after bounded "
+            "WSL CalculiX evidence; this workflow does not broaden that closure.",
         ),
     ]
     if draft_summary.get("limitations") or schema_summary.get("limitations_count", 0):

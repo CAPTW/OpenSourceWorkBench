@@ -80,6 +80,10 @@ mean the base package is broken.
 
 ## Deferred v0.1 Paths
 
-Full CalculiX FRD field parsing, full OpenFOAM field parsing, vector glyphs,
-streamlines, time animation, and PDF export are deferred. OSW v0.1 reports
-metadata and limitations instead of overclaiming these workflows.
+Full CalculiX FRD field parsing and full OpenFOAM field parsing remain deferred.
+Bounded vector-field mapping and preview-only Mesh Viewer glyph controls/state
+exist for compatible three-component point/cell arrays, but live PyVista glyph
+rendering, arbitrary vector visualization, streamlines, tensor visualization,
+time animation, and PDF export remain deferred. The preview requires optional
+GUI/visualization components where applicable and makes no solver-validation,
+scientific-validation, certification, or production-readiness claim.

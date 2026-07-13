@@ -101,7 +101,8 @@ _SAFETY_BOUNDARY_NOTES = (
     "A trust label is not certification.",
     "ProjectSchema mutation remains out of scope.",
     "Reload, export, report, clipboard, and GUI/CLI integrations remain future-gated.",
-    "Issues #6 through #11 remain live optional validation issues.",
+    "GitHub state verified 2026-07-14: Issues #6 through #11 are closed with "
+    "bounded, issue-specific evidence.",
 )
 
 

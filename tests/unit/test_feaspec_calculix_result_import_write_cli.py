@@ -160,7 +160,10 @@ def test_plan_only_default_writes_no_files(
     assert "Files written: false" in out
     assert "Solver execution performed by this command: false" in out
     assert "Artifact copying performed by this command: false" in out
-    assert "Issue #8 remains separate and open." in out
+    assert (
+        "GitHub state verified 2026-07-14: Issue #8 is closed after bounded WSL "
+        "CalculiX evidence; this workflow does not broaden that closure."
+    ) in out
 
 
 def test_explicit_plan_only_json_is_parseable_and_writes_no_files(

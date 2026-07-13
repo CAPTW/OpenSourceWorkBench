@@ -122,7 +122,10 @@ def test_lazy_export_inert_construction_and_unavailable_guidance() -> None:
         assert "Persisted review record is not automatic activation." in safety
         assert "does not close issues or mutate releases" in safety
         assert "Trust label is not certification." in safety
-        assert "Issues #6 through #11 remain open." in safety
+        assert (
+            "GitHub state verified 2026-07-14: Issues #6 through #11 are closed "
+            "with bounded, issue-specific evidence."
+        ) in safety
         assert "No target chooser is exposed." in safety
         assert "No writer bridge is exposed." in safety
         assert "No CLI bridge or external process use." in safety

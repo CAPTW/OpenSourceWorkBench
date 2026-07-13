@@ -1415,7 +1415,8 @@ def _safety_text() -> tuple[str, ...]:
         "Acceptance does not install, uninstall, or remove dependencies or solvers.",
         "Acceptance does not close issues or mutate releases, tags, or assets.",
         "Acceptance does not certify manifests.",
-        "Issues #6 through #11 remain live optional validation issues.",
+        "GitHub state verified 2026-07-14: Issues #6 through #11 are closed with "
+        "bounded, issue-specific evidence.",
     )
 
 

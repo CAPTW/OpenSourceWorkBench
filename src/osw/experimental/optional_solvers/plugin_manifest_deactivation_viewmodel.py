@@ -1089,7 +1089,9 @@ def _guidance_text() -> tuple[str, ...]:
         "does not deactivate built-ins.",
         "User-selected and plugin-provided manifests are untrusted by default.",
         "Historical validation evidence is retained and not rewritten.",
-        "Issues #6 through #11 remain open; skipped-missing remains skipped-missing.",
+        "GitHub state verified 2026-07-14: Issues #6 through #11 are closed with "
+        "bounded, issue-specific evidence; skipped-missing remains historical "
+        "non-pass evidence.",
     )
 
 

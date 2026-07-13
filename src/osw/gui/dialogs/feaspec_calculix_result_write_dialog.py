@@ -289,7 +289,9 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
             "Retry guidance:",
             self.retry_guidance_text(),
             "",
-            "Safety: no solver execution; no artifact copying; issue #8 remains open.",
+            "Safety: no solver execution; no artifact copying; GitHub state "
+            "verified 2026-07-14: issue #8 is closed after bounded WSL CalculiX "
+            "evidence, and this workflow does not broaden that closure.",
         ]
         return "\n".join(lines)
 
@@ -658,7 +660,8 @@ class FEASpecCalculiXResultWriteDialog(_BaseDialog):
             "No solver execution.",
             "No command execution.",
             "No release, tag, asset, or issue mutation.",
-            "Issue #8 live CalculiX validation remains separate and open.",
+            "GitHub state verified 2026-07-14: Issue #8 is closed after bounded "
+            "WSL CalculiX evidence; this workflow does not broaden that closure.",
             "External solvers are optional and not bundled.",
             "No industrial certification or production accuracy claim.",
             "",

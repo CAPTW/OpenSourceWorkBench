@@ -52,12 +52,23 @@ workflows, not during install or health checks.
   Path Native Deferral](../experimental/report_asset_runtime_path_native_deferral.md).
 - Full CalculiX FRD parser.
 - Full OpenFOAM field parser.
-- Vector glyphs, streamlines, and time animation.
+- Bounded vector-field mapping and preview-only Mesh Viewer glyph
+  controls/state are implemented for compatible three-component point/cell
+  arrays. Live PyVista glyph rendering, arbitrary vector visualization,
+  streamlines, tensor visualization, and time animation remain unsupported;
+  the preview requires optional GUI/visualization components where applicable
+  and is not solver validation, scientific validation, certification, or
+  production readiness.
 - PDF export.
 - Binary desktop installers.
 - Remote plugin store, plugin signing, and dependency auto-install.
-- Published GitHub Release assets, package artifacts, and binary installers for
-  `v0.1.3-rc1`.
+- The public `v0.1.3-rc1` GitHub prerelease has five attached Release assets: a
+  wheel, an sdist, an unsigned Windows portable ZIP, `SHA256SUMS.txt`, and
+  `release_asset_manifest.json`. GitHub’s automatic source archives are
+  separate from that five-asset count. No MSI, code signing, Python
+  package-index publication, bundled-solver distribution, stable-production
+  status, or future packaging format is claimed; those remain separately
+  gated.
 
 For the broader standing limitations document, see
 [Known Limitations](../known_limitations.md).

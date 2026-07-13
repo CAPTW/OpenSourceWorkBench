@@ -58,7 +58,10 @@ information can be summarized by report tooling where already supported.
 
 - Full CalculiX FRD field parsing is deferred.
 - Full OpenFOAM field parsing is deferred.
-- Vector glyphs, streamlines, and time animation are optional future work.
+- FieldViewer does not render vector glyphs. Mesh Viewer provides bounded
+  preview-only glyph controls/state for compatible three-component vectors;
+  live PyVista glyph rendering, arbitrary vector visualization, streamlines,
+  tensor visualization, and time animation remain future work.
 - PyVista is optional and is not required for result or field metadata
   inspection.
 - Users should validate engineering results independently.

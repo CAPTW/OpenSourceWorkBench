@@ -691,7 +691,9 @@ def _draft_limitations(
                 "draft-mapping",
             ),
             FEASpecCalculiXResultDraftLimitation(
-                "Issue #8 live CalculiX validation remains open.",
+                "GitHub state verified 2026-07-14: Issue #8 is closed after "
+                "bounded WSL CalculiX evidence; this workflow does not broaden "
+                "that closure.",
                 "validation",
             ),
         ]

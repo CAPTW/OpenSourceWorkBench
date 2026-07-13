@@ -6,11 +6,11 @@ produces an overlay ``MeshData`` with the field's scalar values added as a
 viewer can color a mesh by a *result* field through the scene shell's existing
 ``color_by`` seam.
 
-The same module also exposes a bounded vector overlay mapper for future glyph
-preview work. It runs no solver, parses no solver artifacts, generates no meshes,
-and imports no rendering package: it only rearranges already-computed values,
-refusing with a friendly diagnostic (rather than fabricating data) when the
-values do not align to the mesh.
+The same module also exposes the bounded vector overlay mapper used by Mesh
+Viewer glyph-preview controls/state. It runs no solver, parses no solver
+artifacts, generates no meshes, and imports no rendering package: it only
+rearranges already-computed values, refusing with a friendly diagnostic (rather
+than fabricating data) when the values do not align to the mesh.
 """
 
 from __future__ import annotations

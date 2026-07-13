@@ -168,7 +168,10 @@ def test_dialog_renders_safety_and_acknowledgements(
     assert "existing library writer" in safety
     assert "No directory creation during selection." in safety
     assert "No solver execution." in safety
-    assert "Issue #8 live CalculiX validation remains separate and open." in safety
+    assert (
+        "GitHub state verified 2026-07-14: Issue #8 is closed after bounded WSL "
+        "CalculiX evidence; this workflow does not broaden that closure."
+    ) in safety
     assert "External solvers are optional and not bundled." in safety
     assert "No industrial certification" in safety
     assert "Limitations acknowledged" in dialog.acknowledgement_text()

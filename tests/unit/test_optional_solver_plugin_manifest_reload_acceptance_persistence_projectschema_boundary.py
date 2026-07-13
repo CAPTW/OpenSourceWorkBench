@@ -287,7 +287,7 @@ def test_preconditions_candidates_and_mutation_blockers_are_explicit() -> None:
         "acknowledgements_expired",
         "raw_paths_unredacted",
         "secrets_tokens_api_keys_present",
-        "live_optional_validation_issues_open",
+        "bounded_optional_validation_closure_not_projectschema_authority",
     ):
         assert blockers[row_id]["status"] == "blocked_future_only"
         assert blockers[row_id]["value"] is True

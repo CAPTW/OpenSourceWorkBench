@@ -1743,7 +1743,8 @@ def _safety_text() -> tuple[str, ...]:
         "Summary audit output is not certification.",
         "Persisted review records remain untrusted by default.",
         "Skipped-missing remains skipped-missing.",
-        "Issues #6 through #11 remain live optional validation issues.",
+        "GitHub state verified 2026-07-14: Issues #6 through #11 are closed with "
+        "bounded, issue-specific evidence.",
         "Prepared-machine validation remains separate and supplied-only.",
     )
 

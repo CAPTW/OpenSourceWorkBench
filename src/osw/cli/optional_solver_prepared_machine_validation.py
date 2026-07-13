@@ -84,7 +84,9 @@ _SAFETY_GUIDANCE = (
     "Run this command only on a machine intentionally prepared by the operator.",
     "Review preflight and plan output before using run.",
     "Use --write-evidence and --evidence-dir only for local evidence directories.",
-    "Keep issues #6 through #11 open until a separate issue triage gate.",
+    "GitHub state verified 2026-07-14: Issues #6 through #11 are closed with "
+    "bounded, issue-specific evidence; revalidation or reopening requires a "
+    "separate explicit gate.",
     "Keep release, tag, asset, and version changes in separate release gates.",
     "Treat skipped-missing as parked setup state, not as validation success.",
 )

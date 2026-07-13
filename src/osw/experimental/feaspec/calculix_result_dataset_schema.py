@@ -815,7 +815,8 @@ def _review_readme_payload(
             "No ResultDataset persistence is implemented here.",
             "No file writes occur in this schema model.",
             "No solver execution is performed by this schema model.",
-            "Issue #8 live CalculiX validation remains open.",
+            "GitHub state verified 2026-07-14: Issue #8 is closed after bounded "
+            "WSL CalculiX evidence; this workflow does not broaden that closure.",
             "External solvers are optional and are not bundled.",
             "No industrial certification is claimed.",
         )

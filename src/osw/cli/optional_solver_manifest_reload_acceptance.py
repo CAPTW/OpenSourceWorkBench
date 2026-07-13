@@ -119,7 +119,8 @@ _SAFETY_GUIDANCE = (
     "Accepted-for-session-review remains untrusted by default.",
     "Trust label is not certification.",
     "Skipped-missing remains skipped-missing.",
-    "Live issues #6 through #11 remain open.",
+    "GitHub state verified 2026-07-14: Issues #6 through #11 are closed with "
+    "bounded, issue-specific evidence.",
     "Prepared-machine validation remains separate.",
 )
 
