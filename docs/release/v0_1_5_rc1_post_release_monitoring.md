@@ -35,8 +35,9 @@ state that the post-public audit and fresh public asset download smoke completed
 - Issues `#6`, `#7`, `#8`, `#9`, `#10`, and `#11` remain closed after the
   later bounded optional validation evidence and closure gates. Treat those
   closures as scoped issue-state evidence only, not certification,
-  production-readiness, release-readiness, broad solver/science correctness, bundled-solver
-  support, or native-Windows validation where evidence was WSL-scoped.
+  production-readiness, release-readiness, broad solver/science correctness,
+  bundled-solver support, or native-Windows validation where evidence was
+  WSL-scoped.
 - Historical `skipped-missing` checks remain historical setup evidence only and
   do not replace the later issue-specific validation evidence.
 - Public notes continue to avoid stale audit-pending wording.
@@ -55,4 +56,7 @@ state that the post-public audit and fresh public asset download smoke completed
 - No certification claim.
 - No signed ZIP or MSI/code-signing claim.
 - No live CalculiX validation pass claim.
-- No issue `#8` closure claim.
+- Issue `#8` closure is limited to its later bounded WSL CalculiX evidence; it
+  is not certification, production readiness, release readiness,
+  bundled-solver support, broad solver-correctness evidence, or native-Windows
+  validation.

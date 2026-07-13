@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from osw.scripts.mscript.mat_model import MatFileVersion
+from osw.core.diagnostics import DiagnosticSeverity
+from osw.scripts.mscript.mat_model import MatFileVersion, MatReadStatus
 from osw.scripts.mscript.mat_reader import (
     MatReader,
     detect_mat_version,
@@ -13,6 +14,14 @@ from osw.scripts.mscript.mat_reader import (
     is_hdf5_mat_v73,
     read_mat_file,
 )
+
+V73_SIGNATURE_ONLY_PLACEHOLDER = b"\x89HDF\r\n\x1a\nplaceholder"
+
+
+class _FailingH5py:
+    @staticmethod
+    def File(_path: Path, _mode: str) -> object:
+        raise OSError("invalid HDF5 content")
 
 
 def scipy_available() -> bool:
@@ -83,15 +92,50 @@ def test_missing_scipy_gives_friendly_diagnostic(tmp_path: Path) -> None:
 
 def test_v73_hdf5_path_is_explicit_and_non_crashing(tmp_path: Path) -> None:
     mat_path = tmp_path / "v73.mat"
-    mat_path.write_bytes(b"\x89HDF\r\n\x1a\nplaceholder")
+    # This is an HDF5 signature marker only, not a valid MAT v7.3 container.
+    mat_path.write_bytes(V73_SIGNATURE_ONLY_PLACEHOLDER)
 
-    preview = MatReader(scipy_loadmat=None, hdf5storage_loadmat=None).read(mat_path)
+    preview = MatReader(
+        scipy_loadmat=None,
+        hdf5storage_loadmat=None,
+        h5py_module=None,
+    ).read(mat_path)
 
+    assert preview.status == MatReadStatus.DEPENDENCY_MISSING
     assert preview.format_version == "7.3"
     assert preview.variables == ()
     assert preview.diagnostics.has_warnings
+    assert not preview.diagnostics.has_errors
+    assert any(
+        message.code == "mat-v73-dependency-missing"
+        and message.severity is DiagnosticSeverity.WARNING
+        for message in preview.diagnostics.messages
+    )
     assert "MAT v7.3" in preview.diagnostics.summary()
     assert "hdf5storage" in preview.diagnostics.summary()
+
+
+def test_v73_invalid_hdf5_with_available_reader_reports_error(tmp_path: Path) -> None:
+    mat_path = tmp_path / "invalid-v73.mat"
+    mat_path.write_bytes(V73_SIGNATURE_ONLY_PLACEHOLDER)
+
+    preview = MatReader(
+        scipy_loadmat=None,
+        hdf5storage_loadmat=None,
+        h5py_module=_FailingH5py(),
+    ).read(mat_path)
+
+    failures = [
+        message
+        for message in preview.diagnostics.messages
+        if message.code == "mat-v73-h5py-summary-failed"
+    ]
+    assert preview.status == MatReadStatus.ERROR
+    assert preview.variables == ()
+    assert preview.diagnostics.has_errors
+    assert len(failures) == 1
+    assert failures[0].severity is DiagnosticSeverity.ERROR
+    assert str(tmp_path) not in failures[0].message
 
 
 def test_invalid_extension_returns_friendly_error(tmp_path: Path) -> None:
@@ -123,7 +167,7 @@ def test_corrupt_tiny_file_returns_friendly_error(tmp_path: Path) -> None:
 
 def test_hdf5_v73_detection(tmp_path: Path) -> None:
     path = tmp_path / "v73.mat"
-    path.write_bytes(b"\x89HDF\r\n\x1a\nplaceholder")
+    path.write_bytes(V73_SIGNATURE_ONLY_PLACEHOLDER)
 
     assert is_hdf5_mat_v73(path) is True
     assert detect_mat_version(path) is MatFileVersion.V73

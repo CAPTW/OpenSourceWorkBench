@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail when pytest test files share the same basename."""
+"""Fail when ordinary pytest test modules share the same basename."""
 
 from __future__ import annotations
 
@@ -7,6 +7,8 @@ from collections import defaultdict
 from pathlib import Path
 
 from _common import repo_root
+
+PYTEST_RESERVED_MODULE_BASENAMES = {"__init__.py", "conftest.py"}
 
 ALLOWED_DUPLICATE_TEST_BASENAMES = {
     "test_optional_solver_gui_discovery_refresh_guardrails.py": {
@@ -21,14 +23,14 @@ ALLOWED_DUPLICATE_TEST_BASENAMES = {
 
 
 def find_duplicate_test_basenames(tests_root: Path) -> dict[str, list[Path]]:
-    """Return duplicate non-__init__.py basenames under the tests tree."""
+    """Return duplicate ordinary test-module basenames under the tests tree."""
 
     paths_by_name: dict[str, list[Path]] = defaultdict(list)
     if not tests_root.exists():
         return {}
 
     for path in sorted(tests_root.rglob("*.py")):
-        if path.name == "__init__.py":
+        if path.name in PYTEST_RESERVED_MODULE_BASENAMES:
             continue
         paths_by_name[path.name].append(path)
 

@@ -4,6 +4,9 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
+import osw.core.executables as executable_discovery
 from osw.core.executables import ExecutablePathRegistry
 from osw.mesh.gmsh_adapter import (
     GmshAdapter,
@@ -52,7 +55,11 @@ def test_module_imports_without_gmsh_meshio_or_pyside6() -> None:
     assert hasattr(adapter, "GmshAdapter")
 
 
-def test_gmsh_executable_detection_uses_registry_and_reports_missing(tmp_path: Path) -> None:
+def test_gmsh_executable_detection_uses_registry_and_reports_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(executable_discovery.shutil, "which", lambda _name: None)
+
     missing = find_gmsh_executable(ExecutablePathRegistry())
     configured = find_gmsh_executable(ExecutablePathRegistry().register("gmsh", sys.executable))
 

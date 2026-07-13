@@ -54,3 +54,10 @@ def test_init_py_is_ignored(tmp_path: Path) -> None:
     _write(tmp_path / "gui" / "__init__.py")
 
     assert find_duplicate_test_basenames(tmp_path) == {}
+
+
+def test_conftest_py_is_ignored(tmp_path: Path) -> None:
+    _write(tmp_path / "unit" / "conftest.py")
+    _write(tmp_path / "gui" / "conftest.py")
+
+    assert find_duplicate_test_basenames(tmp_path) == {}

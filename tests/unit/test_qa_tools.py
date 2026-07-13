@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import shutil
 import subprocess
@@ -25,10 +26,10 @@ def tool_env() -> dict[str, str]:
     return env
 
 
-def run_tool(*args: str) -> subprocess.CompletedProcess[str]:
+def run_tool(*args: str, cwd: Path = REPO_ROOT) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, *args],
-        cwd=REPO_ROOT,
+        cwd=cwd,
         env=tool_env(),
         text=True,
         encoding="utf-8",
@@ -49,6 +50,32 @@ def load_module(path: Path, name: str) -> ModuleType:
     finally:
         sys.path.pop(0)
     return module
+
+
+def _release_gate_repo(tmp_path: Path) -> tuple[Path, Path]:
+    root = tmp_path / "release-gate-repo"
+    root.mkdir()
+    init = subprocess.run(
+        [GIT_BIN or "git", "init", "--quiet"],
+        cwd=root,
+        env=tool_env(),
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        capture_output=True,
+        check=False,
+    )
+    assert init.returncode == 0, init.stdout + init.stderr
+
+    codex_dir = root / ".codex"
+    codex_dir.mkdir()
+    for name in ("func_queue_state.json", "ui_queue_state.json"):
+        shutil.copyfile(REPO_ROOT / ".codex" / name, codex_dir / name)
+
+    func_state = json.loads((codex_dir / "func_queue_state.json").read_text(encoding="utf-8"))
+    report_value = func_state["last_report"]
+    assert isinstance(report_value, str)
+    return root, Path(report_value)
 
 
 def test_scope_drift_flags_forbidden_positive_claim() -> None:
@@ -136,8 +163,22 @@ def test_fast_qa_runner_handles_available_checks() -> None:
     assert "pytest tests/unit -q" in proc.stdout
 
 
-def test_release_gate_checker_runs_on_current_repo() -> None:
-    proc = run_tool("tools/qa/check_release_gate.py")
+def test_release_gate_checker_fails_closed_when_synthetic_report_is_missing(
+    tmp_path: Path,
+) -> None:
+    root, report_relative = _release_gate_repo(tmp_path)
+    proc = run_tool(str(REPO_ROOT / "tools" / "qa" / "check_release_gate.py"), cwd=root)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert f"release report is missing: {report_relative.as_posix()}" in proc.stdout
+
+
+def test_release_gate_checker_accepts_synthetic_release_fixture(tmp_path: Path) -> None:
+    root, report_relative = _release_gate_repo(tmp_path)
+    report_path = root / report_relative
+    report_path.parent.mkdir(parents=True)
+    report_path.write_text("# Synthetic release gate evidence\n", encoding="utf-8")
+    proc = run_tool(str(REPO_ROOT / "tools" / "qa" / "check_release_gate.py"), cwd=root)
 
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert "Release gate queue" in proc.stdout
