@@ -8,7 +8,12 @@
 - Canonical phrase: **Native resolution: `DEFERRED_RETAINED`.**
 - Native implementation allowlist: empty
 - Native-test allowlist: empty
-- Selected next gate: `OSW-3D_WORKSPACE_REPORT_ASSET_RUNTIME_PATH_RESOLVER_FILESYSTEM_SERVICE_NATIVE_DEFERRAL_TRACKED_DOCUMENTATION_REVIEW_AND_COMMIT_READINESS`
+- Documentation review: complete
+- Documentation commit: `adad148becf87ead12f4e3a16f59530d048b21a6`
+- Post-commit verification: complete
+- Publication ancestry direction: `SELECT_FULL_EXISTING_HISTORY_FAST_FORWARD_PATH`
+- Pre-amendment publication-readiness outcome: `BLOCKED_DOCUMENTATION_SEMANTIC_MISMATCH`; this additive correction requires a fresh full-range readiness result
+- 3D MVP delivery plan: `SELECT_3D_WORKSPACE_MVP_DELIVERY_PLAN`; `OSW-3D-WORKSPACE-SCENE-INTERACTION-CORE` has not started and its clean published-baseline entry conditions are not met
 
 `DEFERRED_RETAINED` means production native report-asset availability
 resolution is unsupported and unscheduled. Accepted non-native contracts and
@@ -19,11 +24,11 @@ effort, safe local only, provider silent, sandboxed, or race-free.
 
 ## Canonical Product Claim
 
-**Native resolution: `DEFERRED_RETAINED`.** OSW preserves typed report-asset path intent and performs schema round-trip, lexical validation, lexical classification, and path-private projection without filesystem access. Native report-asset availability resolution is unsupported. Typed `external_absolute` and `project_relative` references therefore remain unresolved and produce placeholders until the user explicitly relinks the record or a separately authorized resolver exists. “Unsupported” is not a finding that a referenced asset is missing, unreadable, unsafe, or nonexistent, and it is not a claim of locality, containment, link safety, provider silence, sandboxing, or race-free consumption. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
+**Native resolution: `DEFERRED_RETAINED`.** OSW preserves typed path intent and performs schema round-trip, lexical validation/classification, and path-private projection without native filesystem resolution. Without an authorized resolver, the manager/report bridge keeps both typed kinds as `unresolved_no_resolver` placeholders, the runtime descriptor has no `effective_path`, and the report bridge produces no usable `image_path`. Explicit relink is a compatibility metadata action performed only after selected-file validation, explicit confirmation, and post-confirmation revalidation: `external_absolute` remains `external_absolute`, while `project_relative` becomes `external_absolute`. Relink does not perform typed native resolution and Project saving remains separate. “Unsupported” is not a finding that the target is missing, unreadable, unsafe, or nonexistent and makes no locality, containment, link-safety, provider-silence, sandboxing, race-free, authenticity, malware-safety, or production-readiness claim. Legacy or unmarked compatibility behavior is separate, may perform filesystem checks, and is not certified provider-silent.
 
 ## User-Facing GUI And Report Status
 
-**Native availability resolution is unsupported (`DEFERRED_RETAINED`); this reference was not checked.** It may or may not exist or be readable. The report will keep an unresolved placeholder. You may use “Relink selected screenshot…” to explicitly choose a replacement reference; relinking is an existing compatibility action, changes project metadata only after confirmation, and does not prove locality, containment, link safety, provider silence, sandboxing, or race-free consumption. Saving the Project remains separate and explicit. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
+**Native report-asset availability resolution is unsupported (`DEFERRED_RETAINED`).** Without an authorized resolver, the manager and report bridge continue to represent typed `external_absolute` and `project_relative` references as `unresolved_no_resolver` placeholders. “Relink selected screenshot…” performs point-in-time selected-file and suffix checks and, only after explicit confirmation plus post-confirmation file and stale-target revalidation, replaces one in-memory Project screenshot record: `external_absolute` remains `external_absolute`, while `project_relative` becomes `external_absolute`. Relink does not perform typed native resolution; the runtime descriptor still has no `effective_path`, the report bridge supplies no usable `image_path`, and the placeholder remains. Saving the Project is separate and explicit. These compatibility checks add no durable claim of existence, readability, locality, containment, link safety, provider silence, sandboxing, race-free consumption, authenticity, malware safety, or production readiness, and make no negative finding about the target. Legacy or unmarked compatibility behavior is separate, may perform filesystem checks, and is not certified provider-silent.
 
 ## Developer And Architecture Boundary
 
@@ -31,11 +36,11 @@ effort, safe local only, provider silent, sandboxed, or race-free.
 
 ## Known Limitation
 
-**Native report-asset availability resolution is unsupported (`DEFERRED_RETAINED`).** OSW can preserve and lexically validate a typed path reference without accessing the filesystem, but it cannot establish existence, regular-file status, readability, locality, containment, link/reparse safety, provider silence, sandboxing, or race-free consumption. Typed unresolved references remain visible as placeholders and can be explicitly relinked. This limitation does not mean the referenced asset is missing, unreadable, unsafe, or nonexistent. Legacy compatibility behavior is separate and is not certified provider-silent.
+**Native report-asset availability resolution is unsupported (`DEFERRED_RETAINED`).** Without an authorized resolver, the manager and report bridge continue to represent typed `external_absolute` and `project_relative` references as `unresolved_no_resolver` placeholders. “Relink selected screenshot…” performs point-in-time selected-file and suffix checks and, only after explicit confirmation plus post-confirmation file and stale-target revalidation, replaces one in-memory Project screenshot record: `external_absolute` remains `external_absolute`, while `project_relative` becomes `external_absolute`. Relink does not perform typed native resolution; the runtime descriptor still has no `effective_path`, the report bridge supplies no usable `image_path`, and the placeholder remains. Saving the Project is separate and explicit. These compatibility checks add no durable claim of existence, readability, locality, containment, link safety, provider silence, sandboxing, race-free consumption, authenticity, malware safety, or production readiness, and make no negative finding about the target. Legacy or unmarked compatibility behavior is separate, may perform filesystem checks, and is not certified provider-silent.
 
 ## Roadmap And Current-Cycle Status
 
-**Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
+The native-deferral documentation review, commit `adad148becf87ead12f4e3a16f59530d048b21a6`, and post-commit verification are complete. `SELECT_FULL_EXISTING_HISTORY_FAST_FORWARD_PATH` remains the selected ancestry direction. A subsequent full-range publication-readiness gate stopped at `BLOCKED_DOCUMENTATION_SEMANTIC_MISMATCH`. This additive documentation amendment corrects the known wording defects only; it does not validate runtime behavior or publish history. Publication remains blocked until the amended tip receives a fresh full-range validation and publication-readiness result. The 3D MVP delivery plan is selected, but `OSW-3D-WORKSPACE-SCENE-INTERACTION-CORE` has not started and cannot start until its clean published-baseline entry conditions pass.
 
 ## Validation-Matrix Status
 
@@ -63,7 +68,7 @@ effort, safe local only, provider silent, sandboxed, or race-free.
 | Pure lexical classification | supported | none | no |
 | Path-private projections | supported | none | no |
 | Existing stale-context/binding protection | supported | none for token/snapshot checks | no |
-| Explicit relink | supported compatibility action | existing `Path.is_file()` checks; provider silence unproved | no |
+| Explicit relink | supported compatibility metadata replacement; `external_absolute` remains `external_absolute`, `project_relative` becomes `external_absolute` | point-in-time selected-file and suffix checks; provider silence unproved | no; typed result remains unresolved without a resolver |
 | Unresolved placeholders | supported | none in pure bridge | no |
 | Deterministic unresolved report behavior | supported | no native target access in bridge | no |
 | Retained evidence inspection | evidence-only | repository evidence reads | no |
@@ -110,6 +115,8 @@ path-private projections, stale-state protection, explicit compatibility
 relink, and deterministic unresolved placeholders. An unresolved placeholder
 is not successful native resolution.
 
+Explicit relink is point-in-time compatibility validation and metadata replacement, not successful typed resolution; without an authorized resolver, the manager/report bridge still reports `unresolved_no_resolver`, the runtime descriptor has no `effective_path`, and the report bridge has no usable `image_path`.
+
 OSW may not claim native existence, file type, readability, stable readability,
 locality, canonical or same-volume containment, symlink/junction/reparse safety,
 provider or network silence, fixed-local storage, non-removability,
@@ -125,19 +132,12 @@ certification.
   native implementation.
 - Both retained worktrees remain registered until a separate authorized cleanup
   decision inventories unique evidence and provenance.
-- Local `.codex/reports/` evidence remains untracked, unstaged, local-only, and
-  retained in place.
 - Retained local evidence is not a backup, implementation, validation, or
   authorization claim.
 - Retention does not authorize merging, pushing, deletion, archival, cleanup,
   probing, architecture work, implementation, or native validation.
 
-The retained evidence chain is referenced by these local paths:
-
-- `.codex/reports/planning/OSW-3D_WORKSPACE_REPORT_ASSET_RUNTIME_PATH_RESOLVER_FILESYSTEM_SERVICE_NATIVE_DEFERRAL_CLOSURE_AND_DOCUMENTATION_DESIGN.md`
-- `.codex/reports/planning/OSW-3D_WORKSPACE_REPORT_ASSET_RUNTIME_PATH_RESOLVER_FILESYSTEM_SERVICE_NATIVE_DEFERRAL_CLOSURE_AND_DOCUMENTATION_DESIGN.json`
-- `.codex/reports/project_sources/2026-07-04__PLAN__3D_WORKSPACE_REPORT_ASSET_RUNTIME_PATH_RESOLVER_FILESYSTEM_SERVICE_NATIVE_DEFERRAL_CLOSURE_AND_DOCUMENTATION_DESIGN.md`
-- `.codex/reports/handoff/OSW-3D_WORKSPACE_REPORT_ASSET_RUNTIME_PATH_RESOLVER_FILESYSTEM_SERVICE_NATIVE_DEFERRAL_CLOSURE_AND_DOCUMENTATION_DESIGN_SELECTED_NEXT_GATE_PROMPT.md`
+Untracked local gate artifacts are retained as operational provenance only. They are absent from a public clone, are not publicly retrievable, and are not product, runtime, validation, security, release, or authorization evidence. No public claim in this document depends on them. This tracked boundary is self-contained and relies only on tracked source, tracked tests, tracked documentation, commit identity, and publicly observable repository state.
 
 ## Reopening Criteria
 

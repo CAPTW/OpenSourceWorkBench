@@ -26,9 +26,9 @@ Current recommended sequence:
    solver/science correctness, or release-readiness.
 4. Plan GUI runner-boundary hardening as a later P1 gate; do not use docs status
    cleanup as permission for GUI direct solver execution.
-5. Review the complete report-asset native-deferral documentation diff through
-   `OSW-3D_WORKSPACE_REPORT_ASSET_RUNTIME_PATH_RESOLVER_FILESYSTEM_SERVICE_NATIVE_DEFERRAL_TRACKED_DOCUMENTATION_REVIEW_AND_COMMIT_READINESS`;
-   that selected gate is read-only and determines commit readiness only.
+5. Treat the native-deferral documentation review, commit `adad148becf87ead12f4e3a16f59530d048b21a6`, and post-commit verification as complete. Keep `SELECT_FULL_EXISTING_HISTORY_FAST_FORWARD_PATH` as the selected ancestry direction.
+6. Keep publication blocked after `BLOCKED_DOCUMENTATION_SEMANTIC_MISMATCH`. This additive documentation amendment corrects wording only; the amended tip still requires fresh full-range validation and publication-readiness review before any push or publication.
+7. Keep `SELECT_3D_WORKSPACE_MVP_DELIVERY_PLAN` selected but queued. `OSW-3D-WORKSPACE-SCENE-INTERACTION-CORE` has not started and cannot start until the clean published-baseline entry conditions pass.
 
 **Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
 
