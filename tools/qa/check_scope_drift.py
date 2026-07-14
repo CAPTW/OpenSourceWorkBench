@@ -69,6 +69,17 @@ FORBIDDEN_PATTERNS = [
     ("nonlinear contact/plasticity", re.compile(r"nonlinear contact|plasticity", re.IGNORECASE)),
 ]
 
+CERTIFICATION_PATTERN = re.compile(
+    r"\bindustrial[\s-]+certification\b|\bcertified\b",
+    re.IGNORECASE,
+)
+INDUSTRIAL_OTHER_PATTERN = re.compile(
+    r"\bcompliance claim\b|\bproduction CAE\b",
+    re.IGNORECASE,
+)
+MARKDOWN_WRAPPERS = str.maketrans("", "", "*_`")
+CLAUSE_BOUNDARIES = ";.!?"
+
 SAFE_CONTEXT = [
     "must not",
     "do not",
@@ -103,6 +114,126 @@ def is_safe_context(line: str) -> bool:
     return any(marker in lowered for marker in SAFE_CONTEXT)
 
 
+def _certification_clause(
+    line: str,
+    match: re.Match[str],
+) -> tuple[str, int, int]:
+    start = max((line.rfind(marker, 0, match.start()) for marker in CLAUSE_BOUNDARIES), default=-1)
+    ends = [line.find(marker, match.end()) for marker in CLAUSE_BOUNDARIES]
+    end = min((value for value in ends if value >= 0), default=len(line))
+    clause_start = start + 1
+    return line[clause_start:end], match.start() - clause_start, match.end() - clause_start
+
+
+def _pattern_governs_match(
+    pattern: re.Pattern[str],
+    clause: str,
+    match_start: int,
+    match_end: int,
+) -> bool:
+    return any(
+        safe.start() <= match_start and safe.end() >= match_end
+        for safe in pattern.finditer(clause)
+    )
+
+
+EXPLICIT_CERTIFICATION_NEGATIONS = (
+    re.compile(
+        r"\bnot\s+(?:an?\s+)?(?:industrial[\s-]+)?certified\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\b(?:no|without)\s+industrial\s+certification\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\bnot\s+(?:an?\s+)?industrial\s+certification\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\b(?:does|do|did|will)\s+not\s+"
+        r"(?:claim|provide|offer|imply|constitute)\s+"
+        r"(?:an?\s+)?industrial\s+certification\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\bmakes?\s+no\s+industrial\s+certification\s+claim\b",
+        re.IGNORECASE,
+    ),
+)
+
+AFFIRMATIVE_CERTIFICATION_PREFIX = re.compile(
+    r"\b(?:is|are|was|were|be|being|been|becomes?|remains?)\s+"
+    r"(?:not\s+(?:only|merely|just)\s+)?(?:industrial[\s-]+)?$|"
+    r"\b(?:claims?|provides?|offers?|guarantees?|holds?|achieves?)\s+"
+    r"(?:an?\s+)?$",
+    re.IGNORECASE,
+)
+AFFIRMATIVE_CERTIFICATION_SUFFIX = re.compile(
+    r"^\s+(?:is|are|was|were|will\s+be)\s+"
+    r"(?:provided|available|guaranteed|supported|achieved|held)\b",
+    re.IGNORECASE,
+)
+AMBIGUOUS_CERTIFICATION_PREFIX = re.compile(
+    r"\bwhether(?:\s+or\s+not)?\s*$|"
+    r"\bnot\s+(?:only|merely|just)\s*$|"
+    r"\bnot\s*[,/:]\s*$",
+    re.IGNORECASE,
+)
+
+
+def _certification_match_is_safe(
+    normalized_line: str,
+    match: re.Match[str],
+    *,
+    context_is_safe: bool,
+    explicit_unsafe_fixture: bool,
+) -> bool:
+    clause, match_start, match_end = _certification_clause(normalized_line, match)
+    if explicit_unsafe_fixture:
+        return True
+    if any(
+        _pattern_governs_match(pattern, clause, match_start, match_end)
+        for pattern in EXPLICIT_CERTIFICATION_NEGATIONS
+    ):
+        return True
+
+    prefix = clause[:match_start]
+    suffix = clause[match_end:]
+    if AMBIGUOUS_CERTIFICATION_PREFIX.search(prefix):
+        return False
+    if match.group(0).lower() == "certified":
+        return False
+    if AFFIRMATIVE_CERTIFICATION_PREFIX.search(prefix):
+        return False
+    if AFFIRMATIVE_CERTIFICATION_SUFFIX.search(suffix):
+        return False
+    return context_is_safe
+
+
+def unsafe_certification_matches(
+    line: str,
+    *,
+    context: str,
+    context_is_safe: bool,
+) -> list[re.Match[str]]:
+    normalized = line.translate(MARKDOWN_WRAPPERS)
+    explicit_unsafe_fixture = bool(
+        re.search(r"\bdef\s+blocked_by_unsafe_claim\s*\(", context)
+        and re.search(r"\bclaim_text\s*:\s*str\s*=", line)
+    )
+    return [
+        match
+        for match in CERTIFICATION_PATTERN.finditer(normalized)
+        if not _certification_match_is_safe(
+            normalized,
+            match,
+            context_is_safe=context_is_safe,
+            explicit_unsafe_fixture=explicit_unsafe_fixture,
+        )
+    ]
+
+
 def findings_for_text(text: str, *, label: str) -> list[str]:
     findings: list[str] = []
     lines = text.splitlines()
@@ -129,6 +260,21 @@ def findings_for_text(text: str, *, label: str) -> list[str]:
             safe_section = True
         context = line + "\n" + "\n".join(lines[max(0, line_no - 4) : line_no])
         for name, pattern in FORBIDDEN_PATTERNS:
+            if name == "industrial certification":
+                context_is_safe = safe_section or is_safe_context(context)
+                for _match in unsafe_certification_matches(
+                    line,
+                    context=context,
+                    context_is_safe=context_is_safe,
+                ):
+                    findings.append(
+                        f"{label}:{line_no}: possible scope drift ({name}): {line.strip()}"
+                    )
+                if INDUSTRIAL_OTHER_PATTERN.search(line) and not context_is_safe:
+                    findings.append(
+                        f"{label}:{line_no}: possible scope drift ({name}): {line.strip()}"
+                    )
+                continue
             if pattern.search(line) and not (safe_section or is_safe_context(context)):
                 findings.append(f"{label}:{line_no}: possible scope drift ({name}): {line.strip()}")
     return findings

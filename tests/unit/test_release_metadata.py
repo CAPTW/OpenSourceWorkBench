@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -74,6 +76,51 @@ GPL-3.0-or-later
     _write(root / "CHANGELOG.md", f"## {version} - Draft\n\nTag: {tag}\n\nPrior: v0.1.0-rc3\n")
     _write(root / "docs" / "13_license_and_version_plan.md", "# Plan\n")
     _write(root / "docs" / "14_third_party_notices.md", "# Notices\n")
+
+
+def _installed_observation(
+    root: Path,
+    python: Path,
+    *,
+    distribution_version: str | None = "0.1.5rc1",
+    imported_version: str | None = "0.1.5rc1",
+    direct_url_root: Path | None = None,
+    imported_root: Path | None = None,
+) -> dict[str, object]:
+    direct_root = direct_url_root or root
+    import_root = imported_root or root
+    return {
+        "executable": str(python),
+        "python_version": "3.11.9",
+        "distribution_version": distribution_version,
+        "osw_version": imported_version,
+        "osw_file": str(import_root / "src" / "osw" / "__init__.py"),
+        "direct_url": {
+            "dir_info": {"editable": True},
+            "url": direct_root.resolve().as_uri(),
+        },
+    }
+
+
+def _validate_observation(
+    observation: dict[str, object],
+    *,
+    expected_version: str,
+    metadata_python: Path,
+    metadata_root: Path,
+) -> list[str]:
+    validator = getattr(
+        release_metadata,
+        "_validate_installed_metadata_observation",
+        None,
+    )
+    assert callable(validator), "installed metadata observation validator is missing"
+    return validator(
+        observation,
+        expected_version=expected_version,
+        metadata_python=metadata_python,
+        metadata_root=metadata_root,
+    )
 
 
 def _mock_git_tags(
@@ -320,21 +367,20 @@ def test_default_release_metadata_accepts_current_v015rc1_history(
     assert check_release_metadata(tmp_path) == []
 
 
-def test_default_release_metadata_reports_installed_distribution_version_mismatch(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_selected_metadata_rejects_stale_distribution_version(
+    tmp_path: Path,
 ) -> None:
     _minimal_release_tree(tmp_path, version="0.1.5rc1")
-    monkeypatch.setattr(
-        release_metadata.importlib_metadata,
-        "version",
-        lambda _: "0.1.3rc1",
-    )
-
-    failures = check_release_metadata(
-        tmp_path,
+    metadata_python = tmp_path / "venv" / "python"
+    failures = _validate_observation(
+        _installed_observation(
+            tmp_path,
+            metadata_python,
+            distribution_version="0.1.3rc1",
+        ),
         expected_version="0.1.5rc1",
-        check_tags=False,
-        check_installed_distribution=True,
+        metadata_python=metadata_python,
+        metadata_root=tmp_path,
     )
 
     assert any(
@@ -344,46 +390,287 @@ def test_default_release_metadata_reports_installed_distribution_version_mismatc
     )
 
 
-def test_default_release_metadata_accepts_when_installed_distribution_version_matches(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_selected_metadata_accepts_matching_repository_environment(
+    tmp_path: Path,
 ) -> None:
     _minimal_release_tree(tmp_path, version="0.1.5rc1")
+    metadata_python = tmp_path / "venv" / "python"
+
+    assert _validate_observation(
+        _installed_observation(tmp_path, metadata_python),
+        expected_version="0.1.5rc1",
+        metadata_python=metadata_python,
+        metadata_root=tmp_path,
+    ) == []
+
+
+def test_selected_metadata_rejects_missing_distribution(tmp_path: Path) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.5rc1")
+    metadata_python = tmp_path / "venv" / "python"
+
+    failures = _validate_observation(
+        _installed_observation(
+            tmp_path,
+            metadata_python,
+            distribution_version=None,
+        ),
+        expected_version="0.1.5rc1",
+        metadata_python=metadata_python,
+        metadata_root=tmp_path,
+    )
+
+    assert any(
+        "open-solver-workbench distribution is missing" in failure for failure in failures
+    )
+
+
+def test_selected_metadata_rejects_imported_version_mismatch(tmp_path: Path) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.5rc1")
+    metadata_python = tmp_path / "venv" / "python"
+
+    failures = _validate_observation(
+        _installed_observation(
+            tmp_path,
+            metadata_python,
+            imported_version="0.1.4rc1",
+        ),
+        expected_version="0.1.5rc1",
+        metadata_python=metadata_python,
+        metadata_root=tmp_path,
+    )
+
+    assert any(
+        "Selected imported osw.__version__ is 0.1.4rc1, expected 0.1.5rc1."
+        in failure
+        for failure in failures
+    )
+
+
+def test_selected_metadata_rejects_different_checkout(
+    tmp_path: Path,
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.5rc1")
+    metadata_python = tmp_path / "venv" / "python"
+    other_root = tmp_path / "other-checkout"
+    other_root.mkdir()
+
+    failures = _validate_observation(
+        _installed_observation(
+            tmp_path,
+            metadata_python,
+            direct_url_root=other_root,
+            imported_root=other_root,
+        ),
+        expected_version="0.1.5rc1",
+        metadata_python=metadata_python,
+        metadata_root=tmp_path,
+    )
+
+    assert any("does not match selected metadata root" in failure for failure in failures)
+
+
+def test_selected_metadata_query_uses_only_requested_interpreter(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = getattr(release_metadata, "_query_installed_metadata", None)
+    assert callable(query), "installed metadata interpreter query is missing"
+    metadata_python = tmp_path / "selected-python"
+    observation = _installed_observation(tmp_path, metadata_python)
+    calls: list[tuple[list[str], dict[str, object]]] = []
+
+    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append((args, kwargs))
+        return subprocess.CompletedProcess(args, 0, json.dumps(observation), "")
+
+    monkeypatch.setattr(release_metadata.subprocess, "run", fake_run)
+
+    actual, error = query(metadata_python, metadata_root=tmp_path)
+
+    assert error is None
+    assert actual == observation
+    assert calls[0][0][0] == str(metadata_python)
+    assert calls[0][1]["shell"] is False
+
+
+def test_selected_metadata_query_rejects_invalid_json(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = getattr(release_metadata, "_query_installed_metadata", None)
+    assert callable(query), "installed metadata interpreter query is missing"
+    metadata_python = tmp_path / "selected-python"
+
     monkeypatch.setattr(
-        release_metadata.importlib_metadata,
-        "version",
-        lambda _: "0.1.5rc1",
+        release_metadata.subprocess,
+        "run",
+        lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "not-json", ""),
     )
 
-    assert (
-        check_release_metadata(
-            tmp_path,
-            expected_version="0.1.5rc1",
-            check_tags=False,
-            check_installed_distribution=True,
-        )
-        == []
-    )
+    observation, error = query(metadata_python, metadata_root=tmp_path)
+
+    assert observation is None
+    assert error is not None
+    assert "invalid JSON" in error
 
 
-def test_default_release_metadata_accepts_without_installed_distribution(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_selected_metadata_rejects_metadata_root_source_mismatch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _minimal_release_tree(tmp_path, version="0.1.5rc1")
-
-    def _missing(_: str) -> str:
-        raise release_metadata.importlib_metadata.PackageNotFoundError("open-solver-workbench")
-
-    monkeypatch.setattr(release_metadata.importlib_metadata, "version", _missing)
-
-    assert (
-        check_release_metadata(
-            tmp_path,
-            expected_version="0.1.5rc1",
-            check_tags=False,
-            check_installed_distribution=True,
-        )
-        == []
+    selector = getattr(release_metadata, "_validate_selected_installed_metadata", None)
+    assert callable(selector), "selected installed metadata validator is missing"
+    source_root = tmp_path / "source"
+    metadata_root = tmp_path / "metadata"
+    _minimal_release_tree(source_root, version="0.1.5rc1")
+    _minimal_release_tree(metadata_root, version="0.1.4rc1")
+    metadata_python = tmp_path / "venv" / "python"
+    observation = _installed_observation(
+        metadata_root,
+        metadata_python,
+        distribution_version="0.1.5rc1",
+        imported_version="0.1.5rc1",
     )
+    monkeypatch.setattr(
+        release_metadata,
+        "_query_installed_metadata",
+        lambda _python, *, metadata_root: (observation, None),
+    )
+
+    failures, _ = selector(
+        source_root=source_root,
+        metadata_python=metadata_python,
+        metadata_root=metadata_root,
+        expected_version="0.1.5rc1",
+    )
+
+    assert any(
+        "Selected metadata root pyproject version is 0.1.4rc1, expected 0.1.5rc1."
+        in failure
+        for failure in failures
+    )
+
+
+def test_release_metadata_main_is_source_only_by_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_check(_root: Path, **kwargs: object) -> list[str]:
+        calls.append(kwargs)
+        return []
+
+    monkeypatch.setattr(release_metadata, "repo_root", lambda: tmp_path)
+    monkeypatch.setattr(release_metadata, "check_release_metadata", fake_check)
+    monkeypatch.setattr(sys, "argv", ["check_release_metadata.py"])
+
+    assert release_metadata.main() == 0
+    output = capsys.readouterr().out
+    assert f"Release metadata driver: {Path(sys.executable).resolve()}" in output
+    assert "Installed distribution metadata was not checked" in output
+    assert "check_installed_distribution" not in calls[0]
+
+
+def test_release_metadata_main_requires_paired_environment_options(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(release_metadata, "repo_root", lambda: tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["check_release_metadata.py", "--installed-metadata-python", str(sys.executable)],
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        release_metadata.main()
+
+    assert exc_info.value.code == 2
+    assert "must be provided together" in capsys.readouterr().err
+
+
+def test_release_metadata_main_requires_absolute_environment_paths(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(release_metadata, "repo_root", lambda: tmp_path)
+    monkeypatch.setattr(
+        release_metadata,
+        "check_release_metadata",
+        lambda _root, **_kwargs: [],
+    )
+    monkeypatch.setattr(
+        release_metadata,
+        "_validate_selected_installed_metadata",
+        lambda **_kwargs: ([], {}),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "check_release_metadata.py",
+            "--installed-metadata-python",
+            "relative/python",
+            "--installed-metadata-root",
+            "relative/root",
+        ],
+    )
+
+    try:
+        result = release_metadata.main()
+    except SystemExit as exc:
+        result = int(exc.code)
+
+    assert result == 2
+    assert "must be absolute paths" in capsys.readouterr().err
+
+
+def test_release_metadata_main_reports_explicit_environment_identity(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    metadata_python = tmp_path / "venv" / "python"
+    observation = _installed_observation(tmp_path, metadata_python)
+
+    monkeypatch.setattr(release_metadata, "repo_root", lambda: tmp_path)
+    monkeypatch.setattr(
+        release_metadata,
+        "check_release_metadata",
+        lambda _root, **_kwargs: [],
+    )
+    monkeypatch.setattr(
+        release_metadata,
+        "_validate_selected_installed_metadata",
+        lambda **_kwargs: ([], observation),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "check_release_metadata.py",
+            "--installed-metadata-python",
+            str(metadata_python),
+            "--installed-metadata-root",
+            str(tmp_path),
+        ],
+    )
+
+    try:
+        result = release_metadata.main()
+    except SystemExit as exc:
+        result = int(exc.code)
+
+    assert result == 0
+    output = capsys.readouterr().out
+    assert f"Release metadata driver: {Path(sys.executable).resolve()}" in output
+    assert f"Selected installed metadata interpreter: {metadata_python}" in output
+    assert f"Selected installed metadata root: {tmp_path}" in output
 
 
 def test_release_metadata_rejects_placeholder_license(tmp_path: Path) -> None:

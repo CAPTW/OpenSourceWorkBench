@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PYTHON_BIN = Path(sys.executable).resolve().parent
 ORIGINAL_PATH = os.environ.get("PATH", "")
@@ -89,6 +91,81 @@ def test_scope_drift_allows_in_scope_adapter_text() -> None:
     proc = run_tool("tools/qa/check_scope_drift.py", "--text", "Gmsh adapter")
 
     assert proc.returncode == 0
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "OSW is certified.",
+        "OSW is certified provider-silent.",
+        "OSW is not only certified.",
+        "OSW is not merely certified.",
+        "Whether certified or not is unresolved.",
+        "# Non-goals\nWhether certified or not is unresolved.",
+        "# Non-goals\nOSW is certified.",
+        "# Non-goals\nCertified products are supported.",
+        "# Non-goals\nThe companion is safe and certified.",
+        "# Non-goals\nOSW may be certified.",
+        "OSW is not a clone; OSW is certified.",
+        "OSW is not certified; the companion is certified.",
+        "OSW is not, certified.",
+    ],
+)
+def test_scope_drift_rejects_positive_or_ambiguous_certification_claims(
+    text: str,
+) -> None:
+    proc = run_tool("tools/qa/check_scope_drift.py", "--text", text)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "industrial certification" in proc.stdout
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "OSW is not certified provider-silent.",
+        "OSW is **NOT CERTIFIED** provider-silent!",
+        "OSW is not a certified CAE product.",
+        "OSW is not industrial-certified.",
+        "No industrial certification is provided.",
+        "This workbench is offered without industrial certification.",
+        "OSW does not claim industrial certification.",
+        "OSW makes no industrial certification claim.",
+    ],
+)
+def test_scope_drift_accepts_explicit_certification_negation(text: str) -> None:
+    proc = run_tool("tools/qa/check_scope_drift.py", "--text", text)
+
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_scope_drift_evaluates_certification_matches_independently() -> None:
+    proc = run_tool(
+        "tools/qa/check_scope_drift.py",
+        "--text",
+        "OSW is not certified; the companion is certified and the export is certified.",
+    )
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert proc.stdout.count("possible scope drift (industrial certification)") == 2
+
+
+def test_scope_drift_allows_explicit_blocked_unsafe_claim_fixture() -> None:
+    proc = run_tool(
+        "tools/qa/check_scope_drift.py",
+        "--text",
+        "\n".join(
+            [
+                "def blocked_by_unsafe_claim(",
+                "    *,",
+                '    claim_text: str = "This manifest is certified.",',
+                "):",
+                "    return build_viewmodel(unsafe_claims=(claim_text,))",
+            ]
+        ),
+    )
+
+    assert proc.returncode == 0, proc.stdout + proc.stderr
 
 
 def test_architecture_checker_runs_on_current_repo() -> None:
@@ -182,6 +259,49 @@ def test_release_gate_checker_accepts_synthetic_release_fixture(tmp_path: Path) 
 
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert "Release gate queue" in proc.stdout
+
+
+def test_release_gate_runner_passes_only_when_all_required_subchecks_pass(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runner = load_module(
+        REPO_ROOT / "tools" / "qa" / "run_release_gate.py",
+        "run_release_gate_for_all_pass_test",
+    )
+    labels: list[str] = []
+
+    monkeypatch.setattr(runner, "repo_root", lambda: REPO_ROOT)
+    monkeypatch.setattr(runner, "python_executable", lambda: sys.executable)
+    monkeypatch.setattr(
+        runner,
+        "run",
+        lambda _args, *, cwd, label: labels.append(label) or 0,
+    )
+
+    assert runner.main() == 0
+    assert len(labels) == 7
+
+
+def test_release_gate_runner_propagates_required_subcheck_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runner = load_module(
+        REPO_ROOT / "tools" / "qa" / "run_release_gate.py",
+        "run_release_gate_for_failure_test",
+    )
+    labels: list[str] = []
+
+    def fake_run(_args: list[str], *, cwd: Path, label: str) -> int:
+        del cwd
+        labels.append(label)
+        return 1 if label == "python tools/qa/check_scope_drift.py" else 0
+
+    monkeypatch.setattr(runner, "repo_root", lambda: REPO_ROOT)
+    monkeypatch.setattr(runner, "python_executable", lambda: sys.executable)
+    monkeypatch.setattr(runner, "run", fake_run)
+
+    assert runner.main() == 1
+    assert len(labels) == 7
 
 
 def test_solver_artifact_checker_allows_only_curated_solver_fixture_paths() -> None:

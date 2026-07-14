@@ -4,12 +4,16 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import platform
 import re
 import subprocess
+import sys
 import tomllib
+import urllib.parse
+import urllib.request
 from dataclasses import dataclass
-from importlib import metadata as importlib_metadata
 from pathlib import Path
 
 from _common import repo_root
@@ -39,6 +43,45 @@ DEFAULT_HISTORICAL_FINAL_V012_TAG = "v0.1.2"
 DEFAULT_HISTORICAL_FINAL_V012_TARGET = "c39f21372ef837f096aa0d430cced82adc6f3485"
 FINAL_TAG = "v0.1.3"
 RELEASE_TAG_PATTERN = "v0.1*"
+INSTALLED_METADATA_QUERY = r"""
+import importlib.metadata as metadata
+import json
+import platform
+import sys
+
+payload = {
+    "executable": sys.executable,
+    "python_version": platform.python_version(),
+    "distribution_version": None,
+    "osw_version": None,
+    "osw_file": None,
+    "direct_url": None,
+}
+
+try:
+    distribution = metadata.distribution("open-solver-workbench")
+except metadata.PackageNotFoundError:
+    distribution = None
+
+if distribution is not None:
+    payload["distribution_version"] = distribution.version
+    direct_url_text = distribution.read_text("direct_url.json")
+    if direct_url_text:
+        try:
+            payload["direct_url"] = json.loads(direct_url_text)
+        except json.JSONDecodeError:
+            payload["direct_url"] = {"invalid_json": direct_url_text}
+
+try:
+    import osw
+except Exception as exc:
+    payload["osw_import_error"] = f"{type(exc).__name__}: {exc}"
+else:
+    payload["osw_version"] = getattr(osw, "__version__", None)
+    payload["osw_file"] = getattr(osw, "__file__", None)
+
+print(json.dumps(payload, sort_keys=True))
+"""
 
 
 @dataclass(frozen=True)
@@ -149,20 +192,184 @@ def _local_release_tags(root: Path) -> tuple[list[str] | None, str | None]:
     return [line.strip() for line in stdout.splitlines() if line.strip()], None
 
 
-def _validate_installed_distribution_version(expected_version: str) -> list[str]:
-    try:
-        installed_version = importlib_metadata.version("open-solver-workbench")
-    except importlib_metadata.PackageNotFoundError:
-        return []
-    except Exception as exc:  # pragma: no cover - defensive for unusual metadata failures.
-        return [f"Could not read installed package metadata: {exc}"]
+def _path_identity(path: Path) -> str:
+    return os.path.normcase(str(path.resolve(strict=False)))
 
-    if installed_version != expected_version:
-        return [
-            f"Installed package metadata version is {installed_version}, "
+
+def _path_is_within(path: Path, root: Path) -> bool:
+    try:
+        return os.path.commonpath([_path_identity(path), _path_identity(root)]) == _path_identity(
+            root
+        )
+    except ValueError:
+        return False
+
+
+def _direct_url_path(value: object) -> Path | None:
+    if not isinstance(value, dict):
+        return None
+    url = value.get("url")
+    if not isinstance(url, str):
+        return None
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "file" or parsed.query or parsed.fragment:
+        return None
+    path_text = urllib.request.url2pathname(parsed.path)
+    if os.name == "nt" and re.match(r"^[/\\][A-Za-z]:", path_text):
+        path_text = path_text[1:]
+    return Path(path_text)
+
+
+def _query_installed_metadata(
+    metadata_python: Path,
+    *,
+    metadata_root: Path,
+) -> tuple[dict[str, object] | None, str | None]:
+    try:
+        proc = subprocess.run(
+            [str(metadata_python), "-I", "-c", INSTALLED_METADATA_QUERY],
+            cwd=metadata_root,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+            check=False,
+            shell=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return None, f"Could not run selected installed metadata interpreter: {exc}"
+    if proc.returncode != 0:
+        detail = proc.stderr.strip() or proc.stdout.strip() or "no diagnostic output"
+        return (
+            None,
+            "Selected installed metadata interpreter exited "
+            f"{proc.returncode}: {detail}",
+        )
+    try:
+        value = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        return None, f"Selected installed metadata interpreter returned invalid JSON: {exc}"
+    if not isinstance(value, dict):
+        return None, "Selected installed metadata interpreter returned a non-object JSON value."
+    return value, None
+
+
+def _validate_installed_metadata_observation(
+    observation: dict[str, object],
+    *,
+    expected_version: str,
+    metadata_python: Path,
+    metadata_root: Path,
+) -> list[str]:
+    failures: list[str] = []
+    executable = observation.get("executable")
+    if not isinstance(executable, str) or _path_identity(Path(executable)) != _path_identity(
+        metadata_python
+    ):
+        failures.append(
+            "Selected installed metadata interpreter reported an unexpected executable: "
+            f"{executable!r}."
+        )
+
+    python_version = observation.get("python_version")
+    if not isinstance(python_version, str) or not python_version:
+        failures.append("Selected installed metadata interpreter did not report Python version.")
+
+    distribution_version = observation.get("distribution_version")
+    if distribution_version is None:
+        failures.append("Selected open-solver-workbench distribution is missing.")
+    elif distribution_version != expected_version:
+        failures.append(
+            f"Installed package metadata version is {distribution_version}, "
             f"expected {expected_version}."
-        ]
-    return []
+        )
+
+    imported_version = observation.get("osw_version")
+    if imported_version is None:
+        detail = observation.get("osw_import_error")
+        failures.append(f"Selected environment could not import osw: {detail or 'unknown error' }.")
+    elif imported_version != expected_version:
+        failures.append(
+            f"Selected imported osw.__version__ is {imported_version}, "
+            f"expected {expected_version}."
+        )
+
+    direct_path = _direct_url_path(observation.get("direct_url"))
+    if direct_path is None or _path_identity(direct_path) != _path_identity(metadata_root):
+        failures.append(
+            "Installed distribution direct URL does not match selected metadata root "
+            f"{metadata_root}."
+        )
+
+    imported_file = observation.get("osw_file")
+    if not isinstance(imported_file, str) or not _path_is_within(
+        Path(imported_file), metadata_root
+    ):
+        failures.append(
+            "Imported osw path does not match selected metadata root "
+            f"{metadata_root}."
+        )
+    return failures
+
+
+def _source_version_failures(root: Path, expected_version: str, *, label: str) -> list[str]:
+    failures: list[str] = []
+    pyproject_path = root / "pyproject.toml"
+    if not pyproject_path.exists():
+        failures.append(f"{label} pyproject.toml is missing.")
+    else:
+        project = tomllib.loads(_read(pyproject_path)).get("project", {})
+        version = project.get("version") if isinstance(project, dict) else None
+        if version != expected_version:
+            failures.append(
+                f"{label} pyproject version is {version}, expected {expected_version}."
+            )
+
+    init_path = root / "src" / "osw" / "__init__.py"
+    if not init_path.exists():
+        failures.append(f"{label} src/osw/__init__.py is missing.")
+    elif f'__version__ = "{expected_version}"' not in _read(init_path):
+        failures.append(f"{label} osw.__version__ is not {expected_version}.")
+    return failures
+
+
+def _validate_selected_installed_metadata(
+    *,
+    source_root: Path,
+    metadata_python: Path,
+    metadata_root: Path,
+    expected_version: str,
+) -> tuple[list[str], dict[str, object] | None]:
+    failures = _source_version_failures(
+        source_root,
+        expected_version,
+        label="Source-under-test",
+    )
+    failures.extend(
+        _source_version_failures(
+            metadata_root,
+            expected_version,
+            label="Selected metadata root",
+        )
+    )
+    observation, error = _query_installed_metadata(
+        metadata_python,
+        metadata_root=metadata_root,
+    )
+    if error is not None:
+        failures.append(error)
+        return failures, None
+    assert observation is not None
+    failures.extend(
+        _validate_installed_metadata_observation(
+            observation,
+            expected_version=expected_version,
+            metadata_python=metadata_python,
+            metadata_root=metadata_root,
+        )
+    )
+    return failures, observation
 
 
 def _resolve_expected_target(root: Path, target: str | None) -> tuple[str | None, str | None]:
@@ -312,7 +519,6 @@ def check_release_metadata(
     expected_version: str = TARGET_VERSION,
     expected_source_license: str = TARGET_LICENSE,
     check_tags: bool = True,
-    check_installed_distribution: bool = False,
     tag_policy: ReleaseTagPolicy | None = None,
 ) -> list[str]:
     failures: list[str] = []
@@ -390,9 +596,6 @@ def check_release_metadata(
     ]:
         if not (root / relative).exists():
             failures.append(f"{relative} is missing.")
-
-    if check_installed_distribution:
-        failures.extend(_validate_installed_distribution_version(expected_version))
 
     if check_tags:
         failures.extend(_validate_release_tags(root, tag_policy or ReleaseTagPolicy()))
@@ -487,6 +690,16 @@ def main() -> int:
         help="expected project source license metadata",
     )
     parser.add_argument(
+        "--installed-metadata-python",
+        type=Path,
+        help="exact Python executable for the explicit installed-metadata check",
+    )
+    parser.add_argument(
+        "--installed-metadata-root",
+        type=Path,
+        help="exact repository root represented by the installed-metadata interpreter",
+    )
+    parser.add_argument(
         "--forbid-release-tags",
         action="store_true",
         help="strict pre-tag mode: fail if any local v0.1* tag exists",
@@ -549,6 +762,19 @@ def main() -> int:
         help="require the expected final tag to be an annotated tag object",
     )
     args = parser.parse_args()
+    if bool(args.installed_metadata_python) != bool(args.installed_metadata_root):
+        parser.error(
+            "--installed-metadata-python and --installed-metadata-root "
+            "must be provided together"
+        )
+    if args.installed_metadata_python is not None and (
+        not args.installed_metadata_python.is_absolute()
+        or not args.installed_metadata_root.is_absolute()
+    ):
+        parser.error(
+            "--installed-metadata-python and --installed-metadata-root "
+            "must be absolute paths"
+        )
     if args.allowed_prior_rc_tag and (
         len(args.allowed_prior_rc_tag) != len(args.allowed_prior_rc_target)
     ):
@@ -567,13 +793,41 @@ def main() -> int:
         )
 
     root = repo_root()
+    print(
+        f"[info] Release metadata driver: {Path(sys.executable).resolve()} "
+        f"(Python {platform.python_version()})."
+    )
     failures = check_release_metadata(
         root,
         expected_version=args.expected_version,
         expected_source_license=args.expected_source_license,
-        check_installed_distribution=args.expected_version == TARGET_VERSION,
         tag_policy=_tag_policy_from_args(args),
     )
+    observation: dict[str, object] | None = None
+    if args.installed_metadata_python is None:
+        print(
+            "[info] Installed distribution metadata was not checked; "
+            "provide both explicit installed-metadata options to enable it."
+        )
+    else:
+        metadata_python = args.installed_metadata_python.resolve(strict=False)
+        assert args.installed_metadata_root is not None
+        metadata_root = args.installed_metadata_root.resolve(strict=False)
+        selected_failures, observation = _validate_selected_installed_metadata(
+            source_root=root,
+            metadata_python=metadata_python,
+            metadata_root=metadata_root,
+            expected_version=args.expected_version,
+        )
+        failures.extend(selected_failures)
+        print(f"[info] Selected installed metadata interpreter: {metadata_python}")
+        print(f"[info] Selected installed metadata root: {metadata_root}")
+        if observation is not None:
+            print(
+                "[info] Selected interpreter reported: "
+                f"{observation.get('executable')} "
+                f"(Python {observation.get('python_version')})."
+            )
     if failures:
         print("[fail] Release metadata check failed:")
         for failure in failures:

@@ -10,6 +10,36 @@ gate, not the current public prerelease. It does not provide legal advice,
 create a Git tag, announce a public release, or approve redistribution of
 third-party solver binaries.
 
+## Release validation interpreter contract
+
+Repository source metadata is authoritative. The release-metadata check first
+requires `pyproject.toml`, `src/osw/__init__.py`, and the QA helper target to
+agree on the exact package version. Its default command reports the driver
+interpreter and validates source, license, and tag metadata without treating
+whatever distribution happens to be installed in that driver as repository
+evidence.
+
+Complete unit, GUI, changed-test, and optional-dependency validation continues
+to use the explicitly prepared complete-test interpreter. Installed repository
+metadata is a separate check and requires both
+`--installed-metadata-python <absolute-python>` and
+`--installed-metadata-root <absolute-repository-root>`. The checker logs both
+roles and invokes only the named metadata interpreter, without a shell,
+automatic `.venv` discovery, PATH fallback, or dependency installation.
+
+The selected metadata environment must report its executable, Python version,
+`open-solver-workbench` distribution version, imported `osw.__version__`,
+imported `osw.__file__`, and editable `direct_url.json`. The selected root's
+source metadata, distribution metadata, and imported package must agree with
+the source-under-test version. A missing or stale distribution, invalid
+observation, differently rooted import or direct URL, or version mismatch is a
+hard failure. In particular, `0.1.2` is not equivalent to `0.1.5rc1`.
+
+Selecting a metadata interpreter never substitutes it for the complete-test
+interpreter or reduces optional-dependency coverage. Focused success is not
+publication readiness; complete validation and a separately authorized
+full-range readiness gate remain required.
+
 ## Historical License State Inventory
 
 | Area | Recorded state at this gate | Release impact |
