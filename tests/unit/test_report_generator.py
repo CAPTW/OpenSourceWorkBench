@@ -218,8 +218,11 @@ def test_render_report_html_contains_project_metadata_and_limitations() -> None:
     assert "Cantilever Demo" in html
     assert "Small educational report export." in html
     assert "Known Limitations" in html
-    assert "educational/research artifact" in html
-    assert "Industrial certification" in html
+    assert (
+        "OSW v0.1 reports are educational/research artifacts. "
+        "This report makes no industrial certification claim and no production CAE claim."
+        in html
+    )
 
 
 def test_render_report_html_embeds_full_sections_and_handles_missing_images(

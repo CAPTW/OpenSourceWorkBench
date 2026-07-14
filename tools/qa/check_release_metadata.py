@@ -8,11 +8,13 @@ import json
 import os
 import platform
 import re
+import stat
 import subprocess
 import sys
 import tomllib
 import urllib.parse
 import urllib.request
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -56,6 +58,7 @@ payload = {
     "osw_version": None,
     "osw_file": None,
     "direct_url": None,
+    "dir_info": None,
 }
 
 try:
@@ -69,6 +72,8 @@ if distribution is not None:
     if direct_url_text:
         try:
             payload["direct_url"] = json.loads(direct_url_text)
+            if isinstance(payload["direct_url"], dict):
+                payload["dir_info"] = payload["direct_url"].get("dir_info")
         except json.JSONDecodeError:
             payload["direct_url"] = {"invalid_json": direct_url_text}
 
@@ -193,31 +198,82 @@ def _local_release_tags(root: Path) -> tuple[list[str] | None, str | None]:
 
 
 def _path_identity(path: Path) -> str:
-    return os.path.normcase(str(path.resolve(strict=False)))
+    return os.path.normcase(os.path.normpath(str(path.resolve(strict=False))))
 
 
-def _path_is_within(path: Path, root: Path) -> bool:
+def _parse_local_file_url(value: object) -> tuple[Path | None, str | None]:
+    if not isinstance(value, str) or not value:
+        return None, "[DIRECT_URL_INVALID] direct_url.url must be a nonempty string."
     try:
-        return os.path.commonpath([_path_identity(path), _path_identity(root)]) == _path_identity(
-            root
+        parsed = urllib.parse.urlsplit(value)
+        port = parsed.port
+    except ValueError as exc:
+        return None, f"[DIRECT_URL_INVALID] direct_url.url is malformed: {exc}"
+    if parsed.scheme.casefold() != "file":
+        return None, "[DIRECT_URL_NON_FILE_SCHEME] direct_url.url must use file:."
+    if parsed.query or parsed.fragment:
+        return None, "[DIRECT_URL_INVALID] file URL must not contain query or fragment."
+    if parsed.username is not None or parsed.password is not None or port is not None:
+        return None, "[DIRECT_URL_INVALID] file URL must not contain credentials or port."
+    if re.search(r"%(?![0-9A-Fa-f]{2})", parsed.path):
+        return None, "[DIRECT_URL_INVALID] file URL contains a malformed percent escape."
+    try:
+        decoded_path = urllib.parse.unquote_to_bytes(parsed.path).decode("utf-8", "strict")
+    except UnicodeDecodeError as exc:
+        return None, f"[DIRECT_URL_INVALID] file URL path is not valid UTF-8: {exc}"
+    if not decoded_path:
+        return None, "[DIRECT_URL_INVALID] file URL path is empty."
+
+    authority = parsed.hostname or ""
+    if authority and authority.casefold() != "localhost":
+        if os.name != "nt":
+            return None, "[DIRECT_URL_INVALID] nonlocal file URL authority is unsupported."
+        path_text = f"\\\\{authority}{decoded_path.replace('/', os.sep)}"
+    else:
+        path_text = urllib.request.url2pathname(decoded_path)
+        if os.name == "nt" and re.match(r"^[/\\][A-Za-z]:", path_text):
+            path_text = path_text[1:]
+    path = Path(path_text)
+    if not path.is_absolute():
+        return None, "[DIRECT_URL_INVALID] file URL must resolve to an absolute path."
+    return path, None
+
+
+def _direct_url_failures(value: object, metadata_root: Path) -> list[str]:
+    if not isinstance(value, Mapping):
+        return ["[DIRECT_URL_NOT_MAPPING] direct_url must be a mapping."]
+
+    failures: list[str] = []
+    direct_path, error = _parse_local_file_url(value.get("url"))
+    if error is not None:
+        failures.append(error)
+    elif direct_path is not None and _path_identity(direct_path) != _path_identity(
+        metadata_root
+    ):
+        failures.append(
+            "[DIRECT_URL_ROOT_MISMATCH] Installed distribution direct URL does not "
+            f"match selected metadata root {metadata_root}."
         )
-    except ValueError:
-        return False
+
+    if "dir_info" not in value:
+        failures.append("[DIRECT_URL_DIR_INFO_MISSING] direct_url.dir_info is missing.")
+        return failures
+    dir_info = value.get("dir_info")
+    if not isinstance(dir_info, Mapping):
+        failures.append("[DIRECT_URL_DIR_INFO_INVALID] direct_url.dir_info must be a mapping.")
+        return failures
+    if "editable" not in dir_info:
+        failures.append("[DIRECT_URL_EDITABLE_MISSING] direct_url.dir_info.editable is missing.")
+    elif dir_info.get("editable") is not True:
+        failures.append(
+            "[DIRECT_URL_EDITABLE_NOT_TRUE] direct_url.dir_info.editable must be "
+            "Boolean true."
+        )
+    return failures
 
 
-def _direct_url_path(value: object) -> Path | None:
-    if not isinstance(value, dict):
-        return None
-    url = value.get("url")
-    if not isinstance(url, str):
-        return None
-    parsed = urllib.parse.urlparse(url)
-    if parsed.scheme != "file" or parsed.query or parsed.fragment:
-        return None
-    path_text = urllib.request.url2pathname(parsed.path)
-    if os.name == "nt" and re.match(r"^[/\\][A-Za-z]:", path_text):
-        path_text = path_text[1:]
-    return Path(path_text)
+def _expected_repository_package_path(metadata_root: Path) -> Path:
+    return metadata_root / "src" / "osw" / "__init__.py"
 
 
 def _query_installed_metadata(
@@ -237,21 +293,39 @@ def _query_installed_metadata(
             shell=False,
             timeout=30,
         )
+    except subprocess.TimeoutExpired as exc:
+        return (
+            None,
+            "[SELECTED_INTERPRETER_TIMEOUT] Selected installed metadata interpreter "
+            f"timed out after {exc.timeout} seconds.",
+        )
     except (OSError, subprocess.SubprocessError) as exc:
-        return None, f"Could not run selected installed metadata interpreter: {exc}"
+        return (
+            None,
+            "[SELECTED_INTERPRETER_UNAVAILABLE] Could not run selected installed "
+            f"metadata interpreter: {exc}",
+        )
     if proc.returncode != 0:
         detail = proc.stderr.strip() or proc.stdout.strip() or "no diagnostic output"
         return (
             None,
-            "Selected installed metadata interpreter exited "
+            "[SELECTED_INTERPRETER_NONZERO] Selected installed metadata interpreter exited "
             f"{proc.returncode}: {detail}",
         )
     try:
         value = json.loads(proc.stdout)
     except json.JSONDecodeError as exc:
-        return None, f"Selected installed metadata interpreter returned invalid JSON: {exc}"
+        return (
+            None,
+            "[OBSERVATION_JSON_INVALID] Selected installed metadata interpreter "
+            f"returned invalid JSON: {exc}",
+        )
     if not isinstance(value, dict):
-        return None, "Selected installed metadata interpreter returned a non-object JSON value."
+        return (
+            None,
+            "[OBSERVATION_JSON_NOT_OBJECT] Selected installed metadata interpreter "
+            "returned a non-object JSON value.",
+        )
     return value, None
 
 
@@ -278,37 +352,61 @@ def _validate_installed_metadata_observation(
 
     distribution_version = observation.get("distribution_version")
     if distribution_version is None:
-        failures.append("Selected open-solver-workbench distribution is missing.")
+        failures.append(
+            "[DISTRIBUTION_MISSING] Selected open-solver-workbench distribution is missing."
+        )
     elif distribution_version != expected_version:
         failures.append(
-            f"Installed package metadata version is {distribution_version}, "
+            "[DISTRIBUTION_VERSION_MISMATCH] Installed package metadata version is "
+            f"{distribution_version}, "
             f"expected {expected_version}."
         )
 
     imported_version = observation.get("osw_version")
     if imported_version is None:
         detail = observation.get("osw_import_error")
-        failures.append(f"Selected environment could not import osw: {detail or 'unknown error' }.")
+        failures.append(
+            "[IMPORTED_VERSION_MISMATCH] Selected environment could not import osw: "
+            f"{detail or 'unknown error' }."
+        )
     elif imported_version != expected_version:
         failures.append(
-            f"Selected imported osw.__version__ is {imported_version}, "
+            "[IMPORTED_VERSION_MISMATCH] Selected imported osw.__version__ is "
+            f"{imported_version}, "
             f"expected {expected_version}."
         )
 
-    direct_path = _direct_url_path(observation.get("direct_url"))
-    if direct_path is None or _path_identity(direct_path) != _path_identity(metadata_root):
+    failures.extend(_direct_url_failures(observation.get("direct_url"), metadata_root))
+
+    expected_package = _expected_repository_package_path(metadata_root)
+    try:
+        expected_stat = expected_package.lstat()
+    except FileNotFoundError:
         failures.append(
-            "Installed distribution direct URL does not match selected metadata root "
-            f"{metadata_root}."
+            "[EXPECTED_PACKAGE_MISSING] Expected repository package file is missing: "
+            f"{expected_package}."
         )
+    except OSError as exc:
+        failures.append(
+            "[EXPECTED_PACKAGE_MISSING] Could not inspect expected repository package "
+            f"file {expected_package}: {exc}"
+        )
+    else:
+        if expected_package.is_symlink() or not stat.S_ISREG(expected_stat.st_mode):
+            failures.append(
+                "[EXPECTED_PACKAGE_NOT_REGULAR] Expected repository package path is "
+                f"not a regular non-symlink file: {expected_package}."
+            )
 
     imported_file = observation.get("osw_file")
-    if not isinstance(imported_file, str) or not _path_is_within(
-        Path(imported_file), metadata_root
+    if (
+        not isinstance(imported_file, str)
+        or not Path(imported_file).is_absolute()
+        or _path_identity(Path(imported_file)) != _path_identity(expected_package)
     ):
         failures.append(
-            "Imported osw path does not match selected metadata root "
-            f"{metadata_root}."
+            "[IMPORTED_PACKAGE_PATH_MISMATCH] Imported osw path does not match exact "
+            f"repository package path {expected_package}: {imported_file!r}."
         )
     return failures
 
@@ -317,21 +415,34 @@ def _source_version_failures(root: Path, expected_version: str, *, label: str) -
     failures: list[str] = []
     pyproject_path = root / "pyproject.toml"
     if not pyproject_path.exists():
-        failures.append(f"{label} pyproject.toml is missing.")
+        failures.append(f"[SOURCE_VERSION_MISMATCH] {label} pyproject.toml is missing.")
     else:
         project = tomllib.loads(_read(pyproject_path)).get("project", {})
         version = project.get("version") if isinstance(project, dict) else None
         if version != expected_version:
             failures.append(
+                "[SOURCE_VERSION_MISMATCH] "
                 f"{label} pyproject version is {version}, expected {expected_version}."
             )
 
     init_path = root / "src" / "osw" / "__init__.py"
     if not init_path.exists():
-        failures.append(f"{label} src/osw/__init__.py is missing.")
+        failures.append(
+            f"[SOURCE_VERSION_MISMATCH] {label} src/osw/__init__.py is missing."
+        )
     elif f'__version__ = "{expected_version}"' not in _read(init_path):
-        failures.append(f"{label} osw.__version__ is not {expected_version}.")
+        failures.append(
+            f"[SOURCE_VERSION_MISMATCH] {label} osw.__version__ is not {expected_version}."
+        )
     return failures
+
+
+def _source_project_version(root: Path) -> object:
+    pyproject_path = root / "pyproject.toml"
+    if not pyproject_path.is_file():
+        return None
+    project = tomllib.loads(_read(pyproject_path)).get("project", {})
+    return project.get("version") if isinstance(project, dict) else None
 
 
 def _validate_selected_installed_metadata(
@@ -361,6 +472,14 @@ def _validate_selected_installed_metadata(
         failures.append(error)
         return failures, None
     assert observation is not None
+    observation = dict(observation)
+    direct_url = observation.get("direct_url")
+    observation["dir_info"] = (
+        direct_url.get("dir_info") if isinstance(direct_url, Mapping) else None
+    )
+    observation["metadata_root"] = str(metadata_root.resolve(strict=False))
+    observation["metadata_root_source_version"] = _source_project_version(metadata_root)
+    observation["source_under_test_version"] = _source_project_version(source_root)
     failures.extend(
         _validate_installed_metadata_observation(
             observation,
@@ -764,7 +883,8 @@ def main() -> int:
     args = parser.parse_args()
     if bool(args.installed_metadata_python) != bool(args.installed_metadata_root):
         parser.error(
-            "--installed-metadata-python and --installed-metadata-root "
+            "[CLI_METADATA_OPTIONS_PAIRED] --installed-metadata-python and "
+            "--installed-metadata-root "
             "must be provided together"
         )
     if args.installed_metadata_python is not None and (
@@ -772,7 +892,8 @@ def main() -> int:
         or not args.installed_metadata_root.is_absolute()
     ):
         parser.error(
-            "--installed-metadata-python and --installed-metadata-root "
+            "[CLI_METADATA_OPTIONS_ABSOLUTE] --installed-metadata-python and "
+            "--installed-metadata-root "
             "must be absolute paths"
         )
     if args.allowed_prior_rc_tag and (

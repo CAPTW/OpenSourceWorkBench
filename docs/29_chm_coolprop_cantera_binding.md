@@ -108,6 +108,5 @@ packages are missing.
 - CHM adapters do not call `ExternalCommandRunner`.
 - CHM adapters do not call subprocesses.
 - GUI dialogs do not call subprocesses.
-- DWSIM, CAPE-OPEN, process flowsheets, Aspen/HYSYS clone behavior, reacting
-  CFD, and industrial certification claims are out of scope.
-
+- CHM binding makes no industrial certification claim and does not cover DWSIM,
+  CAPE-OPEN, process flowsheets, Aspen/HYSYS clone behavior, or reacting CFD.

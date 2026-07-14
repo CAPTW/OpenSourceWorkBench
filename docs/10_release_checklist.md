@@ -119,7 +119,7 @@ or full solver parity.
 | Windows portable ZIP UX guidance | `PASS` | [Windows Portable ZIP](release/windows_portable_zip.md) documents extraction layout, `--help` first-run guidance, unsigned/no MSI/no code-signing warnings, no bundled external solver caveat, checksum verification, and troubleshooting. |
 | Validation evidence carry-forward | `PASS_WITH_WARNINGS` | [Live optional solver validation evidence](validation/live_optional_solver_validation.md) records local PySide6/Pillow availability and missing optional solver/science backends. Missing optional stacks remain environment-specific and non-blocking. |
 | Maintenance revalidation baseline | `PASS_WITH_WARNINGS` | [v0.1.3rc2 maintenance revalidation](maintenance/v0_1_3rc2_revalidation.md) records release integrity, workflow safety, asset smoke evidence, known warnings, and next maintenance choices. |
-| Scope discipline | `PASS` | `v0.1.3rc2` is maintenance/revalidation/release polish only. It does not claim stable production status, industrial certification, MATLAB/ANSYS/Simulink cloning, or native commercial CAD direct import. |
+| Scope discipline | `PASS` | At this gate, `v0.1.3rc2` was limited to maintenance/revalidation/release polish. It made no industrial certification claim and did not claim stable production status, MATLAB/ANSYS/Simulink cloning, or native commercial CAD direct import. |
 
 ## FUNC-020 Release Gate Snapshot
 
@@ -242,10 +242,10 @@ or full solver parity.
 | Release notes describe OSW v0.1 as an educational/research prototype. | `PASS` | README, north star, tutorials, known limitations, and install docs use educational/research prototype language. |
 | README scope and non-goals are current. | `PASS` | README lists v0.1 scope, eight demos, non-goals, release checklist, demo smoke checklist, and known limitations. |
 | `docs/known_limitations.md` is current and linked from README. | `PASS` | README non-goals section links Known Limitations. |
-| Public docs avoid industrial certification and full commercial solver parity claims. | `PASS` | Scope drift check passed; docs state no certification or production accuracy claims. |
+| Public docs make no industrial certification claim and avoid full commercial solver parity claims. | `PASS` | Scope drift check passed; docs state no certification or production accuracy claims. |
 | Public docs avoid native commercial CAD direct import support claims. | `PASS` | README, known limitations, tutorials, and demo smoke checklist say standard/exported formats only. |
 | `.m` workflows remain preview-first and execution is user-triggered. | `PASS` | README, tutorials, demo smoke checklist, and known limitations state `.m` import does not auto-run scripts. |
-| No out-of-scope release requirement is introduced. | `PASS` | This gate does not require Simulink, `.mlapp`, native CAD direct import, full OpenFOAM UI, industrial certification, or GUI direct solver execution. |
+| No out-of-scope release requirement is introduced. | `PASS` | This gate makes no industrial certification claim and does not require Simulink, `.mlapp`, native CAD direct import, full OpenFOAM UI, or GUI direct solver execution. |
 
 ## Demo Smoke Status
 
@@ -503,7 +503,7 @@ or full solver parity.
 
 | Item | Status | Evidence / notes |
 | --- | --- | --- |
-| Public packages avoid industrial certification and full commercial solver parity claims. | `PASS` | Scope and docs checks passed. |
+| Public packages make no industrial certification claim and avoid full commercial solver parity claims. | `PASS` | Scope and docs checks passed. |
 | Known limitations are included in release notes or linked from release documentation. | `PASS` | README and checklist link known limitations. |
 | Report-asset release wording preserves the exact unsupported boundary and does not claim feature removal. | `PASS` | The Unreleased changelog uses the approved `DEFERRED_RETAINED` release-note entry, states no native resolver/test matrix was added, and says no existing supported native feature was removed. |
 | External solver installers are not bundled into the base package. | `PASS` | Install docs explicitly keep solver installs optional. |

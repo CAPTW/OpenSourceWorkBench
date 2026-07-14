@@ -10,7 +10,7 @@
 | Validation without golden evidence | Weak research credibility and over-trust in demo outputs | Add validation matrix rows, assumptions, limitations, and golden fixtures as demos mature | Mark workflow as preview-only until evidence exists |
 | Simulink, `.slx`, or `.mlapp` expectations | Creates MATLAB product compatibility burden | Limit script support to preview-first `.m` and `.mat` workflows | Defer as post-v0.1 research topic with explicit non-goal note |
 | Full OpenFOAM UI or solver coverage | Expands beyond a bounded educational demo | Keep only cavity/duct templates and documented limitations | Ship template preparation/reporting without broad case editor |
-| Industrial certification claims | Legal and trust risk | Ban certification/compliance/production accuracy language in docs and UI | Replace with educational/research validation wording |
+| No industrial certification claim is permitted | Legal and trust risk | Ban certification/compliance/production accuracy language in docs and UI | Replace with educational/research validation wording |
 | Heavy dependencies blocking bootstrap | Slows contributors and CI | Keep PySide6, mesh, viz, thermo, and script stacks as optional extras | Allow doctor to report missing optional modules without failing |
 | Solver runtime artifacts committed | Pollutes repo and hides reproducibility issues | Use `.gitignore`, preflight checks, and review gates | Remove artifacts from index and store curated fixtures under examples/tests |
 | Report output overclaiming results | Users may trust unvalidated results | Reports must list assumptions, limitations, and validation status | Block release of report feature until warnings are present |
@@ -210,6 +210,6 @@ Any review finding in these areas should block merge until fixed:
 - native commercial CAD direct import;
 - Simulink or `.mlapp` support;
 - full OpenFOAM UI or full solver coverage;
-- industrial certification or production CAE claims;
+- no industrial certification or production CAE claim may pass review;
 - GUI direct subprocess solver execution;
 - committed runtime artifacts, secrets, or generated junk.

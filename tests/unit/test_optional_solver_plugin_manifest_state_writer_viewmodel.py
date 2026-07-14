@@ -296,6 +296,17 @@ def test_stale_source_conflict_shared_stack_and_unsafe_claims_block() -> None:
     assert OSPMG_STATE_WRITER_UNSAFE_CLAIM in _codes(unsafe)
 
 
+def test_unsafe_claim_fixture_uses_non_certification_placeholder_and_still_blocks() -> None:
+    vm = OptionalSolverPluginManifestStateWriterViewModel.blocked_by_unsafe_claim()
+
+    assert vm.summary.readiness == "blocked_unsafe_claim"
+    assert vm.unsafe_claim_rows[0].blocked is True
+    assert vm.unsafe_claim_rows[0].accepted_by_writer is False
+    assert vm.unsafe_claim_rows[0].persisted_as_truth is False
+    assert "certif" not in vm.unsafe_claim_rows[0].claim_text.casefold()
+    assert OSPMG_STATE_WRITER_UNSAFE_CLAIM in _codes(vm)
+
+
 def test_missing_acknowledgement_blocks_and_required_categories_are_visible() -> None:
     vm = OptionalSolverPluginManifestStateWriterViewModel.from_records(
         sources=(_source(),),

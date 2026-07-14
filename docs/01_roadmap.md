@@ -1,7 +1,7 @@
 # OSW v0.1 Roadmap
 
-Each milestone must remain runnable without commercial software and must avoid
-industrial certification claims.
+Each milestone must remain runnable without commercial software. Each milestone
+must make no industrial certification claim.
 
 ## Roadmap Items
 
@@ -95,7 +95,7 @@ log entry moves them:
 - full ANSYS Workbench-like workflow cloning;
 - full OpenFOAM case editor or solver UI;
 - nonlinear contact/plasticity demos;
-- industrial certification, compliance, or production accuracy claims;
+- OSW v0.1 does not claim industrial certification, compliance, or production accuracy;
 - GUI-triggered direct external solver execution.
 - native report-asset availability resolution while its lifecycle remains
   `DEFERRED_RETAINED`.

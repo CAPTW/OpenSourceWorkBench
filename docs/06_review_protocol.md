@@ -65,7 +65,7 @@ block merge regardless of score:
   import support.
 - Simulink or `.mlapp` support.
 - Full OpenFOAM solver coverage claims or broad solver UI coverage claims.
-- Industrial certification claims.
+- No industrial certification claim may pass review.
 - GUI direct subprocess solver execution.
 - Committed secrets, tokens, credentials, or obvious solver runtime artifacts.
 - Dirty source or target worktree at merge time.

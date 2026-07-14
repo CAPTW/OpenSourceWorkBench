@@ -478,7 +478,8 @@ request should stop, park, or defer.
 - Simulink, `.slx`, or `.mlapp` support.
 - Full OpenFOAM solver coverage or a full OpenFOAM UI.
 - Full MATLAB proprietary toolbox compatibility.
-- Industrial certification, compliance, accuracy, or production CAE claims.
+- OSW v0.1 does not claim industrial certification, compliance, engineering
+  accuracy, or production CAE readiness.
 - GUI direct subprocess solver execution.
 - Proprietary solver automation that requires licensed commercial software.
 - Automatic unreviewed solver execution from image or VLM output.
@@ -487,8 +488,8 @@ request should stop, park, or defer.
   solver requirement in VFEA planning.
 - Topology optimization implementation inside the initial VFEA scope.
 - FEASpec examples or benchmark seeds presented as solver-validated results.
-- Treating FEASpec model parsing or basic checks as proof of physical validity,
-  solver readiness, or industrial certification.
+- Do not treat FEASpec model parsing or basic checks as proof of physical validity
+  or solver readiness; those checks do not constitute industrial certification.
 - Treating FEASpec validator design documentation as a production validator,
   ProjectSchema bridge, solver exporter, VLM provider, or solver execution
   capability.
@@ -1630,7 +1631,7 @@ Use this table before implementing any ambiguous request.
 
 | Decision | Criteria | Required action |
 | --- | --- | --- |
-| Stop | Secrets, destructive Git operations, industrial certification claims, GUI direct solver subprocess execution, native commercial CAD direct import, Simulink or `.mlapp`, full ANSYS clone, or full OpenFOAM UI. | Do not implement. Write a blocker or scope report. |
+| Stop | No industrial certification claim may be accepted. Other blockers are secrets, destructive Git operations, GUI direct solver subprocess execution, native commercial CAD direct import, Simulink or `.mlapp`, a full ANSYS clone, or a full OpenFOAM UI. | Do not implement. Write a blocker or scope report. |
 | Park | Useful idea, but architecture is missing or risk is high: generalized solver execution, remote jobs, broad OpenFOAM case management, native CAD research, or advanced runner design. | Add a decision/risk note and create a future Task Card. |
 | Defer | Plausible after v0.1 but not needed for the eight demos: richer materials, more formats, GUI polish, parallel execution, nonlinear contact/plasticity, or advanced MATLAB compatibility. | Mark post-v0.1 and keep current diff focused. |
 | Defer | Native report-asset availability resolution remains `DEFERRED_RETAINED`; heuristics, fake adapters, undefined helper processes, or user consent treated as locality proof do not justify uplift. | Keep native implementation and native-test allowlists empty; require a qualifying trigger and separately authorized policy/architecture gate. |

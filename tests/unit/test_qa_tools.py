@@ -106,9 +106,24 @@ def test_scope_drift_allows_in_scope_adapter_text() -> None:
         "# Non-goals\nCertified products are supported.",
         "# Non-goals\nThe companion is safe and certified.",
         "# Non-goals\nOSW may be certified.",
+        "# Non-goals\nOSW supports industrial certification.",
+        (
+            "# Non-goals\n"
+            "The provider is silent about whether OSW supports industrial certification."
+        ),
         "OSW is not a clone; OSW is certified.",
         "OSW is not certified; the companion is certified.",
         "OSW is not, certified.",
+        "OSW is unrelated not ready but supports industrial certification.",
+        "OSW is not industrial certification.",
+        "This matrix is not merely an industrial certification plan.",
+        "Industrial certification is not optional.",
+        "This matrix is not: an industrial certification plan.",
+        "This matrix is not — an industrial certification plan.",
+        (
+            "- This matrix is not an industrial certification plan.\n"
+            "  Industrial certification is available."
+        ),
     ],
 )
 def test_scope_drift_rejects_positive_or_ambiguous_certification_claims(
@@ -131,6 +146,13 @@ def test_scope_drift_rejects_positive_or_ambiguous_certification_claims(
         "This workbench is offered without industrial certification.",
         "OSW does not claim industrial certification.",
         "OSW makes no industrial certification claim.",
+        "OSW does not claim `industrial certification`.",
+        "OSW MAKES NO INDUSTRIAL CERTIFICATION CLAIM!",
+        "This matrix is not an industrial certification plan.",
+        "This statement was not an industrial certification claim.",
+        "These matrices are not industrial certification plans.",
+        "These statements were not industrial certification claims.",
+        "This matrix **IS NOT AN INDUSTRIAL CERTIFICATION PLAN**.",
     ],
 )
 def test_scope_drift_accepts_explicit_certification_negation(text: str) -> None:
@@ -139,33 +161,71 @@ def test_scope_drift_accepts_explicit_certification_negation(text: str) -> None:
     assert proc.returncode == 0, proc.stdout + proc.stderr
 
 
-def test_scope_drift_evaluates_certification_matches_independently() -> None:
+@pytest.mark.parametrize(
+    ("text", "expected_count"),
+    [
+        (
+            "OSW is not certified; the companion supports industrial certification.",
+            1,
+        ),
+        (
+            "OSW supports industrial certification; the companion is not certified.",
+            1,
+        ),
+        (
+            "OSW supports industrial certification; the companion is certified.",
+            2,
+        ),
+        (
+            "OSW is not certified; the companion has no industrial certification.",
+            0,
+        ),
+        (
+            "This matrix is not an industrial certification plan; "
+            "the export is certified.",
+            1,
+        ),
+        (
+            "This matrix is not an industrial certification plan: "
+            "the export supports industrial certification.",
+            1,
+        ),
+        (
+            "This matrix is not an industrial certification plan — "
+            "the export supports industrial certification.",
+            1,
+        ),
+    ],
+)
+def test_scope_drift_evaluates_certification_matches_independently(
+    text: str,
+    expected_count: int,
+) -> None:
+    proc = run_tool("tools/qa/check_scope_drift.py", "--text", text)
+
+    assert proc.stdout.count("possible scope drift (industrial certification)") == expected_count
+    assert proc.returncode == (1 if expected_count else 0), proc.stdout + proc.stderr
+
+
+def test_scope_drift_preserves_certification_source_diagnostics() -> None:
     proc = run_tool(
         "tools/qa/check_scope_drift.py",
         "--text",
-        "OSW is not certified; the companion is certified and the export is certified.",
+        "# Non-goals\nOSW supports industrial certification.",
     )
 
     assert proc.returncode == 1, proc.stdout + proc.stderr
-    assert proc.stdout.count("possible scope drift (industrial certification)") == 2
+    assert (
+        "<text>:2: possible scope drift (industrial certification): "
+        "OSW supports industrial certification."
+    ) in proc.stdout
 
 
-def test_scope_drift_allows_explicit_blocked_unsafe_claim_fixture() -> None:
-    proc = run_tool(
-        "tools/qa/check_scope_drift.py",
-        "--text",
-        "\n".join(
-            [
-                "def blocked_by_unsafe_claim(",
-                "    *,",
-                '    claim_text: str = "This manifest is certified.",',
-                "):",
-                "    return build_viewmodel(unsafe_claims=(claim_text,))",
-            ]
-        ),
-    )
+def test_scope_drift_certification_changes_preserve_other_scope_categories() -> None:
+    proc = run_tool("tools/qa/check_scope_drift.py", "--text", "Simulink support")
 
-    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "possible scope drift (Simulink)" in proc.stdout
 
 
 def test_architecture_checker_runs_on_current_repo() -> None:

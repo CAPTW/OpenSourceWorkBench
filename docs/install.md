@@ -6,9 +6,9 @@ desktop packaging is not required for v0.1 release readiness; if it blocks the
 release, use the source install path below.
 
 OSW v0.1 is an educational and research prototype. It does not bundle external
-solver runtimes, does not require commercial software, and does not claim
-industrial certification. See [Known Limitations](known_limitations.md) for the
-release boundary.
+solver runtimes and does not require commercial software.
+OSW makes no industrial certification claim. See
+[Known Limitations](known_limitations.md) for the release boundary.
 
 ## Install Matrix
 

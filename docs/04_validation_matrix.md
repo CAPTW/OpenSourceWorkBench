@@ -897,9 +897,9 @@ trust/provenance, atomicity/error handling, reload/export-summary/ProjectSchema/
 GUI/CLI/passive-discovery boundaries, live optional validation issue boundaries,
 and `OSPMG_STATE_WRITER_*` diagnostic reservations.
 
-This evidence is useful for confidence and diagnostics, but it is not an
-industrial certification claim and does not make optional dependencies mandatory
-for base import, CLI smoke, or unit tests.
+This evidence is useful for confidence and diagnostics.
+It makes no industrial certification claim and does not make optional dependencies
+mandatory for base import, CLI smoke, or unit tests.
 
 [Optional solver plugin manifest reload acceptance persistence view-model](experimental/optional_solver_plugin_manifest_reload_acceptance_persistence_viewmodel.md)
 implements pure automated view-model evidence for future reload acceptance

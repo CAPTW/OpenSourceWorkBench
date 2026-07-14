@@ -66,8 +66,8 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
 
 - Status: Accepted
 - Date: 2026-05-12
-- Context: OSW needs traceable quality gates without depending on remote CI or
-  industrial certification claims.
+- Context: At this decision, OSW needed traceable quality gates without
+  depending on remote CI, and no industrial certification claim was made.
 - Decision: Merge to `develop` requires review score thresholds, clean source
   and target worktrees, QA evidence, artifact checks, and a squash commit. A
   release candidate requires a separate release gate with validation, docs,

@@ -404,6 +404,157 @@ def test_selected_metadata_accepts_matching_repository_environment(
     ) == []
 
 
+@pytest.mark.parametrize(
+    ("case", "category"),
+    [
+        ("false", "DIRECT_URL_EDITABLE_NOT_TRUE"),
+        ("missing", "DIRECT_URL_EDITABLE_MISSING"),
+        ("string", "DIRECT_URL_EDITABLE_NOT_TRUE"),
+        ("integer", "DIRECT_URL_EDITABLE_NOT_TRUE"),
+        ("missing_dir_info", "DIRECT_URL_DIR_INFO_MISSING"),
+        ("malformed_dir_info", "DIRECT_URL_DIR_INFO_INVALID"),
+    ],
+)
+def test_selected_metadata_rejects_invalid_editable_provenance(
+    tmp_path: Path,
+    case: str,
+    category: str,
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.5rc1")
+    metadata_python = tmp_path / "venv" / "python"
+    observation = _installed_observation(tmp_path, metadata_python)
+    direct_url = observation["direct_url"]
+    assert isinstance(direct_url, dict)
+    if case == "false":
+        direct_url["dir_info"] = {"editable": False}
+    elif case == "missing":
+        direct_url["dir_info"] = {}
+    elif case == "string":
+        direct_url["dir_info"] = {"editable": "true"}
+    elif case == "integer":
+        direct_url["dir_info"] = {"editable": 1}
+    elif case == "missing_dir_info":
+        direct_url.pop("dir_info")
+    else:
+        direct_url["dir_info"] = ["editable", True]
+
+    failures = _validate_observation(
+        observation,
+        expected_version="0.1.5rc1",
+        metadata_python=metadata_python,
+        metadata_root=tmp_path,
+    )
+
+    assert any(f"[{category}]" in failure for failure in failures)
+
+
+@pytest.mark.parametrize(
+    ("case", "category"),
+    [
+        ("missing", "DIRECT_URL_NOT_MAPPING"),
+        ("malformed", "DIRECT_URL_INVALID"),
+        ("relative", "DIRECT_URL_INVALID"),
+        ("non_file", "DIRECT_URL_NON_FILE_SCHEME"),
+        ("external", "DIRECT_URL_ROOT_MISMATCH"),
+        ("parent", "DIRECT_URL_ROOT_MISMATCH"),
+        ("child", "DIRECT_URL_ROOT_MISMATCH"),
+    ],
+)
+def test_selected_metadata_rejects_invalid_direct_url(
+    tmp_path: Path,
+    case: str,
+    category: str,
+) -> None:
+    root = tmp_path / "repository"
+    _minimal_release_tree(root, version="0.1.5rc1")
+    metadata_python = tmp_path / "venv" / "python"
+    observation = _installed_observation(root, metadata_python)
+    if case == "missing":
+        observation["direct_url"] = None
+    else:
+        direct_url = observation["direct_url"]
+        assert isinstance(direct_url, dict)
+        if case == "malformed":
+            direct_url["url"] = "file:///bad%ZZpath"
+        elif case == "relative":
+            direct_url["url"] = "file:relative/repository"
+        elif case == "non_file":
+            direct_url["url"] = "https://example.invalid/repository"
+        elif case == "external":
+            direct_url["url"] = (tmp_path / "external").resolve().as_uri()
+        elif case == "parent":
+            direct_url["url"] = tmp_path.resolve().as_uri()
+        else:
+            direct_url["url"] = (root / "child").resolve().as_uri()
+
+    failures = _validate_observation(
+        observation,
+        expected_version="0.1.5rc1",
+        metadata_python=metadata_python,
+        metadata_root=root,
+    )
+
+    assert any(f"[{category}]" in failure for failure in failures)
+
+
+@pytest.mark.parametrize("case", ["unrelated", "nonexistent", "wrong_exact_path"])
+def test_selected_metadata_rejects_noncanonical_import_path(
+    tmp_path: Path,
+    case: str,
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.5rc1")
+    metadata_python = tmp_path / "venv" / "python"
+    observation = _installed_observation(tmp_path, metadata_python)
+    if case == "unrelated":
+        imported_file = tmp_path / "alternate" / "osw" / "__init__.py"
+        _write(imported_file, '__version__ = "0.1.5rc1"\n')
+    elif case == "nonexistent":
+        imported_file = tmp_path / "missing" / "osw" / "__init__.py"
+    else:
+        imported_file = tmp_path / "src" / "osw" / "alternate.py"
+        _write(imported_file, '__version__ = "0.1.5rc1"\n')
+    observation["osw_file"] = str(imported_file)
+
+    failures = _validate_observation(
+        observation,
+        expected_version="0.1.5rc1",
+        metadata_python=metadata_python,
+        metadata_root=tmp_path,
+    )
+
+    assert any("[IMPORTED_PACKAGE_PATH_MISMATCH]" in failure for failure in failures)
+
+
+@pytest.mark.parametrize(
+    ("case", "category"),
+    [
+        ("missing", "EXPECTED_PACKAGE_MISSING"),
+        ("directory", "EXPECTED_PACKAGE_NOT_REGULAR"),
+    ],
+)
+def test_selected_metadata_requires_regular_expected_package_file(
+    tmp_path: Path,
+    case: str,
+    category: str,
+) -> None:
+    _minimal_release_tree(tmp_path, version="0.1.5rc1")
+    metadata_python = tmp_path / "venv" / "python"
+    observation = _installed_observation(tmp_path, metadata_python)
+    expected_file = tmp_path / "src" / "osw" / "__init__.py"
+    expected_file.unlink()
+    if case == "directory":
+        expected_file.mkdir()
+
+    failures = _validate_observation(
+        observation,
+        expected_version="0.1.5rc1",
+        metadata_python=metadata_python,
+        metadata_root=tmp_path,
+    )
+
+    assert any(f"[{category}]" in failure for failure in failures)
+
+
 def test_selected_metadata_rejects_missing_distribution(tmp_path: Path) -> None:
     _minimal_release_tree(tmp_path, version="0.1.5rc1")
     metadata_python = tmp_path / "venv" / "python"
@@ -511,7 +662,85 @@ def test_selected_metadata_query_rejects_invalid_json(
 
     assert observation is None
     assert error is not None
-    assert "invalid JSON" in error
+    assert "[OBSERVATION_JSON_INVALID]" in error
+
+
+def test_selected_metadata_query_rejects_non_object_json(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = getattr(release_metadata, "_query_installed_metadata", None)
+    assert callable(query), "installed metadata interpreter query is missing"
+    metadata_python = tmp_path / "selected-python"
+
+    monkeypatch.setattr(
+        release_metadata.subprocess,
+        "run",
+        lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "[]", ""),
+    )
+
+    observation, error = query(metadata_python, metadata_root=tmp_path)
+
+    assert observation is None
+    assert error is not None
+    assert "[OBSERVATION_JSON_NOT_OBJECT]" in error
+
+
+@pytest.mark.parametrize(
+    ("case", "category"),
+    [
+        ("unavailable", "SELECTED_INTERPRETER_UNAVAILABLE"),
+        ("timeout", "SELECTED_INTERPRETER_TIMEOUT"),
+        ("nonzero", "SELECTED_INTERPRETER_NONZERO"),
+    ],
+)
+def test_selected_metadata_query_preserves_failures_and_timeout(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    case: str,
+    category: str,
+) -> None:
+    query = getattr(release_metadata, "_query_installed_metadata", None)
+    assert callable(query), "installed metadata interpreter query is missing"
+    metadata_python = tmp_path / "selected-python"
+
+    def fake_run(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        if case == "unavailable":
+            raise OSError("selected interpreter is unavailable")
+        if case == "timeout":
+            raise subprocess.TimeoutExpired(args, timeout=30)
+        return subprocess.CompletedProcess(args, 7, "query stdout", "query stderr")
+
+    monkeypatch.setattr(release_metadata.subprocess, "run", fake_run)
+
+    observation, error = query(metadata_python, metadata_root=tmp_path)
+
+    assert observation is None
+    assert error is not None
+    assert f"[{category}]" in error
+
+
+def test_selected_metadata_query_has_no_ambient_fallback(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    query = getattr(release_metadata, "_query_installed_metadata", None)
+    assert callable(query), "installed metadata interpreter query is missing"
+    metadata_python = tmp_path / "selected-python"
+    calls: list[list[str]] = []
+
+    def fake_run(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append(args)
+        raise OSError("selected interpreter is unavailable")
+
+    monkeypatch.setattr(release_metadata.subprocess, "run", fake_run)
+
+    observation, error = query(metadata_python, metadata_root=tmp_path)
+
+    assert observation is None
+    assert error is not None
+    assert "[SELECTED_INTERPRETER_UNAVAILABLE]" in error
+    assert calls == [[str(metadata_python), "-I", "-c", release_metadata.INSTALLED_METADATA_QUERY]]
 
 
 def test_selected_metadata_rejects_metadata_root_source_mismatch(
@@ -549,6 +778,37 @@ def test_selected_metadata_rejects_metadata_root_source_mismatch(
         in failure
         for failure in failures
     )
+    assert any("[SOURCE_VERSION_MISMATCH]" in failure for failure in failures)
+
+
+def test_selected_metadata_observation_retains_structured_repository_identity(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    selector = getattr(release_metadata, "_validate_selected_installed_metadata", None)
+    assert callable(selector), "selected installed metadata validator is missing"
+    _minimal_release_tree(tmp_path, version="0.1.5rc1")
+    metadata_python = tmp_path / "venv" / "python"
+    queried = _installed_observation(tmp_path, metadata_python)
+    monkeypatch.setattr(
+        release_metadata,
+        "_query_installed_metadata",
+        lambda _python, *, metadata_root: (queried, None),
+    )
+
+    failures, observation = selector(
+        source_root=tmp_path,
+        metadata_python=metadata_python,
+        metadata_root=tmp_path,
+        expected_version="0.1.5rc1",
+    )
+
+    assert failures == []
+    assert observation is not None
+    assert observation["metadata_root"] == str(tmp_path.resolve())
+    assert observation["metadata_root_source_version"] == "0.1.5rc1"
+    assert observation["source_under_test_version"] == "0.1.5rc1"
+    assert observation["dir_info"] == {"editable": True}
 
 
 def test_release_metadata_main_is_source_only_by_default(
@@ -573,29 +833,48 @@ def test_release_metadata_main_is_source_only_by_default(
     assert "check_installed_distribution" not in calls[0]
 
 
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["--installed-metadata-python", str(Path(sys.executable).resolve())],
+        ["--installed-metadata-root", str(Path.cwd().resolve())],
+    ],
+)
 def test_release_metadata_main_requires_paired_environment_options(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    arguments: list[str],
 ) -> None:
     monkeypatch.setattr(release_metadata, "repo_root", lambda: tmp_path)
     monkeypatch.setattr(
         sys,
         "argv",
-        ["check_release_metadata.py", "--installed-metadata-python", str(sys.executable)],
+        ["check_release_metadata.py", *arguments],
     )
 
     with pytest.raises(SystemExit) as exc_info:
         release_metadata.main()
 
     assert exc_info.value.code == 2
-    assert "must be provided together" in capsys.readouterr().err
+    error = capsys.readouterr().err
+    assert "[CLI_METADATA_OPTIONS_PAIRED]" in error
+    assert "must be provided together" in error
 
 
+@pytest.mark.parametrize(
+    ("python_path", "root_path"),
+    [
+        ("relative/python", None),
+        (None, "relative/root"),
+    ],
+)
 def test_release_metadata_main_requires_absolute_environment_paths(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    python_path: str | None,
+    root_path: str | None,
 ) -> None:
     monkeypatch.setattr(release_metadata, "repo_root", lambda: tmp_path)
     monkeypatch.setattr(
@@ -614,9 +893,9 @@ def test_release_metadata_main_requires_absolute_environment_paths(
         [
             "check_release_metadata.py",
             "--installed-metadata-python",
-            "relative/python",
+            python_path or str(Path(sys.executable).resolve()),
             "--installed-metadata-root",
-            "relative/root",
+            root_path or str(tmp_path.resolve()),
         ],
     )
 
@@ -626,7 +905,9 @@ def test_release_metadata_main_requires_absolute_environment_paths(
         result = int(exc.code)
 
     assert result == 2
-    assert "must be absolute paths" in capsys.readouterr().err
+    error = capsys.readouterr().err
+    assert "[CLI_METADATA_OPTIONS_ABSOLUTE]" in error
+    assert "must be absolute paths" in error
 
 
 def test_release_metadata_main_reports_explicit_environment_identity(

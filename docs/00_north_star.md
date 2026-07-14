@@ -59,7 +59,8 @@ external solver execution.
 - Simulink, `.slx`, or `.mlapp` compatibility.
 - Full OpenFOAM solver coverage or a full OpenFOAM UI.
 - Full MATLAB proprietary toolbox compatibility.
-- Industrial certification, accuracy, compliance, or production CAE claims.
+- OSW v0.1 does not claim industrial certification, engineering accuracy,
+  compliance, or production CAE readiness.
 - GUI direct subprocess solver execution.
 - Nonlinear contact/plasticity unless explicitly deferred as future work.
 - Full ANSYS Workbench-style workflow cloning.
@@ -86,6 +87,6 @@ Before accepting work into v0.1, ask:
   Result -> Report?
 - Can it run or be inspected without commercial software?
 - Are heavy dependencies optional for bootstrap and unit tests?
-- Does it avoid native commercial CAD, Simulink, `.mlapp`, full OpenFOAM UI,
-  industrial certification, and GUI direct solver execution?
+- Does it make no industrial certification claim and avoid native commercial
+  CAD, Simulink, `.mlapp`, full OpenFOAM UI, and GUI direct solver execution?
 - Is the validation evidence honest about educational/research limits?

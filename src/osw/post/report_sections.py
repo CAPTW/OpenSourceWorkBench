@@ -18,8 +18,8 @@ from osw.post.report_model import (
 )
 
 REPORT_KNOWN_LIMITATIONS = (
-    "OSW v0.1 reports are an educational/research artifact and must not be read "
-    "as Industrial certification or production CAE claims.",
+    "OSW v0.1 reports are educational/research artifacts. "
+    "This report makes no industrial certification claim and no production CAE claim.",
     "OSW is not a substitute for engineering judgment; review inputs, assumptions, "
     "units, validation notes, and tool availability before using report content.",
     "Native commercial CAD direct import is not supported in v0.1.",

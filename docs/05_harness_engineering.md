@@ -17,8 +17,9 @@ execution, or unreviewed generated artifacts.
 - Keep unit tests network-free and solver-free. External solvers are optional
   integration concerns, never default smoke-test requirements.
 - Treat scope guardrails as hard requirements. Native commercial CAD import,
-  Simulink or `.mlapp`, full OpenFOAM UI coverage, industrial certification,
-  and GUI direct subprocess solver execution are out of v0.1 scope.
+  Simulink or `.mlapp`, full OpenFOAM UI coverage, and GUI direct subprocess
+  solver execution are out of v0.1 scope.
+- OSW v0.1 does not claim industrial certification.
 - Do not push, force-push, delete branches, remove worktrees, or use
   destructive recovery commands from Codex prompts unless the user explicitly
   requests the exact operation.
@@ -244,5 +245,5 @@ show:
 - Package metadata, README, docs, license, and non-goals are aligned.
 - Unit tests and selected integration/golden/validation checks pass in the
   documented environment.
-- No public claim implies industrial certification or compatibility with
+- Public claims do not imply industrial certification or compatibility with
   forbidden native/proprietary workflows.

@@ -1020,7 +1020,7 @@ class OptionalSolverPluginManifestStateWriterViewModel:
     def blocked_by_unsafe_claim(
         cls,
         *,
-        claim_text: str = "This manifest is certified.",
+        claim_text: str = "This manifest contains a prohibited qualification claim.",
     ) -> OptionalSolverPluginManifestStateWriterViewModel:
         return build_optional_solver_plugin_manifest_state_writer_viewmodel(
             sources=({"source_id": "s1", "source_reference_display": "plugin.json"},),
