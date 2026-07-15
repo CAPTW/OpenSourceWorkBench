@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import subprocess
 import sys
@@ -365,6 +366,48 @@ def test_default_release_metadata_accepts_current_v015rc1_history(
     )
 
     assert check_release_metadata(tmp_path) == []
+
+
+def test_forbid_final_tag_help_uses_action_const_and_tag_metavar(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    observed: list[str | None] = []
+
+    def capture_policy(args: argparse.Namespace) -> ReleaseTagPolicy:
+        observed.append(args.forbid_final_tag)
+        return ReleaseTagPolicy()
+
+    monkeypatch.setattr(release_metadata, "FINAL_TAG", "v9.8.7")
+    monkeypatch.setattr(release_metadata, "_tag_policy_from_args", capture_policy)
+    monkeypatch.setattr(release_metadata, "check_release_metadata", lambda *_args, **_kwargs: [])
+
+    for argv, expected in (
+        (["check_release_metadata.py"], None),
+        (["check_release_metadata.py", "--forbid-final-tag"], "v9.8.7"),
+        (
+            ["check_release_metadata.py", "--forbid-final-tag", "v1.2.3"],
+            "v1.2.3",
+        ),
+    ):
+        monkeypatch.setattr(sys, "argv", argv)
+        assert release_metadata.main() == 0
+        assert observed[-1] == expected
+
+    monkeypatch.setattr(sys, "argv", ["check_release_metadata.py", "--help"])
+    with pytest.raises(SystemExit) as exc:
+        release_metadata.main()
+
+    assert exc.value.code == 0
+    help_text = " ".join(capsys.readouterr().out.split())
+    assert "[TAG]" in help_text
+    assert "v9.8.7" in help_text
+    assert "%(const)s" not in help_text
+    assert "defaults to v0.1.0" not in help_text
+    assert (
+        "final-prep mode: fail if TAG exists; omit TAG to check v9.8.7"
+        in help_text
+    )
 
 
 def test_selected_metadata_rejects_stale_distribution_version(

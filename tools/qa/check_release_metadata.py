@@ -853,7 +853,8 @@ def main() -> int:
         nargs="?",
         const=FINAL_TAG,
         default=None,
-        help="final-prep mode: fail if the named final tag exists; defaults to v0.1.0",
+        metavar="TAG",
+        help="final-prep mode: fail if TAG exists; omit TAG to check %(const)s",
     )
     parser.add_argument(
         "--allowed-historical-final-tag",
