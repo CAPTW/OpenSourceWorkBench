@@ -4,6 +4,32 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TUTORIALS = REPO_ROOT / "docs" / "tutorials"
+TUTORIAL_CURRENT_RELEASE_COPY = (
+    "OSW package metadata is currently `0.1.5rc1`, and the current public GitHub "
+    "prerelease is `v0.1.5-rc1`. OSW is intended for educational and research "
+    "workflows, not stable-production, industrial, or regulated engineering use; "
+    "it is not a MATLAB, ANSYS, or Simulink clone or a commercial CAD replacement."
+)
+TUTORIAL_CURRENT_RELEASE_BULLET = (
+    "- understand that `v0.1.5-rc1` is the current public prerelease and that "
+    "`v0.1.3-rc1` records are historical"
+)
+EXAMPLES_CURRENT_RELEASE_COPY = (
+    "These examples are small source-tree workflows for the current `develop` "
+    "line. Package metadata is `0.1.5rc1`, and `v0.1.5-rc1` is the current public "
+    "prerelease. They are intended for inspection and teaching, not production "
+    "or regulated engineering use."
+)
+SUPERSEDED_TUTORIAL_RELEASE_COPY = (
+    "OSW v0.1.3rc1 is a public prerelease for educational and research workflows. "
+    "It is not a stable production solver, industrial-certified CAE tool, MATLAB "
+    "clone, ANSYS clone, Simulink clone, or commercial CAD replacement."
+)
+SUPERSEDED_EXAMPLES_RELEASE_COPY = (
+    "These examples are small, source-tree workflows for the v0.1.3rc1 release "
+    "candidate. They are designed for inspection and teaching, not for certified "
+    "engineering decisions."
+)
 
 
 def _read(path: Path) -> str:
@@ -16,6 +42,24 @@ def test_tutorial_index_exists() -> None:
     assert "result dataset walkthrough" in text
     assert "first gui walkthrough" in text
     assert "release asset smoke walkthrough" in text
+
+
+def test_current_release_onboarding_copy_is_scope_safe() -> None:
+    tutorial = _read(TUTORIALS / "README.md")
+    examples = _read(REPO_ROOT / "examples" / "README.md")
+
+    assert tutorial.count(TUTORIAL_CURRENT_RELEASE_COPY) == 1
+    assert tutorial.count(TUTORIAL_CURRENT_RELEASE_BULLET) == 1
+    assert examples.count(EXAMPLES_CURRENT_RELEASE_COPY) == 1
+    assert "`0.1.5rc1`" in tutorial
+    assert "`v0.1.5-rc1`" in tutorial
+    assert "`v0.1.3-rc1` records are historical" in tutorial
+    assert "`0.1.5rc1`" in examples
+    assert "`v0.1.5-rc1`" in examples
+    assert SUPERSEDED_TUTORIAL_RELEASE_COPY not in " ".join(tutorial.split())
+    assert SUPERSEDED_EXAMPLES_RELEASE_COPY not in " ".join(examples.split())
+    assert "industrial-certified CAE tool" not in tutorial
+    assert "certified engineering decisions" not in examples
 
 
 def test_first_cli_walkthrough_has_copy_paste_commands() -> None:

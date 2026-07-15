@@ -70,13 +70,37 @@ FIELD_VIEW_MODEL_LIMITATION = (
     "deferred; Mesh Viewer glyph controls/state are preview-only."
 )
 RELEASE_ASSET_LIMITATION = (
-    "- The public `v0.1.3-rc1` GitHub prerelease has five attached Release "
+    "- The current public `v0.1.5-rc1` GitHub prerelease has five attached Release "
     "assets: a wheel, an sdist, an unsigned Windows portable ZIP, "
-    "`SHA256SUMS.txt`, and `release_asset_manifest.json`. GitHub’s automatic "
-    "source archives are separate from that five-asset count. No MSI, code "
-    "signing, Python package-index publication, bundled-solver distribution, "
-    "stable-production status, or future packaging format is claimed; those "
-    "remain separately gated."
+    "`SHA256SUMS.txt`, and `release_asset_manifest.json`. GitHub's automatic "
+    "source archives are separate from that five-asset count. Release-asset "
+    "`quick` and `full-static` verification establish only their stated identity "
+    "and static-consistency result, report `release_readiness=false`, and do not "
+    "establish installability, launch behavior, runtime correctness, engineering "
+    "correctness, regulated-use suitability, or publication readiness. No MSI, "
+    "code signing, Python package-index publication, bundled-solver distribution, "
+    "stable-production status, broader engineering assurance, or future packaging "
+    "format is claimed; those remain separately gated."
+)
+SIGNING_CURRENT_AUTHORITY_NOTE = (
+    "Current-authority note: this page began as the post-`v0.1.3-rc1` strategy "
+    "record. The current public prerelease is `v0.1.5-rc1`. The "
+    "checksum/signing/installer distinctions and the current unsigned portable "
+    "ZIP, no-MSI, no-code-signing, and no-bundled-solver limitations remain "
+    "applicable; version-specific v0.1.3rc2/v0.1.4 recommendations below are "
+    "retained as historical planning, not current roadmap authority."
+)
+TUTORIAL_CURRENT_RELEASE_COPY = (
+    "OSW package metadata is currently `0.1.5rc1`, and the current public GitHub "
+    "prerelease is `v0.1.5-rc1`. OSW is intended for educational and research "
+    "workflows, not stable-production, industrial, or regulated engineering use; "
+    "it is not a MATLAB, ANSYS, or Simulink clone or a commercial CAD replacement."
+)
+EXAMPLES_CURRENT_RELEASE_COPY = (
+    "These examples are small source-tree workflows for the current `develop` "
+    "line. Package metadata is `0.1.5rc1`, and `v0.1.5-rc1` is the current public "
+    "prerelease. They are intended for inspection and teaching, not production "
+    "or regulated engineering use."
 )
 HISTORICAL_OPEN_CONTEXT = (
     "- At this completed maintenance gate, live optional validation issues `#6` "
@@ -201,12 +225,19 @@ def _string_literals(relative: str) -> list[str]:
 
 def test_current_public_docs_distinguish_vector_preview_rendering_and_release_assets() -> None:
     known_limitations = _compact(_read("docs/release/known_limitations_v0_1.md"))
+    signing_strategy = _compact(
+        _read("docs/release/code_signing_installer_strategy.md")
+    )
     optional_dependencies = _compact(_read("docs/install/optional_dependencies.md"))
     tutorial = _compact(_read("docs/tutorials/result_dataset_walkthrough.md"))
     mapper = _compact(_read("src/osw/post/result_field_mapping.py"))
 
     assert _compact(VECTOR_RELEASE_LIMITATION) in known_limitations
     assert _compact(RELEASE_ASSET_LIMITATION) in known_limitations
+    assert _compact(SIGNING_CURRENT_AUTHORITY_NOTE) in signing_strategy
+    assert "## Historical v0.1.3-rc1 Baseline" in _read(
+        "docs/release/code_signing_installer_strategy.md"
+    )
     assert _compact(OPTIONAL_DEPENDENCY_LIMITATION) in optional_dependencies
     assert _compact(TUTORIAL_LIMITATION) in tutorial
     assert _compact(MAPPER_DOCSTRING) in mapper
@@ -217,6 +248,15 @@ def test_current_public_docs_distinguish_vector_preview_rendering_and_release_as
     ):
         assert FIELD_VIEW_MODEL_LIMITATION in _string_literals(relative)
 
+    public_docs_checker_literals = _string_literals("tools/qa/check_public_docs.py")
+    for current_authority_copy in (
+        TUTORIAL_CURRENT_RELEASE_COPY,
+        EXAMPLES_CURRENT_RELEASE_COPY,
+        RELEASE_ASSET_LIMITATION,
+        SIGNING_CURRENT_AUTHORITY_NOTE,
+    ):
+        assert current_authority_copy in public_docs_checker_literals
+
     audited = " ".join((known_limitations, optional_dependencies, tutorial)).lower()
     for positive_uplift in (
         "is production ready",
@@ -226,6 +266,13 @@ def test_current_public_docs_distinguish_vector_preview_rendering_and_release_as
         "publication ready",
     ):
         assert positive_uplift not in audited
+
+
+def test_code_signing_strategy_current_authority_copy_is_scope_safe() -> None:
+    strategy = _read("docs/release/code_signing_installer_strategy.md")
+
+    assert strategy.count("industrial or regulated solver platform") == 1
+    assert "industrial-certified solver platform" not in strategy
 
 
 def test_live_issue_status_literals_use_dated_bounded_closure_copy() -> None:

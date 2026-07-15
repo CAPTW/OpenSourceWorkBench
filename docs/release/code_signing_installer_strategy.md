@@ -7,12 +7,19 @@ Workbench after the public `v0.1.3-rc1` prerelease. It is a planning document,
 not evidence that signing, MSI, MSIX, Store distribution, or certificate
 provisioning already exists.
 
+Current-authority note: this page began as the post-`v0.1.3-rc1` strategy
+record. The current public prerelease is `v0.1.5-rc1`. The
+checksum/signing/installer distinctions and the current unsigned portable ZIP,
+no-MSI, no-code-signing, and no-bundled-solver limitations remain applicable;
+version-specific v0.1.3rc2/v0.1.4 recommendations below are retained as
+historical planning, not current roadmap authority.
+
 OpenSolver Workbench remains educational/research software. Code signing and
 installer packaging can improve publisher identity and installation experience,
 but they do not validate engineering correctness or convert OSW into an
-industrial-certified solver platform.
+industrial or regulated solver platform.
 
-## Current v0.1.3-rc1 State
+## Historical v0.1.3-rc1 Baseline
 
 - Release state: public prerelease.
 - Windows asset: unsigned portable ZIP.

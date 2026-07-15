@@ -1,8 +1,6 @@
 # OpenSolver Workbench Examples
 
-These examples are small, source-tree workflows for the v0.1.3rc1 release
-candidate. They are designed for inspection and teaching, not for certified
-engineering decisions.
+These examples are small source-tree workflows for the current `develop` line. Package metadata is `0.1.5rc1`, and `v0.1.5-rc1` is the current public prerelease. They are intended for inspection and teaching, not production or regulated engineering use.
 
 Run commands from the repository root with the repo venv:
 

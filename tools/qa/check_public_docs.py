@@ -63,6 +63,46 @@ LIMITATION_PHRASES = (
     "No plugin signing",
 )
 
+TUTORIAL_CURRENT_RELEASE_COPY = (
+    "OSW package metadata is currently `0.1.5rc1`, and the current public GitHub "
+    "prerelease is `v0.1.5-rc1`. OSW is intended for educational and research "
+    "workflows, not stable-production, industrial, or regulated engineering use; "
+    "it is not a MATLAB, ANSYS, or Simulink clone or a commercial CAD replacement."
+)
+EXAMPLES_CURRENT_RELEASE_COPY = (
+    "These examples are small source-tree workflows for the current `develop` "
+    "line. Package metadata is `0.1.5rc1`, and `v0.1.5-rc1` is the current public "
+    "prerelease. They are intended for inspection and teaching, not production "
+    "or regulated engineering use."
+)
+RELEASE_ASSET_LIMITATION = (
+    "- The current public `v0.1.5-rc1` GitHub prerelease has five attached Release "
+    "assets: a wheel, an sdist, an unsigned Windows portable ZIP, "
+    "`SHA256SUMS.txt`, and `release_asset_manifest.json`. GitHub's automatic "
+    "source archives are separate from that five-asset count. Release-asset "
+    "`quick` and `full-static` verification establish only their stated identity "
+    "and static-consistency result, report `release_readiness=false`, and do not "
+    "establish installability, launch behavior, runtime correctness, engineering "
+    "correctness, regulated-use suitability, or publication readiness. No MSI, "
+    "code signing, Python package-index publication, bundled-solver distribution, "
+    "stable-production status, broader engineering assurance, or future packaging "
+    "format is claimed; those remain separately gated."
+)
+SIGNING_CURRENT_AUTHORITY_NOTE = (
+    "Current-authority note: this page began as the post-`v0.1.3-rc1` strategy "
+    "record. The current public prerelease is `v0.1.5-rc1`. The "
+    "checksum/signing/installer distinctions and the current unsigned portable "
+    "ZIP, no-MSI, no-code-signing, and no-bundled-solver limitations remain "
+    "applicable; version-specific v0.1.3rc2/v0.1.4 recommendations below are "
+    "retained as historical planning, not current roadmap authority."
+)
+CURRENT_AUTHORITY_PHRASES = (
+    (TUTORIAL_INDEX, TUTORIAL_CURRENT_RELEASE_COPY),
+    (EXAMPLES_README, EXAMPLES_CURRENT_RELEASE_COPY),
+    (KNOWN_LIMITATIONS, RELEASE_ASSET_LIMITATION),
+    (CODE_SIGNING_STRATEGY, SIGNING_CURRENT_AUTHORITY_NOTE),
+)
+
 UNSUPPORTED_CLAIMS = (
     "industrial-" + "certi" + "fied CAE product",
     "production " + "CAE replacement",
@@ -95,6 +135,12 @@ def check_public_docs() -> list[str]:
         for phrase in LIMITATION_PHRASES:
             if not _contains_phrase(limitations, phrase):
                 errors.append(f"Known limitations missing phrase: {phrase}")
+
+    for path, phrase in CURRENT_AUTHORITY_PHRASES:
+        if path.exists() and not _contains_phrase(path.read_text(encoding="utf-8"), phrase):
+            errors.append(
+                f"{path.relative_to(REPO_ROOT)} missing current-authority phrase: {phrase}"
+            )
 
     for markdown_path in (
         README,
