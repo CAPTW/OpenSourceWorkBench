@@ -76,7 +76,7 @@ To run the live smoke from GitHub:
 1. Open the repository Actions tab.
 2. Select `Release asset smoke`.
 3. Choose `Run workflow`.
-4. Use `tag=v0.1.3-rc1` for the current public prerelease.
+4. Use `tag=v0.1.3-rc1` for the public prerelease current at the time of this smoke validation.
 5. Use `full_smoke=false` for a quick checksum/manifest/archive check.
 6. Use `full_smoke=true` for release maintenance evidence.
 7. Leave `skip_portable_exe=true` when the runner desktop/executable context is

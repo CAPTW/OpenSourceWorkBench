@@ -308,3 +308,14 @@ def test_issue_status_copy_preserves_non_claim_boundaries() -> None:
         "publication-ready",
     ):
         assert positive_uplift not in approved_copy
+
+
+def test_release_asset_smoke_historical_prerelease_wording_is_time_bounded() -> None:
+    smoke = _read("docs/release/release_asset_download_smoke.md")
+    historical = (
+        "4. Use `tag=v0.1.3-rc1` for the public prerelease current at the time "
+        "of this smoke validation."
+    )
+
+    assert smoke.count(historical) == 1
+    assert "4. Use `tag=v0.1.3-rc1` for the current public prerelease." not in smoke
