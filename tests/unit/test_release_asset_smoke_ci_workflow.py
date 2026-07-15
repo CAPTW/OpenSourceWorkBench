@@ -69,7 +69,48 @@ def test_release_asset_smoke_workflow_references_smoke_tools_and_tests() -> None
     assert "tests/unit/test_release_asset_smoke.py" in text
 
 
-def test_release_asset_smoke_workflow_defaults_to_current_release_tag() -> None:
+def test_release_asset_smoke_workflow_defaults_to_current_live_identity() -> None:
     text = _workflow_text()
 
-    assert "default: v0.1.3-rc1" in text
+    assert "default: current-live" in text
+    assert "default: quick" in text
+    assert "default: v0.1.5-rc1" in text
+
+
+def test_release_asset_smoke_workflow_forwards_identity_through_environment() -> None:
+    live = _live_job_text(_workflow_text())
+
+    for variable in (
+        "OSW_RELEASE_MODE",
+        "OSW_RELEASE_REPO",
+        "OSW_RELEASE_TAG",
+        "OSW_RELEASE_VERSION",
+        "OSW_RELEASE_TARGET",
+        "OSW_VERIFICATION_LEVEL",
+    ):
+        assert variable in live
+    assert '"--mode", $env:OSW_RELEASE_MODE' in live
+    assert '"--repo", $env:OSW_RELEASE_REPO' in live
+    assert '"--tag", $env:OSW_RELEASE_TAG' in live
+    assert '"--expected-version", $env:OSW_RELEASE_VERSION' in live
+    assert '"--expected-target", $env:OSW_RELEASE_TARGET' in live
+    assert '"${{ inputs.tag }}"' not in live
+
+
+def test_release_asset_smoke_workflow_pins_offline_fixture_mode() -> None:
+    text = _workflow_text()
+
+    assert "--mode offline-fixture" in text
+    assert "--asset-dir tests/fixtures/release_assets" in text
+    assert "--verification-level quick" in text
+
+
+def test_release_asset_smoke_workflow_uses_run_scoped_outputs_without_execution() -> None:
+    text = _workflow_text().lower()
+
+    assert "artifacts/release/download_smoke/**/summary.json" in text
+    assert "__release-" in text
+    assert "/assets" in text
+    assert "--full-smoke" not in text
+    assert "--skip-portable-exe" not in text
+    assert "opensolverworkbench.exe" not in text

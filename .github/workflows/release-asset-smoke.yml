@@ -7,18 +7,38 @@ name: Release asset smoke
       - develop
   workflow_dispatch:
     inputs:
-      tag:
-        description: GitHub Release tag to smoke
-        default: v0.1.3-rc1
+      mode:
+        description: Release authority mode
+        type: choice
+        options:
+          - current-live
+          - explicit-remote
+        default: current-live
         required: true
-      full_smoke:
-        description: Run wheel/sdist/portable full smoke
-        type: boolean
-        default: false
-      skip_portable_exe:
-        description: Skip portable executable --help
-        type: boolean
-        default: true
+      verification_level:
+        description: Identity-bound verification level
+        type: choice
+        options:
+          - quick
+          - full-static
+        default: quick
+        required: true
+      repo:
+        description: Explicit repository (used only for explicit-remote)
+        default: CAPTW/OpenSourceWorkBench
+        required: true
+      tag:
+        description: Explicit annotated release tag
+        default: v0.1.5-rc1
+        required: true
+      version:
+        description: Explicit package version
+        default: 0.1.5rc1
+        required: true
+      target:
+        description: Explicit peeled tag target
+        default: 85c8144f7ff19159ab02c40adb6483ce6b13c017
+        required: true
 
 permissions:
   contents: read
@@ -52,7 +72,11 @@ jobs:
         run: python -m pytest tests/unit/test_release_asset_smoke.py -q
 
       - name: Offline fixture asset smoke
-        run: python tools/qa/check_release_asset_smoke.py --offline-asset-dir tests/fixtures/release_assets
+        run: >-
+          python tools/qa/check_release_asset_smoke.py
+          --mode offline-fixture
+          --asset-dir tests/fixtures/release_assets
+          --verification-level quick
 
   live-release-asset-download-smoke:
     name: Live release asset download smoke
@@ -63,6 +87,12 @@ jobs:
       contents: read
     env:
       GH_TOKEN: ${{ github.token }}
+      OSW_RELEASE_MODE: ${{ inputs.mode }}
+      OSW_RELEASE_REPO: ${{ inputs.repo }}
+      OSW_RELEASE_TAG: ${{ inputs.tag }}
+      OSW_RELEASE_VERSION: ${{ inputs.version }}
+      OSW_RELEASE_TARGET: ${{ inputs.target }}
+      OSW_VERIFICATION_LEVEL: ${{ inputs.verification_level }}
 
     steps:
       - name: Check out repository
@@ -72,31 +102,24 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
-
-      - name: Install development package
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
 
       - name: Live GitHub release asset smoke
         shell: pwsh
         run: |
-          $downloadDir = "artifacts/release/download_smoke/ci-${{ inputs.tag }}"
-          $summaryPath = Join-Path $downloadDir "summary.json"
+          $downloadRoot = "artifacts/release/download_smoke"
           $smokeArgs = @(
             "tools/qa/check_release_asset_smoke.py",
-            "--repo", "CAPTW/OpenSourceWorkBench",
-            "--tag", "${{ inputs.tag }}",
-            "--download-dir", $downloadDir,
-            "--download",
-            "--json-out", $summaryPath
+            "--mode", $env:OSW_RELEASE_MODE,
+            "--verification-level", $env:OSW_VERIFICATION_LEVEL,
+            "--download-dir", $downloadRoot
           )
-          if ("${{ inputs.full_smoke }}" -eq "true") {
-            $smokeArgs += "--full-smoke"
-          }
-          if ("${{ inputs.skip_portable_exe }}" -eq "true") {
-            $smokeArgs += "--skip-portable-exe"
+          if ($env:OSW_RELEASE_MODE -eq "explicit-remote") {
+            $smokeArgs += @(
+              "--repo", $env:OSW_RELEASE_REPO,
+              "--tag", $env:OSW_RELEASE_TAG,
+              "--expected-version", $env:OSW_RELEASE_VERSION,
+              "--expected-target", $env:OSW_RELEASE_TARGET
+            )
           }
           python @smokeArgs
 
@@ -104,6 +127,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: release-asset-smoke-summary-${{ inputs.tag }}
-          path: artifacts/release/download_smoke/ci-${{ inputs.tag }}/summary.json
+          name: release-asset-smoke-summary
+          # Assets stay under <tag>__release-<id>/assets; upload only summaries.
+          path: artifacts/release/download_smoke/**/summary.json
           if-no-files-found: warn
