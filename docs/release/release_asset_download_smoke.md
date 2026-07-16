@@ -1,152 +1,118 @@
 # Release Asset Download Smoke
 
-This page documents the reusable release asset download smoke added for Issue
-`#2`. It turns the manual `v0.1.3-rc1` asset verification into a repeatable
-local QA command.
+This page documents the read-only, identity-bound release asset checker. The
+current public prerelease is `v0.1.5-rc1`. The published `v0.1.3-rc1` asset set
+remains available as an explicit historical verification example.
 
-The smoke checker verifies downloaded release assets only. It does not upload
-assets, edit a GitHub Release, create tags, retarget tags, push branches, push
-tags, or overwrite existing release assets.
+The checker never uploads assets, edits a GitHub Release, creates or retargets
+tags, pushes Git refs, or overwrites release assets.
 
-## Expected v0.1.3-rc1 Assets
+## Assurance Boundary
 
-- `open_solver_workbench-0.1.3rc1-py3-none-any.whl`
-- `open_solver_workbench-0.1.3rc1.tar.gz`
-- `OpenSolverWorkbench-v0.1.3rc1-windows-x64-portable.zip`
-- `SHA256SUMS.txt`
-- `release_asset_manifest.json`
+The checker verifies release identity and static consistency only. `quick`
+reports `IDENTITY_BOUND_QUICK`; `full-static` adds static package and
+portable-layout inspection and reports `IDENTITY_BOUND_FULL_STATIC`. Both set
+`release_readiness=false`. Neither level extracts or installs a package,
+imports downloaded code, runs a downloaded CLI, launches
+`OpenSolverWorkbench.exe`, proves runtime behavior, establishes engineering
+correctness, or establishes publication readiness.
 
-## Offline Local Verification
+`quick` verifies the selected identity, exact asset inventory, nonzero file
+sizes, `SHA256SUMS.txt`, `release_asset_manifest.json`, and safe archive member
+names. `full-static` adds static wheel, sdist, and portable-layout inspection.
+Neither level executes artifact content.
 
-Use this when assets were already downloaded to a local directory:
+Immutable target authority is the annotated Git tag object peeled to its exact
+40-hex commit. GitHub Release `target_commitish` is display context only and
+cannot override the selected profile or caller-supplied target.
+
+## Explicit Modes
+
+- `current-live` uses the repository-pinned `v0.1.5-rc1` repository, version,
+  annotated tag, and peeled target profile. Identity overrides are rejected.
+- `explicit-remote` requires one complete caller-supplied repository, tag,
+  version, and peeled-target tuple.
+- `local-set` requires one complete caller-supplied tag, version, and
+  peeled-target tuple plus a local asset directory.
+- `offline-fixture` accepts only `tests/fixtures/release_assets` and only the
+  `quick` level.
+
+Remote modes require `--download-dir` and reject `--asset-dir`. Local modes
+require `--asset-dir` and reject `--download-dir`. Every invocation must select
+`--verification-level quick` or `--verification-level full-static` explicitly.
+
+## Command Contracts
+
+Current live release:
 
 ```powershell
-.venv\Scripts\python.exe tools\release\check_release_assets.py `
-  --asset-dir artifacts\release\download_smoke\v0.1.3-rc1 `
-  --tag v0.1.3-rc1 `
-  --expected-version 0.1.3rc1 `
-  --json-out artifacts\release\download_smoke\v0.1.3-rc1\summary.json
+.venv\Scripts\python.exe tools\qa\check_release_asset_smoke.py --mode current-live --download-dir artifacts\release\download_smoke\manual-current --verification-level quick --json-out artifacts\release\download_smoke\manual-current-summary.json
 ```
 
-Offline verification checks expected asset presence, nonzero file sizes,
-`SHA256SUMS.txt`, `release_asset_manifest.json`, and safe archive structure.
-
-## GitHub Download Verification
-
-Use this when GitHub CLI is installed and authenticated:
+Explicit historical remote release:
 
 ```powershell
-.venv\Scripts\python.exe tools\release\check_release_assets.py `
-  --repo CAPTW/OpenSourceWorkBench `
-  --tag v0.1.3-rc1 `
-  --download `
-  --download-dir artifacts\release\download_smoke\v0.1.3-rc1_auto `
-  --expected-version 0.1.3rc1 `
-  --json-out artifacts\release\download_smoke\v0.1.3-rc1_auto\summary.json
+.venv\Scripts\python.exe tools\qa\check_release_asset_smoke.py --mode explicit-remote --repo CAPTW/OpenSourceWorkBench --tag v0.1.3-rc1 --expected-version 0.1.3rc1 --expected-target a6e8d3a8211e02359841d10e1947e16ab847b132 --download-dir artifacts\release\download_smoke\manual-v013 --verification-level quick --json-out artifacts\release\download_smoke\manual-v013-summary.json
 ```
 
-If the target download directory already contains files, the tool creates a
-timestamped subdirectory unless `--reuse-dir` is passed.
+Local historical asset set:
 
-## CI And Manual GitHub Actions Smoke
+```powershell
+.venv\Scripts\python.exe tools\qa\check_release_asset_smoke.py --mode local-set --tag v0.1.3-rc1 --expected-version 0.1.3rc1 --expected-target a6e8d3a8211e02359841d10e1947e16ab847b132 --asset-dir artifacts\release\download_smoke\local-v013\assets --verification-level quick
+```
 
-The `Release asset smoke` workflow in
-`.github/workflows/release-asset-smoke.yml` connects the same checker to CI
-without mutating the GitHub Release.
+Offline synthetic fixture:
 
-CI behavior:
+```powershell
+.venv\Scripts\python.exe tools\qa\check_release_asset_smoke.py --mode offline-fixture --asset-dir tests\fixtures\release_assets --verification-level quick
+```
 
-- `pull_request` and `push` to `develop` run offline fixture checks only.
-- Offline fixture mode runs `tests/unit/test_release_asset_smoke.py` and
-  `tools/qa/check_release_asset_smoke.py --offline-asset-dir
-  tests/fixtures/release_assets`.
-- Offline fixture files under `tests/fixtures/release_assets` are byte-level
-  checksum fixtures and are marked `-text` in `.gitattributes` so CI checkouts
-  do not normalize line endings before hash verification.
-- Live GitHub release asset download smoke is manual only through
-  `workflow_dispatch`.
-- Workflow permissions are read-only: `contents: read`.
-- `GH_TOKEN` is supplied only to the manual live-download job from the GitHub
-  Actions `GITHUB_TOKEN`.
-- The workflow does not upload release assets, edit releases, push branches,
-  push tags, or use clobber/overwrite behavior.
+Use `--verification-level full-static` only when the additional static package
+and portable-layout inspection is required. It does not add installation,
+import, CLI, executable, runtime, engineering, or release-readiness evidence.
 
-To run the live smoke from GitHub:
+## Frozen Offline Fixture
 
-1. Open the repository Actions tab.
-2. Select `Release asset smoke`.
-3. Choose `Run workflow`.
+`tests/fixtures/release_assets` is a frozen synthetic, non-installable
+fixture. It is not a byte snapshot of the published `v0.1.3-rc1` assets and
+supplies no remote provenance.
+
+The fixture checks deterministic parsing, hashing, manifest comparison, archive
+member safety, result shape, and fail-closed behavior without network access.
+It cannot establish anything about current GitHub Release state.
+
+## CI And Manual GitHub Actions
+
+The `Release asset smoke` workflow uses read-only `contents: read` permission.
+Pull requests and `develop` pushes run `offline-fixture` at `quick`. A manual
+`workflow_dispatch` selects `current-live` or `explicit-remote` and separately
+selects `quick` or `full-static`. Live summaries are uploaded only as workflow
+artifacts; they are not GitHub Release assets.
+
 4. Use `tag=v0.1.3-rc1` for the public prerelease current at the time of this smoke validation.
-5. Use `full_smoke=false` for a quick checksum/manifest/archive check.
-6. Use `full_smoke=true` for release maintenance evidence.
-7. Leave `skip_portable_exe=true` when the runner desktop/executable context is
-   uncertain; set it to `false` only when executable `--help` smoke is desired.
 
-The live job writes a JSON smoke summary under
-`artifacts/release/download_smoke/ci-<tag>/summary.json` and exposes that
-summary as a workflow artifact. This is a CI evidence artifact, not a GitHub
-Release asset.
+That sentence is a historical workflow record. Current live authority is the
+pinned `v0.1.5-rc1` profile; historical identities must use `explicit-remote`.
 
-## Full Smoke
+## Portable ZIP Guidance
 
-Add `--full-smoke` to run deeper checks:
+The portable ZIP is unsigned. It is not an MSI installer, is not code-signed,
+and does not bundle external solvers. The checker only inspects it statically.
+Voluntary manual extraction and launch are separate user actions documented in
+[Windows Portable ZIP](windows_portable_zip.md); they are not checker behavior
+or release-readiness evidence.
 
-- install the downloaded wheel in a fresh virtual environment;
-- run `python -m osw.cli --version` and `--help`;
-- extract and optionally install the sdist in a separate virtual environment;
-- extract the Windows portable ZIP safely;
-- run `OpenSolverWorkbench.exe --help` on Windows unless
-  `--skip-portable-exe` is provided.
-
-The portable ZIP is unsigned. It is not an MSI installer, not code-signed, and
-does not bundle external solvers. Optional solver/science dependencies remain
-local user-provided tools.
-
-The checker also records portable ZIP UX warnings, including missing or
-incomplete `README_RUN_FIRST.txt` guidance, missing checksum guidance, missing
-license files, multi-folder layouts, and absent `OpenSolverWorkbench.exe`.
-Warnings do not mutate or overwrite already-published assets.
-
-For user-facing portable ZIP guidance, see
-[Windows Portable ZIP](windows_portable_zip.md). For the difference between
-checksums, artifact attestations, code signing, and installer packaging, see
+For the distinction between checksums, artifact attestations, code signing,
+and installer packaging, see
 [Code Signing And Installer Strategy](code_signing_installer_strategy.md).
-
-## QA Wrapper
-
-The QA wrapper defaults to the public `v0.1.3-rc1` release:
-
-```powershell
-.venv\Scripts\python.exe tools\qa\check_release_asset_smoke.py `
-  --download `
-  --full-smoke
-```
-
-For CI-safe offline runs, provide a local asset directory:
-
-```powershell
-.venv\Scripts\python.exe tools\qa\check_release_asset_smoke.py `
-  --offline-asset-dir tests\fixtures\release_assets
-```
 
 ## Troubleshooting
 
 | Symptom | Meaning / action |
 | --- | --- |
-| `gh` is unavailable or unauthenticated | Run offline verification or authenticate with `gh auth login`. |
-| GitHub Actions token error | Confirm the workflow still uses `contents: read`; live smoke only needs read access to download release assets. |
-| Live smoke ran on PR/push | Treat this as a workflow bug; live GitHub release downloads must remain `workflow_dispatch` only. |
-| Asset missing | Confirm the release asset list on the GitHub Release and rerun the manual workflow after the asset appears. |
-| Checksum mismatch | Treat the asset set as invalid; redownload and compare with the published release. |
-| Manifest mismatch | Inspect `release_asset_manifest.json` against the downloaded files before relying on the assets. |
-| CI-only `release_asset_manifest.json` checksum mismatch | Confirm `.gitattributes` still marks `tests/fixtures/release_assets/**` as `-text`; the fixture hash is byte-level and line-ending-sensitive. |
-| Portable executable `--help` fails | Rerun with `--skip-portable-exe` only to isolate archive/hash checks, then investigate the portable build separately. |
-| Path traversal or forbidden archive entry | Treat the archive as unsafe; do not extract or distribute it. |
-
-## Limitations
-
-- The tool verifies assets; it does not publish or mutate the release.
-- Full wheel and portable smoke can be platform-specific.
-- The Windows portable ZIP is unsigned and may trigger operating-system trust
-  prompts outside this automated smoke.
-- Optional solvers, MATLAB/Octave tools, and science backends are not bundled.
+| GitHub CLI is unavailable or unauthenticated | Use `local-set` or `offline-fixture`, or separately establish read-only GitHub access. |
+| Selected mode rejects an argument | Supply only the atomic identity and path arguments allowed by that explicit mode. |
+| Asset inventory, checksum, or manifest mismatch | Treat the selected asset set as invalid and investigate without executing it. |
+| Annotated tag or peeled target mismatch | Treat the selected release identity as invalid; `target_commitish` cannot repair it. |
+| Forbidden archive member | Treat the archive as unsafe; do not distribute or manually extract it. |
+| `release_readiness=false` | Expected: this checker never establishes publication readiness. |

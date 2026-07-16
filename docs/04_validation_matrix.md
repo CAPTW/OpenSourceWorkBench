@@ -63,12 +63,32 @@ The `v0.1.3rc2` line is maintenance and revalidation only. It should not expand
 features unless a critical public-prerelease blocker is identified and scoped in
 a separate gate.
 
+Release-asset rows in this historical section now use the current static-only
+contract. The current public prerelease is `v0.1.5-rc1`; `v0.1.3-rc1` remains
+an explicit historical identity.
+
+The checker verifies release identity and static consistency only. `quick`
+reports `IDENTITY_BOUND_QUICK`; `full-static` adds static package and
+portable-layout inspection and reports `IDENTITY_BOUND_FULL_STATIC`. Both set
+`release_readiness=false`. Neither level extracts or installs a package,
+imports downloaded code, runs a downloaded CLI, launches
+`OpenSolverWorkbench.exe`, proves runtime behavior, establishes engineering
+correctness, or establishes publication readiness.
+
+Immutable target authority is the annotated Git tag object peeled to its exact
+40-hex commit. GitHub Release `target_commitish` is display context only and
+cannot override the selected profile or caller-supplied target.
+
+`tests/fixtures/release_assets` is a frozen synthetic, non-installable
+fixture. It is not a byte snapshot of the published `v0.1.3-rc1` assets and
+supplies no remote provenance.
+
 | Area | Evidence target | Pass criterion | Status |
 | --- | --- | --- | --- |
 | Duplicate hygiene | `OSW-MAINT-002_POST_PUBLIC_RELEASE_DUPLICATE_FILE_HYGIENE` evidence and `tools/qa/check_release_gate.py` | No untracked duplicate ` (1)` warning returns. | completed |
-| Release asset smoke | `tools/release/check_release_assets.py`, downloaded assets, `SHA256SUMS.txt`, manifest, wheel install, sdist install, and portable ZIP `--help` evidence | Checksums match, manifest matches, archives are safe to inspect/extract, and optional full smoke commands pass on a local machine. | automated for `v0.1.3-rc1`; reusable for `v0.1.3rc2` |
-| Release asset smoke CI | `.github/workflows/release-asset-smoke.yml`, `tests/fixtures/release_assets`, and `tools/qa/check_release_asset_smoke.py` | PR and `develop` push checks use offline fixtures only; live GitHub release downloads are manual `workflow_dispatch` only with read-only permissions. | automated offline; manual live download |
-| Portable ZIP UX | Current portable ZIP inspection, [Windows Portable ZIP](release/windows_portable_zip.md), and `README_RUN_FIRST.txt` template checks | Docs clearly say unsigned, no MSI, no code signing, no bundled external solvers, prerelease, and checksum verification. Tooling reports portable UX warnings for future builds. | automated warnings added for `v0.1.3rc2` maintenance |
+| Release asset identity check | `tools/qa/check_release_asset_smoke.py` with `--mode current-live`, `--mode explicit-remote`, or `--mode local-set`; explicit `quick` or `full-static` | Selected annotated-tag identity, exact asset inventory, hashes, manifest, and static archive/package/layout checks agree; result is `IDENTITY_BOUND_QUICK` or `IDENTITY_BOUND_FULL_STATIC` with `release_readiness=false`. | current `v0.1.5-rc1` or explicit historical `v0.1.3-rc1` identity |
+| Release asset smoke CI | `.github/workflows/release-asset-smoke.yml`, `tests/fixtures/release_assets`, and `tools/qa/check_release_asset_smoke.py --mode offline-fixture --verification-level quick` | PR and `develop` push checks use the frozen fixture only; manual dispatch uses `current-live` or `explicit-remote` with read-only permissions. Fixture success supplies no remote provenance. | automated offline; manual live static verification |
+| Portable ZIP UX | Static portable-layout inspection plus [Windows Portable ZIP](release/windows_portable_zip.md) | Docs clearly separate static checker behavior from voluntary manual extraction or launch, and preserve unsigned/no MSI/no code-signing/no bundled-solver warnings. | static identity evidence only |
 | Maintenance baseline revalidation | [v0.1.3rc2 maintenance revalidation](maintenance/v0_1_3rc2_revalidation.md), release tag checks, GitHub Release asset checks, local smoke, unit, GUI, Ruff, and QA guardrails | Current `develop` remains scoped to maintenance, active version is `0.1.3rc2.dev0`, `v0.1.3-rc1` remains intact, and workflow/release asset checks stay non-mutating. | revalidated for maintenance |
 | Post-public release checklist | [Post-Public Release Checklist](release/post_public_release_checklist.md), release checklist, release summary, and issue #3 evidence | Checklist records metadata/tag gates, draft/publish gates, asset build/upload, asset smoke, post-public audit, docs polish, branch reconciliation, maintenance follow-up, CI/manual smoke, issue triage, safety checks, never-do rules, and limitations. | completed for issue `#3` |
 | Onboarding examples and tutorials | [Tutorials](tutorials/README.md), [First CLI Walkthrough](tutorials/first_cli_walkthrough.md), [Result Dataset Walkthrough](tutorials/result_dataset_walkthrough.md), [Examples](examples.md), and public docs QA | New users can run zero-dependency CLI smoke, inspect fixtures, understand GUI prerequisites, and see optional backend diagnostics without external solver execution. | completed for issue `#13` |

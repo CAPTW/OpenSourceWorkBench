@@ -114,12 +114,28 @@ or full solver parity.
 | Historical development metadata | `PASS` | `pyproject.toml`, `osw.__version__`, CLI `--version`, and version smoke tests were aligned to development version `0.1.3rc2.dev0` during the maintenance cycle. Later metadata gates align current metadata to `0.1.5rc1`. |
 | Historical public prerelease boundary | `PASS` | `v0.1.3-rc1` was the current public prerelease for this cycle-start snapshot and still points to `a6e8d3a8211e02359841d10e1947e16ab847b132`. The current public prerelease is now `v0.1.5-rc1`. |
 | Current cycle docs | `PASS` | [Current development cycle](development/current_cycle.md) now records the post-`v0.1.5-rc1` package/release state, OpenFOAM #18/#19 closure boundary, #6-#11 closed optional validation state with scoped caveats, primary goals, and non-goals. |
-| Release asset download smoke automation | `PASS` | [Release asset download smoke](release/release_asset_download_smoke.md) documents `tools/release/check_release_assets.py`, the QA wrapper, offline fixture tests, GitHub download verification, optional full wheel/sdist/portable ZIP smoke, and the read-only `Release asset smoke` workflow. |
-| Release asset smoke CI | `PASS` | `.github/workflows/release-asset-smoke.yml` runs offline fixture smoke on pull requests and `develop` pushes. Live GitHub release downloads are manual `workflow_dispatch` only with `contents: read` permissions. |
-| Windows portable ZIP UX guidance | `PASS` | [Windows Portable ZIP](release/windows_portable_zip.md) documents extraction layout, `--help` first-run guidance, unsigned/no MSI/no code-signing warnings, no bundled external solver caveat, checksum verification, and troubleshooting. |
+| Release asset identity verification | `PASS` | [Release asset download smoke](release/release_asset_download_smoke.md) documents the explicit `current-live`, `explicit-remote`, `local-set`, and `offline-fixture` modes; the `quick` and `full-static` levels; `IDENTITY_BOUND_QUICK` and `IDENTITY_BOUND_FULL_STATIC`; and mandatory `release_readiness=false`. The current profile is `v0.1.5-rc1`; `v0.1.3-rc1` is historical only. |
+| Release asset smoke CI | `PASS` | `.github/workflows/release-asset-smoke.yml` runs `--mode offline-fixture --verification-level quick` on pull requests and `develop` pushes. Manual dispatch selects `current-live` or `explicit-remote` and `quick` or `full-static`, with `contents: read` permissions. |
+| Windows portable ZIP UX guidance | `PASS` | [Windows Portable ZIP](release/windows_portable_zip.md) separates static checker evidence from voluntary manual user extraction and launch. It preserves unsigned/no MSI/no code-signing warnings, no bundled external solver caveat, checksum verification, and troubleshooting. |
 | Validation evidence carry-forward | `PASS_WITH_WARNINGS` | [Live optional solver validation evidence](validation/live_optional_solver_validation.md) records local PySide6/Pillow availability and missing optional solver/science backends. Missing optional stacks remain environment-specific and non-blocking. |
 | Maintenance revalidation baseline | `PASS_WITH_WARNINGS` | [v0.1.3rc2 maintenance revalidation](maintenance/v0_1_3rc2_revalidation.md) records release integrity, workflow safety, asset smoke evidence, known warnings, and next maintenance choices. |
 | Scope discipline | `PASS` | At this gate, `v0.1.3rc2` was limited to maintenance/revalidation/release polish. It made no industrial certification claim and did not claim stable production status, MATLAB/ANSYS/Simulink cloning, or native commercial CAD direct import. |
+
+The checker verifies release identity and static consistency only. `quick`
+reports `IDENTITY_BOUND_QUICK`; `full-static` adds static package and
+portable-layout inspection and reports `IDENTITY_BOUND_FULL_STATIC`. Both set
+`release_readiness=false`. Neither level extracts or installs a package,
+imports downloaded code, runs a downloaded CLI, launches
+`OpenSolverWorkbench.exe`, proves runtime behavior, establishes engineering
+correctness, or establishes publication readiness.
+
+Immutable target authority is the annotated Git tag object peeled to its exact
+40-hex commit. GitHub Release `target_commitish` is display context only and
+cannot override the selected profile or caller-supplied target.
+
+`tests/fixtures/release_assets` is a frozen synthetic, non-installable
+fixture. It is not a byte snapshot of the published `v0.1.3-rc1` assets and
+supplies no remote provenance.
 
 ## FUNC-020 Release Gate Snapshot
 
