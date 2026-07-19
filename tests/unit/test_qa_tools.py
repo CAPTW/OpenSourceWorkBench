@@ -41,6 +41,35 @@ def run_tool(*args: str, cwd: Path = REPO_ROOT) -> subprocess.CompletedProcess[s
     )
 
 
+def run_tool_with_io_encoding(
+    io_encoding: str,
+    *args: str,
+    cwd: Path = REPO_ROOT,
+) -> subprocess.CompletedProcess[str]:
+    """Run a QA tool with a forced stdio encoding, deterministic on any host OS.
+
+    Setting ``PYTHONIOENCODING`` makes the child encode ``stdout``/``stderr`` with
+    ``io_encoding`` regardless of the host locale, so a ``cp949`` console
+    regression is reproduced even on UTF-8 developer machines and Linux CI. The
+    captured streams are decoded with the same strict codec so a real
+    ``UnicodeEncodeError`` crash surfaces instead of being masked.
+    """
+    env = tool_env()
+    env["PYTHONIOENCODING"] = io_encoding
+    env.pop("PYTHONUTF8", None)
+    env.pop("PYTHONLEGACYWINDOWSSTDIO", None)
+    return subprocess.run(
+        [sys.executable, "-B", *args],
+        cwd=cwd,
+        env=env,
+        text=True,
+        encoding=io_encoding,
+        errors="strict",
+        capture_output=True,
+        check=False,
+    )
+
+
 def load_module(path: Path, name: str) -> ModuleType:
     spec = importlib.util.spec_from_file_location(name, path)
     assert spec is not None
@@ -226,6 +255,50 @@ def test_scope_drift_certification_changes_preserve_other_scope_categories() -> 
 
     assert proc.returncode == 1, proc.stdout + proc.stderr
     assert "possible scope drift (Simulink)" in proc.stdout
+
+
+# Finding text intentionally contains an em dash (U+2014), which ``cp949`` cannot
+# encode. Forcing ``PYTHONIOENCODING=cp949`` reproduces the Windows console
+# regression on any host, including UTF-8 developer machines and Linux CI.
+_EM_DASH_SCOPE_DRIFT_TEXT = (
+    "This matrix is not an industrial certification plan — "
+    "the export supports industrial certification."
+)
+
+
+def test_scope_drift_survives_cp949_console_without_dropping_findings() -> None:
+    proc = run_tool_with_io_encoding(
+        "cp949",
+        "tools/qa/check_scope_drift.py",
+        "--text",
+        _EM_DASH_SCOPE_DRIFT_TEXT,
+    )
+
+    combined = proc.stdout + proc.stderr
+    assert "Traceback" not in combined, combined
+    assert "UnicodeEncodeError" not in combined, combined
+    # Scope-drift semantics are unchanged: the finding is still detected (exit 1).
+    assert proc.returncode == 1, combined
+    assert proc.stdout.count("possible scope drift (industrial certification)") == 1, proc.stdout
+    # The unencodable em dash survives as a visible backslash escape rather than
+    # crashing the checker or being silently discarded.
+    assert "\\u2014" in proc.stdout, proc.stdout
+
+
+def test_scope_drift_preserves_unicode_on_utf8_console() -> None:
+    proc = run_tool_with_io_encoding(
+        "utf-8",
+        "tools/qa/check_scope_drift.py",
+        "--text",
+        _EM_DASH_SCOPE_DRIFT_TEXT,
+    )
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "Traceback" not in proc.stderr, proc.stderr
+    # A UTF-8 console can represent the em dash, so the original Unicode is kept
+    # verbatim and is not rewritten as an escape.
+    assert "—" in proc.stdout, proc.stdout
+    assert "\\u2014" not in proc.stdout, proc.stdout
 
 
 def test_architecture_checker_runs_on_current_repo() -> None:

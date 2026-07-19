@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import argparse
 import re
+import sys
 from pathlib import Path
+from typing import TextIO
 
 from _common import build_base_arg, changed_files, repo_root, text_files
 
@@ -285,6 +287,33 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _console_safe(text: str, stream: TextIO) -> str:
+    """Render ``text`` so it can be written to ``stream`` without crashing.
+
+    Characters the stream encoding can represent are preserved verbatim, so a
+    UTF-8 console keeps the original Unicode findings. Characters it cannot
+    represent (for example an em dash on a ``cp949`` console) are rewritten as
+    visible ``backslashreplace`` escapes such as ``\\u2014`` instead of raising
+    ``UnicodeEncodeError`` or being silently dropped.
+    """
+    encoding = getattr(stream, "encoding", None)
+    if not encoding:
+        return text
+    try:
+        text.encode(encoding, errors="strict")
+    except UnicodeError:
+        return text.encode(encoding, errors="backslashreplace").decode(encoding, errors="replace")
+    except LookupError:
+        return text
+    return text
+
+
+def _safe_print(text: str, *, stream: TextIO | None = None) -> None:
+    """Print ``text`` to ``stream`` (default stdout) with console-safe encoding."""
+    target = sys.stdout if stream is None else stream
+    print(_console_safe(text, target), file=target)
+
+
 def main() -> int:
     args = build_parser().parse_args()
     root = repo_root()
@@ -308,12 +337,12 @@ def main() -> int:
                 )
 
     if findings:
-        print("[fail] Scope drift findings:")
+        _safe_print("[fail] Scope drift findings:")
         for finding in findings:
-            print(f"  - {finding}")
+            _safe_print(f"  - {finding}")
         return 1
 
-    print("[ok] No OSW scope drift found.")
+    _safe_print("[ok] No OSW scope drift found.")
     return 0
 
 
