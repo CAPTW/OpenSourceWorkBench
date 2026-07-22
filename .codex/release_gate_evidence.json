@@ -1,0 +1,14 @@
+{
+  "claim_scope": "tracked-static-release-gate-invariants-only",
+  "evidence_kind": "osw-release-gate-canonical",
+  "functional_queue_path": ".codex/func_queue_state.json",
+  "functional_queue_sha256": "d58ef7105416ce5f93cabaa26fab948b04cc86adcee3fb4b55dc496fc3b436d3",
+  "required_functional_step": "OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF",
+  "required_release_state": "v0.1-internal-rc-frozen",
+  "required_ui_status": "complete",
+  "runtime_report_policy": "local-untracked-noncanonical",
+  "schema_version": 1,
+  "ui_queue_path": ".codex/ui_queue_state.json",
+  "ui_queue_sha256": "839a62751c241ceb960a8962e4e16ffb2e78928a46d9be59e4dde8103d93e452",
+  "validation_evidence": "separate-fresh-full-range-required"
+}

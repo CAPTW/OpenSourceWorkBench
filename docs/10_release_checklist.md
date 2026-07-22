@@ -9,6 +9,21 @@ limitations. It does not claim industrial certification, production CAE
 validation, external solver availability, native commercial CAD direct import,
 or full solver parity.
 
+## Release-Gate Tracked Canonical Evidence
+
+The strict static release gate is reproducible from tracked state on a clean
+checkout. `python tools/qa/check_release_gate.py` reads canonical evidence at
+`.codex/release_gate_evidence.json` and binds it to the exact Git blob bytes of
+the tracked functional and UI queues at the current `HEAD`. Missing, untracked,
+stale, malformed, schema-invalid, or dirty canonical evidence fails closed. The
+raw `.codex/reports/**` runtime report remains local and noncanonical unless a
+separate gate promotes it, and the previous `--allow-missing-report` permissive
+path has been removed.
+
+Passing the strict static gate is not fresh full-range validation,
+publication-readiness approval, push authorization, or tag/release/asset
+authorization. Fresh full-range validation remains a separate required gate.
+
 ## Post-Public v0.1.3-rc1 Maintenance Snapshot
 
 | Item | Status | Evidence / decision |

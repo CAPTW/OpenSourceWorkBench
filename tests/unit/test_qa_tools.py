@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import os
@@ -83,11 +84,28 @@ def load_module(path: Path, name: str) -> ModuleType:
     return module
 
 
-def _release_gate_repo(tmp_path: Path) -> tuple[Path, Path]:
-    root = tmp_path / "release-gate-repo"
-    root.mkdir()
-    init = subprocess.run(
-        [GIT_BIN or "git", "init", "--quiet"],
+# --- Tracked canonical release-gate evidence fixtures ---
+# The strict static gate reads canonical evidence and the queues from the
+# committed HEAD only; no untracked runtime report is required. Fixtures write
+# LF bytes with core.autocrlf=false so each committed blob equals the written
+# bytes, making the SHA-256 bindings deterministic on any host OS.
+
+_CANONICAL_EVIDENCE_PATH = ".codex/release_gate_evidence.json"
+_FUNCTIONAL_QUEUE_PATH = ".codex/func_queue_state.json"
+_UI_QUEUE_PATH = ".codex/ui_queue_state.json"
+_OLD_RAW_REPORT_PATH = ".codex/reports/func/OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF.md"
+
+_release_gate_module = load_module(
+    REPO_ROOT / "tools" / "qa" / "check_release_gate.py",
+    "check_release_gate_for_fixtures",
+)
+_FUNC_STEPS = list(_release_gate_module.FUNC_STEPS)
+_UI_STEPS = list(_release_gate_module.UI_STEPS)
+
+
+def _git_in(root: Path, *args: str) -> None:
+    proc = subprocess.run(
+        [GIT_BIN or "git", *args],
         cwd=root,
         env=tool_env(),
         text=True,
@@ -96,17 +114,90 @@ def _release_gate_repo(tmp_path: Path) -> tuple[Path, Path]:
         capture_output=True,
         check=False,
     )
-    assert init.returncode == 0, init.stdout + init.stderr
+    assert proc.returncode == 0, proc.stdout + proc.stderr
 
-    codex_dir = root / ".codex"
-    codex_dir.mkdir()
-    for name in ("func_queue_state.json", "ui_queue_state.json"):
-        shutil.copyfile(REPO_ROOT / ".codex" / name, codex_dir / name)
 
-    func_state = json.loads((codex_dir / "func_queue_state.json").read_text(encoding="utf-8"))
-    report_value = func_state["last_report"]
-    assert isinstance(report_value, str)
-    return root, Path(report_value)
+def _canonical_func_bytes(**overrides: object) -> bytes:
+    payload = {
+        "completed": _FUNC_STEPS,
+        "current_step": None,
+        "next_step": None,
+        "release_state": "v0.1-internal-rc-frozen",
+        "last_report": _CANONICAL_EVIDENCE_PATH,
+    }
+    payload.update(overrides)
+    return (json.dumps(payload, indent=2) + "\n").encode("utf-8")
+
+
+def _canonical_ui_bytes(**overrides: object) -> bytes:
+    payload = {"completed": _UI_STEPS, "current_step": None, "status": "complete"}
+    payload.update(overrides)
+    return (json.dumps(payload, indent=2) + "\n").encode("utf-8")
+
+
+def _canonical_manifest_dict(func_sha: str, ui_sha: str) -> dict[str, object]:
+    return {
+        "claim_scope": "tracked-static-release-gate-invariants-only",
+        "evidence_kind": "osw-release-gate-canonical",
+        "functional_queue_path": _FUNCTIONAL_QUEUE_PATH,
+        "functional_queue_sha256": func_sha,
+        "required_functional_step": "OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF",
+        "required_release_state": "v0.1-internal-rc-frozen",
+        "required_ui_status": "complete",
+        "runtime_report_policy": "local-untracked-noncanonical",
+        "schema_version": 1,
+        "ui_queue_path": _UI_QUEUE_PATH,
+        "ui_queue_sha256": ui_sha,
+        "validation_evidence": "separate-fresh-full-range-required",
+    }
+
+
+def _canonical_bytes(mapping: dict[str, object]) -> bytes:
+    return (json.dumps(mapping, sort_keys=True, indent=2) + "\n").encode("utf-8")
+
+
+def _canonical_release_repo(
+    tmp_path: Path,
+    *,
+    func_bytes: bytes | None = None,
+    ui_bytes: bytes | None = None,
+    manifest_builder=None,
+    commit_manifest: bool = True,
+    post_commit=None,
+) -> Path:
+    root = tmp_path / "release-gate-repo"
+    (root / ".codex").mkdir(parents=True)
+    _git_in(root, "init", "--quiet")
+    _git_in(root, "config", "user.email", "osw-test@example.invalid")
+    _git_in(root, "config", "user.name", "OSW Test")
+    _git_in(root, "config", "core.autocrlf", "false")
+
+    resolved_func = _canonical_func_bytes() if func_bytes is None else func_bytes
+    resolved_ui = _canonical_ui_bytes() if ui_bytes is None else ui_bytes
+    (root / _FUNCTIONAL_QUEUE_PATH).write_bytes(resolved_func)
+    (root / _UI_QUEUE_PATH).write_bytes(resolved_ui)
+
+    func_sha = hashlib.sha256(resolved_func).hexdigest()
+    ui_sha = hashlib.sha256(resolved_ui).hexdigest()
+    if manifest_builder is None:
+        manifest_bytes = _canonical_bytes(_canonical_manifest_dict(func_sha, ui_sha))
+    else:
+        manifest_bytes = manifest_builder(func_sha, ui_sha)
+    (root / _CANONICAL_EVIDENCE_PATH).write_bytes(manifest_bytes)
+
+    add_paths = [_FUNCTIONAL_QUEUE_PATH, _UI_QUEUE_PATH]
+    if commit_manifest:
+        add_paths.append(_CANONICAL_EVIDENCE_PATH)
+    _git_in(root, "add", "--", *add_paths)
+    _git_in(root, "commit", "--quiet", "-m", "canonical release evidence")
+
+    if post_commit is not None:
+        post_commit(root)
+    return root
+
+
+def _run_release_gate_checker(root: Path) -> subprocess.CompletedProcess[str]:
+    return run_tool(str(REPO_ROOT / "tools" / "qa" / "check_release_gate.py"), cwd=root)
 
 
 def test_scope_drift_flags_forbidden_positive_claim() -> None:
@@ -373,25 +464,223 @@ def test_fast_qa_runner_handles_available_checks() -> None:
     assert "pytest tests/unit -q" in proc.stdout
 
 
-def test_release_gate_checker_fails_closed_when_synthetic_report_is_missing(
-    tmp_path: Path,
-) -> None:
-    root, report_relative = _release_gate_repo(tmp_path)
-    proc = run_tool(str(REPO_ROOT / "tools" / "qa" / "check_release_gate.py"), cwd=root)
+def test_release_gate_checker_passes_from_committed_canonical_evidence(tmp_path: Path) -> None:
+    root = _canonical_release_repo(tmp_path)
+    assert not (root / _OLD_RAW_REPORT_PATH).exists()
 
-    assert proc.returncode == 1, proc.stdout + proc.stderr
-    assert f"release report is missing: {report_relative.as_posix()}" in proc.stdout
-
-
-def test_release_gate_checker_accepts_synthetic_release_fixture(tmp_path: Path) -> None:
-    root, report_relative = _release_gate_repo(tmp_path)
-    report_path = root / report_relative
-    report_path.parent.mkdir(parents=True)
-    report_path.write_text("# Synthetic release gate evidence\n", encoding="utf-8")
-    proc = run_tool(str(REPO_ROOT / "tools" / "qa" / "check_release_gate.py"), cwd=root)
+    proc = _run_release_gate_checker(root)
 
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert "Release gate queue" in proc.stdout
+    assert "Tracked static release-gate invariants passed" in proc.stdout
+    # Strict static success must not overclaim validation/publication readiness.
+    assert "publication" not in proc.stdout.lower()
+
+
+def test_release_gate_checker_passes_without_and_ignores_old_raw_report(tmp_path: Path) -> None:
+    def add_untracked_report(root: Path) -> None:
+        report = root / _OLD_RAW_REPORT_PATH
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text("# arbitrary local runtime markdown\n", encoding="utf-8")
+
+    root = _canonical_release_repo(tmp_path, post_commit=add_untracked_report)
+
+    proc = _run_release_gate_checker(root)
+
+    # An arbitrary untracked markdown at the old report path neither satisfies nor
+    # breaks the canonical gate; tracked evidence alone governs.
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_release_gate_checker_fails_when_canonical_evidence_untracked(tmp_path: Path) -> None:
+    root = _canonical_release_repo(tmp_path, commit_manifest=False)
+
+    proc = _run_release_gate_checker(root)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "release_evidence_untracked" in proc.stdout
+    assert "Traceback" not in (proc.stdout + proc.stderr)
+
+
+def test_release_gate_checker_fails_when_canonical_evidence_deleted(tmp_path: Path) -> None:
+    def delete_manifest(root: Path) -> None:
+        (root / _CANONICAL_EVIDENCE_PATH).unlink()
+
+    root = _canonical_release_repo(tmp_path, post_commit=delete_manifest)
+
+    proc = _run_release_gate_checker(root)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "release_evidence_dirty" in proc.stdout
+
+
+def test_release_gate_checker_fails_when_committed_queue_worktree_modified(tmp_path: Path) -> None:
+    def modify_queue(root: Path) -> None:
+        (root / _FUNCTIONAL_QUEUE_PATH).write_bytes(_canonical_func_bytes() + b"\n")
+
+    root = _canonical_release_repo(tmp_path, post_commit=modify_queue)
+
+    proc = _run_release_gate_checker(root)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "release_evidence_dirty" in proc.stdout
+
+
+@pytest.mark.parametrize("digest_field", ["functional_queue_sha256", "ui_queue_sha256"])
+def test_release_gate_checker_fails_on_queue_digest_mismatch(
+    tmp_path: Path, digest_field: str
+) -> None:
+    def builder(func_sha: str, ui_sha: str) -> bytes:
+        mapping = _canonical_manifest_dict(func_sha, ui_sha)
+        mapping[digest_field] = "0" * 64
+        return _canonical_bytes(mapping)
+
+    root = _canonical_release_repo(tmp_path, manifest_builder=builder)
+
+    proc = _run_release_gate_checker(root)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "release_evidence_digest_mismatch" in proc.stdout
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda mapping: {**mapping, "unexpected_key": "x"},
+        lambda mapping: {k: v for k, v in mapping.items() if k != "schema_version"},
+        lambda mapping: {**mapping, "schema_version": 2},
+        lambda mapping: {**mapping, "claim_scope": "broad-release-claim"},
+        lambda mapping: {**mapping, "validation_evidence": "already-validated"},
+        lambda mapping: {**mapping, "functional_queue_sha256": "NOTHEX"},
+    ],
+)
+def test_release_gate_checker_fails_on_schema_violation(tmp_path: Path, mutate) -> None:
+    def builder(func_sha: str, ui_sha: str) -> bytes:
+        return _canonical_bytes(mutate(_canonical_manifest_dict(func_sha, ui_sha)))
+
+    root = _canonical_release_repo(tmp_path, manifest_builder=builder)
+
+    proc = _run_release_gate_checker(root)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "release_evidence_schema_mismatch" in proc.stdout
+    assert "Traceback" not in (proc.stdout + proc.stderr)
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        b"{ this is not json",
+        b"\xef\xbb\xbf{}\n",
+        b'{\n  "claim_scope": "a",\n  "claim_scope": "b"\n}\n',
+    ],
+)
+def test_release_gate_checker_fails_on_malformed_canonical_bytes(
+    tmp_path: Path, raw: bytes
+) -> None:
+    root = _canonical_release_repo(tmp_path, manifest_builder=lambda _f, _u: raw)
+
+    proc = _run_release_gate_checker(root)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "release_evidence_malformed_json" in proc.stdout
+    assert "Traceback" not in (proc.stdout + proc.stderr)
+
+
+@pytest.mark.parametrize(
+    "bad_path",
+    [
+        "/abs/queue.json",
+        "C:/queue.json",
+        "\\\\unc\\queue.json",
+        "../escape.json",
+        ".codex/../x.json",
+    ],
+)
+def test_release_gate_checker_fails_on_noncanonical_path(tmp_path: Path, bad_path: str) -> None:
+    def builder(func_sha: str, ui_sha: str) -> bytes:
+        mapping = _canonical_manifest_dict(func_sha, ui_sha)
+        mapping["functional_queue_path"] = bad_path
+        return _canonical_bytes(mapping)
+
+    root = _canonical_release_repo(tmp_path, manifest_builder=builder)
+
+    proc = _run_release_gate_checker(root)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "release_evidence_path_invalid" in proc.stdout
+
+
+def test_release_gate_checker_fails_on_wrong_release_state(tmp_path: Path) -> None:
+    root = _canonical_release_repo(
+        tmp_path, func_bytes=_canonical_func_bytes(release_state="draft")
+    )
+
+    proc = _run_release_gate_checker(root)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "release_evidence_release_state_mismatch" in proc.stdout
+
+
+def test_release_gate_checker_fails_on_wrong_ui_status(tmp_path: Path) -> None:
+    root = _canonical_release_repo(tmp_path, ui_bytes=_canonical_ui_bytes(status="in_progress"))
+
+    proc = _run_release_gate_checker(root)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "release_evidence_ui_status_mismatch" in proc.stdout
+
+
+def test_release_gate_checker_fails_on_wrong_last_report_pointer(tmp_path: Path) -> None:
+    root = _canonical_release_repo(
+        tmp_path,
+        func_bytes=_canonical_func_bytes(last_report=_OLD_RAW_REPORT_PATH),
+    )
+
+    proc = _run_release_gate_checker(root)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "release_evidence_pointer_mismatch" in proc.stdout
+
+
+def test_release_gate_checker_fails_when_required_terminal_step_missing(tmp_path: Path) -> None:
+    truncated = [step for step in _FUNC_STEPS if step != "OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF"]
+    root = _canonical_release_repo(tmp_path, func_bytes=_canonical_func_bytes(completed=truncated))
+
+    proc = _run_release_gate_checker(root)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert (
+        "functional queue missing OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF" in proc.stdout
+        or "release_evidence_pointer_mismatch" in proc.stdout
+    )
+
+
+def test_release_gate_checker_rejects_staged_forbidden_report_artifact(tmp_path: Path) -> None:
+    def stage_report(root: Path) -> None:
+        report = root / ".codex" / "reports" / "func" / "SYNTHETIC_STAGED.md"
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text("synthetic\n", encoding="utf-8")
+        _git_in(root, "add", "--", ".codex/reports/func/SYNTHETIC_STAGED.md")
+
+    root = _canonical_release_repo(tmp_path, post_commit=stage_report)
+
+    proc = _run_release_gate_checker(root)
+
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "forbidden runtime/report/duplicate files are staged" in proc.stdout
+
+
+def test_release_gate_checker_rejects_removed_allow_missing_report_flag(tmp_path: Path) -> None:
+    root = _canonical_release_repo(tmp_path)
+
+    proc = run_tool(
+        str(REPO_ROOT / "tools" / "qa" / "check_release_gate.py"),
+        "--allow-missing-report",
+        cwd=root,
+    )
+
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert "allow-missing-report" in (proc.stdout + proc.stderr)
 
 
 def test_release_gate_runner_passes_only_when_all_required_subchecks_pass(

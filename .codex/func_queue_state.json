@@ -27,5 +27,5 @@
   "current_step": null,
   "next_step": null,
   "release_state": "v0.1-internal-rc-frozen",
-  "last_report": ".codex/reports/func/OSW-FUNC-023_V0_1_FREEZE_AND_HANDOFF.md"
+  "last_report": ".codex/release_gate_evidence.json"
 }
