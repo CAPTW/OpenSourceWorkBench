@@ -24,6 +24,20 @@ Passing the strict static gate is not fresh full-range validation,
 publication-readiness approval, push authorization, or tag/release/asset
 authorization. Fresh full-range validation remains a separate required gate.
 
+## Ruff Toolchain Reproducibility Checklist
+
+| Item | Status | Evidence / decision |
+| --- | --- | --- |
+| Ruff dev/QA dependency is exactly `ruff==0.14.14`. | `CONFIGURED` | `pyproject.toml` is the shared dependency authority. |
+| Ruff runtime guard is exactly `required-version = "==0.14.14"`. | `CONFIGURED` | A mismatched Ruff invocation must fail closed. |
+| Local and CI installs use the same `.[dev]` authority. | `CONFIGURED` | CI retains both existing `python -m pip install -e ".[dev]"` commands and has no workflow-local Ruff override. |
+| A clean environment resolves Ruff `0.14.14`. | `REQUIRED` | Existing ambient metadata is not clean-environment resolution evidence. |
+| Full Ruff runs under exact `0.14.14`. | `REQUIRED` | Exact version identity must accompany the lint result. |
+| Ruff upgrades receive a separate reviewed gate. | `REQUIRED` | Broad `UP` selection can gain stable rules when Ruff changes. |
+| `UP042` and `StrEnum` migration are handled separately. | `DEFERRED` | The exact pin preserves current enum semantics and is reproducibility policy, not source-correctness certification. |
+| Fresh full-range validation and publication-readiness review pass on the new tip. | `BLOCKED` | Focused configuration evidence does not satisfy either gate. |
+| Push, tag, release, workflow, and asset mutations use separate authorizations. | `BLOCKED` | This implementation grants no remote or publication authority. |
+
 ## Post-Public v0.1.3-rc1 Maintenance Snapshot
 
 | Item | Status | Evidence / decision |

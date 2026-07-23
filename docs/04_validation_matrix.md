@@ -18,6 +18,20 @@ closed after separate bounded validation evidence and closure gates. Historical
 rows that describe those issues as open or `skipped-missing` record the state at
 their original gate and are superseded for current issue-state purposes.
 
+## Ruff Toolchain Reproducibility Policy
+
+Ruff is a mandatory dev/QA tool pinned to `0.14.14` by the `pyproject.toml`
+`dev` extra. Local and CI installs share that `.[dev]` authority, and
+`[tool.ruff] required-version = "==0.14.14"` makes a mismatched Ruff invocation
+fail closed. Validation evidence must record the exact Ruff version.
+
+This pin preserves the current enum runtime semantics; it does not certify
+source correctness. `UP042` and any `StrEnum` migration remain deferred to a
+separate reviewed gate. The implementation creates a new exact tip, so
+clean-environment dependency resolution and fresh full-range validation remain
+required before publication-readiness review. No such later proof is claimed
+here.
+
 ## Case Status Legend
 
 | Status | Meaning |

@@ -32,7 +32,7 @@ solvers = []
 chm = ["cantera>=3.0", "CoolProp>=6.6"]
 thermo = ["cantera>=3.0", "CoolProp>=6.6"]
 mscript = ["scipy>=1.11", "hdf5storage>=0.1"]
-dev = ["pytest>=8.0", "ruff>=0.6"]
+dev = ["pytest>=8.0", "ruff==0.14.14"]
 all = [
   "PySide6>=6.7",
   "meshio>=5.3",
@@ -60,6 +60,7 @@ markers = [
 ]
 
 [tool.ruff]
+required-version = "==0.14.14"
 target-version = "py311"
 line-length = 100
 src = ["src", "tests", "tools"]
