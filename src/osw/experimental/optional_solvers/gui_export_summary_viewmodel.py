@@ -13,7 +13,7 @@ import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any
 
 from .gui_health_viewmodel import (
@@ -722,11 +722,11 @@ def _extension_for_format(export_format: OptionalSolverExportSummaryFormat) -> s
     }[export_format]
 
 
-def _has_unsafe_path_parts(path: Path) -> bool:
+def _has_unsafe_path_parts(path: PurePath) -> bool:
     raw = str(path)
     if "\x00" in raw:
         return True
-    if any(part == ".." for part in path.parts):
+    if any(part == ".." for part in raw.replace("\\", "/").split("/")):
         return True
     return any(char in raw for char in '<>"|?*')
 

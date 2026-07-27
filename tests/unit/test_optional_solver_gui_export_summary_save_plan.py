@@ -1,8 +1,32 @@
 from __future__ import annotations
 
+from pathlib import PurePosixPath
+
+import pytest
+
 from osw.experimental.optional_solvers import (
     OptionalSolverExportSummaryFormat,
     plan_optional_solver_export_summary_save,
+)
+from osw.experimental.optional_solvers.gui_export_summary_viewmodel import (
+    _has_unsafe_path_parts,
+)
+
+_UNSAFE_PATHS = (
+    "../summary.json",
+    r"..\summary.json",
+    "safe/../summary.json",
+    r"safe\..\summary.json",
+    r"safe\../summary.json",
+    "../safe/summary.json",
+    r"..\safe\summary.json",
+)
+
+_SAFE_PATHS = (
+    "summary.json",
+    "summary..json",
+    "safe/summary.json",
+    r"safe\summary.json",
 )
 
 
@@ -20,6 +44,24 @@ def test_save_plan_rejects_missing_path() -> None:
 
 def test_save_plan_rejects_unsafe_traversal_path() -> None:
     plan = plan_optional_solver_export_summary_save("..\\summary.json")
+
+    assert plan.can_save is False
+    assert "OSE_UNSAFE_PATH" in _codes(plan)
+
+
+@pytest.mark.parametrize("candidate", _UNSAFE_PATHS)
+def test_dual_separator_scanner_rejects_unsafe_paths(candidate: str) -> None:
+    assert _has_unsafe_path_parts(PurePosixPath(candidate)) is True
+
+
+@pytest.mark.parametrize("candidate", _SAFE_PATHS)
+def test_dual_separator_scanner_preserves_safe_paths(candidate: str) -> None:
+    assert _has_unsafe_path_parts(PurePosixPath(candidate)) is False
+
+
+@pytest.mark.parametrize("candidate", _UNSAFE_PATHS)
+def test_dual_separator_save_plan_rejects_unsafe_paths(candidate: str) -> None:
+    plan = plan_optional_solver_export_summary_save(candidate)
 
     assert plan.can_save is False
     assert "OSE_UNSAFE_PATH" in _codes(plan)
