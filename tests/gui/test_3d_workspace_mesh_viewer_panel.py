@@ -51,6 +51,7 @@ class RecordingSceneAdapter:
         self.load_calls: list[tuple[MeshData, SceneInputRef, SceneViewState]] = []
         self.view_state_calls: list[SceneViewState] = []
         self.export_calls: list[str] = []
+        self.clear_calls = 0
 
     def load_mesh(
         self,
@@ -63,6 +64,9 @@ class RecordingSceneAdapter:
 
     def set_view_state(self, scene_state: SceneViewState) -> None:
         self.view_state_calls.append(scene_state)
+
+    def clear(self) -> None:
+        self.clear_calls += 1
 
     def export_screenshot_record(
         self,
@@ -162,6 +166,21 @@ def test_scene_input_carries_mesh_ref_and_toggles(app: object) -> None:
     assert scene_state.render_options.show_edges is True
     assert scene_state.render_options.show_grid is True
     assert scene_state.render_options.show_axes is False
+    del app
+
+
+def test_replacing_panel_mesh_clears_existing_scene_resources(app: object) -> None:
+    from osw.gui.widgets.mesh_viewer_panel import MeshViewerPanel
+
+    adapter = RecordingSceneAdapter()
+    panel = MeshViewerPanel(scene_adapter=adapter)
+    panel.set_mesh(_mesh(), mesh_ref="mesh-1")
+    panel.load_mesh_preview()
+
+    panel.set_mesh(_mesh(), mesh_ref="mesh-2")
+
+    assert adapter.clear_calls == 1
+    assert panel.current_state().mesh_ref == "mesh-2"
     del app
 
 

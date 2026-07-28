@@ -138,6 +138,7 @@ def render_field_view(
             request=request,
         )
     mesh_data = getattr(field_view_model, "mesh_data", None)
+    scene: PyVistaScene | None = None
     try:
         scene = PyVistaScene(
             config=PyVistaSceneConfig(
@@ -182,6 +183,9 @@ def render_field_view(
             request=request,
             diagnostics=(str(exc),),
         )
+    finally:
+        if scene is not None:
+            scene.close()
     return FieldRenderResult(
         status="rendered",
         message=f"Rendered scalar field '{scalar_field}'.",
@@ -215,39 +219,58 @@ class PyVistaScene:
         self._plotter: Any | None = None
 
     def add_mesh(self, mesh_data: MeshData) -> PyVistaSceneState:
+        self.close()
         module = self._require_pyvista()
         dataset = mesh_data_to_polydata(mesh_data, pyvista_module=module)
         self._attach_scalar_field(dataset, mesh_data)
 
         plotter = module.Plotter(off_screen=self.config.off_screen)
         self._plotter = plotter
-        if self.config.show_surface:
-            scalars = (
-                self.config.scalar_field
-                if _has_scalar(mesh_data, self.config.scalar_field)
-                else None
-            )
-            plotter.add_mesh(
-                dataset,
-                show_edges=self.config.show_edges,
-                scalars=scalars,
-            )
-        if self.config.show_axes and hasattr(plotter, "add_axes"):
-            plotter.add_axes()
-        if self.config.show_grid and hasattr(plotter, "show_grid"):
-            plotter.show_grid()
+        try:
+            if self.config.show_surface:
+                scalars = (
+                    self.config.scalar_field
+                    if _has_scalar(mesh_data, self.config.scalar_field)
+                    else None
+                )
+                plotter.add_mesh(
+                    dataset,
+                    show_edges=self.config.show_edges,
+                    scalars=scalars,
+                )
+            if self.config.show_axes and hasattr(plotter, "add_axes"):
+                plotter.add_axes()
+            if self.config.show_grid and hasattr(plotter, "show_grid"):
+                plotter.show_grid()
+        except Exception:
+            self.close()
+            raise
 
         return build_scene_state(mesh_data, config=self.config, rendered=True)
 
     def export_screenshot(self, mesh_data: MeshData, target_path: str | Path) -> Path:
         target = Path(target_path)
         target.parent.mkdir(parents=True, exist_ok=True)
-        self.add_mesh(mesh_data)
-        if self._plotter is None or not hasattr(self._plotter, "screenshot"):
-            msg = "PyVista plotter does not provide screenshot export in this environment."
-            raise PyVistaUnavailableError(msg)
-        self._plotter.screenshot(str(target))
-        return target
+        try:
+            self.add_mesh(mesh_data)
+            if self._plotter is None or not hasattr(self._plotter, "screenshot"):
+                msg = "PyVista plotter does not provide screenshot export in this environment."
+                raise PyVistaUnavailableError(msg)
+            self._plotter.screenshot(str(target))
+            return target
+        finally:
+            self.close()
+
+    def close(self) -> None:
+        """Close the current Plotter exactly once and release the reference."""
+
+        plotter = self._plotter
+        self._plotter = None
+        if plotter is None:
+            return
+        close = getattr(plotter, "close", None)
+        if callable(close):
+            close()
 
     def _require_pyvista(self) -> Any:
         if self._pyvista_module is not None:
@@ -295,7 +318,10 @@ def export_screenshot_record(
     else:
         config = PyVistaSceneConfig(off_screen=True)
     scene = PyVistaScene(config=config, pyvista_module=pyvista_module, loader=loader)
-    written = scene.export_screenshot(mesh_data, target_path)
+    try:
+        written = scene.export_screenshot(mesh_data, target_path)
+    finally:
+        scene.close()
     return build_screenshot_record(
         str(written),
         record_id=record_id,

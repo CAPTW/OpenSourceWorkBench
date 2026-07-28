@@ -12,6 +12,7 @@ from osw.post.pyvista_scene import (
     PyVistaSceneConfig,
     PyVistaUnavailableError,
     build_scene_state,
+    export_screenshot_record,
     mesh_data_to_polydata,
     render_field_view,
 )
@@ -25,14 +26,18 @@ class FakePolyData:
 
 
 class FakePlotter:
-    def __init__(self, *, off_screen: bool = False) -> None:
+    def __init__(self, *, off_screen: bool = False, fail_add_mesh: bool = False) -> None:
         self.off_screen = off_screen
+        self.fail_add_mesh = fail_add_mesh
         self.mesh_calls: list[dict[str, object]] = []
         self.axes_added = False
         self.grid_shown = False
         self.screenshots: list[str] = []
+        self.close_calls = 0
 
     def add_mesh(self, dataset: object, **kwargs: object) -> None:
+        if self.fail_add_mesh:
+            raise RuntimeError("forced add_mesh failure")
         self.mesh_calls.append({"dataset": dataset, **kwargs})
 
     def add_axes(self) -> None:
@@ -45,15 +50,22 @@ class FakePlotter:
         self.screenshots.append(path)
         Path(path).write_text("fake screenshot", encoding="utf-8")
 
+    def close(self) -> None:
+        self.close_calls += 1
+
 
 class FakePyVista:
     PolyData = FakePolyData
 
-    def __init__(self) -> None:
+    def __init__(self, *, fail_add_mesh: bool = False) -> None:
+        self.fail_add_mesh = fail_add_mesh
         self.plotters: list[FakePlotter] = []
 
     def Plotter(self, *, off_screen: bool = False) -> FakePlotter:
-        plotter = FakePlotter(off_screen=off_screen)
+        plotter = FakePlotter(
+            off_screen=off_screen,
+            fail_add_mesh=self.fail_add_mesh,
+        )
         self.plotters.append(plotter)
         return plotter
 
@@ -123,6 +135,34 @@ def test_fake_pyvista_scene_accepts_simple_mesh() -> None:
     assert isinstance(plotter.mesh_calls[0]["dataset"], FakePolyData)
 
 
+def test_add_mesh_closes_replaced_plotter_and_close_is_idempotent() -> None:
+    fake_pyvista = FakePyVista()
+    scene = PyVistaScene(pyvista_module=fake_pyvista)
+
+    scene.add_mesh(sample_mesh())
+    first = fake_pyvista.plotters[0]
+    scene.add_mesh(sample_mesh())
+    second = fake_pyvista.plotters[1]
+
+    assert first.close_calls == 1
+    assert second.close_calls == 0
+
+    scene.close()
+    scene.close()
+
+    assert second.close_calls == 1
+
+
+def test_add_mesh_closes_partially_initialized_plotter_on_failure() -> None:
+    fake_pyvista = FakePyVista(fail_add_mesh=True)
+    scene = PyVistaScene(pyvista_module=fake_pyvista)
+
+    with pytest.raises(RuntimeError, match="forced add_mesh failure"):
+        scene.add_mesh(sample_mesh())
+
+    assert fake_pyvista.plotters[0].close_calls == 1
+
+
 def test_mesh_data_to_polydata_builds_triangle_faces() -> None:
     fake_pyvista = FakePyVista()
 
@@ -142,6 +182,21 @@ def test_screenshot_export_uses_optional_plotter(tmp_path: Path) -> None:
     assert exported == screenshot_path
     assert screenshot_path.read_text(encoding="utf-8") == "fake screenshot"
     assert fake_pyvista.plotters[0].screenshots == [str(screenshot_path)]
+    assert fake_pyvista.plotters[0].close_calls == 1
+
+
+def test_screenshot_record_export_closes_plotter(tmp_path: Path) -> None:
+    fake_pyvista = FakePyVista()
+
+    record = export_screenshot_record(
+        sample_mesh(),
+        tmp_path / "record.png",
+        record_id="record-1",
+        pyvista_module=fake_pyvista,
+    )
+
+    assert record.id == "record-1"
+    assert fake_pyvista.plotters[0].close_calls == 1
 
 
 def test_field_render_missing_pyvista_returns_dependency_diagnostic() -> None:
@@ -177,6 +232,7 @@ def test_field_render_fake_pyvista_uses_scalar_field() -> None:
     assert fake_pyvista.plotters[0].mesh_calls[0]["scalars"] == "temperature"
     dataset = fake_pyvista.plotters[0].mesh_calls[0]["dataset"]
     assert dataset.point_data["temperature"] == (300.0, 310.0, 305.0)
+    assert fake_pyvista.plotters[0].close_calls == 1
 
 
 def test_vector_field_rendering_is_deferred_placeholder() -> None:

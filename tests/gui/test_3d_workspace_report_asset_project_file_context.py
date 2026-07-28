@@ -454,6 +454,22 @@ def test_successful_open_discards_document_viewers(qapp: object) -> None:
     assert window.mesh_viewer is None
 
 
+def test_successful_open_replaces_active_scene_controller(qapp: object) -> None:
+    loaded = _project("Loaded")
+    window = _window(
+        qapp,
+        project_open_path_picker=lambda: "loaded.osw.json",
+        project_loader=lambda _path: loaded,
+        project_error_reporter=lambda _message: None,
+    )
+    previous = window.active_scene_controller
+
+    assert window.open_project() is True
+
+    assert previous.state.value == "closed"
+    assert window.active_scene_controller is not previous
+
+
 def test_successful_open_retires_every_document_bound_surface(qapp: object) -> None:
     class Surface:
         def __init__(self) -> None:

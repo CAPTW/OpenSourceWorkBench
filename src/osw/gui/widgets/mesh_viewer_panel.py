@@ -371,6 +371,10 @@ class MeshViewerPanel(_BaseWidget):
 
     def set_mesh(self, mesh: MeshData, *, mesh_ref: str = "") -> None:
         """Attach an in-memory mesh and show its summary (no rendering)."""
+        if self._state.mesh is not None:
+            clear = getattr(self._adapter, "clear", None)
+            if callable(clear):
+                clear()
         self._state = MeshViewerState(
             mesh=mesh,
             mesh_ref=mesh_ref,
@@ -577,6 +581,9 @@ class MeshViewerPanel(_BaseWidget):
 
     def clear_mesh(self) -> None:
         """Return the panel to its friendly empty state."""
+        clear = getattr(self._adapter, "clear", None)
+        if callable(clear):
+            clear()
         self._state = MeshViewerState(status_message=_NO_MESH_TEXT)
         self._populate_scalar_selector(None)
         self._populate_vector_selector(None)

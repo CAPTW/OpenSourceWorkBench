@@ -4301,3 +4301,39 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   It is a separately authorized read-only review-and-commit-readiness gate and
   was not executed by this documentation update.
 - Status update (2026-07-13): The original Consequences and Next gate wording above is retained as historical evidence of this accepted decision. Its suggestion that explicit relink could end the typed unresolved state is superseded for current interpretation: explicit relink replaces compatibility metadata only after validation, explicit confirmation, and post-confirmation revalidation; `external_absolute` remains `external_absolute`, while `project_relative` becomes `external_absolute`. Without an authorized resolver, either typed result remains `unresolved_no_resolver`; the runtime descriptor has no `effective_path`, no usable report `image_path` is produced, and the placeholder remains. The documentation review, commit `adad148becf87ead12f4e3a16f59530d048b21a6`, and post-commit verification subsequently completed, and `SELECT_FULL_EXISTING_HISTORY_FAST_FORWARD_PATH` was selected. A later full-range publication-readiness gate stopped at `BLOCKED_DOCUMENTATION_SEMANTIC_MISMATCH`. This additive documentation amendment corrects those wording defects only; publication remains blocked pending a fresh full-range result. The 3D MVP delivery plan is selected, but `OSW-3D-WORKSPACE-SCENE-INTERACTION-CORE` has not started and its publication-baseline entry conditions are not met.
+
+## ADR-0183: One Document Owns One Active Scene Controller And Renderer Session
+
+- Status: Accepted
+- Date: 2026-07-28
+- Context: The existing mesh viewer panel owned a summary/screenshot adapter,
+  while off-screen `PyVistaScene` paths could overwrite or abandon Plotters
+  without an explicit close. `MainWindow` document replacement retired Qt
+  surfaces but had no single renderer-session owner, semantic actor registry,
+  scene-generation guard, or deterministic backend teardown contract. Qt
+  parent deletion, Python garbage collection, and `__del__` are insufficient
+  for native renderer resources.
+- Decision: Each `MainWindow` document owns exactly one
+  `ActiveSceneController`. The controller lazily owns at most one
+  `SceneRendererSession`, keeps native objects inside that session, records only
+  semantic `base_mesh`/`wireframe` actors, and invalidates guarded callbacks
+  whenever its generation changes. Mesh replacement clears old session
+  resources before installing the next semantic records. Project replacement
+  closes the old controller before installing a fresh document controller, and
+  application close invokes the controller before Qt child teardown.
+  Controller, compatibility session, and off-screen `PyVistaScene` close paths
+  are idempotent and handle partial initialization. The existing
+  `SceneAdapterProtocol` remains contained in a compatibility session rather
+  than becoming a broad renderer framework.
+- Consequences: Mandatory tests use fake renderer sessions and fake off-screen
+  Plotters, so they prove ownership, replacement, stale-callback, and close
+  semantics only. Missing renderer initialization produces an explicit
+  metadata-only fallback. PyVista remains a guarded optional dependency.
+  PyVistaQt, `QtInteractor`, embedded interaction, picking, stable identity,
+  ProjectSchema persistence, setup overlays, interactive results, solver
+  execution, Golden repair, and report-asset native locality are unchanged and
+  not validated by this decision.
+- Next gate: `OSW-3D-WORKSPACE-SCENE-INTERACTION-CORE` requires separate human
+  authorization and must not be executed automatically. Integration or remote
+  publication also remains separate while the required exact-head CI baseline
+  is red at its Golden step.

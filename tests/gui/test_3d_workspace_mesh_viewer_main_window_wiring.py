@@ -78,6 +78,55 @@ class RecordingSceneAdapter:
         return SceneScreenshotRecord(id=record_id, path=str(path), scene_state=scene_state)
 
 
+class RecordingRendererSession:
+    backend_kind = "fake-window"
+    capabilities = frozenset({"mesh-preview", "semantic-actors"})
+
+    def __init__(self) -> None:
+        self.close_calls = 0
+        self.closed = False
+        self.actors: dict[str, object] = {}
+
+    def clear(self) -> None:
+        self.actors.clear()
+
+    def replace_actor(
+        self,
+        semantic_id: str,
+        payload: object,
+        *,
+        generation: int,
+    ) -> object:
+        self.actors[semantic_id] = (payload, generation)
+        return SimpleNamespace(warnings=(), rendered=False)
+
+    def remove_actor(self, semantic_id: str) -> None:
+        self.actors.pop(semantic_id, None)
+
+    def request_render(self) -> None:
+        return None
+
+    def close(self) -> None:
+        if self.closed:
+            return
+        self.closed = True
+        self.close_calls += 1
+        self.actors.clear()
+
+
+class RecordingRendererFactory:
+    backend_kind = RecordingRendererSession.backend_kind
+    capabilities = RecordingRendererSession.capabilities
+
+    def __init__(self) -> None:
+        self.sessions: list[RecordingRendererSession] = []
+
+    def create_session(self) -> RecordingRendererSession:
+        session = RecordingRendererSession()
+        self.sessions.append(session)
+        return session
+
+
 def test_main_window_exposes_mesh_viewer_action_and_dialog(app: object) -> None:
     from osw.gui.main_window import MainWindow
 
@@ -126,6 +175,62 @@ def test_load_mesh_into_viewer_updates_panel_and_uses_fake_adapter(app: object) 
     _mesh_arg, scene_input, _scene_state = adapter.load_calls[0]
     assert scene_input.source_kind == "mesh"
     assert scene_input.mesh_ref == "demo-mesh"
+    del app
+
+
+def test_main_window_document_owns_controller_used_by_mesh_panel(app: object) -> None:
+    from osw.gui.main_window import MainWindow
+
+    factory = RecordingRendererFactory()
+    window = MainWindow(scene_renderer_factory=factory)
+    controller = window.active_scene_controller
+
+    window.load_mesh_into_viewer(_mesh(), mesh_ref="demo-mesh")
+    assert window.mesh_viewer is not None
+    assert window.mesh_viewer._adapter is controller
+
+    window.mesh_viewer.load_mesh_preview()
+
+    assert len(factory.sessions) == 1
+    assert controller.session is factory.sessions[0]
+    del app
+
+
+def test_project_replacement_closes_old_scene_and_installs_new_controller(app: object) -> None:
+    from osw.gui.main_window import MainWindow
+
+    factory = RecordingRendererFactory()
+    window = MainWindow(scene_renderer_factory=factory)
+    old_controller = window.active_scene_controller
+    window.load_mesh_into_viewer(_mesh(), mesh_ref="demo-mesh")
+    assert window.mesh_viewer is not None
+    window.mesh_viewer.load_mesh_preview()
+    session = factory.sessions[0]
+
+    assert window.new_project() is True
+
+    assert session.close_calls == 1
+    assert old_controller.session is None
+    assert window.active_scene_controller is not old_controller
+    assert window.mesh_viewer is None
+    del app
+
+
+def test_application_close_closes_scene_session_once(app: object) -> None:
+    from osw.gui.main_window import MainWindow
+
+    factory = RecordingRendererFactory()
+    window = MainWindow(scene_renderer_factory=factory)
+    window.load_mesh_into_viewer(_mesh(), mesh_ref="demo-mesh")
+    assert window.mesh_viewer is not None
+    window.mesh_viewer.load_mesh_preview()
+    session = factory.sessions[0]
+
+    window.close()
+    assert session.close_calls == 1
+
+    window.active_scene_controller.close()
+    assert session.close_calls == 1
     del app
 
 

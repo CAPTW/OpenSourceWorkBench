@@ -267,6 +267,7 @@ class MainWindow(_BaseMainWindow):
         plugin_state_store: PluginStateStore | None = None,
         executable_registry: ExecutablePathRegistry | None = None,
         mesh_scene_adapter_factory: Callable[[], Any] | None = None,
+        scene_renderer_factory: Any | None = None,
         result_mesh_binding_confirmation: Callable[[str], bool] | None = None,
         result_mesh_binding_target_selector: ResultMeshBindingTargetSelector | None = None,
         metadata_mesh_reader: MeshRefLoadReader | None = None,
@@ -340,6 +341,8 @@ class MainWindow(_BaseMainWindow):
         self.persisted_report_screenshot_manager: object | None = None
         self._last_persisted_report_screenshot_status = ""
         self._mesh_scene_adapter_factory = mesh_scene_adapter_factory
+        self._scene_renderer_factory = scene_renderer_factory
+        self.active_scene_controller = self._create_active_scene_controller()
         self._result_mesh_binding_confirmation = result_mesh_binding_confirmation
         self._result_mesh_binding_target_selector = result_mesh_binding_target_selector
         self._metadata_mesh_reader = metadata_mesh_reader or self._read_metadata_mesh
@@ -1402,6 +1405,7 @@ class MainWindow(_BaseMainWindow):
     def _retire_document_bound_surfaces(self) -> None:
         """Best-effort close document surfaces after an otherwise complete commit."""
 
+        self._replace_active_scene_controller()
         for dialog_name in _DOCUMENT_DIALOG_ATTRIBUTES:
             dialog = getattr(self, dialog_name)
             if dialog is not None:
@@ -1567,6 +1571,32 @@ class MainWindow(_BaseMainWindow):
         self.refresh_results_from_project(update_report=False)
         self.generate_report_preview(log=False)
         self._refresh_persisted_report_screenshot_surfaces()
+
+    def _create_active_scene_controller(self) -> object:
+        """Create the one lazy active-scene owner for the current document."""
+
+        from osw.gui.workspace_scene_controller import (
+            ActiveSceneController,
+            SceneAdapterRendererFactory,
+        )
+
+        factory = self._scene_renderer_factory
+        if factory is None:
+            factory = SceneAdapterRendererFactory(self._mesh_scene_adapter_factory)
+        return ActiveSceneController(factory)
+
+    def _replace_active_scene_controller(self) -> None:
+        """Close the previous document scene before installing a fresh owner."""
+
+        controller = self.active_scene_controller
+        controller.close()
+        self.active_scene_controller = self._create_active_scene_controller()
+
+    def closeEvent(self, event: object) -> None:
+        """Close renderer resources before Qt tears down child widgets."""
+
+        self.active_scene_controller.close()
+        super().closeEvent(event)
 
     def build_current_report_summary(self) -> object:
         """Build report summary data without executing tools."""
@@ -2349,13 +2379,9 @@ class MainWindow(_BaseMainWindow):
             self.mesh_viewer_dialog.setObjectName("oswMeshViewerDialog")
             self.mesh_viewer_dialog.setWindowTitle("3D Mesh Preview")
             layout = QtWidgets.QVBoxLayout(self.mesh_viewer_dialog)
-            adapter = (
-                self._mesh_scene_adapter_factory()
-                if self._mesh_scene_adapter_factory is not None
-                else None
-            )
             self.mesh_viewer = build_mesh_viewer_panel(
-                self.mesh_viewer_dialog, scene_adapter=adapter
+                self.mesh_viewer_dialog,
+                scene_adapter=self.active_scene_controller,
             )
             if hasattr(self.mesh_viewer, "set_bind_result_callback"):
                 self.mesh_viewer.set_bind_result_callback(

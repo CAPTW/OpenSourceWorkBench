@@ -242,6 +242,17 @@ class DefaultSceneAdapter:
     def set_view_state(self, scene_state: SceneViewState) -> None:
         self._scene_state = scene_state
 
+    def clear(self) -> None:
+        """Release transient logical scene references (no native renderer is retained)."""
+
+        self._scene_input = None
+        self._scene_state = SceneViewState()
+
+    def close(self) -> None:
+        """Idempotently clear this compatibility adapter."""
+
+        self.clear()
+
     def export_screenshot_record(
         self,
         path: str,

@@ -173,6 +173,32 @@ explicitly deferred. The GUI FieldViewerPanel is a ResultViewer subpanel and
 does not call subprocesses or make visualization dependencies mandatory. See
 `docs/30_result_viewer_field_rendering.md`.
 
+## 3D Workspace Active-Scene Lifecycle Foundation
+
+One `MainWindow` document owns one `ActiveSceneController`. The controller is
+Qt-free, creates at most one lazy `SceneRendererSession`, owns the scene
+generation counter, and records only semantic `base_mesh` and `wireframe`
+actors outside the session. Native renderer objects must remain inside the
+session. Mesh replacement clears old session resources before replacing the
+semantic records, so generation-guarded callbacks from the prior scene become
+inert.
+
+The existing `SceneAdapterProtocol` is retained inside a narrow compatibility
+session. It is not a new generic renderer framework and does not establish an
+interactive renderer. Project replacement closes the old controller before a
+fresh document controller is installed, while `MainWindow.closeEvent()` closes
+the current controller before Qt child teardown. Both controller and
+off-screen `PyVistaScene` close operations are explicit and idempotent; Qt
+parent deletion, Python garbage collection, and `__del__` are not cleanup
+contracts.
+
+PyVista remains lazy and optional. Screenshot and field-render paths close every
+created off-screen Plotter, including failure paths. Missing or failed renderer
+initialization stays an explicit metadata-only fallback. PyVistaQt,
+`QtInteractor`, embedded interaction, picking, stable mesh identity,
+ProjectSchema persistence, solver setup, and interactive result inspection
+remain outside this foundation gate.
+
 ## CHM CoolProp / Cantera Binding
 
 CHM support lives under `osw.solvers.coolprop` and `osw.solvers.cantera` as
