@@ -15,6 +15,7 @@ from osw.gui.workspace_scene_view_model import (
     mesh_input_ref,
     scene_view_state_from_toggles,
 )
+from osw.mesh.identity import compute_mesh_fingerprint
 from osw.mesh.mesh_model import MeshCellBlock, MeshData
 
 
@@ -246,12 +247,29 @@ class FakeActor:
 class FakeDataSet:
     def __init__(self) -> None:
         self.point_data: dict[str, object] = {}
+        self.cell_data: dict[str, object] = {}
         self.clip_calls: list[dict[str, object]] = []
+        self.extracted_points: tuple[int, ...] = ()
+        self.extracted_cells: tuple[int, ...] = ()
 
     def clip(self, **kwargs: object) -> FakeDataSet:
         clipped = FakeDataSet()
         clipped.clip_calls = [*self.clip_calls, dict(kwargs)]
         return clipped
+
+    def extract_points(
+        self,
+        indices: object,
+        **_kwargs: object,
+    ) -> FakeDataSet:
+        extracted = FakeDataSet()
+        extracted.extracted_points = tuple(int(item) for item in indices)
+        return extracted
+
+    def extract_cells(self, indices: object) -> FakeDataSet:
+        extracted = FakeDataSet()
+        extracted.extracted_cells = tuple(int(item) for item in indices)
+        return extracted
 
 
 class FakePyVista:
@@ -285,6 +303,9 @@ class FakeInteractor:
         self.hide_axes_calls = 0
         self.clear_plane_widget_calls = 0
         self.close_calls = 0
+        self.point_pick_kwargs: dict[str, object] = {}
+        self.cell_pick_kwargs: dict[str, object] = {}
+        self.disable_picking_calls = 0
 
     def set_background(self, _color: str) -> None:
         if self.fail_background:
@@ -315,6 +336,15 @@ class FakeInteractor:
 
     def clear_plane_widgets(self) -> None:
         self.clear_plane_widget_calls += 1
+
+    def enable_point_picking(self, **kwargs: object) -> None:
+        self.point_pick_kwargs = dict(kwargs)
+
+    def enable_cell_picking(self, **kwargs: object) -> None:
+        self.cell_pick_kwargs = dict(kwargs)
+
+    def disable_picking(self) -> None:
+        self.disable_picking_calls += 1
 
     def render(self) -> None:
         self.render_calls += 1
@@ -380,6 +410,69 @@ def test_pyvistaqt_partial_initialization_failure_closes_created_interactor() ->
     assert interactor.render_timer.stop_calls == 1
     assert interactor.clear_plane_widget_calls == 1
     assert interactor.close_calls == 1
+
+
+def test_pyvistaqt_picking_and_semantic_selection_overlays_are_session_local() -> None:
+    from osw.gui.workspace_scene_pyvistaqt import PyVistaQtRendererSession
+
+    fake_pyvista = FakePyVista()
+    interactor = FakeInteractor()
+    session = PyVistaQtRendererSession(
+        object(),
+        pyvista_module=fake_pyvista,
+        interactor_factory=lambda **_kwargs: interactor,
+    )
+    mesh = _mesh()
+    payload = SimpleNamespace(
+        mesh=mesh,
+        scene_input=mesh_input_ref("mesh-1"),
+        scene_state=scene_view_state_from_toggles(),
+        mesh_fingerprint=compute_mesh_fingerprint(mesh),
+    )
+    events: list[dict[str, object]] = []
+
+    session.replace_actor("base_mesh", payload, generation=7)
+    session.replace_actor("wireframe", payload, generation=7)
+    session.set_pick_mode("node", events.append)
+    point_callback = interactor.point_pick_kwargs["callback"]
+    assert callable(point_callback)
+    point_callback(SimpleNamespace(GetPointId=lambda: 2))
+
+    assert events == [
+        {
+            "generation": 7,
+            "mesh_ref": "mesh-1",
+            "mesh_fingerprint": payload.mesh_fingerprint.digest,
+            "entity_kind": "node",
+            "backend_index": 2,
+            "intent": "replace",
+        }
+    ]
+
+    session.set_hover_entities("node", (0,), 7)
+    session.set_current_selection("node", (0, 2), 7)
+    session.set_named_selection_overlay("selection-1", "cell", (0,), 7)
+    assert {
+        "hover",
+        "current_selection",
+        "named_selection:selection-1",
+    }.issubset(set(session.semantic_actor_ids))
+
+    session.set_pick_mode("cell", events.append)
+    cell_callback = interactor.cell_pick_kwargs["callback"]
+    assert callable(cell_callback)
+    picked_cells = FakeDataSet()
+    picked_cells.cell_data["_osw_transient_cell_index"] = (0,)
+    cell_callback(picked_cells)
+    assert events[-1]["entity_kind"] == "cell"
+    assert events[-1]["backend_index"] == 0
+
+    session.clear_hover()
+    session.clear_current_selection()
+    session.remove_named_selection_overlay("selection-1")
+    assert set(session.semantic_actor_ids) == {"base_mesh", "wireframe"}
+    session.close()
+    assert interactor.disable_picking_calls >= 1
 
 
 def test_missing_pyvistaqt_is_an_explicit_controller_fallback() -> None:

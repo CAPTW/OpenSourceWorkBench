@@ -15,6 +15,7 @@ from osw.core.materials import IsotropicElastic, Material
 from osw.core.project_schema import (
     CURRENT_SCHEMA_VERSION,
     DEFAULT_PROJECT_SCHEMA_VERSION,
+    ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION,
     LEGACY_PROJECT_SCHEMA_VERSION,
     PATH_KIND_PROJECT_SCHEMA_VERSION,
     SUPPORTED_PROJECT_SCHEMA_VERSIONS,
@@ -282,8 +283,9 @@ def test_project_schema_versions_keep_feature_unused_projects_at_0_1() -> None:
     assert LEGACY_PROJECT_SCHEMA_VERSION == "0.1"
     assert DEFAULT_PROJECT_SCHEMA_VERSION == "0.1"
     assert PATH_KIND_PROJECT_SCHEMA_VERSION == "0.2"
-    assert CURRENT_SCHEMA_VERSION == "0.2"
-    assert SUPPORTED_PROJECT_SCHEMA_VERSIONS == frozenset({"0.1", "0.2"})
+    assert ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION == "0.3"
+    assert CURRENT_SCHEMA_VERSION == "0.3"
+    assert SUPPORTED_PROJECT_SCHEMA_VERSIONS == frozenset({"0.1", "0.2", "0.3"})
     assert Project(metadata=ProjectMetadata(name="default")).schema_version == "0.1"
 
 

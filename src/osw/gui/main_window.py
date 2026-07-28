@@ -7,6 +7,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
+from uuid import uuid4
 
 from osw.core.demo_project import create_heatsink_flow_demo_project
 from osw.core.executables import ExecutablePathRegistry
@@ -433,6 +434,7 @@ class MainWindow(_BaseMainWindow):
                     )
 
     def _build_shell(self) -> None:
+        from osw.gui.widgets.named_selection_panel import NamedSelectionPanel
         from osw.gui.widgets.project_tree_panel import ProjectTreePanel
         from osw.gui.widgets.properties_panel import PropertiesPanel
         from osw.gui.widgets.run_monitor_panel import RunMonitorPanel
@@ -455,6 +457,7 @@ class MainWindow(_BaseMainWindow):
 
         self.project_tree_panel = ProjectTreePanel(container)
         self.project_tree = self.project_tree_panel.tree
+        self.named_selection_panel = NamedSelectionPanel(container)
         self.central_viewport_panel = CentralViewportPanel(
             container,
             scene_controller=self.active_scene_controller,
@@ -470,6 +473,42 @@ class MainWindow(_BaseMainWindow):
             self.export_current_report
         )
         self.project_tree.currentItemChanged.connect(self._on_project_tree_selection_changed)
+        self.named_selection_panel.pickModeChanged.connect(
+            self._on_entity_pick_mode_changed
+        )
+        self.named_selection_panel.clearRequested.connect(
+            self._on_clear_current_selection
+        )
+        self.named_selection_panel.createRequested.connect(
+            self._on_create_named_selection
+        )
+        self.named_selection_panel.renameRequested.connect(
+            self._on_rename_named_selection
+        )
+        self.named_selection_panel.replaceRequested.connect(
+            self._on_replace_named_selection_targets
+        )
+        self.named_selection_panel.deleteRequested.connect(
+            self._on_delete_named_selection
+        )
+        self.named_selection_panel.selectionActivated.connect(
+            self._on_named_selection_activated
+        )
+        self.active_scene_controller.set_selection_listener(
+            self._refresh_named_selection_panel
+        )
+        picking_available = bool(
+            getattr(self.central_viewport_panel, "interactive_available", False)
+            and "picking" in self.active_scene_controller.capabilities
+        )
+        self.named_selection_panel.set_backend_available(
+            picking_available,
+            getattr(self.active_scene_controller, "fallback_reason", ""),
+        )
+        if picking_available:
+            self.active_scene_controller.set_pick_mode(
+                self.named_selection_panel.mode_selector.currentText().lower()
+            )
 
         center_splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical, container)
         center_splitter.setObjectName("oswCenterVerticalSplitter")
@@ -481,7 +520,17 @@ class MainWindow(_BaseMainWindow):
 
         main_splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal, container)
         main_splitter.setObjectName("oswMainHorizontalSplitter")
-        main_splitter.addWidget(self.project_tree_panel)
+        left_splitter = QtWidgets.QSplitter(
+            QtCore.Qt.Orientation.Vertical,
+            container,
+        )
+        left_splitter.setObjectName("oswProjectSelectionVerticalSplitter")
+        left_splitter.addWidget(self.project_tree_panel)
+        left_splitter.addWidget(self.named_selection_panel)
+        left_splitter.setStretchFactor(0, 2)
+        left_splitter.setStretchFactor(1, 1)
+        left_splitter.setSizes([620, 340])
+        main_splitter.addWidget(left_splitter)
         main_splitter.addWidget(center_splitter)
         main_splitter.addWidget(self.properties_panel)
         main_splitter.setStretchFactor(0, 0)
@@ -1580,6 +1629,8 @@ class MainWindow(_BaseMainWindow):
             self.project_tree_panel.set_project(project)
         if hasattr(self.properties_panel, "set_project"):
             self.properties_panel.set_project(project)
+        self.active_scene_controller.set_named_selections(project.selections)
+        self._refresh_named_selection_panel()
         self.refresh_results_from_project(update_report=False)
         self.generate_report_preview(log=False)
         self._refresh_persisted_report_screenshot_surfaces()
@@ -1614,6 +1665,202 @@ class MainWindow(_BaseMainWindow):
         bind_controller = getattr(panel, "set_scene_controller", None)
         if callable(bind_controller):
             bind_controller(self.active_scene_controller)
+        self.active_scene_controller.set_selection_listener(
+            self._refresh_named_selection_panel
+        )
+        self.active_scene_controller.set_named_selections(
+            self.current_project.selections
+        )
+        named_panel = getattr(self, "named_selection_panel", None)
+        if named_panel is not None:
+            picking_available = bool(
+                getattr(panel, "interactive_available", False)
+                and "picking" in self.active_scene_controller.capabilities
+            )
+            named_panel.set_backend_available(
+                picking_available,
+                getattr(self.active_scene_controller, "fallback_reason", ""),
+            )
+            if picking_available:
+                self.active_scene_controller.set_pick_mode(
+                    named_panel.mode_selector.currentText().lower()
+                )
+            self._refresh_named_selection_panel()
+
+    def _on_entity_pick_mode_changed(self, mode: str) -> None:
+        if self.active_scene_controller.set_pick_mode(mode):
+            self.named_selection_panel.set_status(
+                f"{mode.title()} picking is active."
+            )
+            return
+        if self.active_scene_controller.current_mesh_fingerprint is None:
+            self.named_selection_panel.set_status(
+                "Load an in-memory mesh before picking entities.",
+                error=True,
+            )
+        else:
+            self.named_selection_panel.set_status(
+                "The active renderer does not provide entity picking.",
+                error=True,
+            )
+
+    def _on_clear_current_selection(self) -> None:
+        self.active_scene_controller.clear_current_selection()
+        self.named_selection_panel.set_status(
+            "Current transient selection cleared."
+        )
+
+    def _on_create_named_selection(
+        self,
+        name: str,
+        description: str,
+    ) -> None:
+        from osw.core.selection_resolution import (
+            NamedSelectionLifecycleError,
+            create_named_selection,
+        )
+
+        selection_id = f"selection-{uuid4().hex[:12]}"
+        try:
+            selections = create_named_selection(
+                self.current_project.selections,
+                self.active_scene_controller.current_selection_target,
+                self.active_scene_controller.current_selection_resolution,
+                selection_id=selection_id,
+                name=name,
+                description=description,
+            )
+            self.set_project(
+                _project_replacing_named_selections(
+                    self.current_project,
+                    selections,
+                )
+            )
+        except NamedSelectionLifecycleError as exc:
+            self.named_selection_panel.set_status(str(exc), error=True)
+            return
+        self.named_selection_panel.select_named_selection(selection_id)
+        self.named_selection_panel.set_status(
+            f"Created NamedSelection '{name}'."
+        )
+
+    def _on_rename_named_selection(
+        self,
+        selection_id: str,
+        name: str,
+    ) -> None:
+        from osw.core.selection_resolution import (
+            NamedSelectionLifecycleError,
+            rename_named_selection,
+        )
+
+        try:
+            selections = rename_named_selection(
+                self.current_project.selections,
+                selection_id,
+                name,
+            )
+            self.set_project(
+                _project_replacing_named_selections(
+                    self.current_project,
+                    selections,
+                )
+            )
+        except NamedSelectionLifecycleError as exc:
+            self.named_selection_panel.set_status(str(exc), error=True)
+            return
+        self.named_selection_panel.select_named_selection(selection_id)
+        self.named_selection_panel.set_status(
+            f"Renamed NamedSelection to '{name}'."
+        )
+
+    def _on_replace_named_selection_targets(
+        self,
+        selection_id: str,
+    ) -> None:
+        from osw.core.selection_resolution import (
+            NamedSelectionLifecycleError,
+            replace_named_selection_targets,
+        )
+
+        try:
+            selections = replace_named_selection_targets(
+                self.current_project.selections,
+                selection_id,
+                self.active_scene_controller.current_selection_target,
+                self.active_scene_controller.current_selection_resolution,
+            )
+            self.set_project(
+                _project_replacing_named_selections(
+                    self.current_project,
+                    selections,
+                )
+            )
+        except NamedSelectionLifecycleError as exc:
+            self.named_selection_panel.set_status(str(exc), error=True)
+            return
+        self.named_selection_panel.select_named_selection(selection_id)
+        self.named_selection_panel.set_status(
+            "Replaced NamedSelection targets from the resolved current selection."
+        )
+
+    def _on_delete_named_selection(self, selection_id: str) -> None:
+        from osw.core.selection_resolution import (
+            NamedSelectionLifecycleError,
+            delete_named_selection,
+            find_named_selection_references,
+        )
+
+        references = find_named_selection_references(
+            self.current_project,
+            selection_id,
+        )
+        try:
+            selections = delete_named_selection(
+                self.current_project.selections,
+                selection_id,
+                references=references,
+            )
+            self.set_project(
+                _project_replacing_named_selections(
+                    self.current_project,
+                    selections,
+                )
+            )
+        except NamedSelectionLifecycleError as exc:
+            self.named_selection_panel.set_status(str(exc), error=True)
+            return
+        self.named_selection_panel.set_status(
+            f"Deleted NamedSelection '{selection_id}'."
+        )
+
+    def _on_named_selection_activated(self, selection_id: str) -> None:
+        resolution = self.active_scene_controller.named_selection_resolutions.get(
+            selection_id
+        )
+        if resolution is not None:
+            self.named_selection_panel.set_status(resolution.message)
+
+    def _refresh_named_selection_panel(self) -> None:
+        panel = getattr(self, "named_selection_panel", None)
+        if panel is None:
+            return
+        target = self.active_scene_controller.current_selection_target
+        resolution = self.active_scene_controller.current_selection_resolution
+        count = (
+            len(target.locator.entity_ids)
+            if target is not None and target.locator is not None
+            else 0
+        )
+        panel.set_current_selection(
+            count=count,
+            resolution_state=resolution.state.value,
+            status=resolution.message,
+        )
+        panel.set_named_selections(
+            self.current_project.selections,
+            self.active_scene_controller.named_selection_resolutions,
+        )
 
     def closeEvent(self, event: object) -> None:
         """Close renderer resources before Qt tears down child widgets."""
@@ -3298,6 +3545,32 @@ def _action_object_name(action_title: str) -> str:
         return plugin_action_names[action_title]
     words = "".join(part.capitalize() for part in action_title.replace("/", " ").split())
     return f"action{words}"
+
+
+def _project_replacing_named_selections(
+    project: Project,
+    selections: Sequence[object],
+) -> Project:
+    """Return a Project copy with exact durable NamedSelections preserved."""
+
+    return Project(
+        metadata=project.metadata,
+        units=project.units,
+        materials=project.materials,
+        geometry=project.geometry,
+        meshes=project.meshes,
+        scripts=project.scripts,
+        boundary_curves=project.boundary_curves,
+        physics=project.physics,
+        solvers=project.solvers,
+        results=project.results,
+        report=project.report,
+        schema_version=project.schema_version,
+        plugins=project.plugins,
+        warnings=project.warnings,
+        selections=selections,
+        report_screenshots=project.report_screenshots,
+    )
 
 
 def _project_with_report_screenshots(project: Project, assets: object) -> Project:

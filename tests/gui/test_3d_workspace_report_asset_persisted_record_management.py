@@ -999,7 +999,7 @@ def test_management_never_auto_saves_and_preserves_schema_compatibility(
     assert saves == []
     assert window.current_project.schema_version == "0.1"
     assert DEFAULT_PROJECT_SCHEMA_VERSION == "0.1"
-    assert CURRENT_SCHEMA_VERSION == "0.2"
+    assert CURRENT_SCHEMA_VERSION == "0.3"
 
     legacy_payload = Project(metadata=ProjectMetadata(name="Legacy")).to_dict()
     legacy_payload.pop("report_screenshots", None)

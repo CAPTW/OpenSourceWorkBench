@@ -23,12 +23,16 @@ The native-deferral documentation review, commit `adad148becf87ead12f4e3a16f5953
 
 The narrower
 `OSW-3D-WORKSPACE-ACTIVE-SCENE-OWNERSHIP-ADAPTER-AND-TEARDOWN-FOUNDATION`
-is implemented and validated only on its isolated local feature branch. It
-establishes one document-owned controller, one lazy renderer-session boundary,
-semantic actor records, generation invalidation, and deterministic off-screen
-and document/application teardown. It is not integrated or published and is not
-interactive-renderer proof. `OSW-3D-WORKSPACE-SCENE-INTERACTION-CORE` has not
-started and still requires a separate human-authorized gate.
+is implemented and validated only on its retained isolated local feature
+branch. The chained `OSW-3D-WORKSPACE-SCENE-INTERACTION-CORE` exact base adds
+one optional central PyVistaQt session and bounded camera/representation/clip
+interaction, also without integration or publication. The current isolated
+`OSW-3D-WORKSPACE-ENTITY-PICKING-AND-NAMED-SELECTION` branch adds exact mesh
+fingerprints, durable node/cell locators, fail-closed five-state resolution,
+Project schema 0.3 selection persistence, generation-guarded picking, and
+NamedSelection CRUD. Fake-session/offscreen evidence is not prepared live
+PyVistaQt evidence. Face/Edge, setup/result overlays, full scene persistence,
+solver execution, integration, publication, and Golden repair remain separate.
 
 **Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
 

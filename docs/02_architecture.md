@@ -228,9 +228,48 @@ disables unsupported controls. Session close explicitly stops its timer,
 removes actors and transient helpers, closes the interactor, and drops native
 references before Qt child cleanup.
 
-This core adds no picking, stable mesh/entity identity, NamedSelection
-persistence, ProjectSchema change, camera persistence, result interaction,
-solver/setup overlay, report redesign, or native-locality behavior.
+The Scene Interaction Core itself added no picking, stable mesh/entity
+identity, NamedSelection persistence, ProjectSchema change, camera
+persistence, result interaction, solver/setup overlay, report redesign, or
+native-locality behavior. Those boundaries remain the baseline for the next
+bounded layer.
+
+## 3D Workspace Entity Picking and Named Selections
+
+`osw.mesh.identity` computes `osw.mesh_identity.v1` SHA-256 fingerprints from a
+length-delimited byte stream containing the explicit coordinate basis, ordered
+finite little-endian float64 points, ordered cell blocks, and complete
+non-negative connectivity. Negative zero is normalized. Paths, names,
+timestamps, result/quality arrays, renderer objects, and GUI state are
+excluded. Source IDs can enter identity only through an explicit, complete,
+unique validated namespace.
+
+New node/cell `EntityLocator` records bind an entity namespace and deterministic
+IDs to one mesh reference and exact fingerprint. Fallback node IDs are point
+ordinals; fallback cell IDs are cell-block ordinal plus block-local ordinal.
+VTK/PyVista indices remain transient lookup handles. The pure resolver returns
+`UNRESOLVED`, `RESOLVED`, `PARTIAL`, `STALE`, or `INVALID`; only
+`RESOLVED` is eligible for a future solver-setup handoff. Legacy positional
+targets remain readable but resolve as
+`STALE/LEGACY_IDENTITY_UNVERIFIED` until explicit reselection.
+
+Project schemas `0.1` and `0.2` remain readable without automatic mesh access.
+Creating durable locator data promotes serialization to schema `0.3`; reopening
+preserves identity metadata but initially remains unresolved until an in-memory
+mesh is explicitly supplied. Exact fingerprint reload resolves, while changed
+coordinates/connectivity fail closed as stale. Camera, clipping,
+representation, actor visibility, native handles, and full active-scene state
+are not persisted.
+
+The existing document `ActiveSceneController` maps generation-guarded point and
+cell callbacks into durable locators and keeps hover, current transient
+selection, and persisted NamedSelection overlays separate. One session owns
+the semantic `hover`, `current_selection`, and `named_selection:<stable-id>`
+native actors. Replace/add/toggle/clear are deterministic; mesh replacement
+clears transient state and re-resolves persisted selections. The bounded GUI
+supports Node/Cell modes and NamedSelection create, rename, target replacement,
+and reference-checked delete. Face/Edge picking, selection invert, solver setup
+overlays, result probes, and solver execution remain deferred.
 
 ## CHM CoolProp / Cantera Binding
 

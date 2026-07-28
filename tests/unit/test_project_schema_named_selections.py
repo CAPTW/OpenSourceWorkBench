@@ -41,7 +41,7 @@ def test_old_project_dict_without_selections_loads_unchanged() -> None:
 def test_project_with_named_selection_roundtrips() -> None:
     project = Project(metadata=ProjectMetadata(name="P"), selections=[_selection()])
     payload = project.to_dict()
-    assert CURRENT_SCHEMA_VERSION == "0.2"
+    assert CURRENT_SCHEMA_VERSION == "0.3"
     assert DEFAULT_PROJECT_SCHEMA_VERSION == "0.1"
     assert payload["schema_version"] == DEFAULT_PROJECT_SCHEMA_VERSION
     assert len(payload["selections"]) == 1
@@ -123,5 +123,5 @@ def test_duplicate_selection_ids_are_errors() -> None:
 def test_schema_version_remains_0_1_with_selections() -> None:
     project = Project(metadata=ProjectMetadata(name="P"), selections=[_selection()])
     assert project.schema_version == DEFAULT_PROJECT_SCHEMA_VERSION == "0.1"
-    assert CURRENT_SCHEMA_VERSION == "0.2"
+    assert CURRENT_SCHEMA_VERSION == "0.3"
     assert Project.from_dict(project.to_dict()).schema_version == "0.1"

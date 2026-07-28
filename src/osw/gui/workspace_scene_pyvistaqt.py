@@ -72,6 +72,8 @@ class PyVistaQtRendererSession:
             "semantic-visibility",
             "axes",
             "clipping",
+            "picking",
+            "selection-overlays",
         }
     )
 
@@ -94,6 +96,8 @@ class PyVistaQtRendererSession:
         self._axes_visible = True
         self._clip_axis: str | None = None
         self._clip_origin = 0.0
+        self._pick_mode: str | None = None
+        self._pick_callback: Callable[[object], object] | None = None
         self._closed = False
         try:
             self._interactor = interactor_factory(
@@ -129,11 +133,110 @@ class PyVistaQtRendererSession:
     def clear(self) -> None:
         if self._closed:
             return
+        self.disable_picking()
         for semantic_id in tuple(self._actors):
             self._remove_native_actor(semantic_id)
         self._payloads.clear()
         self._clip_axis = None
         self._clip_origin = 0.0
+
+    def set_pick_mode(
+        self,
+        mode: str,
+        callback: Callable[[object], object],
+    ) -> None:
+        """Enable one native point/cell picker with renderer-neutral events."""
+
+        if mode not in {"node", "cell"}:
+            raise ValueError(f"Unsupported pick mode: {mode}")
+        if not callable(callback):
+            raise TypeError("Pick callback must be callable.")
+        self._disable_native_picking()
+        self._pick_mode = mode
+        self._pick_callback = callback
+        interactor = self._require_open_interactor()
+        if mode == "node":
+            enable = getattr(interactor, "enable_point_picking", None)
+            if not callable(enable):
+                raise RuntimeError("The interactive backend does not support point picking.")
+            enable(
+                callback=self._on_native_point_pick,
+                left_clicking=True,
+                show_message=False,
+                show_point=False,
+                use_picker=True,
+            )
+            return
+        enable = getattr(interactor, "enable_cell_picking", None)
+        if not callable(enable):
+            raise RuntimeError("The interactive backend does not support cell picking.")
+        enable(
+            callback=self._on_native_cell_pick,
+            through=False,
+            show=False,
+            show_message=False,
+            start=True,
+        )
+
+    def disable_picking(self) -> None:
+        self._disable_native_picking()
+        self._pick_mode = None
+        self._pick_callback = None
+
+    def set_hover_entities(
+        self,
+        entity_kind: str,
+        indices: tuple[int, ...],
+        generation: int,
+    ) -> None:
+        self._set_selection_overlay(
+            "hover",
+            entity_kind,
+            indices,
+            generation,
+            color="#fbbf24",
+            opacity=0.75,
+        )
+
+    def clear_hover(self) -> None:
+        self._remove_native_actor("hover")
+
+    def set_current_selection(
+        self,
+        entity_kind: str,
+        indices: tuple[int, ...],
+        generation: int,
+    ) -> None:
+        self._set_selection_overlay(
+            "current_selection",
+            entity_kind,
+            indices,
+            generation,
+            color="#22d3ee",
+            opacity=1.0,
+        )
+
+    def clear_current_selection(self) -> None:
+        self._remove_native_actor("current_selection")
+
+    def set_named_selection_overlay(
+        self,
+        selection_id: str,
+        entity_kind: str,
+        indices: tuple[int, ...],
+        generation: int,
+    ) -> None:
+        self._set_selection_overlay(
+            f"named_selection:{selection_id}",
+            entity_kind,
+            indices,
+            generation,
+            color="#c084fc",
+            opacity=0.65,
+        )
+
+    def remove_named_selection_overlay(self, selection_id: str) -> None:
+        self._remove_native_actor(f"named_selection:{selection_id}")
 
     def replace_actor(
         self,
@@ -299,6 +402,9 @@ class PyVistaQtRendererSession:
             self._payloads.clear()
             return
 
+        self._disable_native_picking()
+        self._pick_mode = None
+        self._pick_callback = None
         for semantic_id in tuple(self._actors):
             self._remove_native_actor(semantic_id)
         self._payloads.clear()
@@ -353,6 +459,7 @@ class PyVistaQtRendererSession:
         scene_state = payload.scene_state
         dataset = mesh_data_to_polydata(mesh, pyvista_module=self._pyvista)
         self._attach_scalar_field(dataset, mesh, scene_state)
+        self._attach_transient_pick_indices(dataset, mesh)
         if self._clip_axis is not None:
             clip = getattr(dataset, "clip", None)
             if callable(clip):
@@ -374,6 +481,70 @@ class PyVistaQtRendererSession:
         self._actors[semantic_id] = actor
         _set_native_visibility(actor, self._visibility[semantic_id])
 
+    def _set_selection_overlay(
+        self,
+        semantic_id: str,
+        entity_kind: str,
+        indices: tuple[int, ...],
+        generation: int,
+        *,
+        color: str,
+        opacity: float,
+    ) -> None:
+        if entity_kind not in {"node", "cell"}:
+            raise ValueError(f"Unsupported selection overlay kind: {entity_kind}")
+        payload_entry = self._payloads.get("base_mesh")
+        if payload_entry is None:
+            raise RuntimeError("Selection overlay requires an active base mesh.")
+        payload, active_generation = payload_entry
+        if generation != active_generation:
+            return
+        self._remove_native_actor(semantic_id)
+        if not indices:
+            return
+        mesh = payload.mesh
+        dataset = mesh_data_to_polydata(mesh, pyvista_module=self._pyvista)
+        self._attach_transient_pick_indices(dataset, mesh)
+        if entity_kind == "node":
+            extractor = getattr(dataset, "extract_points", None)
+            if callable(extractor):
+                subset = extractor(
+                    list(indices),
+                    adjacent_cells=False,
+                    include_cells=False,
+                )
+            else:
+                subset = self._pyvista.PolyData(
+                    [mesh.points[index] for index in indices]
+                )
+            actor = self._require_open_interactor().add_mesh(
+                subset,
+                name=f"osw-{semantic_id}",
+                color=color,
+                point_size=12,
+                render_points_as_spheres=True,
+                reset_camera=False,
+                render=False,
+            )
+        else:
+            extractor = getattr(dataset, "extract_cells", None)
+            if not callable(extractor):
+                raise RuntimeError(
+                    "The interactive backend cannot extract selected cells."
+                )
+            subset = extractor(list(indices))
+            actor = self._require_open_interactor().add_mesh(
+                subset,
+                name=f"osw-{semantic_id}",
+                color=color,
+                opacity=opacity,
+                show_edges=True,
+                reset_camera=False,
+                render=False,
+            )
+        self._actors[semantic_id] = actor
+        self.request_render()
+
     def _remove_native_actor(self, semantic_id: str) -> None:
         actor = self._actors.pop(semantic_id, None)
         if actor is None or self._interactor is None:
@@ -386,6 +557,63 @@ class PyVistaQtRendererSession:
     def _apply_actor_visibility(self) -> None:
         for semantic_id, actor in self._actors.items():
             _set_native_visibility(actor, self._visibility[semantic_id])
+
+    @staticmethod
+    def _attach_transient_pick_indices(dataset: object, mesh: object) -> None:
+        point_data = getattr(dataset, "point_data", None)
+        if point_data is not None:
+            point_data["_osw_transient_point_index"] = tuple(
+                range(len(getattr(mesh, "points", ())))
+            )
+        cell_data = getattr(dataset, "cell_data", None)
+        if cell_data is not None:
+            cell_count = sum(
+                int(getattr(block, "count", 0))
+                for block in getattr(mesh, "cells", ())
+            )
+            cell_data["_osw_transient_cell_index"] = tuple(range(cell_count))
+
+    def _on_native_point_pick(self, picked: object) -> None:
+        point_index = _native_point_index(picked)
+        if point_index is not None:
+            self._emit_pick(point_index)
+
+    def _on_native_cell_pick(self, picked: object) -> None:
+        cell_index = _native_cell_index(picked)
+        if cell_index is not None:
+            self._emit_pick(cell_index)
+
+    def _emit_pick(self, backend_index: int) -> None:
+        callback = self._pick_callback
+        mode = self._pick_mode
+        payload_entry = self._payloads.get("base_mesh")
+        if callback is None or mode is None or payload_entry is None:
+            return
+        payload, generation = payload_entry
+        callback(
+            {
+                "generation": generation,
+                "mesh_ref": str(payload.scene_input.mesh_ref or ""),
+                "mesh_fingerprint": payload.mesh_fingerprint.digest,
+                "entity_kind": mode,
+                "backend_index": int(backend_index),
+                "intent": "replace",
+            }
+        )
+
+    def _disable_native_picking(self) -> None:
+        interactor = self._interactor
+        if interactor is None:
+            return
+        for method_name in (
+            "disable_picking",
+            "disable_point_picking",
+            "disable_cell_picking",
+        ):
+            method = getattr(interactor, method_name, None)
+            if callable(method):
+                with suppress(Exception):
+                    method()
 
     @staticmethod
     def _attach_scalar_field(
@@ -461,6 +689,36 @@ def _set_native_visibility(actor: object, visible: bool) -> None:
         return
     if hasattr(actor, "visibility"):
         actor.visibility = bool(visible)
+
+
+def _native_point_index(picked: object) -> int | None:
+    if isinstance(picked, int):
+        return picked if picked >= 0 else None
+    getter = getattr(picked, "GetPointId", None)
+    if callable(getter):
+        value = int(getter())
+        return value if value >= 0 else None
+    value = getattr(picked, "point_id", None)
+    if value is None:
+        return None
+    normalized = int(value)
+    return normalized if normalized >= 0 else None
+
+
+def _native_cell_index(picked: object) -> int | None:
+    if isinstance(picked, int):
+        return picked if picked >= 0 else None
+    cell_data = getattr(picked, "cell_data", None)
+    if cell_data is not None:
+        values = cell_data.get("_osw_transient_cell_index")
+        if values is not None and len(values):
+            value = int(values[0])
+            return value if value >= 0 else None
+    getter = getattr(picked, "GetCellId", None)
+    if callable(getter):
+        value = int(getter())
+        return value if value >= 0 else None
+    return None
 
 
 __all__ = [

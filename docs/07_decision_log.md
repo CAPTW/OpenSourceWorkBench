@@ -4337,3 +4337,34 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   authorization and must not be executed automatically. Integration or remote
   publication also remains separate while the required exact-head CI baseline
   is red at its Golden step.
+
+## ADR-0184: Durable Node And Cell Selections Require Exact Mesh Identity
+
+- Status: Accepted for local implementation and validation
+- Date: 2026-07-28
+- Context: The retained `NamedSelection` model stored positional IDs and
+  provenance but had no strong mesh identity, pure resolution state, renderer
+  picking contract, or bounded GUI lifecycle. Equal counts could not detect
+  changed coordinates/connectivity, legacy indices could appear usable after a
+  remesh, and no fail-closed handoff criterion existed.
+- Decision: Define `osw.mesh_identity.v1` as a SHA-256 digest over a
+  length-delimited canonical point/cell byte stream. Persist node point
+  ordinals or cell-block/local ordinals only inside a versioned
+  fingerprint-bound `EntityLocator`; keep VTK/PyVista indices transient. Resolve
+  locators as `UNRESOLVED`, `RESOLVED`, `PARTIAL`, `STALE`, or `INVALID`, with
+  only `RESOLVED` eligible for future setup handoff. Preserve index-only legacy
+  data as `STALE/LEGACY_IDENTITY_UNVERIFIED`. Add Project schema `0.3` only for
+  durable selection identity, without automatic mesh reads or full active-scene
+  persistence. Extend the existing one-session controller for generation-guarded
+  node/cell picking and separate hover/current/named semantic overlays. Allow
+  NamedSelection create, rename, explicit target replacement, and deletion only
+  when current Project references permit it.
+- Consequences: Exact in-memory mesh reload can re-establish selection
+  resolution; changed coordinates/connectivity cannot silently remap. Projects
+  `0.1` and `0.2` remain readable and do not auto-upgrade merely on read.
+  PyVista/PyVistaQt remain optional and lazy, and fake-session/offscreen tests
+  are not live-backend proof. Face/Edge identity, selection invert, setup/result
+  overlays, full scene persistence, solver execution, Golden maintenance,
+  integration, and remote publication remain outside this decision.
+- Next gate: `OSW-3D-WORKSPACE-SOLVER-SETUP-OVERLAYS` requires separate human
+  authorization and must not be executed automatically.

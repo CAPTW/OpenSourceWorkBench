@@ -8,6 +8,7 @@ from pathlib import Path
 from osw.core.selection import (
     BoundaryTargetRef,
     EntityKind,
+    EntityLocator,
     NamedSelection,
     SelectionMode,
     SelectionState,
@@ -52,6 +53,31 @@ def test_selection_target_ref_roundtrip_and_order() -> None:
     assert restored == target
     # JSON round-trip stays stable.
     assert SelectionTargetRef.from_dict(json.loads(json.dumps(target.to_dict()))) == target
+
+
+def test_durable_entity_locator_roundtrip_is_additive_and_legacy_shape_is_stable() -> None:
+    legacy = SelectionTargetRef(kind="node", ids=[3], mesh_ref="mesh-1")
+    assert "locator" not in legacy.to_dict()
+
+    locator = EntityLocator(
+        identity_schema="osw.mesh_identity.v1",
+        mesh_ref="mesh-1",
+        mesh_fingerprint="a" * 64,
+        entity_kind="node",
+        id_namespace="osw.mesh.point_ordinal.v1",
+        entity_ids=(3,),
+    )
+    durable = SelectionTargetRef(
+        kind="node",
+        ids=(3,),
+        mesh_ref="mesh-1",
+        locator=locator,
+    )
+
+    payload = json.loads(json.dumps(durable.to_dict()))
+    assert payload["locator"]["mesh_fingerprint"] == "a" * 64
+    assert SelectionTargetRef.from_dict(payload) == durable
+    assert not durable.validate().has_errors
 
 
 def test_selection_target_ref_id_type_validation() -> None:

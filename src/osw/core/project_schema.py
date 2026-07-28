@@ -16,16 +16,22 @@ from .selection import (
     NamedSelection,
     coerce_boundary_target_ref,
     coerce_named_selections,
+    has_durable_entity_locators,
 )
 from .units import UnitSystem
 from .validation import ProjectSchemaError, ValidationReport
 
 LEGACY_PROJECT_SCHEMA_VERSION = "0.1"
 PATH_KIND_PROJECT_SCHEMA_VERSION = "0.2"
-CURRENT_SCHEMA_VERSION = PATH_KIND_PROJECT_SCHEMA_VERSION
+ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION = "0.3"
+CURRENT_SCHEMA_VERSION = ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
 DEFAULT_PROJECT_SCHEMA_VERSION = LEGACY_PROJECT_SCHEMA_VERSION
 SUPPORTED_PROJECT_SCHEMA_VERSIONS = frozenset(
-    {LEGACY_PROJECT_SCHEMA_VERSION, PATH_KIND_PROJECT_SCHEMA_VERSION}
+    {
+        LEGACY_PROJECT_SCHEMA_VERSION,
+        PATH_KIND_PROJECT_SCHEMA_VERSION,
+        ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION,
+    }
 )
 NATIVE_COMMERCIAL_CAD_EXTENSIONS = frozenset(
     {".sldprt", ".sldasm", ".catpart", ".catproduct", ".prt", ".asm"}
@@ -699,10 +705,24 @@ class Project:
         report_screenshots: Sequence[ReportScreenshotAsset] | None = None,
     ) -> None:
         schema_version_value = str(schema_version)
+        named_selections = coerce_named_selections(selections)
+        if (
+            schema_version_value
+            in {
+                LEGACY_PROJECT_SCHEMA_VERSION,
+                PATH_KIND_PROJECT_SCHEMA_VERSION,
+            }
+            and has_durable_entity_locators(named_selections)
+        ):
+            schema_version_value = ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
         screenshot_assets = coerce_report_screenshots(report_screenshots)
         _ensure_report_screenshot_path_kind_envelope(
             schema_version_value,
             screenshot_assets,
+        )
+        _ensure_selection_identity_envelope(
+            schema_version_value,
+            named_selections,
         )
         object.__setattr__(self, "metadata", metadata)
         object.__setattr__(self, "units", unit_system or units or UnitSystem.si())
@@ -718,7 +738,7 @@ class Project:
         object.__setattr__(self, "schema_version", schema_version_value)
         object.__setattr__(self, "plugins", list(plugins or []))
         object.__setattr__(self, "warnings", list(warnings or []))
-        object.__setattr__(self, "selections", coerce_named_selections(selections))
+        object.__setattr__(self, "selections", named_selections)
         object.__setattr__(self, "report_screenshots", screenshot_assets)
 
     @property
@@ -757,6 +777,10 @@ class Project:
         _ensure_report_screenshot_path_kind_envelope(
             self.schema_version,
             self.report_screenshots,
+        )
+        _ensure_selection_identity_envelope(
+            self.schema_version,
+            self.selections,
         )
         unit_payload = self.units.to_dict()
         geometry_payload = [item.to_dict() for item in self.geometry]
@@ -807,12 +831,20 @@ class Project:
         )
         _ensure_supported_project_schema_version(schema_version)
         screenshot_payload = migrated.get("report_screenshots", [])
+        selection_payload = migrated.get("selections", [])
         if (
             schema_version == LEGACY_PROJECT_SCHEMA_VERSION
             and _payload_has_explicit_report_screenshot_path_kind(screenshot_payload)
         ):
             raise ProjectSchemaError(
                 "Report screenshot path_kind requires Project schema version 0.2."
+            )
+        if (
+            schema_version != ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
+            and _payload_has_durable_entity_locator(selection_payload)
+        ):
+            raise ProjectSchemaError(
+                "Durable entity locators require Project schema version 0.3."
             )
 
         units_defaulted = bool(migrated.get("_units_defaulted", False))
@@ -934,7 +966,10 @@ def _ensure_report_screenshot_path_kind_envelope(
     schema_version: str,
     report_screenshots: Sequence[ReportScreenshotAsset],
 ) -> None:
-    if schema_version == PATH_KIND_PROJECT_SCHEMA_VERSION:
+    if schema_version in {
+        PATH_KIND_PROJECT_SCHEMA_VERSION,
+        ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION,
+    }:
         return
     if any(asset.path_kind is not None for asset in report_screenshots):
         raise ProjectSchemaError(
@@ -946,6 +981,32 @@ def _payload_has_explicit_report_screenshot_path_kind(value: object) -> bool:
     if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
         return False
     return any(isinstance(item, Mapping) and "path_kind" in item for item in value)
+
+
+def _ensure_selection_identity_envelope(
+    schema_version: str,
+    selections: Sequence[NamedSelection],
+) -> None:
+    if not has_durable_entity_locators(selections):
+        return
+    if schema_version != ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION:
+        raise ProjectSchemaError(
+            "Durable entity locators require Project schema version 0.3."
+        )
+
+
+def _payload_has_durable_entity_locator(value: object) -> bool:
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        return False
+    for selection in value:
+        if not isinstance(selection, Mapping):
+            continue
+        targets = selection.get("targets", ())
+        if isinstance(targets, (str, bytes)) or not isinstance(targets, Sequence):
+            continue
+        if any(isinstance(target, Mapping) and "locator" in target for target in targets):
+            return True
+    return False
 
 
 def project_to_dict(project: Project) -> dict[str, Any]:

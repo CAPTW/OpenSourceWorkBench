@@ -5,9 +5,9 @@ selections used by future 3D Workspace overlays and boundary-condition targets.
 
 These models are metadata/state only. They never trigger a solver, never import
 GUI/PyVista/meshio/solver-runner code, and carry no executable/command fields.
-Raw mesh entity ids are positional and can become stale after a remesh, so a
-provenance snapshot is recorded on each target for later resolve-time staleness
-detection (staleness is computed then, not persisted as a mutable flag here).
+Legacy raw mesh entity ids remain readable. New node/cell targets may carry a
+versioned fingerprint-bound ``EntityLocator``; staleness is always computed
+from current mesh evidence rather than persisted as a mutable flag.
 """
 
 from __future__ import annotations
@@ -99,6 +99,107 @@ def _string_dict(value: Mapping[str, Any] | None) -> dict[str, Any]:
 
 
 @dataclass(frozen=True)
+class EntityLocator:
+    """Durable identity for entities on one exact mesh."""
+
+    identity_schema: str = ""
+    mesh_ref: str = ""
+    mesh_fingerprint: str = ""
+    entity_kind: EntityKind = EntityKind.UNKNOWN
+    id_namespace: str = ""
+    entity_ids: tuple[int | str, ...] = ()
+    cell_block_key: str | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "identity_schema", str(self.identity_schema or ""))
+        object.__setattr__(self, "mesh_ref", str(self.mesh_ref or ""))
+        object.__setattr__(
+            self,
+            "mesh_fingerprint",
+            str(self.mesh_fingerprint or "").lower(),
+        )
+        object.__setattr__(self, "entity_kind", EntityKind.coerce(self.entity_kind))
+        object.__setattr__(self, "id_namespace", str(self.id_namespace or ""))
+        object.__setattr__(
+            self,
+            "entity_ids",
+            tuple(_normalize_id(item) for item in self.entity_ids),
+        )
+        object.__setattr__(
+            self,
+            "cell_block_key",
+            None if self.cell_block_key is None else str(self.cell_block_key),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "identity_schema": self.identity_schema,
+            "mesh_ref": self.mesh_ref,
+            "mesh_fingerprint": self.mesh_fingerprint,
+            "entity_kind": self.entity_kind.value,
+            "id_namespace": self.id_namespace,
+            "entity_ids": list(self.entity_ids),
+        }
+        if self.cell_block_key is not None:
+            payload["cell_block_key"] = self.cell_block_key
+        return payload
+
+    @classmethod
+    def from_dict(cls, data: object) -> EntityLocator:
+        if not isinstance(data, Mapping):
+            msg = "EntityLocator data must be a mapping."
+            raise TypeError(msg)
+        return cls(
+            identity_schema=str(data.get("identity_schema", "")),
+            mesh_ref=str(data.get("mesh_ref", "")),
+            mesh_fingerprint=str(data.get("mesh_fingerprint", "")),
+            entity_kind=EntityKind.coerce(
+                data.get("entity_kind", EntityKind.UNKNOWN.value)
+            ),
+            id_namespace=str(data.get("id_namespace", "")),
+            entity_ids=tuple(
+                _normalize_id(item)
+                for item in data.get("entity_ids", ()) or ()
+            ),
+            cell_block_key=(
+                None
+                if data.get("cell_block_key") is None
+                else str(data.get("cell_block_key"))
+            ),
+        )
+
+    def validate(self, *, path: str = "entity_locator") -> ValidationReport:
+        report = ValidationReport()
+        for field_name, value in (
+            ("identity_schema", self.identity_schema),
+            ("mesh_ref", self.mesh_ref),
+            ("mesh_fingerprint", self.mesh_fingerprint),
+            ("id_namespace", self.id_namespace),
+        ):
+            if not value:
+                report.add_error(
+                    f"{path}.{field_name}",
+                    f"Durable entity locator requires {field_name}.",
+                )
+        if self.entity_kind not in {EntityKind.NODE, EntityKind.CELL}:
+            report.add_error(
+                f"{path}.entity_kind",
+                "Durable entity locators support only node or cell entities.",
+            )
+        if not self.entity_ids:
+            report.add_error(
+                f"{path}.entity_ids",
+                "Durable entity locator requires at least one entity ID.",
+            )
+        if len(set(self.entity_ids)) != len(self.entity_ids):
+            report.add_error(
+                f"{path}.entity_ids",
+                "Durable entity locator entity IDs must be unique.",
+            )
+        return report
+
+
+@dataclass(frozen=True)
 class SelectionTargetRef:
     """A serializable reference to selected mesh/geometry/solver-label entities."""
 
@@ -108,6 +209,7 @@ class SelectionTargetRef:
     label: str = ""
     provenance: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
+    locator: EntityLocator | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind", EntityKind.coerce(self.kind))
@@ -117,9 +219,10 @@ class SelectionTargetRef:
         object.__setattr__(self, "label", str(self.label or ""))
         object.__setattr__(self, "provenance", _string_dict(self.provenance))
         object.__setattr__(self, "metadata", _string_dict(self.metadata))
+        object.__setattr__(self, "locator", _coerce_locator(self.locator))
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "kind": self.kind.value,
             "ids": list(self.ids),
             "mesh_ref": self.mesh_ref,
@@ -127,6 +230,9 @@ class SelectionTargetRef:
             "provenance": dict(self.provenance),
             "metadata": dict(self.metadata),
         }
+        if self.locator is not None:
+            payload["locator"] = self.locator.to_dict()
+        return payload
 
     @classmethod
     def from_dict(cls, data: object) -> SelectionTargetRef:
@@ -140,13 +246,14 @@ class SelectionTargetRef:
             label=str(data.get("label", "")),
             provenance=_string_dict(data.get("provenance", {})),
             metadata=_string_dict(data.get("metadata", {})),
+            locator=_coerce_locator(data.get("locator")),
         )
 
     def validate(self, *, path: str = "selection_target") -> ValidationReport:
         report = ValidationReport()
         if not self.ids:
             report.add_warning(f"{path}.ids", "Selection target has no entity ids.")
-        if self.kind in _INT_ID_KINDS:
+        if self.kind in _INT_ID_KINDS and self.locator is None:
             for index, item in enumerate(self.ids):
                 if not isinstance(item, int):
                     report.add_warning(
@@ -158,6 +265,18 @@ class SelectionTargetRef:
                 f"{path}.mesh_ref",
                 f"Mesh-backed selection kind {self.kind.value!r} has no mesh_ref for resolution.",
             )
+        if self.locator is not None:
+            report.extend(self.locator.validate(path=f"{path}.locator"))
+            if self.locator.entity_kind is not self.kind:
+                report.add_error(
+                    f"{path}.locator.entity_kind",
+                    "Locator entity kind must match its selection target.",
+                )
+            if self.mesh_ref and self.locator.mesh_ref != self.mesh_ref:
+                report.add_error(
+                    f"{path}.locator.mesh_ref",
+                    "Locator mesh_ref must match its selection target.",
+                )
         return report
 
 
@@ -360,6 +479,29 @@ def _coerce_target(value: object) -> SelectionTargetRef:
     raise TypeError(msg)
 
 
+def _coerce_locator(value: object) -> EntityLocator | None:
+    if value is None:
+        return None
+    if isinstance(value, EntityLocator):
+        return value
+    if isinstance(value, Mapping):
+        return EntityLocator.from_dict(value)
+    msg = "Selection locator must be an EntityLocator, mapping, or None."
+    raise TypeError(msg)
+
+
+def has_durable_entity_locators(
+    selections: Sequence[NamedSelection],
+) -> bool:
+    """Return whether any selection carries new fingerprint-bound identity."""
+
+    return any(
+        target.locator is not None
+        for selection in selections
+        for target in selection.targets
+    )
+
+
 def _normalize_solver_labels(value: object) -> dict[str, list[str]]:
     if not isinstance(value, Mapping):
         return {}
@@ -405,6 +547,7 @@ def coerce_named_selections(value: Sequence[Any] | None) -> list[NamedSelection]
 __all__ = [
     "MVP_ACTIVE_ENTITY_KINDS",
     "BoundaryTargetRef",
+    "EntityLocator",
     "EntityKind",
     "NamedSelection",
     "SelectionMode",
@@ -412,4 +555,5 @@ __all__ = [
     "SelectionTargetRef",
     "coerce_boundary_target_ref",
     "coerce_named_selections",
+    "has_durable_entity_locators",
 ]
