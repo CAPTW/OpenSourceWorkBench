@@ -70,6 +70,10 @@ class SceneRendererSessionProtocol(Protocol):
     backend_kind: str
     capabilities: frozenset[str]
 
+    @property
+    def hosted_widget(self) -> object | None:
+        ...
+
     def clear(self) -> None:
         ...
 
@@ -86,6 +90,39 @@ class SceneRendererSessionProtocol(Protocol):
         ...
 
     def request_render(self) -> None:
+        ...
+
+    def fit_to_scene(self) -> None:
+        ...
+
+    def set_camera_preset(self, preset: str) -> None:
+        ...
+
+    def set_interaction_mode(self, mode: str) -> None:
+        ...
+
+    def set_axes_visible(self, visible: bool) -> None:
+        ...
+
+    def set_representation(self, mode: str) -> None:
+        ...
+
+    def set_actor_visible(self, semantic_id: str, visible: bool) -> None:
+        ...
+
+    def isolate_actor(self, semantic_id: str) -> None:
+        ...
+
+    def show_all_actors(self) -> None:
+        ...
+
+    def enable_clipping(self, axis: str, origin: float) -> None:
+        ...
+
+    def update_clipping(self, axis: str, origin: float) -> None:
+        ...
+
+    def clear_clipping(self) -> None:
         ...
 
     def close(self) -> None:
@@ -272,6 +309,27 @@ class ActiveSceneController:
     def fallback_reason(self) -> str:
         return self._fallback_reason
 
+    def attach_host(self, parent: object) -> object | None:
+        """Attach the factory to one Qt host and return its session widget."""
+
+        if self._state in {
+            SceneLifecycleState.CLOSING,
+            SceneLifecycleState.CLOSED,
+        }:
+            return None
+        setter = getattr(self._factory, "set_host_parent", None)
+        if callable(setter):
+            try:
+                setter(parent)
+            except Exception as exc:
+                self._fallback_reason = str(exc)
+                self._state = SceneLifecycleState.FALLBACK
+                return None
+        session = self._ensure_session()
+        if session is None:
+            return None
+        return getattr(session, "hosted_widget", None)
+
     def load_mesh(
         self,
         mesh: MeshData,
@@ -316,18 +374,21 @@ class ActiveSceneController:
             self._actor_records["base_mesh"] = SceneActorRecord(
                 semantic_id="base_mesh",
                 generation=generation,
-                visible=scene_state.render_options.show_surface,
             )
-            if scene_state.render_options.show_edges:
-                session.replace_actor(
-                    "wireframe",
-                    payload,
-                    generation=generation,
-                )
-                self._actor_records["wireframe"] = SceneActorRecord(
-                    semantic_id="wireframe",
-                    generation=generation,
-                )
+            session.replace_actor(
+                "wireframe",
+                payload,
+                generation=generation,
+            )
+            self._actor_records["wireframe"] = SceneActorRecord(
+                semantic_id="wireframe",
+                generation=generation,
+            )
+            representation = _representation_from_scene_state(scene_state)
+            setter = getattr(session, "set_representation", None)
+            if callable(setter):
+                setter(representation)
+            self._set_registry_representation(representation)
             session.request_render()
         except Exception as exc:
             self._fail_session(exc)
@@ -346,6 +407,103 @@ class ActiveSceneController:
         setter = getattr(session, "set_view_state", None)
         if callable(setter):
             setter(scene_state)
+
+    def set_interaction_mode(self, mode: str) -> bool:
+        if mode not in {"orbit", "pan", "zoom"}:
+            return False
+        return self._call_session("interactive", "set_interaction_mode", mode)
+
+    def fit_to_scene(self) -> bool:
+        return self._call_session("camera", "fit_to_scene")
+
+    def set_camera_preset(self, preset: str) -> bool:
+        if preset not in {
+            "front",
+            "back",
+            "left",
+            "right",
+            "top",
+            "bottom",
+            "isometric",
+        }:
+            return False
+        return self._call_session("camera", "set_camera_preset", preset)
+
+    def set_axes_visible(self, visible: bool) -> bool:
+        return self._call_session("axes", "set_axes_visible", bool(visible))
+
+    def set_representation(self, mode: str) -> bool:
+        if mode not in _REPRESENTATION_VISIBILITY:
+            return False
+        if not self._call_session("representation", "set_representation", mode):
+            return False
+        self._set_registry_representation(mode)
+        return True
+
+    def set_actor_visible(self, semantic_id: str, visible: bool) -> bool:
+        if semantic_id not in self._actor_records:
+            return False
+        if not self._call_session(
+            "semantic-visibility",
+            "set_actor_visible",
+            semantic_id,
+            bool(visible),
+        ):
+            return False
+        record = self._actor_records[semantic_id]
+        self._actor_records[semantic_id] = SceneActorRecord(
+            semantic_id=semantic_id,
+            generation=record.generation,
+            visible=bool(visible),
+        )
+        return True
+
+    def isolate_actor(self, semantic_id: str) -> bool:
+        if semantic_id not in self._actor_records:
+            return False
+        if not self._call_session(
+            "semantic-visibility",
+            "isolate_actor",
+            semantic_id,
+        ):
+            return False
+        self._set_registry_visibility(
+            {key: key == semantic_id for key in self._actor_records}
+        )
+        return True
+
+    def show_all_actors(self) -> bool:
+        if not self._call_session("semantic-visibility", "show_all_actors"):
+            return False
+        self._set_registry_visibility(
+            {key: True for key in self._actor_records}
+        )
+        return True
+
+    def enable_clipping(self, axis: str, origin: float) -> bool:
+        normalized = axis.lower()
+        if normalized not in {"x", "y", "z"}:
+            return False
+        return self._call_session(
+            "clipping",
+            "enable_clipping",
+            normalized,
+            float(origin),
+        )
+
+    def update_clipping(self, axis: str, origin: float) -> bool:
+        normalized = axis.lower()
+        if normalized not in {"x", "y", "z"}:
+            return False
+        return self._call_session(
+            "clipping",
+            "update_clipping",
+            normalized,
+            float(origin),
+        )
+
+    def clear_clipping(self) -> bool:
+        return self._call_session("clipping", "clear_clipping")
 
     def export_screenshot_record(
         self,
@@ -487,6 +645,45 @@ class ActiveSceneController:
         self._fallback_reason = str(error)
         self._state = SceneLifecycleState.FALLBACK
 
+    def _call_session(
+        self,
+        capability: str,
+        method_name: str,
+        *args: object,
+    ) -> bool:
+        if (
+            self._state in {
+                SceneLifecycleState.CLOSING,
+                SceneLifecycleState.CLOSED,
+                SceneLifecycleState.FALLBACK,
+            }
+            or capability not in self.capabilities
+        ):
+            return False
+        session = self._session
+        if session is None:
+            return False
+        method = getattr(session, method_name, None)
+        if not callable(method):
+            return False
+        try:
+            method(*args)
+        except Exception as exc:
+            self._fail_session(exc)
+            return False
+        return True
+
+    def _set_registry_representation(self, mode: str) -> None:
+        self._set_registry_visibility(_REPRESENTATION_VISIBILITY[mode])
+
+    def _set_registry_visibility(self, visibility: Mapping[str, bool]) -> None:
+        for semantic_id, record in tuple(self._actor_records.items()):
+            self._actor_records[semantic_id] = SceneActorRecord(
+                semantic_id=semantic_id,
+                generation=record.generation,
+                visible=bool(visibility.get(semantic_id, record.visible)),
+            )
+
     @staticmethod
     def _fallback_scene_state(
         mesh: MeshData,
@@ -496,6 +693,31 @@ class ActiveSceneController:
             **scene_state.render_options.to_pyvista_config_dict()
         )
         return build_scene_state(mesh, config=config, rendered=False)
+
+
+_REPRESENTATION_VISIBILITY: Mapping[str, Mapping[str, bool]] = {
+    "surface": {
+        "base_mesh": True,
+        "wireframe": False,
+    },
+    "wireframe": {
+        "base_mesh": False,
+        "wireframe": True,
+    },
+    "surface_with_edges": {
+        "base_mesh": True,
+        "wireframe": True,
+    },
+}
+
+
+def _representation_from_scene_state(scene_state: SceneViewState) -> str:
+    options = scene_state.render_options
+    if not options.show_surface and options.show_edges:
+        return "wireframe"
+    if options.show_edges:
+        return "surface_with_edges"
+    return "surface"
 
 
 __all__ = [

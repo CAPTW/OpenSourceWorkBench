@@ -14,6 +14,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
+from osw.gui.workspace_scene_controller import ActiveSceneController
 from osw.gui.workspace_scene_view_model import (
     DefaultSceneAdapter,
     MeshViewerState,
@@ -371,7 +372,10 @@ class MeshViewerPanel(_BaseWidget):
 
     def set_mesh(self, mesh: MeshData, *, mesh_ref: str = "") -> None:
         """Attach an in-memory mesh and show its summary (no rendering)."""
-        if self._state.mesh is not None:
+        if (
+            self._state.mesh is not None
+            and not isinstance(self._adapter, ActiveSceneController)
+        ):
             clear = getattr(self._adapter, "clear", None)
             if callable(clear):
                 clear()

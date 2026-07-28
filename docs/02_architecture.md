@@ -199,6 +199,39 @@ initialization stays an explicit metadata-only fallback. PyVistaQt,
 ProjectSchema persistence, solver setup, and interactive result inspection
 remain outside this foundation gate.
 
+## 3D Workspace Scene Interaction Core
+
+The central `CentralViewportPanel` is the sole 3D workspace host. It owns the Qt
+layout, toolbar presentation, and fallback surface, while the document's
+existing `ActiveSceneController` remains the sole logical scene owner. The
+controller attaches at most one hosted session and routes bounded interaction
+commands for camera fit/presets, trackball interaction, axes, representation,
+semantic visibility/isolation, and one transient axis-aligned clipping plane.
+The legacy Mesh Preview dialog uses this same controller and cannot create a
+second live session.
+
+`osw.gui.workspace_scene_pyvistaqt` contains the one interactive backend. Its
+PyVista and PyVistaQt imports are lazy. The session privately owns the
+`QtInteractor`, native `base_mesh`/`wireframe` actor handles, render timer,
+camera, axes helper, clipping state, and backend callbacks. Representation maps
+deterministically to the two semantic records: surface shows only `base_mesh`,
+wireframe shows only `wireframe`, and surface-with-edges shows both. Clipping
+rebuilds those two actors from the retained logical mesh payload without
+persisting a native plane or introducing selection semantics.
+
+PyVistaQt is declared only in the optional `viz` extra at the current
+metadata-supported lower bound. A usable interactive environment therefore
+requires both `gui` and `viz`; neither PyVista nor PyVistaQt is a base
+dependency. Missing PyVista, missing PyVistaQt, or failed initialization keeps
+the mock/non-interactive preview visible, reports an explicit diagnostic, and
+disables unsupported controls. Session close explicitly stops its timer,
+removes actors and transient helpers, closes the interactor, and drops native
+references before Qt child cleanup.
+
+This core adds no picking, stable mesh/entity identity, NamedSelection
+persistence, ProjectSchema change, camera persistence, result interaction,
+solver/setup overlay, report redesign, or native-locality behavior.
+
 ## CHM CoolProp / Cantera Binding
 
 CHM support lives under `osw.solvers.coolprop` and `osw.solvers.cantera` as

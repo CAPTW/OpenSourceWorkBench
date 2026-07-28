@@ -38,7 +38,7 @@ def test_package_exports_version() -> None:
 
 def test_cli_version_smoke() -> None:
     result = subprocess.run(
-        [sys.executable, "-m", "osw.cli", "--version"],
+        [sys.executable, "-B", "-m", "osw.cli", "--version"],
         cwd=REPO_ROOT,
         env=_python_env(),
         text=True,
@@ -52,7 +52,7 @@ def test_cli_version_smoke() -> None:
 
 def test_cli_doctor_smoke() -> None:
     result = subprocess.run(
-        [sys.executable, "-m", "osw.cli", "doctor"],
+        [sys.executable, "-B", "-m", "osw.cli", "doctor"],
         cwd=REPO_ROOT,
         env=_python_env(),
         text=True,
@@ -68,7 +68,7 @@ def test_cli_doctor_smoke() -> None:
 
 def test_cli_doctor_reports_packaging_extras() -> None:
     result = subprocess.run(
-        [sys.executable, "-m", "osw.cli", "doctor"],
+        [sys.executable, "-B", "-m", "osw.cli", "doctor"],
         cwd=REPO_ROOT,
         env=_python_env(),
         text=True,
@@ -98,6 +98,7 @@ def test_pyproject_optional_extras_cover_v0_1_stacks() -> None:
     assert {"gui", "viz", "mesh", "mscript", "chm", "dev", "all"} <= set(extras)
     assert _has_requirement(extras["gui"], "PySide6")
     assert _has_requirement(extras["viz"], "pyvista")
+    assert extras["viz"].count("pyvistaqt>=0.12.0") == 1
     assert _has_requirement(extras["viz"], "matplotlib")
     assert _has_requirement(extras["mesh"], "meshio")
     assert _has_requirement(extras["mesh"], "gmsh")
@@ -105,3 +106,23 @@ def test_pyproject_optional_extras_cover_v0_1_stacks() -> None:
     assert _has_requirement(extras["mscript"], "hdf5storage")
     assert _has_requirement(extras["chm"], "cantera")
     assert _has_requirement(extras["chm"], "CoolProp")
+
+
+def test_pyvistaqt_is_optional_unique_and_not_installed_by_workflows() -> None:
+    project = _pyproject()["project"]
+    extras = project["optional-dependencies"]
+    all_requirements = [
+        requirement
+        for requirements in extras.values()
+        for requirement in requirements
+    ]
+
+    assert project.get("dependencies", []) == []
+    assert all_requirements.count("pyvistaqt>=0.12.0") == 1
+
+    workflow_root = REPO_ROOT / ".github" / "workflows"
+    workflow_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(workflow_root.glob("*.yml"))
+    )
+    assert "pyvistaqt" not in workflow_text.lower()

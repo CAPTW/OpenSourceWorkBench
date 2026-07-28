@@ -455,7 +455,10 @@ class MainWindow(_BaseMainWindow):
 
         self.project_tree_panel = ProjectTreePanel(container)
         self.project_tree = self.project_tree_panel.tree
-        self.central_viewport_panel = CentralViewportPanel(container)
+        self.central_viewport_panel = CentralViewportPanel(
+            container,
+            scene_controller=self.active_scene_controller,
+        )
         self.viewport_placeholder = self.central_viewport_panel
         self.mock_simulation_viewport = self.central_viewport_panel.viewport
         self.run_monitor = RunMonitorPanel(container)
@@ -701,6 +704,15 @@ class MainWindow(_BaseMainWindow):
         return refreshed
 
     def _apply_selected_mesh_context_to_viewer(self, context: SelectedMeshContext) -> None:
+        if (
+            context.mesh is not None
+            and getattr(self.central_viewport_panel, "interactive_available", False)
+            and hasattr(self.central_viewport_panel, "set_mesh")
+        ):
+            self.central_viewport_panel.set_mesh(
+                context.mesh,
+                mesh_ref=context.mesh_ref,
+            )
         if context.mesh is not None and self.mesh_viewer is not None and hasattr(
             self.mesh_viewer, "set_mesh"
         ):
@@ -1582,7 +1594,14 @@ class MainWindow(_BaseMainWindow):
 
         factory = self._scene_renderer_factory
         if factory is None:
-            factory = SceneAdapterRendererFactory(self._mesh_scene_adapter_factory)
+            if self._mesh_scene_adapter_factory is not None:
+                factory = SceneAdapterRendererFactory(self._mesh_scene_adapter_factory)
+            else:
+                from osw.gui.workspace_scene_pyvistaqt import (
+                    PyVistaQtRendererFactory,
+                )
+
+                factory = PyVistaQtRendererFactory()
         return ActiveSceneController(factory)
 
     def _replace_active_scene_controller(self) -> None:
@@ -1591,6 +1610,10 @@ class MainWindow(_BaseMainWindow):
         controller = self.active_scene_controller
         controller.close()
         self.active_scene_controller = self._create_active_scene_controller()
+        panel = getattr(self, "central_viewport_panel", None)
+        bind_controller = getattr(panel, "set_scene_controller", None)
+        if callable(bind_controller):
+            bind_controller(self.active_scene_controller)
 
     def closeEvent(self, event: object) -> None:
         """Close renderer resources before Qt tears down child widgets."""
@@ -1817,6 +1840,15 @@ class MainWindow(_BaseMainWindow):
         )
         self.last_imported_mesh_data = mesh_data
         self.last_imported_mesh_ref = resolved_ref or None
+        if (
+            selected_context is None
+            and getattr(self.central_viewport_panel, "interactive_available", False)
+            and hasattr(self.central_viewport_panel, "set_mesh")
+        ):
+            self.central_viewport_panel.set_mesh(
+                mesh_data,
+                mesh_ref=self.last_imported_mesh_ref or "",
+            )
         if self.mesh_viewer is not None and hasattr(self.mesh_viewer, "set_mesh"):
             if selected_context is not None:
                 self._apply_selected_mesh_context_to_viewer(selected_context)
@@ -2925,6 +2957,11 @@ class MainWindow(_BaseMainWindow):
         """
 
         self.open_mesh_viewer()
+        if (
+            getattr(self.central_viewport_panel, "interactive_available", False)
+            and hasattr(self.central_viewport_panel, "set_mesh")
+        ):
+            self.central_viewport_panel.set_mesh(mesh, mesh_ref=mesh_ref)
         if self.mesh_viewer is not None and hasattr(self.mesh_viewer, "set_mesh"):
             self.mesh_viewer.set_mesh(mesh, mesh_ref=mesh_ref)
             self._sync_mesh_viewer_result_datasets()
