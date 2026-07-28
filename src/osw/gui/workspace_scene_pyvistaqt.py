@@ -13,6 +13,10 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any
 
+from osw.gui.mesh_diagnostics_view_model import (
+    MESH_QUALITY_ACTOR_KEY,
+    MeshQualityOverlaySpec,
+)
 from osw.gui.setup_overlay_view_model import SetupOverlaySpec
 from osw.gui.workspace_scene_controller import (
     SceneRendererInitializationError,
@@ -76,6 +80,7 @@ class PyVistaQtRendererSession:
             "picking",
             "selection-overlays",
             "setup-overlays",
+            "mesh-quality-overlays",
         }
     )
 
@@ -259,6 +264,14 @@ class PyVistaQtRendererSession:
             self._payloads[semantic_id] = (payload, generation)
             self._visibility[semantic_id] = payload.visible
             return self._replace_setup_actor(semantic_id, payload)
+        if semantic_id == MESH_QUALITY_ACTOR_KEY:
+            if not isinstance(payload, MeshQualityOverlaySpec):
+                raise TypeError(
+                    "Mesh quality actor requires a MeshQualityOverlaySpec."
+                )
+            self._payloads[semantic_id] = (payload, generation)
+            self._visibility[semantic_id] = payload.visible
+            return self._replace_mesh_quality_actor(semantic_id, payload)
         if semantic_id not in {"base_mesh", "wireframe"}:
             raise ValueError(f"Unsupported semantic actor: {semantic_id}")
         if not hasattr(payload, "mesh") or not hasattr(payload, "scene_state"):
@@ -469,6 +482,9 @@ class PyVistaQtRendererSession:
         if isinstance(payload, SetupOverlaySpec):
             self._replace_setup_actor(semantic_id, payload)
             return
+        if isinstance(payload, MeshQualityOverlaySpec):
+            self._replace_mesh_quality_actor(semantic_id, payload)
+            return
         self._remove_native_actor(semantic_id)
         mesh = payload.mesh
         scene_state = payload.scene_state
@@ -545,6 +561,48 @@ class PyVistaQtRendererSession:
                 reset_camera=False,
                 render=False,
             )
+        self._actors[semantic_id] = actor
+        _set_native_visibility(actor, self._visibility[semantic_id])
+        return actor
+
+    def _replace_mesh_quality_actor(
+        self,
+        semantic_id: str,
+        payload: MeshQualityOverlaySpec,
+    ) -> object:
+        self._remove_native_actor(semantic_id)
+        base_payload_entry = self._payloads.get("base_mesh")
+        if base_payload_entry is None:
+            raise RuntimeError("Mesh quality overlay requires an active mesh.")
+        mesh_payload = base_payload_entry[0]
+        active_fingerprint = getattr(
+            getattr(mesh_payload, "mesh_fingerprint", None),
+            "digest",
+            "",
+        )
+        if active_fingerprint != payload.mesh_fingerprint:
+            raise RuntimeError(
+                "Mesh quality overlay fingerprint does not match the active mesh."
+            )
+        dataset = mesh_data_to_polydata(
+            mesh_payload.mesh,
+            pyvista_module=self._pyvista,
+        )
+        extractor = getattr(dataset, "extract_cells", None)
+        if not callable(extractor):
+            raise RuntimeError(
+                "The interactive backend cannot extract bad mesh cells."
+            )
+        subset = extractor(list(payload.entity_indices))
+        actor = self._require_open_interactor().add_mesh(
+            subset,
+            name=f"osw-{semantic_id}",
+            color="#f59e0b",
+            opacity=0.75,
+            show_edges=True,
+            reset_camera=False,
+            render=False,
+        )
         self._actors[semantic_id] = actor
         _set_native_visibility(actor, self._visibility[semantic_id])
         return actor

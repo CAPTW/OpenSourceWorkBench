@@ -437,6 +437,7 @@ class MainWindow(_BaseMainWindow):
                     )
 
     def _build_shell(self) -> None:
+        from osw.gui.widgets.mesh_diagnostics_panel import MeshDiagnosticsPanel
         from osw.gui.widgets.named_selection_panel import NamedSelectionPanel
         from osw.gui.widgets.project_tree_panel import ProjectTreePanel
         from osw.gui.widgets.properties_panel import PropertiesPanel
@@ -463,6 +464,7 @@ class MainWindow(_BaseMainWindow):
         self.project_tree = self.project_tree_panel.tree
         self.named_selection_panel = NamedSelectionPanel(container)
         self.setup_overlay_panel = SetupOverlayPanel(container)
+        self.mesh_diagnostics_panel = MeshDiagnosticsPanel(container)
         self.central_viewport_panel = CentralViewportPanel(
             container,
             scene_controller=self.active_scene_controller,
@@ -517,6 +519,24 @@ class MainWindow(_BaseMainWindow):
         self.setup_overlay_panel.preparePreviewRequested.connect(
             self._on_prepare_setup_preview
         )
+        self.mesh_diagnostics_panel.analyzeRequested.connect(
+            self._on_mesh_diagnostics_analyze
+        )
+        self.mesh_diagnostics_panel.thresholdChanged.connect(
+            self._on_mesh_diagnostics_threshold_changed
+        )
+        self.mesh_diagnostics_panel.highlightToggled.connect(
+            self._on_mesh_diagnostics_highlight_toggled
+        )
+        self.mesh_diagnostics_panel.isolateToggled.connect(
+            self._on_mesh_diagnostics_isolate_toggled
+        )
+        self.mesh_diagnostics_panel.restoreRequested.connect(
+            self._on_mesh_diagnostics_restore
+        )
+        self.mesh_diagnostics_panel.clearRequested.connect(
+            self._on_mesh_diagnostics_clear
+        )
         self.active_scene_controller.set_selection_listener(
             self._refresh_named_selection_panel
         )
@@ -551,10 +571,12 @@ class MainWindow(_BaseMainWindow):
         left_splitter.addWidget(self.project_tree_panel)
         left_splitter.addWidget(self.named_selection_panel)
         left_splitter.addWidget(self.setup_overlay_panel)
+        left_splitter.addWidget(self.mesh_diagnostics_panel)
         left_splitter.setStretchFactor(0, 2)
         left_splitter.setStretchFactor(1, 1)
         left_splitter.setStretchFactor(2, 1)
-        left_splitter.setSizes([500, 260, 300])
+        left_splitter.setStretchFactor(3, 1)
+        left_splitter.setSizes([420, 220, 260, 340])
         main_splitter.addWidget(left_splitter)
         main_splitter.addWidget(center_splitter)
         main_splitter.addWidget(self.properties_panel)
@@ -792,6 +814,7 @@ class MainWindow(_BaseMainWindow):
         ):
             self.mesh_viewer.set_mesh(context.mesh, mesh_ref=context.mesh_ref)
             self._sync_mesh_viewer_result_datasets()
+        self._refresh_mesh_diagnostics_panel()
         self._show_selected_mesh_context_status(context)
 
     def _show_selected_mesh_context_status(self, context: SelectedMeshContext) -> None:
@@ -1664,6 +1687,7 @@ class MainWindow(_BaseMainWindow):
         )
         self._refresh_named_selection_panel()
         self._refresh_setup_overlay_panel()
+        self._refresh_mesh_diagnostics_panel()
         self.refresh_results_from_project(update_report=False)
         self.generate_report_preview(log=False)
         self._refresh_persisted_report_screenshot_surfaces()
@@ -1709,6 +1733,7 @@ class MainWindow(_BaseMainWindow):
             materials=self.current_project.materials,
         )
         self._apply_setup_visibility_to_current_controller()
+        self._refresh_mesh_diagnostics_panel()
         named_panel = getattr(self, "named_selection_panel", None)
         if named_panel is not None:
             picking_available = bool(
@@ -2026,6 +2051,65 @@ class MainWindow(_BaseMainWindow):
             str(getattr(result, "input_preview", result))
         )
 
+    def _refresh_mesh_diagnostics_panel(self) -> None:
+        panel = getattr(self, "mesh_diagnostics_panel", None)
+        if panel is None:
+            return
+        panel.set_view_model(self.active_scene_controller.mesh_quality_view_model)
+
+    def _on_mesh_diagnostics_analyze(self) -> None:
+        panel = self.mesh_diagnostics_panel
+        try:
+            analysis = self.active_scene_controller.analyze_mesh_quality()
+        except ValueError as exc:
+            panel.set_status(str(exc))
+            return
+        self._refresh_mesh_diagnostics_panel()
+        if analysis is None:
+            panel.set_status(
+                "Load an in-memory mesh before running Mesh Diagnostics."
+            )
+
+    def _on_mesh_diagnostics_threshold_changed(self, threshold: float) -> None:
+        if not self.active_scene_controller.set_mesh_quality_threshold(threshold):
+            self.mesh_diagnostics_panel.set_status(
+                "Bad-cell threshold must be finite and positive."
+            )
+            return
+        self._refresh_mesh_diagnostics_panel()
+
+    def _on_mesh_diagnostics_highlight_toggled(self, visible: bool) -> None:
+        applied = self.active_scene_controller.set_mesh_quality_highlight_visible(
+            visible
+        )
+        self._refresh_mesh_diagnostics_panel()
+        if visible and not applied:
+            self.mesh_diagnostics_panel.set_status(
+                self.active_scene_controller.fallback_reason
+                or "Highlight requires analysis, bad cells, and an interactive renderer."
+            )
+
+    def _on_mesh_diagnostics_isolate_toggled(self, isolated: bool) -> None:
+        applied = self.active_scene_controller.set_mesh_quality_isolated(isolated)
+        self._refresh_mesh_diagnostics_panel()
+        if isolated and not applied:
+            self.mesh_diagnostics_panel.set_status(
+                "Isolate requires a visible bad-cell highlight."
+            )
+
+    def _on_mesh_diagnostics_restore(self) -> None:
+        if self.active_scene_controller.restore_mesh_quality_visibility():
+            self.mesh_diagnostics_panel.set_status(
+                "Restored the pre-isolate base mesh visibility."
+            )
+
+    def _on_mesh_diagnostics_clear(self) -> None:
+        self.active_scene_controller.clear_mesh_quality_overlay()
+        self._refresh_mesh_diagnostics_panel()
+        self.mesh_diagnostics_panel.set_status(
+            "Cleared the transient Mesh Diagnostics overlay."
+        )
+
     def closeEvent(self, event: object) -> None:
         """Close renderer resources before Qt tears down child widgets."""
 
@@ -2266,6 +2350,7 @@ class MainWindow(_BaseMainWindow):
             else:
                 self.mesh_viewer.set_mesh(mesh_data, mesh_ref=self.last_imported_mesh_ref or "")
                 self._sync_mesh_viewer_result_datasets()
+        self._refresh_mesh_diagnostics_panel()
 
     def _store_workflow_mesh_for_viewer(self, operation: object) -> None:
         """Feed the latest imported mesh item into the 3D preview (general import).
@@ -3376,6 +3461,7 @@ class MainWindow(_BaseMainWindow):
         if self.mesh_viewer is not None and hasattr(self.mesh_viewer, "set_mesh"):
             self.mesh_viewer.set_mesh(mesh, mesh_ref=mesh_ref)
             self._sync_mesh_viewer_result_datasets()
+        self._refresh_mesh_diagnostics_panel()
         return self.mesh_viewer_dialog
 
     def _sync_mesh_viewer_result_datasets(self) -> None:

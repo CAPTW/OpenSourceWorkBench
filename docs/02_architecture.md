@@ -300,6 +300,42 @@ This architecture statement describes a local feature branch only. It is not
 integrated into `develop`, not pushed, and not hosted-CI or live PyVistaQt
 evidence.
 
+## 3D Workspace Mesh Diagnostics
+
+The chained local Mesh Diagnostics feature extends the existing aggregate
+mesh-quality API with a separate fingerprint-bound per-cell analysis. Its only
+metric is `osw.mesh_quality.edge_aspect_ratio.v1`, labeled **Edge aspect ratio
+preview**: the maximum explicit topological edge length divided by the minimum
+positive explicit topological edge length. Linear line, triangle,
+quadrilateral, tetrahedron, hexahedron, wedge, and pyramid cells use declared
+edge tables. Unknown, high-order, malformed, nonfinite, and degenerate inputs
+fail closed instead of falling back to all-pairs distances or guessed corner
+nodes. The prior aggregate API and its report serialization remain compatible.
+
+Each immutable quality record carries the exact `osw.mesh_identity.v1`
+fingerprint and the existing cell-block/local-ordinal identity namespace.
+Analysis is cached only in the active scene controller by fingerprint, metric,
+topology-rule version, and zero-edge tolerance. The threshold is deliberately
+outside that cache key, so threshold changes derive a new deterministic bad
+set without recomputing geometry. The table and the one semantic
+`mesh_quality:bad_cells` actor are projected from that same ordered stable-key
+set; backend global cell indices remain transient renderer inputs.
+
+The thin panel displays metadata, counts, threshold, status, reasons, and a
+deterministic table without reading or changing a mesh file. Highlight,
+isolate, restore, and clear affect only diagnostics-owned visibility and retain
+selection and solver-setup actors. Missing PyVistaQt keeps metadata and the
+table usable while disabling renderer actions with an explicit diagnostic.
+No quality value, cache, threshold, actor, or isolation state is persisted in
+ProjectSchema, and diagnostics never mark the Project dirty.
+
+This feature is read-only and preview-grade. It adds no mesh editing, repair,
+smoothing, refinement, remeshing, cell deletion, automatic NamedSelection,
+setup mutation, result inspection, report output, solver execution, or native
+locality behavior. This statement describes a local chained feature commit
+only: it is not integrated into `develop`, not pushed, and does not claim
+hosted-CI or live PyVistaQt evidence.
+
 ## CHM CoolProp / Cantera Binding
 
 CHM support lives under `osw.solvers.coolprop` and `osw.solvers.cantera` as
