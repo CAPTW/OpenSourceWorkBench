@@ -30,6 +30,8 @@ from osw.core.selection_resolution import (
     resolve_named_selection,
     resolve_selection_target,
 )
+from osw.core.solver_setup import SetupRecordStatus, evaluate_solver_setup
+from osw.gui.setup_overlay_view_model import build_setup_overlay_specs
 from osw.gui.workspace_scene_view_model import (
     DefaultSceneAdapter,
     SceneAdapterProtocol,
@@ -359,6 +361,15 @@ class ActiveSceneController:
         self._named_selections: tuple[NamedSelection, ...] = ()
         self._named_selection_resolutions: dict[str, ResolutionResult] = {}
         self._named_overlay_ids: set[str] = set()
+        self._solver_setup: object | None = None
+        self._setup_materials: tuple[object, ...] = ()
+        self._setup_statuses: dict[str, SetupRecordStatus] = {}
+        self._setup_overlay_ids: set[str] = set()
+        self._setup_category_visibility = {
+            "material": True,
+            "fixed_support": True,
+            "force": True,
+        }
         self._selection_listener: Callable[[], object] | None = None
 
     @property
@@ -421,6 +432,10 @@ class ActiveSceneController:
     def named_selection_resolutions(self) -> Mapping[str, ResolutionResult]:
         return MappingProxyType(dict(self._named_selection_resolutions))
 
+    @property
+    def setup_statuses(self) -> Mapping[str, SetupRecordStatus]:
+        return MappingProxyType(dict(self._setup_statuses))
+
     def attach_host(self, parent: object) -> object | None:
         """Attach the factory to one Qt host and return its session widget."""
 
@@ -460,6 +475,7 @@ class ActiveSceneController:
         self._clear_transient_state(call_session=False)
         session = self._ensure_session()
         if session is None:
+            self._resolve_and_display_named_selections()
             return self._fallback_scene_state(mesh, scene_state)
 
         replacing = bool(self._actor_records)
@@ -473,6 +489,7 @@ class ActiveSceneController:
                 session.clear()
             except Exception as exc:
                 self._fail_session(exc)
+                self._resolve_and_display_named_selections()
                 return self._fallback_scene_state(mesh, scene_state)
             self._actor_records.clear()
 
@@ -511,6 +528,7 @@ class ActiveSceneController:
             session.request_render()
         except Exception as exc:
             self._fail_session(exc)
+            self._resolve_and_display_named_selections()
             return self._fallback_scene_state(mesh, scene_state)
 
         self._fallback_reason = ""
@@ -668,6 +686,34 @@ class ActiveSceneController:
         self._named_selections = tuple(selections)
         self._resolve_and_display_named_selections()
         self._notify_selection_listener()
+
+    def set_solver_setup(
+        self,
+        setup: object | None,
+        *,
+        materials: Sequence[object] = (),
+    ) -> None:
+        """Replace transient setup projections without mutating durable records."""
+
+        self._solver_setup = setup
+        self._setup_materials = tuple(materials)
+        self._refresh_setup_overlays()
+        self._notify_selection_listener()
+
+    def set_setup_category_visible(self, category: str, visible: bool) -> bool:
+        normalized = str(category)
+        if normalized not in self._setup_category_visibility:
+            return False
+        self._setup_category_visibility[normalized] = bool(visible)
+        for semantic_id in tuple(self._setup_overlay_ids):
+            marker = (
+                "fixed-support"
+                if normalized == "fixed_support"
+                else normalized
+            )
+            if semantic_id.startswith(f"setup:{marker}:"):
+                self.set_actor_visible(semantic_id, visible)
+        return True
 
     def set_view_state(self, scene_state: SceneViewState) -> None:
         session = self._session
@@ -845,6 +891,8 @@ class ActiveSceneController:
             for selection in self._named_selections
         }
         self._named_overlay_ids.clear()
+        self._setup_overlay_ids.clear()
+        self._setup_statuses = {}
         session = self._session
         if session is None:
             self._actor_records.clear()
@@ -891,6 +939,8 @@ class ActiveSceneController:
         self._mesh_fingerprint = None
         self._clear_transient_state(call_session=False)
         self._named_overlay_ids.clear()
+        self._setup_overlay_ids.clear()
+        self._setup_statuses = {}
 
     def _ensure_session(self) -> SceneRendererSessionProtocol | None:
         if self._session is not None:
@@ -1106,6 +1156,53 @@ class ActiveSceneController:
                 self._fail_session(exc)
                 return
             self._named_overlay_ids.add(selection.id)
+        self._refresh_setup_overlays()
+
+    def _refresh_setup_overlays(self) -> None:
+        session = self._session
+        for semantic_id in tuple(self._setup_overlay_ids):
+            if session is not None:
+                remover = getattr(session, "remove_actor", None)
+                if callable(remover):
+                    remover(semantic_id)
+            self._actor_records.pop(semantic_id, None)
+        self._setup_overlay_ids.clear()
+        self._setup_statuses = {}
+        if self._solver_setup is None:
+            return
+        statuses = evaluate_solver_setup(
+            self._solver_setup,
+            selections=self._named_selections,
+            materials=self._setup_materials,
+            resolutions=self._named_selection_resolutions,
+        )
+        self._setup_statuses = {item.record_id: item for item in statuses}
+        if (
+            session is None
+            or self._mesh is None
+            or "setup-overlays" not in self.capabilities
+        ):
+            return
+        specs = build_setup_overlay_specs(
+            self._solver_setup,
+            mesh=self._mesh,
+            resolutions=self._named_selection_resolutions,
+            statuses=self._setup_statuses,
+            category_visibility=self._setup_category_visibility,
+        )
+        for spec in specs:
+            session.replace_actor(
+                spec.actor_key,
+                spec,
+                generation=self._generation,
+            )
+            self._actor_records[spec.actor_key] = SceneActorRecord(
+                semantic_id=spec.actor_key,
+                generation=self._generation,
+                visible=spec.visible,
+            )
+            session.set_actor_visible(spec.actor_key, spec.visible)
+            self._setup_overlay_ids.add(spec.actor_key)
 
     def _notify_selection_listener(self) -> None:
         callback = self._selection_listener

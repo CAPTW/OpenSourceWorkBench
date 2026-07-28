@@ -13,6 +13,7 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any
 
+from osw.gui.setup_overlay_view_model import SetupOverlaySpec
 from osw.gui.workspace_scene_controller import (
     SceneRendererInitializationError,
 )
@@ -74,6 +75,7 @@ class PyVistaQtRendererSession:
             "clipping",
             "picking",
             "selection-overlays",
+            "setup-overlays",
         }
     )
 
@@ -137,6 +139,10 @@ class PyVistaQtRendererSession:
         for semantic_id in tuple(self._actors):
             self._remove_native_actor(semantic_id)
         self._payloads.clear()
+        self._visibility = {
+            "base_mesh": True,
+            "wireframe": False,
+        }
         self._clip_axis = None
         self._clip_origin = 0.0
 
@@ -247,6 +253,12 @@ class PyVistaQtRendererSession:
     ) -> object:
         if self._closed:
             raise RuntimeError("PyVistaQt renderer session is closed.")
+        if semantic_id.startswith("setup:"):
+            if not isinstance(payload, SetupOverlaySpec):
+                raise TypeError("Setup overlay actor requires a SetupOverlaySpec.")
+            self._payloads[semantic_id] = (payload, generation)
+            self._visibility[semantic_id] = payload.visible
+            return self._replace_setup_actor(semantic_id, payload)
         if semantic_id not in {"base_mesh", "wireframe"}:
             raise ValueError(f"Unsupported semantic actor: {semantic_id}")
         if not hasattr(payload, "mesh") or not hasattr(payload, "scene_state"):
@@ -263,6 +275,8 @@ class PyVistaQtRendererSession:
     def remove_actor(self, semantic_id: str) -> None:
         self._payloads.pop(semantic_id, None)
         self._remove_native_actor(semantic_id)
+        if semantic_id not in {"base_mesh", "wireframe"}:
+            self._visibility.pop(semantic_id, None)
 
     def request_render(self) -> None:
         if self._closed or self._interactor is None:
@@ -313,14 +327,14 @@ class PyVistaQtRendererSession:
         self.request_render()
 
     def set_actor_visible(self, semantic_id: str, visible: bool) -> None:
-        if semantic_id not in {"base_mesh", "wireframe"}:
+        if semantic_id not in self._visibility:
             raise ValueError(f"Unsupported semantic actor: {semantic_id}")
         self._visibility[semantic_id] = bool(visible)
         self._apply_actor_visibility()
         self.request_render()
 
     def isolate_actor(self, semantic_id: str) -> None:
-        if semantic_id not in {"base_mesh", "wireframe"}:
+        if semantic_id not in self._visibility:
             raise ValueError(f"Unsupported semantic actor: {semantic_id}")
         for actor_id in self._visibility:
             self._visibility[actor_id] = actor_id == semantic_id
@@ -328,10 +342,8 @@ class PyVistaQtRendererSession:
         self.request_render()
 
     def show_all_actors(self) -> None:
-        self._visibility = {
-            "base_mesh": True,
-            "wireframe": True,
-        }
+        for semantic_id in self._visibility:
+            self._visibility[semantic_id] = True
         self._representation = "surface_with_edges"
         self._apply_actor_visibility()
         self.request_render()
@@ -454,6 +466,9 @@ class PyVistaQtRendererSession:
 
     def _replace_native_actor(self, semantic_id: str) -> None:
         payload, _generation = self._payloads[semantic_id]
+        if isinstance(payload, SetupOverlaySpec):
+            self._replace_setup_actor(semantic_id, payload)
+            return
         self._remove_native_actor(semantic_id)
         mesh = payload.mesh
         scene_state = payload.scene_state
@@ -480,6 +495,75 @@ class PyVistaQtRendererSession:
         )
         self._actors[semantic_id] = actor
         _set_native_visibility(actor, self._visibility[semantic_id])
+
+    def _replace_setup_actor(
+        self,
+        semantic_id: str,
+        payload: SetupOverlaySpec,
+    ) -> object:
+        self._remove_native_actor(semantic_id)
+        interactor = self._require_open_interactor()
+        if payload.category == "material":
+            base_payload = self._payloads.get("base_mesh")
+            if base_payload is None:
+                raise RuntimeError("Material overlays require an active mesh.")
+            mesh_payload = base_payload[0]
+            dataset = mesh_data_to_polydata(
+                mesh_payload.mesh,
+                pyvista_module=self._pyvista,
+            )
+            extractor = getattr(dataset, "extract_cells", None)
+            if not callable(extractor):
+                raise RuntimeError("The backend cannot extract material cells.")
+            subset = extractor(list(payload.entity_indices))
+            actor = interactor.add_mesh(
+                subset,
+                name=f"osw-{semantic_id}",
+                color="#60a5fa",
+                opacity=0.35,
+                show_edges=True,
+                reset_camera=False,
+                render=False,
+            )
+        elif payload.category == "force":
+            dataset = self._force_dataset(payload)
+            actor = interactor.add_mesh(
+                dataset,
+                name=f"osw-{semantic_id}",
+                color="#ef4444",
+                reset_camera=False,
+                render=False,
+            )
+        else:
+            dataset = self._pyvista.PolyData(list(payload.points))
+            actor = interactor.add_mesh(
+                dataset,
+                name=f"osw-{semantic_id}",
+                color="#22c55e",
+                point_size=14,
+                render_points_as_spheres=True,
+                reset_camera=False,
+                render=False,
+            )
+        self._actors[semantic_id] = actor
+        _set_native_visibility(actor, self._visibility[semantic_id])
+        return actor
+
+    def _force_dataset(self, payload: SetupOverlaySpec) -> object:
+        arrow = getattr(self._pyvista, "Arrow", None)
+        if not callable(arrow) or payload.direction is None:
+            return self._pyvista.PolyData(list(payload.points))
+        arrows = [
+            arrow(start=point, direction=payload.direction, scale=0.1)
+            for point in payload.points
+        ]
+        if not arrows:
+            return self._pyvista.PolyData([])
+        merged = arrows[0]
+        merge = getattr(merged, "merge", None)
+        if callable(merge) and len(arrows) > 1:
+            merged = merge(arrows[1:])
+        return merged
 
     def _set_selection_overlay(
         self,
@@ -556,7 +640,10 @@ class PyVistaQtRendererSession:
 
     def _apply_actor_visibility(self) -> None:
         for semantic_id, actor in self._actors.items():
-            _set_native_visibility(actor, self._visibility[semantic_id])
+            _set_native_visibility(
+                actor,
+                self._visibility.get(semantic_id, True),
+            )
 
     @staticmethod
     def _attach_transient_pick_indices(dataset: object, mesh: object) -> None:

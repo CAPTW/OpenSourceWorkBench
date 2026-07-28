@@ -34,6 +34,16 @@ NamedSelection CRUD. Fake-session/offscreen evidence is not prepared live
 PyVistaQt evidence. Face/Edge, setup/result overlays, full scene persistence,
 solver execution, integration, publication, and Golden repair remain separate.
 
+The chained local `OSW-3D-WORKSPACE-SOLVER-SETUP-OVERLAYS` branch adds typed
+material, translational fixed-support, and global per-node force records;
+fail-closed setup status; semantic overlays; a bounded
+CRUD/filter/visibility panel; and a pure deterministic CalculiX prepare-only
+handoff. It remains isolated, not integrated into `develop`, not pushed, and
+not remotely validated. PyVistaQt live rendering, GPU/OpenGL portability,
+pressure/thermal and face/edge targeting, mesh diagnostics, results/probes,
+solver execution, full scene persistence, Golden repair, and publication
+remain separate.
+
 **Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
 
 ## Primary Goals

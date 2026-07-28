@@ -279,6 +279,7 @@ class MainWindow(_BaseMainWindow):
         project_loader: ProjectLoader | None = None,
         project_saver: ProjectSaver | None = None,
         project_error_reporter: ProjectFileErrorReporter | None = None,
+        setup_preview_provider: Callable[[Project, object, str], object] | None = None,
         **legacy_kwargs: object,
     ) -> None:
         if QtCore is None or QtGui is None or QtWidgets is None:
@@ -305,6 +306,8 @@ class MainWindow(_BaseMainWindow):
         self._project_error_reporter = (
             project_error_reporter or self._show_project_file_error
         )
+        self._setup_preview_provider = setup_preview_provider
+        self._project_dirty = False
         self.plugin_paths = tuple(Path(path) for path in plugin_paths)
         self.plugin_registry = plugin_registry or PluginRegistry()
         self.plugin_state_store = plugin_state_store or PluginStateStore()
@@ -438,6 +441,7 @@ class MainWindow(_BaseMainWindow):
         from osw.gui.widgets.project_tree_panel import ProjectTreePanel
         from osw.gui.widgets.properties_panel import PropertiesPanel
         from osw.gui.widgets.run_monitor_panel import RunMonitorPanel
+        from osw.gui.widgets.setup_overlay_panel import SetupOverlayPanel
         from osw.gui.widgets.status_bar import OswStatusBar
         from osw.gui.widgets.top_bar import TopBar
         from osw.gui.widgets.viewport_placeholder import CentralViewportPanel
@@ -458,6 +462,7 @@ class MainWindow(_BaseMainWindow):
         self.project_tree_panel = ProjectTreePanel(container)
         self.project_tree = self.project_tree_panel.tree
         self.named_selection_panel = NamedSelectionPanel(container)
+        self.setup_overlay_panel = SetupOverlayPanel(container)
         self.central_viewport_panel = CentralViewportPanel(
             container,
             scene_controller=self.active_scene_controller,
@@ -494,6 +499,24 @@ class MainWindow(_BaseMainWindow):
         self.named_selection_panel.selectionActivated.connect(
             self._on_named_selection_activated
         )
+        self.setup_overlay_panel.createRequested.connect(
+            self._on_create_setup_record
+        )
+        self.setup_overlay_panel.editRequested.connect(
+            self._on_edit_setup_record
+        )
+        self.setup_overlay_panel.deleteRequested.connect(
+            self._on_delete_setup_record
+        )
+        self.setup_overlay_panel.recordSelected.connect(
+            self._on_setup_record_selected
+        )
+        self.setup_overlay_panel.categoryVisibilityChanged.connect(
+            self._on_setup_category_visibility_changed
+        )
+        self.setup_overlay_panel.preparePreviewRequested.connect(
+            self._on_prepare_setup_preview
+        )
         self.active_scene_controller.set_selection_listener(
             self._refresh_named_selection_panel
         )
@@ -527,9 +550,11 @@ class MainWindow(_BaseMainWindow):
         left_splitter.setObjectName("oswProjectSelectionVerticalSplitter")
         left_splitter.addWidget(self.project_tree_panel)
         left_splitter.addWidget(self.named_selection_panel)
+        left_splitter.addWidget(self.setup_overlay_panel)
         left_splitter.setStretchFactor(0, 2)
         left_splitter.setStretchFactor(1, 1)
-        left_splitter.setSizes([620, 340])
+        left_splitter.setStretchFactor(2, 1)
+        left_splitter.setSizes([500, 260, 300])
         main_splitter.addWidget(left_splitter)
         main_splitter.addWidget(center_splitter)
         main_splitter.addWidget(self.properties_panel)
@@ -1509,6 +1534,7 @@ class MainWindow(_BaseMainWindow):
         # No failure-producing document mutation follows this best-effort final
         # retirement step. Generation guards make late queued callbacks inert.
         self._retire_document_bound_surfaces()
+        self._project_dirty = False
         return True
 
     def _choose_project_open_path(self) -> str | None:
@@ -1590,6 +1616,7 @@ class MainWindow(_BaseMainWindow):
             )
             return False
         self._placeholder_action("Saved Project")
+        self._project_dirty = False
         return True
 
     def save_project_as(self, _checked: bool = False) -> bool:
@@ -1619,6 +1646,7 @@ class MainWindow(_BaseMainWindow):
                 "The project was written, but its document binding could not be updated."
             )
             return False
+        self._project_dirty = False
         return True
 
     def set_project(self, project: Project, *, sync_workflow: bool = True) -> None:
@@ -1630,7 +1658,12 @@ class MainWindow(_BaseMainWindow):
         if hasattr(self.properties_panel, "set_project"):
             self.properties_panel.set_project(project)
         self.active_scene_controller.set_named_selections(project.selections)
+        self.active_scene_controller.set_solver_setup(
+            project.primary_physics,
+            materials=project.materials,
+        )
         self._refresh_named_selection_panel()
+        self._refresh_setup_overlay_panel()
         self.refresh_results_from_project(update_report=False)
         self.generate_report_preview(log=False)
         self._refresh_persisted_report_screenshot_surfaces()
@@ -1671,6 +1704,11 @@ class MainWindow(_BaseMainWindow):
         self.active_scene_controller.set_named_selections(
             self.current_project.selections
         )
+        self.active_scene_controller.set_solver_setup(
+            self.current_project.primary_physics,
+            materials=self.current_project.materials,
+        )
+        self._apply_setup_visibility_to_current_controller()
         named_panel = getattr(self, "named_selection_panel", None)
         if named_panel is not None:
             picking_available = bool(
@@ -1840,6 +1878,9 @@ class MainWindow(_BaseMainWindow):
         )
         if resolution is not None:
             self.named_selection_panel.set_status(resolution.message)
+        panel = getattr(self, "setup_overlay_panel", None)
+        if panel is not None:
+            panel.set_selection_filter(selection_id)
 
     def _refresh_named_selection_panel(self) -> None:
         panel = getattr(self, "named_selection_panel", None)
@@ -1860,6 +1901,129 @@ class MainWindow(_BaseMainWindow):
         panel.set_named_selections(
             self.current_project.selections,
             self.active_scene_controller.named_selection_resolutions,
+        )
+        self._refresh_setup_overlay_panel()
+
+    @property
+    def project_dirty(self) -> bool:
+        return self._project_dirty
+
+    def _refresh_setup_overlay_panel(self) -> None:
+        panel = getattr(self, "setup_overlay_panel", None)
+        if panel is None:
+            return
+        from osw.core.project_schema import PhysicsSetup
+
+        panel.set_context(
+            setup=self.current_project.primary_physics or PhysicsSetup(),
+            selections=self.current_project.selections,
+            materials=self.current_project.materials,
+            statuses=self.active_scene_controller.setup_statuses,
+        )
+
+    def _on_setup_category_visibility_changed(
+        self,
+        category: str,
+        visible: bool,
+    ) -> None:
+        self.active_scene_controller.set_setup_category_visible(
+            category,
+            visible,
+        )
+
+    def _apply_setup_visibility_to_current_controller(self) -> None:
+        panel = getattr(self, "setup_overlay_panel", None)
+        if panel is None:
+            return
+        for category in ("material", "fixed_support", "force"):
+            checkbox = panel.visibility_checks[category]
+            self.active_scene_controller.set_setup_category_visible(
+                category,
+                checkbox.isChecked(),
+            )
+
+    def _show_unsupported_setup_kind(self, kind: str) -> None:
+        self.setup_overlay_panel.set_preview(
+            f"Unsupported setup kind: {kind or '<empty>'}."
+        )
+
+    def _on_create_setup_record(self, payload: object) -> None:
+        if not isinstance(payload, Mapping):
+            return
+        kind = str(payload.get("kind", ""))
+        record_id = f"setup-{kind.casefold().replace(' ', '-')}-{uuid4().hex[:12]}"
+        try:
+            record = _setup_record_from_payload(record_id, payload)
+            setup = _setup_with_record(
+                self.current_project.primary_physics,
+                kind,
+                record,
+            )
+        except ValueError:
+            self._show_unsupported_setup_kind(kind)
+            return
+        self.set_project(_project_replacing_primary_physics(self.current_project, setup))
+        self._project_dirty = True
+
+    def _on_edit_setup_record(
+        self,
+        kind: str,
+        record_id: str,
+        payload: object,
+    ) -> None:
+        if not isinstance(payload, Mapping):
+            return
+        record_payload = dict(payload)
+        record_payload["kind"] = kind
+        try:
+            record = _setup_record_from_payload(record_id, record_payload)
+            setup = _setup_with_record(
+                self.current_project.primary_physics,
+                kind,
+                record,
+                replace_existing=True,
+            )
+        except ValueError:
+            self._show_unsupported_setup_kind(kind)
+            return
+        self.set_project(_project_replacing_primary_physics(self.current_project, setup))
+        self._project_dirty = True
+
+    def _on_delete_setup_record(self, kind: str, record_id: str) -> None:
+        try:
+            setup = _setup_without_record(
+                self.current_project.primary_physics,
+                kind,
+                record_id,
+            )
+        except ValueError:
+            self._show_unsupported_setup_kind(kind)
+            return
+        self.set_project(_project_replacing_primary_physics(self.current_project, setup))
+        self._project_dirty = True
+
+    def _on_setup_record_selected(
+        self,
+        _kind: str,
+        _record_id: str,
+        target_selection_id: str,
+    ) -> None:
+        self.named_selection_panel.select_named_selection(target_selection_id)
+
+    def _on_prepare_setup_preview(self) -> None:
+        provider = self._setup_preview_provider
+        if provider is None or self.last_imported_mesh_data is None:
+            self.setup_overlay_panel.set_preview(
+                "Prepare-only preview requires an injected service and an active in-memory mesh."
+            )
+            return
+        result = provider(
+            self.current_project,
+            self.last_imported_mesh_data,
+            str(self.last_imported_mesh_ref or ""),
+        )
+        self.setup_overlay_panel.set_preview(
+            str(getattr(result, "input_preview", result))
         )
 
     def closeEvent(self, event: object) -> None:
@@ -3569,6 +3733,128 @@ def _project_replacing_named_selections(
         plugins=project.plugins,
         warnings=project.warnings,
         selections=selections,
+        report_screenshots=project.report_screenshots,
+    )
+
+
+def _setup_record_from_payload(record_id: str, payload: Mapping[str, object]) -> object:
+    from osw.core.solver_setup import (
+        FixedSupportRecord,
+        ForceLoadRecord,
+        MaterialAssignmentRecord,
+    )
+    from osw.core.units import Quantity
+
+    kind = str(payload.get("kind", ""))
+    field_name = _setup_field(kind)
+    common = {
+        "id": record_id,
+        "name": str(payload.get("name", "") or record_id),
+        "target_selection_id": str(payload.get("target_selection_id", "")),
+        "enabled": bool(payload.get("enabled", True)),
+    }
+    if field_name == "material_assignment_records":
+        return MaterialAssignmentRecord(
+            **common,
+            material_id=str(payload.get("material_id", "")),
+        )
+    if field_name == "fixed_support_records":
+        return FixedSupportRecord(
+            **common,
+            translational_dofs=tuple(
+                int(item)
+                for item in payload.get("translational_dofs", (1, 2, 3))
+            ),
+        )
+    return ForceLoadRecord(
+        **common,
+        magnitude=Quantity(
+            float(payload.get("magnitude", 0.0)),
+            str(payload.get("unit", "N")),
+        ),
+        direction=tuple(float(item) for item in payload.get("direction", (0, 0, 0))),
+        coordinate_system=str(payload.get("coordinate_system", "GLOBAL")),
+        application_mode=str(payload.get("application_mode", "PER_NODE")),
+    )
+
+
+def _setup_field(kind: str) -> str:
+    normalized = str(kind).casefold().replace("_", " ")
+    if normalized == "material":
+        return "material_assignment_records"
+    if normalized in {"fixed support", "fixed"}:
+        return "fixed_support_records"
+    if normalized == "force":
+        return "force_load_records"
+    raise ValueError(f"Unsupported setup kind: {kind}")
+
+
+def _setup_with_record(
+    setup: object | None,
+    kind: str,
+    record: object,
+    *,
+    replace_existing: bool = False,
+) -> object:
+    from osw.core.project_schema import PhysicsSetup
+
+    current = setup or PhysicsSetup(
+        setup_id="structural",
+        name="Structural Setup",
+        analysis_type="linear_static",
+        domain="STRUCTURAL",
+    )
+    field_name = _setup_field(kind)
+    records = list(getattr(current, field_name))
+    if replace_existing:
+        records = [
+            record if getattr(item, "id", "") == getattr(record, "id", "") else item
+            for item in records
+        ]
+    else:
+        records.append(record)
+    return replace(current, **{field_name: records})
+
+
+def _setup_without_record(
+    setup: object | None,
+    kind: str,
+    record_id: str,
+) -> object:
+    from osw.core.project_schema import PhysicsSetup
+
+    current = setup or PhysicsSetup()
+    field_name = _setup_field(kind)
+    records = [
+        item
+        for item in getattr(current, field_name)
+        if getattr(item, "id", "") != record_id
+    ]
+    return replace(current, **{field_name: records})
+
+
+def _project_replacing_primary_physics(project: Project, setup: object) -> Project:
+    physics = list(project.physics)
+    if physics:
+        physics[0] = setup
+    else:
+        physics.append(setup)
+    return Project(
+        metadata=project.metadata,
+        units=project.units,
+        materials=project.materials,
+        geometry=project.geometry,
+        meshes=project.meshes,
+        scripts=project.scripts,
+        boundary_curves=project.boundary_curves,
+        physics=physics,
+        solvers=project.solvers,
+        results=project.results,
+        report=project.report,
+        schema_version=project.schema_version,
+        plugins=project.plugins,
+        warnings=project.warnings,
+        selections=project.selections,
         report_screenshots=project.report_screenshots,
     )
 

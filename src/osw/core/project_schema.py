@@ -448,6 +448,9 @@ class PhysicsSetup:
     boundaries: list[BoundaryCondition] = field(default_factory=list)
     solver_config: SolverConfig | None = None
     files: list[str] = field(default_factory=list)
+    material_assignment_records: list[object] = field(default_factory=list)
+    fixed_support_records: list[object] = field(default_factory=list)
+    force_load_records: list[object] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not self.boundaries and self.boundary_conditions:
@@ -458,7 +461,7 @@ class PhysicsSetup:
             object.__setattr__(self, "materials", list(self.material_assignments.values()))
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload: dict[str, Any] = {
             "setup_id": self.setup_id,
             "name": self.name,
             "domain": self.domain,
@@ -470,6 +473,19 @@ class PhysicsSetup:
             "solver_config": self.solver_config.to_dict() if self.solver_config else None,
             "files": list(self.files),
         }
+        if self.material_assignment_records:
+            payload["material_assignment_records"] = [
+                item.to_dict() for item in self.material_assignment_records
+            ]
+        if self.fixed_support_records:
+            payload["fixed_support_records"] = [
+                item.to_dict() for item in self.fixed_support_records
+            ]
+        if self.force_load_records:
+            payload["force_load_records"] = [
+                item.to_dict() for item in self.force_load_records
+            ]
+        return payload
 
     @classmethod
     def from_dict(cls, data: object) -> PhysicsSetup:
@@ -478,6 +494,12 @@ class PhysicsSetup:
             raise ValueError(msg)
         boundary_payload = data.get("boundary_conditions", data.get("boundaries", []))
         boundaries = [BoundaryCondition.from_dict(item) for item in boundary_payload]
+        from .solver_setup import (
+            FixedSupportRecord,
+            ForceLoadRecord,
+            MaterialAssignmentRecord,
+        )
+
         return cls(
             setup_id=str(data.get("setup_id", "")),
             name=str(data.get("name", "")),
@@ -496,6 +518,18 @@ class PhysicsSetup:
                 else None
             ),
             files=[str(item) for item in data.get("files", [])],
+            material_assignment_records=[
+                MaterialAssignmentRecord.from_dict(item)
+                for item in data.get("material_assignment_records", [])
+            ],
+            fixed_support_records=[
+                FixedSupportRecord.from_dict(item)
+                for item in data.get("fixed_support_records", [])
+            ],
+            force_load_records=[
+                ForceLoadRecord.from_dict(item)
+                for item in data.get("force_load_records", [])
+            ],
         )
 
 
@@ -706,6 +740,7 @@ class Project:
     ) -> None:
         schema_version_value = str(schema_version)
         named_selections = coerce_named_selections(selections)
+        physics_setups = _physics_list(physics)
         if (
             schema_version_value
             in {
@@ -713,6 +748,15 @@ class Project:
                 PATH_KIND_PROJECT_SCHEMA_VERSION,
             }
             and has_durable_entity_locators(named_selections)
+        ):
+            schema_version_value = ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
+        if (
+            schema_version_value
+            in {
+                LEGACY_PROJECT_SCHEMA_VERSION,
+                PATH_KIND_PROJECT_SCHEMA_VERSION,
+            }
+            and _has_typed_solver_setup(physics_setups)
         ):
             schema_version_value = ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
         screenshot_assets = coerce_report_screenshots(report_screenshots)
@@ -731,7 +775,7 @@ class Project:
         object.__setattr__(self, "meshes", list(mesh_refs or meshes or []))
         object.__setattr__(self, "scripts", list(script_refs or scripts or []))
         object.__setattr__(self, "boundary_curves", list(boundary_curves or []))
-        object.__setattr__(self, "physics", _physics_list(physics))
+        object.__setattr__(self, "physics", physics_setups)
         object.__setattr__(self, "solvers", list(solvers or []))
         object.__setattr__(self, "results", list(result_refs or results or []))
         object.__setattr__(self, "report", report_config or report or ReportConfig())
@@ -845,6 +889,13 @@ class Project:
         ):
             raise ProjectSchemaError(
                 "Durable entity locators require Project schema version 0.3."
+            )
+        if (
+            schema_version != ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
+            and _payload_has_typed_solver_setup(migrated.get("physics", []))
+        ):
+            raise ProjectSchemaError(
+                "Typed solver setup records require Project schema version 0.3."
             )
 
         units_defaulted = bool(migrated.get("_units_defaulted", False))
@@ -1007,6 +1058,34 @@ def _payload_has_durable_entity_locator(value: object) -> bool:
         if any(isinstance(target, Mapping) and "locator" in target for target in targets):
             return True
     return False
+
+
+def _has_typed_solver_setup(setups: Sequence[PhysicsSetup]) -> bool:
+    return any(
+        setup.material_assignment_records
+        or setup.fixed_support_records
+        or setup.force_load_records
+        for setup in setups
+    )
+
+
+def _payload_has_typed_solver_setup(value: object) -> bool:
+    if isinstance(value, Mapping):
+        value = (value,)
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        return False
+    return any(
+        isinstance(item, Mapping)
+        and any(
+            item.get(field_name)
+            for field_name in (
+                "material_assignment_records",
+                "fixed_support_records",
+                "force_load_records",
+            )
+        )
+        for item in value
+    )
 
 
 def project_to_dict(project: Project) -> dict[str, Any]:

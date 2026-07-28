@@ -1152,6 +1152,12 @@ and no certification claim.
   replacement, fallback, and teardown. That evidence does not validate a real
   PyVistaQt render window, GPU/driver portability, or interactive performance;
   prepared-backend status is reported separately.
+- Solver setup overlay validation covers typed schema round-trip, fail-closed
+  readiness, reference-safe deletion, semantic overlay projection, bounded
+  force glyphs, GUI runner guards, and deterministic in-memory CalculiX
+  NSET/ELSET preparation. Fake-session evidence does not prove live PyVistaQt,
+  GPU/OpenGL/driver behavior, or external solver execution. This feature is
+  local-only, not integrated, not pushed, and has no hosted-CI claim.
 - MATLAB/Octave `.m` workflows are preview-first. Import must not auto-run
   arbitrary scripts; execution remains explicit and user-triggered.
 - CAD validation is limited to standard/exported formats such as STEP, STL, OBJ,

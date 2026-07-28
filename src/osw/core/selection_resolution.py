@@ -336,6 +336,17 @@ def find_named_selection_references(
                         owner_id=f"{setup_name}/{boundary_name}",
                     )
                 )
+        for record in getattr(setup, "material_assignment_records", ()) or ():
+            if record.target_selection_id == selection_id:
+                references.append(
+                    SelectionReference("material_assignment", record.id)
+                )
+        for record in getattr(setup, "fixed_support_records", ()) or ():
+            if record.target_selection_id == selection_id:
+                references.append(SelectionReference("fixed_support", record.id))
+        for record in getattr(setup, "force_load_records", ()) or ():
+            if record.target_selection_id == selection_id:
+                references.append(SelectionReference("force_load", record.id))
     for asset in getattr(project, "report_screenshots", ()) or ():
         if selection_id in tuple(getattr(asset, "selection_ids", ()) or ()):
             references.append(

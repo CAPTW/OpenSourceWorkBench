@@ -271,6 +271,35 @@ supports Node/Cell modes and NamedSelection create, rename, target replacement,
 and reference-checked delete. Face/Edge picking, selection invert, solver setup
 overlays, result probes, and solver execution remain deferred.
 
+## 3D Workspace Solver Setup Overlays
+
+The local `OSW-3D-WORKSPACE-SOLVER-SETUP-OVERLAYS` feature branch adds three
+typed, optional Project schema 0.3 structural records under `Project.physics`:
+material-to-cell assignment, translational fixed support on nodes, and global
+force on nodes with explicit `N`/`kN` magnitude and `PER_NODE` semantics.
+Schemas 0.1 and 0.2 remain readable; typed setup data promotes new in-memory
+projects to 0.3 and is never inferred from the legacy maps.
+
+Readiness is computed from the current NamedSelection resolution and project
+materials. Only enabled `READY` records project to semantic
+`setup:material:<id>`, `setup:fixed-support:<id>`, or `setup:force:<id>` actor
+payloads. Missing, legacy, partial, stale, invalid, wrong-domain, overlapping,
+or otherwise unsupported records remain visible as blocked diagnostics but
+produce no overlay or handoff. Force glyph projection is deterministically
+bounded.
+
+The GUI is a thin CRUD/filter/visibility/preview surface. It imports no solver
+runner or subprocess API and requires an injected prepare service for its
+CalculiX preview action. The CalculiX adapter maps only ready records to
+in-memory, deterministic, one-based NSET/ELSET and input fragments; it writes
+no deck and exposes no command or execution field. Pressure, thermal,
+face/edge targeting, mesh diagnostics, results, and solver execution remain
+deferred.
+
+This architecture statement describes a local feature branch only. It is not
+integrated into `develop`, not pushed, and not hosted-CI or live PyVistaQt
+evidence.
+
 ## CHM CoolProp / Cantera Binding
 
 CHM support lives under `osw.solvers.coolprop` and `osw.solvers.cantera` as

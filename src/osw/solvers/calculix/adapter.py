@@ -3,15 +3,24 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar
 
 from osw.core.materials import IsotropicElastic, Material
 from osw.core.project_schema import Project
+from osw.core.selection_resolution import resolve_named_selection
+from osw.core.solver_setup import (
+    SetupReadiness,
+    evaluate_solver_setup,
+    force_direction,
+)
 from osw.core.units import Quantity
 from osw.core.validation import ValidationReport
+from osw.mesh.identity import compute_mesh_fingerprint
 from osw.mesh.mesh_model import MeshCellBlock, MeshData, MeshModel
 from osw.plugins.base import SolverAdapterPlugin
 from osw.plugins.manifest import PluginManifest
@@ -27,6 +36,241 @@ from .input_deck import (
     deck_result_from_case,
 )
 from .model import CalculiXDeckResult
+
+
+@dataclass(frozen=True)
+class CalculiXSolverSetupPreparation:
+    """In-memory, prepare-only handoff with no path, command, or native handle."""
+
+    eligible: bool
+    execution_mode: str
+    source_project_name: str
+    mesh_ref: str
+    mesh_fingerprint: str
+    record_ids: tuple[str, ...]
+    element_sets: tuple[tuple[str, tuple[int, ...]], ...]
+    node_sets: tuple[tuple[str, tuple[int, ...]], ...]
+    diagnostics: tuple[str, ...]
+    input_preview: str
+
+
+def prepare_solver_setup(
+    project: Project,
+    *,
+    mesh: MeshData,
+    mesh_ref: str,
+) -> CalculiXSolverSetupPreparation:
+    """Map ready typed setup records to deterministic CalculiX fragments."""
+
+    setup = project.primary_physics
+    fingerprint = compute_mesh_fingerprint(mesh)
+    if setup is None:
+        return _setup_preparation_error(
+            project,
+            mesh_ref,
+            fingerprint.digest,
+            ("MISSING_PHYSICS_SETUP",),
+        )
+    resolutions = {
+        selection.id: resolve_named_selection(
+            selection,
+            mesh=mesh,
+            mesh_ref=mesh_ref,
+        )
+        for selection in project.selections
+    }
+    statuses = evaluate_solver_setup(
+        setup,
+        selections=project.selections,
+        materials=project.materials,
+        resolutions=resolutions,
+    )
+    blockers = [
+        f"{status.record_id}:{status.reason_code}"
+        for status in statuses
+        if status.state is SetupReadiness.BLOCKED
+    ]
+    records = (
+        *(setup.material_assignment_records or ()),
+        *(setup.fixed_support_records or ()),
+        *(setup.force_load_records or ()),
+    )
+    names = [_setup_set_name(record) for record in records if record.enabled]
+    if len(names) != len(set(names)):
+        blockers.append("NORMALIZED_SET_NAME_COLLISION")
+    material_by_id = {item.material_id: item for item in project.materials}
+    material_signatures: dict[str, tuple[str, float, str, float]] = {}
+    for record in setup.material_assignment_records:
+        material = material_by_id.get(record.material_id)
+        if not record.enabled:
+            continue
+        if material is None or material.elastic is None:
+            blockers.append(f"{record.id}:UNSUPPORTED_MATERIAL")
+            continue
+        modulus = material.elastic.young_modulus
+        poisson_ratio = material.elastic.poisson_ratio
+        if (
+            not math.isfinite(modulus.value)
+            or modulus.value <= 0.0
+            or not math.isfinite(poisson_ratio)
+            or not -1.0 < poisson_ratio < 0.5
+        ):
+            blockers.append(f"{record.id}:INVALID_MATERIAL_ELASTICITY")
+            continue
+        if modulus.unit != project.units.stress:
+            blockers.append(f"{record.id}:MATERIAL_STRESS_UNIT_MISMATCH")
+            continue
+        if modulus.unit != "Pa":
+            blockers.append(f"{record.id}:UNSUPPORTED_MATERIAL_STRESS_UNIT")
+            continue
+        material_name = _normalized_setup_name(material.name)
+        signature = (
+            material.material_id,
+            modulus.value,
+            modulus.unit,
+            poisson_ratio,
+        )
+        existing = material_signatures.get(material_name)
+        if existing is not None and existing != signature:
+            if "NORMALIZED_MATERIAL_NAME_COLLISION" not in blockers:
+                blockers.append("NORMALIZED_MATERIAL_NAME_COLLISION")
+            continue
+        material_signatures[material_name] = signature
+    if blockers:
+        return _setup_preparation_error(
+            project,
+            mesh_ref,
+            fingerprint.digest,
+            tuple(blockers),
+        )
+
+    element_sets: list[tuple[str, tuple[int, ...]]] = []
+    node_sets: list[tuple[str, tuple[int, ...]]] = []
+    fragments: list[str] = []
+    emitted_materials: set[tuple[str, str, float, str, float]] = set()
+    for record in setup.material_assignment_records:
+        if not record.enabled:
+            continue
+        set_name = _setup_set_name(record)
+        indices = resolutions[record.target_selection_id].transient_indices
+        entity_ids = tuple(index + 1 for index in indices)
+        element_sets.append((set_name, entity_ids))
+        material = material_by_id[record.material_id]
+        material_name = _normalized_setup_name(material.name)
+        elastic = material.elastic
+        assert elastic is not None
+        material_signature = (
+            material_name,
+            material.material_id,
+            elastic.young_modulus.value,
+            elastic.young_modulus.unit,
+            elastic.poisson_ratio,
+        )
+        fragments.append(f"*ELSET, ELSET={set_name}\n{_id_line(entity_ids)}")
+        if material_signature not in emitted_materials:
+            fragments.append(
+
+                    f"*MATERIAL, NAME={material_name}\n"
+                    f"*ELASTIC\n"
+                    f"{elastic.young_modulus.value:g}, "
+                    f"{elastic.poisson_ratio:g}"
+
+            )
+            emitted_materials.add(material_signature)
+        fragments.append(
+            f"*SOLID SECTION, ELSET={set_name}, MATERIAL={material_name}"
+        )
+    for record in setup.fixed_support_records:
+        if not record.enabled:
+            continue
+        set_name = _setup_set_name(record)
+        indices = resolutions[record.target_selection_id].transient_indices
+        entity_ids = tuple(index + 1 for index in indices)
+        node_sets.append((set_name, entity_ids))
+        boundary_lines = "\n".join(
+            f"{set_name}, {dof}, {dof}" for dof in record.translational_dofs
+        )
+        fragments.extend(
+            (
+                f"*NSET, NSET={set_name}\n{_id_line(entity_ids)}",
+                f"*BOUNDARY\n{boundary_lines}",
+            )
+        )
+    for record in setup.force_load_records:
+        if not record.enabled:
+            continue
+        set_name = _setup_set_name(record)
+        indices = resolutions[record.target_selection_id].transient_indices
+        entity_ids = tuple(index + 1 for index in indices)
+        node_sets.append((set_name, entity_ids))
+        scale = 1000.0 if record.magnitude.unit == "kN" else 1.0
+        vector = tuple(
+            component * record.magnitude.value * scale
+            for component in force_direction(record)
+        )
+        load_lines = "\n".join(
+            f"{set_name}, {dof}, {value:g}"
+            for dof, value in enumerate(vector, 1)
+            if value != 0.0
+        )
+        fragments.extend(
+            (
+                f"*NSET, NSET={set_name}\n{_id_line(entity_ids)}",
+                f"*CLOAD\n{load_lines}",
+            )
+        )
+    record_ids = tuple(record.id for record in records if record.enabled)
+    return CalculiXSolverSetupPreparation(
+        eligible=True,
+        execution_mode="prepare_only",
+        source_project_name=project.metadata.name,
+        mesh_ref=mesh_ref,
+        mesh_fingerprint=fingerprint.digest,
+        record_ids=record_ids,
+        element_sets=tuple(element_sets),
+        node_sets=tuple(node_sets),
+        diagnostics=(),
+        input_preview="\n".join(fragments) + ("\n" if fragments else ""),
+    )
+
+
+def _setup_preparation_error(
+    project: Project,
+    mesh_ref: str,
+    mesh_fingerprint: str,
+    diagnostics: tuple[str, ...],
+) -> CalculiXSolverSetupPreparation:
+    return CalculiXSolverSetupPreparation(
+        eligible=False,
+        execution_mode="prepare_only",
+        source_project_name=project.metadata.name,
+        mesh_ref=mesh_ref,
+        mesh_fingerprint=mesh_fingerprint,
+        record_ids=(),
+        element_sets=(),
+        node_sets=(),
+        diagnostics=diagnostics,
+        input_preview="",
+    )
+
+
+def _setup_set_name(record: object) -> str:
+    prefixes = {
+        "MaterialAssignmentRecord": "MAT",
+        "FixedSupportRecord": "FIX",
+        "ForceLoadRecord": "FORCE",
+    }
+    prefix = prefixes.get(type(record).__name__, "SET")
+    return f"{prefix}_{_normalized_setup_name(str(getattr(record, 'id', '')))}"
+
+
+def _normalized_setup_name(value: str) -> str:
+    normalized = re.sub(r"[^A-Z0-9_]+", "_", value.upper()).strip("_")
+    return normalized or "UNNAMED"
+
+
+def _id_line(entity_ids: Sequence[int]) -> str:
+    return ", ".join(str(item) for item in entity_ids)
 
 
 class CalculixLinearStaticAdapter(SolverAdapterPlugin):
