@@ -91,6 +91,35 @@ cross-platform pixel identity is claimed. The feature remains isolated, not
 integrated into `develop`, not pushed, not remotely validated, and without live
 PyVistaQt/GPU evidence.
 
+All planned 3D MVP implementation gates are now locally chained through
+Persistence and Report Integration. The local
+`OSW-3D-WORKSPACE-MVP-END-TO-END-VALIDATION` continuation is based exactly on
+commit `6ba8b5449bfefd62cd0e58289d5bd8f6753adfcf` and tree
+`704a6d4b90755903a58419593f0994acffb62a4e`. It validates the byte-frozen
+`tests/gui/test_3d_workspace_mvp_end_to_end_gui.py` at SHA-256
+`01359fb65f516fdf0865fea6107374c714adb7b15e194352171ff30400bd55e2`
+through three deterministic scenarios: the complete round trip, same-count
+changed-mesh fingerprint blocking, and renderer-unavailable fallback. Fresh
+evidence is 33 focused GUI tests, 123 focused unit tests, 3614 full unit tests
+with 2 skips and 8 existing Cantera warnings, 655 full GUI tests with 2 skips,
+and 12 non-solver integration tests with 2 skips, 3 deselections, and 7
+Cantera warnings. Solver invocation and production-source changes are zero.
+PySide6 and PyVista are available, but PyVistaQt and a tracked prepared
+interactive lane are absent, so the prepared backend is
+`NOT_CHECKED_MISSING_PREPARED_INTERACTIVE_ENVIRONMENT`.
+
+The complete OSW 3D Workspace MVP workflow is validated through deterministic
+MainWindow/fake-session GUI wiring, exact mesh/result identity, prepare-only
+handoff, persistence, screenshot/report provenance, changed-mesh blocking, and
+renderer-fallback behavior. Live PyVistaQt, GPU, OpenGL, driver portability,
+visual fidelity, and interactive latency remain unvalidated. This validation
+gate changes no production source, executes no solver, and creates one local
+test/documentation commit with subject
+`test(3d-workspace): validate mvp end to end`; its resulting SHA is recorded in
+the gate report because a commit cannot contain its own hash. The chain remains
+unintegrated into `develop` and unpushed. The next selected gate is
+`OSW-3D-WORKSPACE-MVP-PREPARED-INTERACTIVE-VALIDATION`.
+
 **Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
 
 ## Primary Goals
