@@ -26,6 +26,7 @@ from osw.gui.workspace_scene_view_model import (
     scene_view_state_from_toggles,
     summary_rows_to_text,
 )
+from osw.mesh.identity import compute_mesh_fingerprint
 from osw.mesh.mesh_model import MeshData
 from osw.post.pyvista_scene import PyVistaUnavailableError
 from osw.post.result_field_mapping import (
@@ -33,6 +34,7 @@ from osw.post.result_field_mapping import (
     map_result_vector_field_to_mesh,
     result_field_names,
 )
+from osw.post.result_probe import ResultProbeRequest
 from osw.post.scene_model import SceneScreenshotRecord
 
 try:
@@ -129,7 +131,9 @@ class MeshViewerPanel(_BaseWidget):
         self._result_dataset_ref: str = ""
         self._result_field_lookup: dict[str, object] = {}
         self._result_vector_field_lookup: dict[str, object] = {}
+        self._result_binding: object | None = None
         self._bind_result_callback: Callable[[], object] | None = None
+        self._rebind_result_callback: Callable[[], object] | None = None
         self._capture_scene_screenshot_callback: (
             Callable[[], SceneScreenshotRecord | None] | None
         ) = None
@@ -207,10 +211,67 @@ class MeshViewerPanel(_BaseWidget):
             "Bind result to active mesh...", self
         )
         self.bind_result_button.setObjectName("oswMeshViewerBindResultButton")
+        self.rebind_result_button = QtWidgets.QPushButton(
+            "Rebind result to active mesh...",
+            self,
+        )
+        self.rebind_result_button.setObjectName("oswMeshViewerRebindResultButton")
 
         self.binding_status_label = QtWidgets.QLabel(_NO_STAGED_BINDING_TEXT, self)
         self.binding_status_label.setObjectName("oswMeshViewerBindingStatus")
         self.binding_status_label.setWordWrap(True)
+
+        self.binding_schema_label = QtWidgets.QLabel("", self)
+        self.binding_schema_label.setObjectName("oswResultBindingSchema")
+        self.binding_state_label = QtWidgets.QLabel("UNRESOLVED", self)
+        self.binding_state_label.setObjectName("oswResultBindingState")
+        self.scalar_component_selector = QtWidgets.QComboBox(self)
+        self.scalar_component_selector.setObjectName("oswResultScalarComponent")
+        self.range_mode_selector = QtWidgets.QComboBox(self)
+        self.range_mode_selector.setObjectName("oswResultRangeMode")
+        self.range_mode_selector.addItems(("AUTO", "MANUAL"))
+        self.manual_min_input = QtWidgets.QDoubleSpinBox(self)
+        self.manual_min_input.setObjectName("oswResultManualMinimum")
+        self.manual_min_input.setRange(-1e300, 1e300)
+        self.manual_min_input.setDecimals(6)
+        self.manual_max_input = QtWidgets.QDoubleSpinBox(self)
+        self.manual_max_input.setObjectName("oswResultManualMaximum")
+        self.manual_max_input.setRange(-1e300, 1e300)
+        self.manual_max_input.setDecimals(6)
+        self.manual_max_input.setValue(1.0)
+        self.colormap_selector = QtWidgets.QComboBox(self)
+        self.colormap_selector.setObjectName("oswResultColormap")
+        self.colormap_selector.addItems(("viridis", "plasma", "magma", "cividis"))
+        self.colorbar_toggle = QtWidgets.QCheckBox("Colorbar", self)
+        self.colorbar_toggle.setObjectName("oswResultColorbar")
+        self.colorbar_toggle.setChecked(True)
+        self.apply_scalar_button = QtWidgets.QPushButton("Apply scalar", self)
+        self.apply_scalar_button.setObjectName("oswResultApplyScalar")
+        self.apply_vector_button = QtWidgets.QPushButton("Apply vector", self)
+        self.apply_vector_button.setObjectName("oswResultApplyVector")
+        self.data_range_label = QtWidgets.QLabel("—", self)
+        self.data_range_label.setObjectName("oswResultDataRange")
+        self.applied_range_label = QtWidgets.QLabel("—", self)
+        self.applied_range_label.setObjectName("oswResultAppliedRange")
+        self.vector_count_label = QtWidgets.QLabel("0 / 0 / 0 / 0", self)
+        self.vector_count_label.setObjectName("oswResultVectorCount")
+        self.result_status_label = QtWidgets.QLabel(
+            "Confirm an exact result/mesh binding to enable interactive results.",
+            self,
+        )
+        self.result_status_label.setObjectName("oswResultStatus")
+        self.result_status_label.setWordWrap(True)
+        self.result_probe_label = QtWidgets.QLabel("No result probe.", self)
+        self.result_probe_label.setObjectName("oswResultProbe")
+        self.result_probe_label.setWordWrap(True)
+        self.selected_result_table = QtWidgets.QTableWidget(0, 4, self)
+        self.selected_result_table.setObjectName("oswSelectedResultTable")
+        self.selected_result_table.setHorizontalHeaderLabels(
+            ("Entity", "Field", "Value", "Unit")
+        )
+        self.selected_result_table.setEditTriggers(
+            QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers
+        )
 
         self.status_label = QtWidgets.QLabel(_NO_MESH_TEXT, self)
         self.status_label.setObjectName("oswMeshViewerStatus")
@@ -287,6 +348,7 @@ class MeshViewerPanel(_BaseWidget):
         buttons.addWidget(self.load_button)
         buttons.addWidget(self.capture_button)
         buttons.addWidget(self.bind_result_button)
+        buttons.addWidget(self.rebind_result_button)
         buttons.addStretch(1)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -300,6 +362,35 @@ class MeshViewerPanel(_BaseWidget):
         layout.addLayout(vector_fields)
         layout.addLayout(buttons)
         layout.addWidget(self.binding_status_label)
+        result_binding_row = QtWidgets.QHBoxLayout()
+        result_binding_row.addWidget(QtWidgets.QLabel("Binding:", self))
+        result_binding_row.addWidget(self.binding_schema_label)
+        result_binding_row.addWidget(self.binding_state_label)
+        result_binding_row.addStretch(1)
+        layout.addLayout(result_binding_row)
+        scalar_result_row = QtWidgets.QHBoxLayout()
+        scalar_result_row.addWidget(QtWidgets.QLabel("Component:", self))
+        scalar_result_row.addWidget(self.scalar_component_selector)
+        scalar_result_row.addWidget(self.range_mode_selector)
+        scalar_result_row.addWidget(self.manual_min_input)
+        scalar_result_row.addWidget(self.manual_max_input)
+        scalar_result_row.addWidget(self.colormap_selector)
+        scalar_result_row.addWidget(self.colorbar_toggle)
+        scalar_result_row.addWidget(self.apply_scalar_button)
+        layout.addLayout(scalar_result_row)
+        vector_result_row = QtWidgets.QHBoxLayout()
+        vector_result_row.addWidget(self.apply_vector_button)
+        vector_result_row.addWidget(QtWidgets.QLabel("Data range:", self))
+        vector_result_row.addWidget(self.data_range_label)
+        vector_result_row.addWidget(QtWidgets.QLabel("Applied range:", self))
+        vector_result_row.addWidget(self.applied_range_label)
+        vector_result_row.addWidget(QtWidgets.QLabel("Vectors:", self))
+        vector_result_row.addWidget(self.vector_count_label)
+        vector_result_row.addStretch(1)
+        layout.addLayout(vector_result_row)
+        layout.addWidget(self.result_status_label)
+        layout.addWidget(self.result_probe_label)
+        layout.addWidget(self.selected_result_table)
         layout.addWidget(self.status_label)
 
         screenshots_row = QtWidgets.QHBoxLayout()
@@ -350,6 +441,18 @@ class MeshViewerPanel(_BaseWidget):
         self.bind_result_button.clicked.connect(
             lambda _checked=False: self._on_bind_result_requested()
         )
+        self.rebind_result_button.clicked.connect(
+            lambda _checked=False: self._on_rebind_result_requested()
+        )
+        self.apply_scalar_button.clicked.connect(
+            lambda _checked=False: self._apply_interactive_scalar_result()
+        )
+        self.apply_vector_button.clicked.connect(
+            lambda _checked=False: self._apply_interactive_vector_result()
+        )
+        self.range_mode_selector.currentTextChanged.connect(
+            lambda _text: self._refresh_interactive_result_controls()
+        )
         self.scalar_selector.currentTextChanged.connect(
             lambda _text: self._on_scalar_selection_changed()
         )
@@ -366,6 +469,7 @@ class MeshViewerPanel(_BaseWidget):
             lambda _value=0: self._on_vector_glyph_controls_changed()
         )
         self._set_controls_enabled(False)
+        self._refresh_interactive_result_controls()
         self._render_state()
 
     # -- public API ---------------------------------------------------------
@@ -386,9 +490,31 @@ class MeshViewerPanel(_BaseWidget):
             summary_rows=mesh_summary_rows(mesh),
             status_message=_MESH_READY_TEXT,
         )
+        if (
+            isinstance(self._adapter, ActiveSceneController)
+            and self._adapter.backend_kind != "scene-adapter"
+        ):
+            fingerprint = compute_mesh_fingerprint(mesh)
+            current = self._adapter.current_mesh_fingerprint
+            if (
+                current is None
+                or current.digest != fingerprint.digest
+                or self._adapter.current_mesh_ref != mesh_ref
+            ):
+                scene_input = mesh_input_ref(mesh_ref)
+                scene_state = scene_view_state_from_toggles(
+                    show_surface=self.surface_toggle.isChecked(),
+                    show_edges=self.edge_toggle.isChecked(),
+                    show_axes=self.axis_toggle.isChecked(),
+                    show_grid=self.grid_toggle.isChecked(),
+                )
+                self._state.scene_input = scene_input
+                self._state.scene_state = scene_state
+                self._adapter.load_mesh(mesh, scene_input, scene_state)
         self._populate_scalar_selector(mesh)
         self._populate_vector_selector(mesh)
         self._set_controls_enabled(True)
+        self._sync_interactive_result_binding()
         self._refresh_binding_status()
         self._render_state()
 
@@ -413,12 +539,80 @@ class MeshViewerPanel(_BaseWidget):
         self._result_vector_field_lookup = dict(self._result_field_lookup)
         self._populate_scalar_selector(self._state.mesh)
         self._populate_vector_selector(self._state.mesh)
+        self._sync_interactive_result_binding()
         self._refresh_binding_status()
         self._render_state()
+
+    def set_result_binding(self, binding: object | None) -> None:
+        """Attach one persisted binding to the transient controller projection."""
+
+        self._result_binding = binding
+        self._sync_interactive_result_binding()
+        if self.selected_result_field_id() is not None:
+            self._apply_interactive_scalar_result(allow_render=False)
+        self._render_interactive_result_state()
+
+    def probe_result_entity(
+        self,
+        association: str,
+        stable_entity_key: int | str,
+    ) -> object | None:
+        """Display one exact stored value for a stable selected entity."""
+
+        if not isinstance(self._adapter, ActiveSceneController):
+            return None
+        field_name = self.selected_result_field_id()
+        component = self.scalar_component_selector.currentText()
+        fingerprint = self._adapter.current_mesh_fingerprint
+        if field_name is None or not component or fingerprint is None:
+            return None
+        result = self._adapter.probe_result(
+            ResultProbeRequest(
+                dataset_id=self._result_dataset_ref,
+                field_name=field_name,
+                component=component,
+                association=association,
+                stable_entity_key=stable_entity_key,
+                mesh_fingerprint=fingerprint.digest,
+            )
+        )
+        self._render_interactive_result_state()
+        return result
+
+    def set_selected_result_entities(
+        self,
+        association: str,
+        stable_entity_keys: Sequence[int | str],
+    ) -> object | None:
+        """Display a bounded exact-value table for stable selected entities."""
+
+        if not isinstance(self._adapter, ActiveSceneController):
+            return None
+        field_name = self.selected_result_field_id()
+        component = self.scalar_component_selector.currentText()
+        if field_name is None or not component:
+            return None
+        table = self._adapter.set_selected_result_table(
+            field_name=field_name,
+            component=component,
+            association=association,
+            stable_entity_keys=stable_entity_keys,
+            limit=500,
+        )
+        self._render_interactive_result_state()
+        return table
 
     def set_bind_result_callback(self, callback: Callable[[], object] | None) -> None:
         """Connect the panel action to a MainWindow-owned confirmation flow."""
         self._bind_result_callback = callback
+
+    def set_rebind_result_callback(
+        self,
+        callback: Callable[[], object] | None,
+    ) -> None:
+        """Connect the explicit stale/legacy replacement action."""
+
+        self._rebind_result_callback = callback
 
     def set_capture_scene_screenshot_callback(
         self, callback: Callable[[], SceneScreenshotRecord | None] | None
@@ -592,6 +786,8 @@ class MeshViewerPanel(_BaseWidget):
         self._populate_scalar_selector(None)
         self._populate_vector_selector(None)
         self._set_controls_enabled(False)
+        self._result_binding = None
+        self._refresh_interactive_result_controls()
         self._refresh_binding_status()
         self._render_state()
 
@@ -878,15 +1074,201 @@ class MeshViewerPanel(_BaseWidget):
             return
         self._bind_result_callback()
 
+    def _on_rebind_result_requested(self) -> None:
+        if self._rebind_result_callback is None:
+            self.show_result_mesh_binding_status(_BINDING_HANDLER_MISSING_TEXT)
+            return
+        self._rebind_result_callback()
+
     def _on_scalar_selection_changed(self) -> None:
+        self._populate_scalar_components()
         if self._result_dataset is None:
             return
         self._refresh_binding_status()
+        self._refresh_interactive_result_controls()
         self._render_state()
 
     def _on_vector_glyph_controls_changed(self) -> None:
         self._set_vector_controls_enabled(self._state.mesh is not None)
+        self._refresh_interactive_result_controls()
         self._render_state()
+
+    def _sync_interactive_result_binding(self) -> None:
+        if not isinstance(self._adapter, ActiveSceneController):
+            self._refresh_interactive_result_controls()
+            return
+        self._adapter.set_interactive_result_dataset(
+            self._result_dataset,
+            self._result_binding,
+        )
+        self._render_interactive_result_state()
+
+    def _populate_scalar_components(self) -> None:
+        current = self.scalar_component_selector.currentText()
+        field_name = self.selected_result_field_id()
+        field = self._result_field_lookup.get(field_name or "")
+        components = tuple(
+            str(item) for item in getattr(field, "components", ()) or ()
+        )
+        self.scalar_component_selector.blockSignals(True)
+        self.scalar_component_selector.clear()
+        self.scalar_component_selector.addItems(components)
+        if current in components:
+            self.scalar_component_selector.setCurrentText(current)
+        self.scalar_component_selector.blockSignals(False)
+
+    def _apply_interactive_scalar_result(
+        self,
+        *,
+        allow_render: bool = True,
+    ) -> None:
+        if not isinstance(self._adapter, ActiveSceneController):
+            return
+        field_name = self.selected_result_field_id()
+        if field_name is None:
+            self.result_status_label.setText("Select a result scalar field.")
+            return
+        component = self.scalar_component_selector.currentText() or None
+        manual_range = None
+        if self.range_mode_selector.currentText() == "MANUAL":
+            manual_range = (
+                float(self.manual_min_input.value()),
+                float(self.manual_max_input.value()),
+            )
+        result = self._adapter.set_scalar_result(
+            field_name,
+            component=component,
+            range_mode=self.range_mode_selector.currentText(),
+            manual_range=manual_range,
+            colormap=self.colormap_selector.currentText(),
+            colorbar_visible=self.colorbar_toggle.isChecked(),
+            render=allow_render,
+        )
+        if result.data_range is not None:
+            self.data_range_label.setText(_format_numeric_range(result.data_range))
+        if result.display_range is not None:
+            self.applied_range_label.setText(
+                _format_numeric_range(result.display_range)
+            )
+        self.result_status_label.setText(
+            "Scalar result applied."
+            if result.applied and allow_render
+            else (
+                "Scalar values are available; renderer backend is unavailable."
+                if result.applied
+                else "; ".join(result.diagnostics)
+            )
+        )
+        self._refresh_interactive_result_controls()
+
+    def _apply_interactive_vector_result(self) -> None:
+        if not isinstance(self._adapter, ActiveSceneController):
+            return
+        selected = self.vector_selector.currentText()
+        if not selected.startswith(_RESULT_VECTOR_PREFIX):
+            self.result_status_label.setText("Select a result vector field.")
+            return
+        field_name = selected[len(_RESULT_VECTOR_PREFIX):]
+        result = self._adapter.set_vector_result(
+            field_name,
+            maximum_glyph_count=max(
+                1,
+                int(self.glyph_max_count_input.value()) or 500,
+            ),
+            scale=float(self.glyph_scale_input.value()),
+        )
+        self.vector_count_label.setText(
+            f"{result.candidate_count} / {result.sampled_count} / "
+            f"{result.omitted_count} / {result.zero_vector_count}"
+        )
+        self.result_status_label.setText(
+            "Vector result applied."
+            if result.applied
+            else "; ".join(result.diagnostics)
+        )
+        self._refresh_interactive_result_controls()
+
+    def _refresh_interactive_result_controls(self) -> None:
+        if not isinstance(self._adapter, ActiveSceneController):
+            available = False
+            state = "UNRESOLVED"
+        else:
+            view_model = self._adapter.interactive_results_view_model
+            available = view_model.renderer_available
+            state = view_model.binding_state
+        resolved = state == "RESOLVED"
+        has_scalar = self.selected_result_field_id() is not None
+        has_vector = self.vector_selector.currentText().startswith(
+            _RESULT_VECTOR_PREFIX
+        )
+        self.apply_scalar_button.setEnabled(resolved and available and has_scalar)
+        self.apply_vector_button.setEnabled(resolved and available and has_vector)
+        manual = self.range_mode_selector.currentText() == "MANUAL"
+        self.manual_min_input.setEnabled(resolved and manual)
+        self.manual_max_input.setEnabled(resolved and manual)
+
+    def _render_interactive_result_state(self) -> None:
+        if not isinstance(self._adapter, ActiveSceneController):
+            self.binding_schema_label.setText("")
+            self.binding_state_label.setText("UNRESOLVED")
+            self._refresh_interactive_result_controls()
+            return
+        view_model = self._adapter.interactive_results_view_model
+        self.binding_schema_label.setText(view_model.binding_schema)
+        self.binding_state_label.setText(view_model.binding_state)
+        if view_model.scalar is not None:
+            if view_model.scalar.data_range is not None:
+                self.data_range_label.setText(
+                    _format_numeric_range(view_model.scalar.data_range)
+                )
+            if view_model.scalar.display_range is not None:
+                self.applied_range_label.setText(
+                    _format_numeric_range(view_model.scalar.display_range)
+                )
+        if view_model.vector is not None:
+            result = view_model.vector
+            self.vector_count_label.setText(
+                f"{result.candidate_count} / {result.sampled_count} / "
+                f"{result.omitted_count} / {result.zero_vector_count}"
+            )
+        if view_model.probe is not None:
+            probe = view_model.probe
+            if probe.value is None:
+                self.result_probe_label.setText(
+                    f"{probe.entity_display_id}: {probe.reason_code}"
+                )
+            else:
+                unit = f" {probe.unit}" if probe.unit else ""
+                self.result_probe_label.setText(
+                    f"{probe.entity_display_id}: {probe.value:.12g}{unit}"
+                )
+        self.selected_result_table.setRowCount(0)
+        if view_model.table is not None:
+            for row_index, row in enumerate(view_model.table.rows):
+                self.selected_result_table.insertRow(row_index)
+                values = (
+                    row.entity_display_id,
+                    (
+                        f"{view_model.table.field_name} / "
+                        f"{view_model.table.component}"
+                    ),
+                    f"{row.value:.12g}",
+                    row.unit,
+                )
+                for column, value in enumerate(values):
+                    self.selected_result_table.setItem(
+                        row_index,
+                        column,
+                        QtWidgets.QTableWidgetItem(value),
+                    )
+        if view_model.binding_state != "RESOLVED":
+            self.result_status_label.setText(view_model.binding_reason)
+        elif not view_model.renderer_available:
+            reason = view_model.backend_reason or "renderer backend unavailable"
+            self.result_status_label.setText(
+                f"Result values are available; rendering is unavailable: {reason}"
+            )
+        self._refresh_interactive_result_controls()
 
     def _refresh_binding_status(self) -> None:
         self._binding_persisted = False
@@ -923,6 +1305,7 @@ class MeshViewerPanel(_BaseWidget):
         self.scalar_selector.addItems(items)
         self.scalar_selector.setCurrentText(current if current in items else _NONE_FIELD)
         self.scalar_selector.blockSignals(False)
+        self._populate_scalar_components()
 
     def _populate_vector_selector(self, mesh: MeshData | None) -> None:
         """Fill vector selector from existing mesh arrays and compatible result fields."""
@@ -1069,6 +1452,9 @@ class MeshViewerPanel(_BaseWidget):
         self.load_button.setEnabled(enabled)
         self.capture_button.setEnabled(enabled)
         self.bind_result_button.setEnabled(enabled and self._result_dataset is not None)
+        self.rebind_result_button.setEnabled(
+            enabled and self._result_dataset is not None
+        )
         self._set_vector_controls_enabled(enabled)
 
     def _set_vector_controls_enabled(self, enabled: bool) -> None:
@@ -1094,11 +1480,15 @@ class MeshViewerPanel(_BaseWidget):
         self.status_label.setText(self._state.status_message or _NO_MESH_TEXT)
         self.binding_status_label.setText(self._binding_status_message)
         self.bind_result_button.setEnabled(has_mesh and self._result_dataset is not None)
+        self.rebind_result_button.setEnabled(
+            has_mesh and self._result_dataset is not None
+        )
 
         self.diagnostics_list.clear()
         for warning in self._state.warning_messages:
             self.diagnostics_list.addItem(warning)
 
+        self._render_interactive_result_state()
         self._render_screenshot_status()
 
 
@@ -1109,6 +1499,10 @@ def build_mesh_viewer_panel(
 ) -> object:
     """Factory mirroring the other GUI widget builders."""
     return MeshViewerPanel(parent, scene_adapter=scene_adapter)
+
+
+def _format_numeric_range(value_range: tuple[float, float]) -> str:
+    return f"{value_range[0]:.12g} / {value_range[1]:.12g}"
 
 
 def _staged_screenshot_rows(

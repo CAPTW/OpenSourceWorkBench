@@ -164,7 +164,7 @@ def _pattern_governs_match(
 
 EXPLICIT_CERTIFICATION_NEGATIONS = (
     re.compile(
-        r"\bnot\s+(?:an?\s+)?(?:industrial[\s-]+)?certified\b",
+        r"\bnot\s+(?:an?\s+)?(?:(?:industrial|solver)[\s-]+)?certified\b",
         re.IGNORECASE,
     ),
     re.compile(

@@ -15,6 +15,11 @@ from enum import Enum
 from types import MappingProxyType
 from typing import Protocol, runtime_checkable
 
+from osw.core.result_mesh_binding import (
+    ResultMeshBinding,
+    ResultMeshBindingResolution,
+    resolve_result_mesh_binding,
+)
 from osw.core.selection import (
     EntityKind,
     EntityLocator,
@@ -31,6 +36,17 @@ from osw.core.selection_resolution import (
     resolve_selection_target,
 )
 from osw.core.solver_setup import SetupRecordStatus, evaluate_solver_setup
+from osw.gui.interactive_results_view_model import (
+    RESULT_COLORBAR_ACTOR_KEY,
+    RESULT_PROBE_ACTOR_KEY,
+    RESULT_SCALAR_ACTOR_KEY,
+    RESULT_VECTOR_ACTOR_KEY,
+    InteractiveResultsViewModel,
+    ResultProbeOverlaySpec,
+    build_colorbar_spec,
+    build_interactive_results_view_model,
+    build_scalar_overlay_spec,
+)
 from osw.gui.mesh_diagnostics_view_model import (
     MESH_QUALITY_ACTOR_KEY,
     MeshDiagnosticsViewModel,
@@ -54,6 +70,21 @@ from osw.post.pyvista_scene import (
     PyVistaSceneConfig,
     PyVistaUnavailableError,
     build_scene_state,
+)
+from osw.post.result_field_mapping import (
+    InteractiveScalarResult,
+    ResultVectorGlyphSpec,
+    ScalarRangeMode,
+    build_result_vector_glyph_spec,
+    project_interactive_scalar_result,
+)
+from osw.post.result_probe import (
+    ResultProbeRequest,
+    ResultProbeResult,
+    ResultProbeStatus,
+    SelectedResultTable,
+    build_selected_result_table,
+    probe_result_entity,
 )
 from osw.post.scene_model import (
     SceneInputRef,
@@ -398,6 +429,14 @@ class ActiveSceneController:
         self._mesh_quality_threshold = 10.0
         self._mesh_quality_highlight_visible = False
         self._mesh_quality_visibility_snapshot: dict[str, bool] | None = None
+        self._interactive_result_dataset: object | None = None
+        self._interactive_result_binding: ResultMeshBinding | None = None
+        self._interactive_result_resolution: ResultMeshBindingResolution | None = None
+        self._interactive_scalar_result: InteractiveScalarResult | None = None
+        self._interactive_vector_result: ResultVectorGlyphSpec | None = None
+        self._interactive_probe_result: ResultProbeResult | None = None
+        self._interactive_result_table: SelectedResultTable | None = None
+        self._interactive_result_visibility_snapshot: dict[str, bool] | None = None
         self._selection_listener: Callable[[], object] | None = None
 
     @property
@@ -480,6 +519,24 @@ class ActiveSceneController:
             isolated=self._mesh_quality_visibility_snapshot is not None,
         )
 
+    @property
+    def interactive_result_resolution(
+        self,
+    ) -> ResultMeshBindingResolution | None:
+        return self._interactive_result_resolution
+
+    @property
+    def interactive_results_view_model(self) -> InteractiveResultsViewModel:
+        return build_interactive_results_view_model(
+            self._interactive_result_resolution,
+            renderer_available=self._interactive_result_renderer_available(),
+            backend_reason=self._fallback_reason,
+            scalar=self._interactive_scalar_result,
+            vector=self._interactive_vector_result,
+            probe=self._interactive_probe_result,
+            table=self._interactive_result_table,
+        )
+
     def attach_host(self, parent: object) -> object | None:
         """Attach the factory to one Qt host and return its session widget."""
 
@@ -512,6 +569,7 @@ class ActiveSceneController:
         if self._state is SceneLifecycleState.CLOSED:
             raise RuntimeError("Active scene controller is closed.")
         self._reset_mesh_quality_state(discard_cache=True)
+        self._reset_interactive_result_state(discard_binding=False)
         self._generation += 1
         generation = self._generation
         self._mesh = mesh
@@ -521,6 +579,7 @@ class ActiveSceneController:
         session = self._ensure_session()
         if session is None:
             self._resolve_and_display_named_selections()
+            self._resolve_interactive_result_binding()
             return self._fallback_scene_state(mesh, scene_state)
 
         replacing = bool(self._actor_records)
@@ -570,10 +629,12 @@ class ActiveSceneController:
             self._set_registry_representation(representation)
             self._configure_session_picking()
             self._resolve_and_display_named_selections()
+            self._resolve_interactive_result_binding()
             session.request_render()
         except Exception as exc:
             self._fail_session(exc)
             self._resolve_and_display_named_selections()
+            self._resolve_interactive_result_binding()
             return self._fallback_scene_state(mesh, scene_state)
 
         self._fallback_reason = ""
@@ -760,6 +821,265 @@ class ActiveSceneController:
                 self.set_actor_visible(semantic_id, visible)
         return True
 
+    def set_interactive_result_dataset(
+        self,
+        result_dataset: object | None,
+        binding: ResultMeshBinding | Mapping[str, object] | None,
+    ) -> ResultMeshBindingResolution | None:
+        """Attach transient dataset data and resolve its persisted exact binding."""
+
+        self.clear_interactive_results()
+        self._interactive_result_dataset = result_dataset
+        if isinstance(binding, ResultMeshBinding):
+            self._interactive_result_binding = binding
+        elif isinstance(binding, Mapping):
+            try:
+                self._interactive_result_binding = ResultMeshBinding.from_dict(binding)
+            except (TypeError, ValueError):
+                self._interactive_result_binding = None
+        else:
+            self._interactive_result_binding = None
+        self._resolve_interactive_result_binding()
+        return self._interactive_result_resolution
+
+    def set_scalar_result(
+        self,
+        field_name: str,
+        *,
+        component: str | None = None,
+        range_mode: ScalarRangeMode | str = ScalarRangeMode.AUTO,
+        manual_range: tuple[float, float] | None = None,
+        colormap: str = "viridis",
+        colorbar_visible: bool = True,
+        render: bool = True,
+    ) -> InteractiveScalarResult:
+        """Apply or replace one exact scalar projection without project mutation."""
+
+        if self._mesh_quality_visibility_snapshot is not None:
+            return InteractiveScalarResult(
+                applied=False,
+                status="INVALID",
+                field_name=str(field_name),
+                diagnostics=(
+                    "Restore diagnostics isolation first before applying a scalar result.",
+                ),
+            )
+        if (
+            self._mesh is None
+            or self._interactive_result_dataset is None
+            or self._interactive_result_resolution is None
+        ):
+            return InteractiveScalarResult(
+                applied=False,
+                status="UNRESOLVED",
+                field_name=str(field_name),
+                diagnostics=("An exact mesh/result binding is not available.",),
+            )
+        result = project_interactive_scalar_result(
+            self._mesh,
+            self._interactive_result_dataset,
+            binding_resolution=self._interactive_result_resolution,
+            field_name=field_name,
+            component=component,
+            range_mode=range_mode,
+            manual_range=manual_range,
+            colormap=colormap,
+            colorbar_visible=colorbar_visible,
+        )
+        self._interactive_scalar_result = result
+        if (
+            not result.applied
+            or not render
+            or not self._interactive_result_renderer_available()
+        ):
+            self._remove_result_actor(RESULT_SCALAR_ACTOR_KEY)
+            self._remove_result_actor(RESULT_COLORBAR_ACTOR_KEY)
+            return result
+        fingerprint = self._mesh_fingerprint
+        assert fingerprint is not None
+        spec = build_scalar_overlay_spec(
+            result,
+            mesh_fingerprint=fingerprint.digest,
+        )
+        if spec is None:
+            return result
+        if self._interactive_result_visibility_snapshot is None:
+            self._interactive_result_visibility_snapshot = {
+                semantic_id: self._actor_records[semantic_id].visible
+                for semantic_id in ("base_mesh", "wireframe")
+                if semantic_id in self._actor_records
+            }
+        if not self._replace_result_actor(RESULT_SCALAR_ACTOR_KEY, spec):
+            return result
+        for semantic_id in self._interactive_result_visibility_snapshot:
+            if semantic_id in self._actor_records:
+                self.set_actor_visible(semantic_id, False)
+        colorbar = build_colorbar_spec(result)
+        if colorbar is None:
+            self._remove_result_actor(RESULT_COLORBAR_ACTOR_KEY)
+        else:
+            self._replace_result_actor(RESULT_COLORBAR_ACTOR_KEY, colorbar)
+        return result
+
+    def set_vector_result(
+        self,
+        field_name: str,
+        *,
+        components: tuple[str, ...] | None = None,
+        maximum_glyph_count: int = 500,
+        scale: float = 1.0,
+    ) -> ResultVectorGlyphSpec:
+        """Apply or replace one bounded vector-glyph collection."""
+
+        if (
+            self._mesh is None
+            or self._interactive_result_dataset is None
+            or self._interactive_result_resolution is None
+        ):
+            return ResultVectorGlyphSpec(
+                applied=False,
+                status="UNRESOLVED",
+                field_name=str(field_name),
+                diagnostics=("An exact mesh/result binding is not available.",),
+            )
+        result = build_result_vector_glyph_spec(
+            self._mesh,
+            self._interactive_result_dataset,
+            binding_resolution=self._interactive_result_resolution,
+            field_name=field_name,
+            components=components,
+            maximum_glyph_count=maximum_glyph_count,
+            scale=scale,
+        )
+        self._interactive_vector_result = result
+        if (
+            result.applied
+            and result.sampled_count > 0
+            and self._interactive_result_renderer_available()
+        ):
+            self._replace_result_actor(RESULT_VECTOR_ACTOR_KEY, result)
+        else:
+            self._remove_result_actor(RESULT_VECTOR_ACTOR_KEY)
+        return result
+
+    def probe_result(
+        self,
+        request: ResultProbeRequest,
+    ) -> ResultProbeResult:
+        """Resolve one exact stored point/cell value and optional probe marker."""
+
+        if (
+            self._mesh is None
+            or self._interactive_result_dataset is None
+            or self._interactive_result_resolution is None
+        ):
+            result = ResultProbeResult(
+                status=ResultProbeStatus.STALE,
+                stable_entity_key=request.stable_entity_key,
+                entity_display_id=(
+                    f"{request.association} {request.stable_entity_key}"
+                ),
+                field_name=request.field_name,
+                component=request.component,
+                association=request.association,
+                reason_code="RESULT_BINDING_NOT_CONFIGURED",
+                diagnostics=("An exact mesh/result binding is not available.",),
+            )
+            self._interactive_probe_result = result
+            return result
+        result = probe_result_entity(
+            self._mesh,
+            self._interactive_result_dataset,
+            request,
+            binding_resolution=self._interactive_result_resolution,
+        )
+        self._interactive_probe_result = result
+        if (
+            result.status is ResultProbeStatus.RESOLVED
+            and self._interactive_result_renderer_available()
+        ):
+            transient_index = _result_stable_key_index(
+                self._mesh,
+                request.association,
+                request.stable_entity_key,
+            )
+            fingerprint = self._mesh_fingerprint
+            if transient_index is not None and fingerprint is not None:
+                self._replace_result_actor(
+                    RESULT_PROBE_ACTOR_KEY,
+                    ResultProbeOverlaySpec(
+                        actor_key=RESULT_PROBE_ACTOR_KEY,
+                        association=request.association,
+                        stable_entity_key=request.stable_entity_key,
+                        transient_backend_index=transient_index,
+                        mesh_fingerprint=fingerprint.digest,
+                    ),
+                )
+        else:
+            self._remove_result_actor(RESULT_PROBE_ACTOR_KEY)
+        return result
+
+    def set_selected_result_table(
+        self,
+        *,
+        field_name: str,
+        component: str,
+        association: str,
+        stable_entity_keys: Sequence[int | str],
+        limit: int = 500,
+    ) -> SelectedResultTable | None:
+        """Derive a bounded exact-value table from stable selected entities."""
+
+        if (
+            self._mesh is None
+            or self._interactive_result_dataset is None
+            or self._interactive_result_resolution is None
+        ):
+            self._interactive_result_table = None
+            return None
+        table = build_selected_result_table(
+            self._mesh,
+            self._interactive_result_dataset,
+            field_name=field_name,
+            component=component,
+            association=association,
+            stable_entity_keys=stable_entity_keys,
+            binding_resolution=self._interactive_result_resolution,
+            limit=limit,
+        )
+        self._interactive_result_table = table
+        return table
+
+    def clear_scalar_result(self) -> bool:
+        """Remove scalar/colorbar resources and restore exact mesh visibility."""
+
+        self._interactive_scalar_result = None
+        self._remove_result_actor(RESULT_SCALAR_ACTOR_KEY)
+        self._remove_result_actor(RESULT_COLORBAR_ACTOR_KEY)
+        snapshot = self._interactive_result_visibility_snapshot
+        restored = True
+        if snapshot is not None:
+            for semantic_id, visible in snapshot.items():
+                if semantic_id in self._actor_records:
+                    restored = self.set_actor_visible(semantic_id, visible) and restored
+        if restored:
+            self._interactive_result_visibility_snapshot = None
+        return restored
+
+    def clear_interactive_results(self) -> bool:
+        """Idempotently remove all transient interactive-result resources."""
+
+        restored = self.clear_scalar_result()
+        self._interactive_vector_result = None
+        self._interactive_probe_result = None
+        self._interactive_result_table = None
+        for semantic_id in (
+            RESULT_VECTOR_ACTOR_KEY,
+            RESULT_PROBE_ACTOR_KEY,
+        ):
+            self._remove_result_actor(semantic_id)
+        return restored
+
     def analyze_mesh_quality(
         self,
         *,
@@ -837,6 +1157,7 @@ class ActiveSceneController:
             not self._mesh_quality_highlight_visible
             or MESH_QUALITY_ACTOR_KEY not in self._actor_records
             or not self._mesh_quality_renderer_available()
+            or self._interactive_result_visibility_snapshot is not None
         ):
             return False
         if self._mesh_quality_visibility_snapshot is not None:
@@ -919,6 +1240,14 @@ class ActiveSceneController:
                 for key, value in _REPRESENTATION_VISIBILITY[mode].items()
             }
             for semantic_id in self._mesh_quality_visibility_snapshot:
+                if semantic_id in self._actor_records:
+                    self.set_actor_visible(semantic_id, False)
+        if self._interactive_result_visibility_snapshot is not None:
+            self._interactive_result_visibility_snapshot = {
+                key: bool(value)
+                for key, value in _REPRESENTATION_VISIBILITY[mode].items()
+            }
+            for semantic_id in self._interactive_result_visibility_snapshot:
                 if semantic_id in self._actor_records:
                     self.set_actor_visible(semantic_id, False)
         return True
@@ -1050,6 +1379,7 @@ class ActiveSceneController:
         }:
             return
         self._reset_mesh_quality_state(discard_cache=True)
+        self._reset_interactive_result_state(discard_binding=True)
         self._generation += 1
         self._mesh = None
         self._mesh_ref = ""
@@ -1083,6 +1413,7 @@ class ActiveSceneController:
         if self._state is SceneLifecycleState.CLOSED:
             return
         self._reset_mesh_quality_state(discard_cache=True)
+        self._reset_interactive_result_state(discard_binding=True)
         self._generation += 1
         self._state = SceneLifecycleState.CLOSING
         session = self._session
@@ -1144,6 +1475,7 @@ class ActiveSceneController:
         self._actor_records.clear()
         self._mesh_quality_highlight_visible = False
         self._mesh_quality_visibility_snapshot = None
+        self._interactive_result_visibility_snapshot = None
         if session is not None:
             try:
                 session.clear()
@@ -1457,6 +1789,71 @@ class ActiveSceneController:
         if discard_cache:
             self._mesh_quality_cache.clear()
 
+    def _interactive_result_renderer_available(self) -> bool:
+        return bool(
+            self._session is not None
+            and self._state
+            not in {
+                SceneLifecycleState.CLOSING,
+                SceneLifecycleState.CLOSED,
+                SceneLifecycleState.FALLBACK,
+            }
+            and "result-overlays" in self.capabilities
+        )
+
+    def _resolve_interactive_result_binding(self) -> None:
+        self._interactive_result_resolution = resolve_result_mesh_binding(
+            self._interactive_result_binding,
+            active_mesh=self._mesh,
+            active_mesh_ref=self._mesh_ref,
+            result_dataset=self._interactive_result_dataset,
+        )
+
+    def _replace_result_actor(self, semantic_id: str, payload: object) -> bool:
+        if not self._interactive_result_renderer_available():
+            return False
+        session = self._session
+        assert session is not None
+        try:
+            session.replace_actor(
+                semantic_id,
+                payload,
+                generation=self._generation,
+            )
+            self._actor_records[semantic_id] = SceneActorRecord(
+                semantic_id=semantic_id,
+                generation=self._generation,
+                visible=True,
+            )
+            session.request_render()
+        except Exception as exc:
+            self._fail_session(exc)
+            return False
+        return True
+
+    def _remove_result_actor(self, semantic_id: str) -> None:
+        self._actor_records.pop(semantic_id, None)
+        session = self._session
+        if session is None:
+            return
+        remover = getattr(session, "remove_actor", None)
+        if not callable(remover):
+            return
+        try:
+            remover(semantic_id)
+        except Exception as exc:
+            self._fail_session(exc)
+
+    def _reset_interactive_result_state(self, *, discard_binding: bool) -> None:
+        self.clear_interactive_results()
+        self._interactive_scalar_result = None
+        self._interactive_vector_result = None
+        self._interactive_result_visibility_snapshot = None
+        if discard_binding:
+            self._interactive_result_dataset = None
+            self._interactive_result_binding = None
+            self._interactive_result_resolution = None
+
     def _notify_selection_listener(self) -> None:
         callback = self._selection_listener
         if callback is None:
@@ -1500,6 +1897,37 @@ def _representation_from_scene_state(scene_state: SceneViewState) -> str:
     if options.show_edges:
         return "surface_with_edges"
     return "surface"
+
+
+def _result_stable_key_index(
+    mesh: MeshData,
+    association: str,
+    stable_key: int | str,
+) -> int | None:
+    normalized = str(association).strip().lower()
+    if normalized in {"point", "node", "vertex"}:
+        if isinstance(stable_key, bool):
+            return None
+        try:
+            ordinal = int(stable_key)
+        except (TypeError, ValueError, OverflowError):
+            return None
+        return ordinal if 0 <= ordinal < len(mesh.points) else None
+    if normalized not in {"cell", "element"}:
+        return None
+    parts = str(stable_key).split(":")
+    if len(parts) != 2:
+        return None
+    try:
+        block_ordinal, local_ordinal = (int(item) for item in parts)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if not 0 <= block_ordinal < len(mesh.cells):
+        return None
+    block = mesh.cells[block_ordinal]
+    if not 0 <= local_ordinal < block.count:
+        return None
+    return sum(item.count for item in mesh.cells[:block_ordinal]) + local_ordinal
 
 
 def _coerce_pick_event(value: object) -> ScenePickEvent | None:

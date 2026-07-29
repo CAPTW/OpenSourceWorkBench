@@ -54,9 +54,27 @@ and do not mark the Project dirty. The feature does not edit or repair meshes,
 create NamedSelections, mutate solver setup/results, write files, or execute a
 solver. It remains isolated, not integrated into `develop`, not pushed, and
 not remotely validated. Live PyVistaQt/GPU evidence, unsupported or high-order
-topology support, mesh repair, Interactive Results/probes, full scene
-persistence, Golden/Gmsh maintenance, native locality, and publication remain
-separate.
+topology support, mesh repair, full scene persistence, Golden/Gmsh
+maintenance, native locality, and publication remain separate. Interactive
+Results/probes were separate from that Mesh Diagnostics gate and are addressed
+only by the following chained local gate.
+
+The chained local
+`OSW-3D-WORKSPACE-INTERACTIVE-RESULTS-AND-STABILIZATION-B` branch adds
+fingerprint-backed v2 ResultDataset bindings, fail-closed readable v1
+compatibility, finite point/cell scalar ranges, deterministic bounded
+three-component vector glyphs, exact point/cell probes, and a bounded selected
+result table. Four session-private semantic result resources replace
+deterministically and are cleared or marked stale on mesh change. Renderer
+fallback retains pure binding/range/probe/table state but makes no render
+success claim. Only explicit binding confirmation/rebinding marks the Project
+dirty; transient visualization state is not persisted. No result artifact is
+parsed, no solver executes, no mesh is deformed or edited, and no file is
+written. The feature remains isolated, not integrated into `develop`, not
+pushed, and not remotely validated. Live PyVistaQt/GPU evidence, result-report
+integration, full active-scene persistence, deformation/timestep/tensor/
+streamline work, Golden/Gmsh maintenance, native locality, and publication
+remain separate.
 
 **Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
 

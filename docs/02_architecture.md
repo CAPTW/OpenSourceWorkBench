@@ -336,6 +336,43 @@ locality behavior. This statement describes a local chained feature commit
 only: it is not integrated into `develop`, not pushed, and does not claim
 hosted-CI or live PyVistaQt evidence.
 
+## 3D Workspace Interactive Results and Stabilization B
+
+The chained local Interactive Results feature retains readable
+`osw.result_mesh_binding.v1` metadata but never auto-applies it:
+`STALE / LEGACY_BINDING_FINGERPRINT_UNVERIFIED` requires an explicit rebind.
+New confirmations persist `osw.result_mesh_binding.v2` with the exact
+`osw.mesh_identity.v1` fingerprint. Node/cell counts remain diagnostic only;
+equal-count geometry or connectivity changes fail closed.
+
+Scalar projection accepts only exact point or cell rows with finite values.
+AUTO range uses the finite data range (with a documented nonzero delta for a
+constant field); MANUAL range requires finite ordered bounds. Vector projection
+requires exactly three finite components, excludes zero vectors from glyph
+construction, and uses deterministic rank sampling with stable entity keys.
+Exact point/cell probes and the bounded selected-entity table use stored rows
+only—no interpolation, nearest-neighbor transfer, topology conversion, or
+result-artifact parser is introduced.
+
+The active scene owns at most one actor for each semantic key:
+`result:scalar`, `result:vector`, `result:probe`, and `result:colorbar`.
+Scalar coloring snapshots only base-mesh/wireframe visibility, while selection,
+setup, and mesh-quality actors keep their existing ownership. Diagnostics
+isolation and scalar-surface coloring conflict explicitly rather than silently
+overriding each other. Mesh replacement clears rendered result resources and
+re-resolves the retained binding against the new exact fingerprint. Renderer
+fallback retains pure binding/range/probe/table state and disables render
+actions with an explicit reason.
+
+Only explicit binding confirmation/rebinding changes persisted Project
+metadata and marks the Project dirty. Field/component/range/colormap/colorbar,
+vector sampling, probe, and table state remain transient and never auto-save,
+auto-load a mesh, write a file, execute a solver, or change ProjectSchema.
+Deformation, timestep/animation, tensors, streamlines, interpolation, results
+report integration, and full scene persistence remain deferred. This describes
+one isolated local feature branch: it is not integrated, pushed, hosted-CI
+validated, or live-PyVistaQt evidence.
+
 ## CHM CoolProp / Cantera Binding
 
 CHM support lives under `osw.solvers.coolprop` and `osw.solvers.cantera` as

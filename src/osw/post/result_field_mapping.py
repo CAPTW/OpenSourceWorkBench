@@ -17,9 +17,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from enum import StrEnum
 from math import isfinite
 
 from osw.core.result_dataset import ResultField
+from osw.core.result_mesh_binding import (
+    ResultMeshBindingResolution,
+    ResultMeshBindingResolutionState,
+)
 from osw.mesh.mesh_model import MeshData
 
 _POINT_LOCATIONS = frozenset({"point", "node", "vertex"})
@@ -30,6 +35,58 @@ _CANONICAL_VECTOR_TRIPLES = (
     ("u", "v", "w"),
     ("dx", "dy", "dz"),
 )
+_RESULT_COLORMAPS = frozenset({"viridis", "plasma", "magma", "cividis"})
+
+
+class ScalarRangeMode(StrEnum):
+    """Explicit scalar display-range policy."""
+
+    AUTO = "AUTO"
+    MANUAL = "MANUAL"
+
+
+@dataclass(frozen=True)
+class InteractiveScalarResult:
+    """Pure exact-binding scalar projection ready for one semantic actor."""
+
+    applied: bool
+    status: str
+    field_name: str = ""
+    component: str = ""
+    association: str = ""
+    unit: str = ""
+    array_name: str = ""
+    values: tuple[float, ...] = ()
+    data_range: tuple[float, float] | None = None
+    display_range: tuple[float, float] | None = None
+    range_mode: ScalarRangeMode = ScalarRangeMode.AUTO
+    colormap: str = "viridis"
+    colorbar_visible: bool = True
+    colorbar_title: str = ""
+    diagnostics: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class ResultVectorGlyphSpec:
+    """Pure bounded vector glyph projection with transient backend indices."""
+
+    applied: bool
+    status: str
+    field_name: str = ""
+    association: str = ""
+    selected_components: tuple[str, ...] = ()
+    unit: str = ""
+    scale: float = 1.0
+    candidate_count: int = 0
+    sampled_count: int = 0
+    omitted_count: int = 0
+    zero_vector_count: int = 0
+    selected_candidate_ranks: tuple[int, ...] = ()
+    stable_entity_keys: tuple[int | str, ...] = ()
+    transient_backend_indices: tuple[int, ...] = ()
+    positions: tuple[tuple[float, float, float], ...] = ()
+    vectors: tuple[tuple[float, float, float], ...] = ()
+    diagnostics: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -158,16 +215,16 @@ def map_result_field_to_mesh(
                 "not applied.",
             )
 
-        try:
-            by_id[entity_id] = float(values[chosen])
-        except (TypeError, ValueError):
+        number = _coerce_finite_float(values[chosen])
+        if number is None:
             return _not_applied(
                 mesh_data,
                 name,
                 location,
                 f"Result field '{name}' component '{chosen}' has a non-numeric value "
-                f"for entity ID {entity_id}; not applied.",
+                f"or a non-finite value for entity ID {entity_id}; not applied.",
             )
+        by_id[entity_id] = number
 
     offset = _contiguous_offset(by_id, target)
     if offset is None:
@@ -336,6 +393,232 @@ def map_result_vector_field_to_mesh(
     )
 
 
+def project_interactive_scalar_result(
+    mesh_data: MeshData,
+    result_dataset: object,
+    *,
+    binding_resolution: ResultMeshBindingResolution,
+    field_name: str,
+    component: str | None = None,
+    range_mode: ScalarRangeMode | str = ScalarRangeMode.AUTO,
+    manual_range: tuple[float, float] | None = None,
+    colormap: str = "viridis",
+    colorbar_visible: bool = True,
+) -> InteractiveScalarResult:
+    """Project one exact point/cell scalar field without renderer state."""
+
+    blocked = _binding_diagnostic(binding_resolution)
+    if blocked is not None:
+        return _scalar_invalid(field_name, "STALE", blocked)
+    result_field, resolved_name, diagnostic = _resolve_result_field(
+        result_dataset,
+        field_name,
+    )
+    if result_field is None:
+        return _scalar_invalid(
+            field_name,
+            "INVALID",
+            diagnostic or f"Result field {field_name!r} was not found.",
+        )
+    chosen = _choose_component(
+        tuple(str(item) for item in getattr(result_field, "components", ()) or ()),
+        component,
+    )
+    if chosen is None:
+        return _scalar_invalid(
+            resolved_name,
+            "INVALID",
+            f"Result field {resolved_name!r} has no selectable scalar component.",
+        )
+    mapping = map_result_field_to_mesh(
+        mesh_data,
+        result_field,
+        component=chosen,
+    )
+    if not mapping.applied:
+        return _scalar_invalid(
+            resolved_name,
+            "INVALID",
+            mapping.diagnostics[0],
+            component=chosen,
+        )
+    values = tuple(
+        float(item)
+        for item in (
+            mapping.mesh_data.point_data[mapping.field_name]
+            if mapping.location == "point"
+            else mapping.mesh_data.cell_data[mapping.field_name]
+        )
+    )
+    if not values or any(not isfinite(item) for item in values):
+        return _scalar_invalid(
+            resolved_name,
+            "INVALID",
+            f"Result field {resolved_name!r} contains no finite scalar values.",
+            component=chosen,
+        )
+    try:
+        selected_mode = ScalarRangeMode(str(range_mode))
+    except ValueError:
+        return _scalar_invalid(
+            resolved_name,
+            "INVALID",
+            "Scalar range mode must be AUTO or MANUAL.",
+            component=chosen,
+        )
+    normalized_colormap = str(colormap).strip().lower()
+    if normalized_colormap not in _RESULT_COLORMAPS:
+        return _scalar_invalid(
+            resolved_name,
+            "INVALID",
+            f"Colormap {colormap!r} is not in the bounded interactive-result set.",
+            component=chosen,
+        )
+    minimum = min(values)
+    maximum = max(values)
+    data_range = (minimum, maximum)
+    display_range = _automatic_scalar_range(minimum, maximum)
+    if selected_mode is ScalarRangeMode.MANUAL:
+        if manual_range is None or len(manual_range) != 2:
+            return _scalar_invalid(
+                resolved_name,
+                "INVALID",
+                "Manual scalar range requires finite minimum and maximum values.",
+                component=chosen,
+            )
+        lower = _coerce_finite_float(manual_range[0])
+        upper = _coerce_finite_float(manual_range[1])
+        if lower is None or upper is None or lower >= upper:
+            return _scalar_invalid(
+                resolved_name,
+                "INVALID",
+                "Manual scalar range must be finite with minimum less than maximum.",
+                component=chosen,
+            )
+        display_range = (lower, upper)
+    unit = str(getattr(result_field, "unit", "") or "")
+    title = f"{resolved_name} / {chosen}"
+    if unit:
+        title = f"{title} [{unit}]"
+    return InteractiveScalarResult(
+        applied=True,
+        status="RESOLVED",
+        field_name=resolved_name,
+        component=chosen,
+        association=mapping.location,
+        unit=unit,
+        array_name=mapping.field_name,
+        values=values,
+        data_range=data_range,
+        display_range=display_range,
+        range_mode=selected_mode,
+        colormap=normalized_colormap,
+        colorbar_visible=bool(colorbar_visible),
+        colorbar_title=title,
+    )
+
+
+def build_result_vector_glyph_spec(
+    mesh_data: MeshData,
+    result_dataset: object,
+    *,
+    binding_resolution: ResultMeshBindingResolution,
+    field_name: str,
+    components: tuple[str, ...] | None = None,
+    maximum_glyph_count: int = 500,
+    scale: float = 1.0,
+) -> ResultVectorGlyphSpec:
+    """Build one deterministic, rank-sampled vector glyph collection."""
+
+    blocked = _binding_diagnostic(binding_resolution)
+    if blocked is not None:
+        return _vector_spec_invalid(field_name, "STALE", blocked)
+    if (
+        not isinstance(maximum_glyph_count, int)
+        or isinstance(maximum_glyph_count, bool)
+        or maximum_glyph_count <= 0
+    ):
+        return _vector_spec_invalid(
+            field_name,
+            "INVALID",
+            "Maximum glyph count must be a positive integer.",
+        )
+    finite_scale = _coerce_finite_float(scale)
+    if finite_scale is None or finite_scale <= 0.0:
+        return _vector_spec_invalid(
+            field_name,
+            "INVALID",
+            "Vector glyph scale must be finite and positive.",
+        )
+    result_field, resolved_name, diagnostic = _resolve_result_field(
+        result_dataset,
+        field_name,
+    )
+    if result_field is None:
+        return _vector_spec_invalid(
+            field_name,
+            "INVALID",
+            diagnostic or f"Result field {field_name!r} was not found.",
+        )
+    mapping = map_result_vector_field_to_mesh(
+        mesh_data,
+        result_field,
+        components=components,
+    )
+    if not mapping.applied:
+        return _vector_spec_invalid(
+            resolved_name,
+            "INVALID",
+            mapping.diagnostics[0],
+            selected_components=mapping.selected_components,
+        )
+    vectors = tuple(
+        tuple(float(component) for component in item)
+        for item in (
+            mapping.mesh_data.point_data[mapping.field_name]
+            if mapping.location == "point"
+            else mapping.mesh_data.cell_data[mapping.field_name]
+        )
+    )
+    positions = (
+        tuple(tuple(float(value) for value in point) for point in mesh_data.points)
+        if mapping.location == "point"
+        else _cell_centroids(mesh_data)
+    )
+    stable_keys = (
+        tuple(range(len(mesh_data.points)))
+        if mapping.location == "point"
+        else _cell_stable_keys(mesh_data)
+    )
+    candidates = tuple(
+        (index, stable_keys[index], positions[index], vector)
+        for index, vector in enumerate(vectors)
+        if any(component != 0.0 for component in vector)
+    )
+    zero_count = len(vectors) - len(candidates)
+    ranks = _bounded_sample_ranks(len(candidates), maximum_glyph_count)
+    selected = tuple(candidates[rank] for rank in ranks)
+    unit = str(getattr(result_field, "unit", "") or "")
+    return ResultVectorGlyphSpec(
+        applied=True,
+        status="RESOLVED",
+        field_name=resolved_name,
+        association=mapping.location,
+        selected_components=mapping.selected_components,
+        unit=unit,
+        scale=finite_scale,
+        candidate_count=len(candidates),
+        sampled_count=len(selected),
+        omitted_count=len(candidates) - len(selected),
+        zero_vector_count=zero_count,
+        selected_candidate_ranks=ranks,
+        stable_entity_keys=tuple(item[1] for item in selected),
+        transient_backend_indices=tuple(item[0] for item in selected),
+        positions=tuple(item[2] for item in selected),
+        vectors=tuple(item[3] for item in selected),
+    )
+
+
 def _normalize_location(location: object) -> str:
     text = str(location or "").strip().lower()
     if text in _POINT_LOCATIONS:
@@ -356,12 +639,13 @@ def _choose_component(components: tuple[str, ...], component: str | None) -> str
 
 
 def _coerce_entity_id(value: object) -> int | None:
-    if isinstance(value, float) and not isfinite(value):
-        return None
     try:
-        return int(value)
+        number = float(value)
     except (TypeError, ValueError, OverflowError):
         return None
+    if not isfinite(number) or not number.is_integer():
+        return None
+    return int(number)
 
 
 def _resolve_result_field(
@@ -486,6 +770,102 @@ def _coerce_finite_float(value: object) -> float | None:
     return number if isfinite(number) else None
 
 
+def _binding_diagnostic(
+    resolution: ResultMeshBindingResolution,
+) -> str | None:
+    if resolution.state is ResultMeshBindingResolutionState.RESOLVED:
+        return None
+    return (
+        f"Result binding is {resolution.state.value}: "
+        f"{resolution.reason_code}. {resolution.message}"
+    )
+
+
+def _automatic_scalar_range(
+    minimum: float,
+    maximum: float,
+) -> tuple[float, float]:
+    if minimum != maximum:
+        return (minimum, maximum)
+    delta = max(abs(minimum) * 1e-12, 1e-12)
+    return (minimum - delta, maximum + delta)
+
+
+def _scalar_invalid(
+    field_name: str,
+    status: str,
+    message: str,
+    *,
+    component: str = "",
+) -> InteractiveScalarResult:
+    return InteractiveScalarResult(
+        applied=False,
+        status=status,
+        field_name=str(field_name),
+        component=str(component),
+        diagnostics=(str(message),),
+    )
+
+
+def _vector_spec_invalid(
+    field_name: str,
+    status: str,
+    message: str,
+    *,
+    selected_components: tuple[str, ...] = (),
+) -> ResultVectorGlyphSpec:
+    return ResultVectorGlyphSpec(
+        applied=False,
+        status=status,
+        field_name=str(field_name),
+        selected_components=selected_components,
+        diagnostics=(str(message),),
+    )
+
+
+def _cell_stable_keys(mesh_data: MeshData) -> tuple[str, ...]:
+    return tuple(
+        f"{block_ordinal}:{cell_ordinal}"
+        for block_ordinal, block in enumerate(mesh_data.cells)
+        for cell_ordinal in range(block.count)
+    )
+
+
+def _cell_centroids(
+    mesh_data: MeshData,
+) -> tuple[tuple[float, float, float], ...]:
+    centroids: list[tuple[float, float, float]] = []
+    for block in mesh_data.cells:
+        for connectivity in block.data:
+            if not connectivity:
+                centroids.append((0.0, 0.0, 0.0))
+                continue
+            points = tuple(mesh_data.points[index] for index in connectivity)
+            scale = 1.0 / len(points)
+            centroids.append(
+                (
+                    sum(float(point[0]) for point in points) * scale,
+                    sum(float(point[1]) for point in points) * scale,
+                    sum(float(point[2]) for point in points) * scale,
+                )
+            )
+    return tuple(centroids)
+
+
+def _bounded_sample_ranks(
+    candidate_count: int,
+    maximum_count: int,
+) -> tuple[int, ...]:
+    if candidate_count <= maximum_count:
+        return tuple(range(candidate_count))
+    if maximum_count == 1:
+        return (0,)
+    return tuple(
+        (rank * (candidate_count - 1)) // (maximum_count - 1)
+        for rank in range(maximum_count)
+    )
+
+
 def _contiguous_offset(by_id: Mapping[int, object], target: int) -> int | None:
     keys = sorted(by_id)
     if keys == list(range(target)):
@@ -564,9 +944,14 @@ def _vector_not_applied(
 
 
 __all__ = [
+    "InteractiveScalarResult",
     "ResultFieldMapping",
+    "ResultVectorGlyphSpec",
     "ResultVectorFieldMapping",
+    "ScalarRangeMode",
+    "build_result_vector_glyph_spec",
     "map_result_field_to_mesh",
     "map_result_vector_field_to_mesh",
+    "project_interactive_scalar_result",
     "result_field_names",
 ]

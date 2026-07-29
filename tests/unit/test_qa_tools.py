@@ -217,6 +217,7 @@ def test_scope_drift_allows_in_scope_adapter_text() -> None:
     "text",
     [
         "OSW is certified.",
+        "OSW provides solver-certified mesh quality.",
         "OSW is certified provider-silent.",
         "OSW is not only certified.",
         "OSW is not merely certified.",
@@ -262,6 +263,7 @@ def test_scope_drift_rejects_positive_or_ambiguous_certification_claims(
         "OSW is **NOT CERTIFIED** provider-silent!",
         "OSW is not a certified CAE product.",
         "OSW is not industrial-certified.",
+        "Preview-grade diagnostic only; not solver-certified mesh quality.",
         "No industrial certification is provided.",
         "This workbench is offered without industrial certification.",
         "OSW does not claim industrial certification.",

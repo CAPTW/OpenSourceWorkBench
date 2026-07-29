@@ -13,6 +13,15 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any
 
+from osw.gui.interactive_results_view_model import (
+    RESULT_COLORBAR_ACTOR_KEY,
+    RESULT_PROBE_ACTOR_KEY,
+    RESULT_SCALAR_ACTOR_KEY,
+    RESULT_VECTOR_ACTOR_KEY,
+    ResultColorbarSpec,
+    ResultProbeOverlaySpec,
+    ScalarResultOverlaySpec,
+)
 from osw.gui.mesh_diagnostics_view_model import (
     MESH_QUALITY_ACTOR_KEY,
     MeshQualityOverlaySpec,
@@ -26,6 +35,7 @@ from osw.post.pyvista_scene import (
     build_scene_state,
     mesh_data_to_polydata,
 )
+from osw.post.result_field_mapping import ResultVectorGlyphSpec
 from osw.post.scene_model import (
     SceneScreenshotRecord,
     SceneViewState,
@@ -81,6 +91,7 @@ class PyVistaQtRendererSession:
             "selection-overlays",
             "setup-overlays",
             "mesh-quality-overlays",
+            "result-overlays",
         }
     )
 
@@ -272,6 +283,30 @@ class PyVistaQtRendererSession:
             self._payloads[semantic_id] = (payload, generation)
             self._visibility[semantic_id] = payload.visible
             return self._replace_mesh_quality_actor(semantic_id, payload)
+        if semantic_id == RESULT_SCALAR_ACTOR_KEY:
+            if not isinstance(payload, ScalarResultOverlaySpec):
+                raise TypeError("Scalar result actor requires a scalar overlay spec.")
+            self._payloads[semantic_id] = (payload, generation)
+            self._visibility[semantic_id] = True
+            return self._replace_scalar_result_actor(semantic_id, payload)
+        if semantic_id == RESULT_VECTOR_ACTOR_KEY:
+            if not isinstance(payload, ResultVectorGlyphSpec):
+                raise TypeError("Vector result actor requires a vector glyph spec.")
+            self._payloads[semantic_id] = (payload, generation)
+            self._visibility[semantic_id] = True
+            return self._replace_vector_result_actor(semantic_id, payload)
+        if semantic_id == RESULT_PROBE_ACTOR_KEY:
+            if not isinstance(payload, ResultProbeOverlaySpec):
+                raise TypeError("Probe result actor requires a probe overlay spec.")
+            self._payloads[semantic_id] = (payload, generation)
+            self._visibility[semantic_id] = True
+            return self._replace_probe_result_actor(semantic_id, payload)
+        if semantic_id == RESULT_COLORBAR_ACTOR_KEY:
+            if not isinstance(payload, ResultColorbarSpec):
+                raise TypeError("Result colorbar requires an applied colorbar spec.")
+            self._payloads[semantic_id] = (payload, generation)
+            self._visibility[semantic_id] = payload.visible
+            return self._replace_result_colorbar(semantic_id, payload)
         if semantic_id not in {"base_mesh", "wireframe"}:
             raise ValueError(f"Unsupported semantic actor: {semantic_id}")
         if not hasattr(payload, "mesh") or not hasattr(payload, "scene_state"):
@@ -485,6 +520,18 @@ class PyVistaQtRendererSession:
         if isinstance(payload, MeshQualityOverlaySpec):
             self._replace_mesh_quality_actor(semantic_id, payload)
             return
+        if isinstance(payload, ScalarResultOverlaySpec):
+            self._replace_scalar_result_actor(semantic_id, payload)
+            return
+        if isinstance(payload, ResultVectorGlyphSpec):
+            self._replace_vector_result_actor(semantic_id, payload)
+            return
+        if isinstance(payload, ResultProbeOverlaySpec):
+            self._replace_probe_result_actor(semantic_id, payload)
+            return
+        if isinstance(payload, ResultColorbarSpec):
+            self._replace_result_colorbar(semantic_id, payload)
+            return
         self._remove_native_actor(semantic_id)
         mesh = payload.mesh
         scene_state = payload.scene_state
@@ -601,6 +648,157 @@ class PyVistaQtRendererSession:
             opacity=0.75,
             show_edges=True,
             reset_camera=False,
+            render=False,
+        )
+        self._actors[semantic_id] = actor
+        _set_native_visibility(actor, self._visibility[semantic_id])
+        return actor
+
+    def _replace_scalar_result_actor(
+        self,
+        semantic_id: str,
+        payload: ScalarResultOverlaySpec,
+    ) -> object:
+        self._remove_native_actor(semantic_id)
+        base_payload_entry = self._payloads.get("base_mesh")
+        if base_payload_entry is None:
+            raise RuntimeError("Scalar result overlay requires an active mesh.")
+        mesh_payload = base_payload_entry[0]
+        active_fingerprint = getattr(
+            getattr(mesh_payload, "mesh_fingerprint", None),
+            "digest",
+            "",
+        )
+        if active_fingerprint != payload.mesh_fingerprint:
+            raise RuntimeError(
+                "Scalar result overlay fingerprint does not match the active mesh."
+            )
+        dataset = mesh_data_to_polydata(
+            mesh_payload.mesh,
+            pyvista_module=self._pyvista,
+        )
+        if payload.association == "point":
+            dataset.point_data[payload.field_name] = payload.values
+        elif payload.association == "cell":
+            dataset.cell_data[payload.field_name] = payload.values
+        else:
+            raise RuntimeError("Scalar result association must be point or cell.")
+        actor = self._require_open_interactor().add_mesh(
+            dataset,
+            name=f"osw-{semantic_id}",
+            scalars=payload.field_name,
+            clim=payload.display_range,
+            cmap=payload.colormap,
+            show_scalar_bar=False,
+            reset_camera=False,
+            render=False,
+        )
+        self._actors[semantic_id] = actor
+        _set_native_visibility(actor, self._visibility[semantic_id])
+        return actor
+
+    def _replace_vector_result_actor(
+        self,
+        semantic_id: str,
+        payload: ResultVectorGlyphSpec,
+    ) -> object:
+        self._remove_native_actor(semantic_id)
+        dataset = self._pyvista.PolyData(list(payload.positions))
+        dataset.point_data["osw_result_vector"] = payload.vectors
+        glyph = getattr(dataset, "glyph", None)
+        rendered = (
+            glyph(
+                orient="osw_result_vector",
+                scale=False,
+                factor=payload.scale,
+            )
+            if callable(glyph)
+            else dataset
+        )
+        actor = self._require_open_interactor().add_mesh(
+            rendered,
+            name=f"osw-{semantic_id}",
+            color="#38bdf8",
+            reset_camera=False,
+            render=False,
+        )
+        self._actors[semantic_id] = actor
+        _set_native_visibility(actor, self._visibility[semantic_id])
+        return actor
+
+    def _replace_probe_result_actor(
+        self,
+        semantic_id: str,
+        payload: ResultProbeOverlaySpec,
+    ) -> object:
+        self._remove_native_actor(semantic_id)
+        base_payload_entry = self._payloads.get("base_mesh")
+        if base_payload_entry is None:
+            raise RuntimeError("Result probe overlay requires an active mesh.")
+        mesh_payload = base_payload_entry[0]
+        active_fingerprint = getattr(
+            getattr(mesh_payload, "mesh_fingerprint", None),
+            "digest",
+            "",
+        )
+        if active_fingerprint != payload.mesh_fingerprint:
+            raise RuntimeError(
+                "Result probe overlay fingerprint does not match the active mesh."
+            )
+        dataset = mesh_data_to_polydata(
+            mesh_payload.mesh,
+            pyvista_module=self._pyvista,
+        )
+        if payload.association == "point":
+            extractor = getattr(dataset, "extract_points", None)
+            subset = (
+                extractor(
+                    [payload.transient_backend_index],
+                    adjacent_cells=False,
+                    include_cells=False,
+                )
+                if callable(extractor)
+                else self._pyvista.PolyData(
+                    [mesh_payload.mesh.points[payload.transient_backend_index]]
+                )
+            )
+        else:
+            extractor = getattr(dataset, "extract_cells", None)
+            if not callable(extractor):
+                raise RuntimeError("Result probe backend cannot extract cells.")
+            subset = extractor([payload.transient_backend_index])
+        actor = self._require_open_interactor().add_mesh(
+            subset,
+            name=f"osw-{semantic_id}",
+            color="#f43f5e",
+            point_size=14,
+            render_points_as_spheres=True,
+            show_edges=True,
+            reset_camera=False,
+            render=False,
+        )
+        self._actors[semantic_id] = actor
+        _set_native_visibility(actor, self._visibility[semantic_id])
+        return actor
+
+    def _replace_result_colorbar(
+        self,
+        semantic_id: str,
+        payload: ResultColorbarSpec,
+    ) -> object:
+        self._remove_native_actor(semantic_id)
+        scalar_actor = self._actors.get(RESULT_SCALAR_ACTOR_KEY)
+        mapper = getattr(scalar_actor, "mapper", None)
+        add_scalar_bar = getattr(
+            self._require_open_interactor(),
+            "add_scalar_bar",
+            None,
+        )
+        if not callable(add_scalar_bar):
+            raise RuntimeError("Result colorbar is unavailable in this backend.")
+        actor = add_scalar_bar(
+            title=payload.title,
+            mapper=mapper,
             render=False,
         )
         self._actors[semantic_id] = actor

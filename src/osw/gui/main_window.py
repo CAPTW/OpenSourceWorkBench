@@ -2918,6 +2918,13 @@ class MainWindow(_BaseMainWindow):
                         stale_result=False,
                     )
                 )
+            if hasattr(self.mesh_viewer, "set_rebind_result_callback"):
+                self.mesh_viewer.set_rebind_result_callback(
+                    self._guard_document_callback(
+                        self.rebind_mesh_viewer_result_binding,
+                        stale_result=False,
+                    )
+                )
             if hasattr(self.mesh_viewer, "set_capture_scene_screenshot_callback"):
                 self.mesh_viewer.set_capture_scene_screenshot_callback(
                     self._guard_document_callback(
@@ -3476,9 +3483,23 @@ class MainWindow(_BaseMainWindow):
             self.mesh_viewer, "set_result_dataset_candidates"
         ):
             return
-        self.mesh_viewer.set_result_dataset_candidates(
+        associated = self.mesh_viewer.set_result_dataset_candidates(
             self._mesh_viewer_result_dataset_candidates()
         )
+        if not hasattr(self.mesh_viewer, "set_result_binding"):
+            return
+        binding = None
+        if associated is not None:
+            candidates = self._result_ref_candidates_for_dataset(associated)
+            if len(candidates) == 1:
+                from osw.core.result_mesh_binding import (
+                    result_mesh_binding_from_metadata,
+                )
+
+                binding = result_mesh_binding_from_metadata(
+                    candidates[0].result_ref.metadata
+                )
+        self.mesh_viewer.set_result_binding(binding)
 
     def _mesh_viewer_result_dataset_candidates(self) -> tuple[object, ...]:
         if self.last_result_datasets:
@@ -3491,7 +3512,11 @@ class MainWindow(_BaseMainWindow):
             if getattr(dataset, "fields", ())
         )
 
-    def persist_mesh_viewer_result_binding(self) -> bool:
+    def persist_mesh_viewer_result_binding(
+        self,
+        *,
+        allow_rebind: bool = False,
+    ) -> bool:
         """Persist one confirmed result/mesh binding into Project result metadata."""
         if self.mesh_viewer is None or not hasattr(self.mesh_viewer, "current_state"):
             return self._show_result_mesh_binding_status(
@@ -3553,16 +3578,20 @@ class MainWindow(_BaseMainWindow):
         target_index = target_candidate.index
         target_ref = target_candidate.result_ref
         node_count, cell_count = _mesh_counts(mesh)
+        from osw.mesh.identity import compute_mesh_fingerprint
+
+        mesh_fingerprint = compute_mesh_fingerprint(mesh)
         existing_diagnostics = self._existing_result_binding_diagnostics(
             target_ref,
             active_mesh_ref=mesh_ref,
             node_count=node_count,
             cell_count=cell_count,
+            active_mesh_fingerprint=mesh_fingerprint.digest,
         )
-        if existing_diagnostics:
+        if existing_diagnostics and not allow_rebind:
             return self._show_result_mesh_binding_status(
                 "Existing result/mesh binding metadata is stale or malformed; "
-                "binding was not persisted.",
+                "use the explicit rebind action to replace it.",
                 existing_diagnostics,
             )
 
@@ -3592,9 +3621,12 @@ class MainWindow(_BaseMainWindow):
             field_id=field_id,
             node_count=node_count,
             cell_count=cell_count,
+            mesh_identity_schema="osw.mesh_identity.v1",
+            mesh_fingerprint=mesh_fingerprint.digest,
             proposal_metadata=proposal_metadata,
             active_mesh_ref=mesh_ref,
             require_field_id=True,
+            require_mesh_fingerprint=True,
         )
         if not bridge.valid:
             return self._show_result_mesh_binding_status(
@@ -3609,6 +3641,7 @@ class MainWindow(_BaseMainWindow):
                 bridge.result_ref,
             )
         )
+        self._project_dirty = True
         message = (
             "Persisted result/mesh binding metadata for result "
             f"'{_result_ref_display_id(target_ref)}' on mesh '{mesh_ref}' "
@@ -3618,8 +3651,18 @@ class MainWindow(_BaseMainWindow):
             self.mesh_viewer, "mark_result_mesh_binding_persisted"
         ):
             self.mesh_viewer.mark_result_mesh_binding_persisted(message)
+        if self.mesh_viewer is not None and hasattr(
+            self.mesh_viewer,
+            "set_result_binding",
+        ):
+            self.mesh_viewer.set_result_binding(bridge.binding)
         self._placeholder_action(message)
         return True
+
+    def rebind_mesh_viewer_result_binding(self) -> bool:
+        """Explicitly replace stale/legacy binding metadata after confirmation."""
+
+        return self.persist_mesh_viewer_result_binding(allow_rebind=True)
 
     def _show_result_mesh_binding_status(
         self,
@@ -3744,6 +3787,7 @@ class MainWindow(_BaseMainWindow):
         active_mesh_ref: str,
         node_count: int | None,
         cell_count: int | None,
+        active_mesh_fingerprint: str | None = None,
     ) -> tuple[str, ...]:
         from osw.core.result_mesh_binding import (
             MESH_BINDING_METADATA_KEY,
@@ -3758,6 +3802,7 @@ class MainWindow(_BaseMainWindow):
             active_mesh_ref=active_mesh_ref,
             node_count=node_count,
             cell_count=cell_count,
+            active_mesh_fingerprint=active_mesh_fingerprint,
         )
         return () if check.valid else tuple(check.diagnostics)
 
