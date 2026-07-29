@@ -48,7 +48,7 @@ def _mesh() -> MeshData:
 class RecordingSceneAdapter:
     """Fake adapter that optionally writes a dummy screenshot file."""
 
-    def __init__(self, write_image: bool = False) -> None:
+    def __init__(self, write_image: bool = True) -> None:
         self.write_image = write_image
         self.export_calls: list[str] = []
 
@@ -115,11 +115,15 @@ def test_preview_without_staged_screenshots_keeps_summary_unchanged(app: object)
     )
 
 
-def test_preview_includes_staged_scene_screenshot_section(app: object, tmp_path: Path) -> None:
+def test_preview_includes_persisted_scene_screenshot_section(
+    app: object, tmp_path: Path
+) -> None:
     window = _window(app=app, adapter=RecordingSceneAdapter(write_image=True))
     window.load_mesh_into_viewer(_mesh(), mesh_ref="mesh-1")
     window._pick_scene_screenshot_target_path = lambda: str(tmp_path / "scene.png")
     window.mesh_viewer.capture_button.click()
+    window._confirm_persist_scene_screenshots = lambda count: True
+    assert window.persist_staged_scene_screenshots() == 1
 
     preview_summary = window.generate_report_preview()
 
@@ -129,14 +133,19 @@ def test_preview_includes_staged_scene_screenshot_section(app: object, tmp_path:
 
     section = _scene_screenshot_section(preview_summary)
     assert section is not None
-    assert any("Image path: " in block for block in getattr(section, "content_blocks", ()))
+    assert any("scene.png" in block for block in getattr(section, "content_blocks", ()))
+    assert all(str(tmp_path) not in block for block in section.content_blocks)
 
 
 def test_preview_screenshot_missing_image_warns_like_export(app: object, tmp_path: Path) -> None:
     window = _window(app=app, adapter=RecordingSceneAdapter())
     window.load_mesh_into_viewer(_mesh(), mesh_ref="mesh-1")
-    window._pick_scene_screenshot_target_path = lambda: str(tmp_path / "missing.png")
+    image = tmp_path / "missing.png"
+    window._pick_scene_screenshot_target_path = lambda: str(image)
     window.mesh_viewer.capture_button.click()
+    window._confirm_persist_scene_screenshots = lambda count: True
+    assert window.persist_staged_scene_screenshots() == 1
+    image.unlink()
     before_project = window.current_project.to_dict()
 
     preview_summary = window.generate_report_preview()
@@ -156,6 +165,8 @@ def test_preview_handles_non_image_screenshot_artifact(app: object, tmp_path: Pa
     window.load_mesh_into_viewer(_mesh(), mesh_ref="mesh-1")
     window._pick_scene_screenshot_target_path = lambda: str(tmp_path / "scene.tif")
     window.mesh_viewer.capture_button.click()
+    window._confirm_persist_scene_screenshots = lambda count: True
+    assert window.persist_staged_scene_screenshots() == 1
     preview_summary = window.generate_report_preview()
 
     section = _scene_screenshot_section(preview_summary)
@@ -176,6 +187,8 @@ def test_preview_does_not_add_scene_screenshots_to_summary_figures(
 
     window._pick_scene_screenshot_target_path = lambda: str(tmp_path / "scene.png")
     window.mesh_viewer.capture_button.click()
+    window._confirm_persist_scene_screenshots = lambda count: True
+    assert window.persist_staged_scene_screenshots() == 1
     preview_summary = window.generate_report_preview()
 
     assert len(preview_summary.figures) == baseline_figure_count

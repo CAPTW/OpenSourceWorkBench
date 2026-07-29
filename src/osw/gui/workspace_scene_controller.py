@@ -9,9 +9,12 @@ compatibility seam inside ``SceneAdapterRendererSession``.
 
 from __future__ import annotations
 
+import hashlib
+import struct
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
+from pathlib import Path
 from types import MappingProxyType
 from typing import Protocol, runtime_checkable
 
@@ -36,6 +39,19 @@ from osw.core.selection_resolution import (
     resolve_selection_target,
 )
 from osw.core.solver_setup import SetupRecordStatus, evaluate_solver_setup
+from osw.core.workspace_3d import (
+    ACTIVE_SCENE_SCHEMA,
+    ActiveSceneCameraState,
+    ActiveSceneClippingState,
+    ActiveSceneRestoreResult,
+    ActiveSceneRestoreStatus,
+    ActiveSceneResultState,
+    ActiveSceneScreenshotRequest,
+    ActiveSceneState,
+    MeshQualityViewState,
+    SemanticActorVisibility,
+    active_scene_provenance,
+)
 from osw.gui.interactive_results_view_model import (
     RESULT_COLORBAR_ACTOR_KEY,
     RESULT_PROBE_ACTOR_KEY,
@@ -87,7 +103,9 @@ from osw.post.result_probe import (
     probe_result_entity,
 )
 from osw.post.scene_model import (
+    SceneCameraState,
     SceneInputRef,
+    SceneRenderOptions,
     SceneScreenshotRecord,
     SceneViewState,
 )
@@ -135,6 +153,20 @@ class ScenePickEvent:
     entity_kind: EntityKind
     backend_index: int
     intent: str = "replace"
+
+
+@dataclass(frozen=True)
+class ActiveSceneScreenshotResult:
+    """Explicit screenshot outcome with deterministic capture provenance."""
+
+    status: str
+    record: SceneScreenshotRecord | None = None
+    active_scene_digest: str = ""
+    image_sha256: str = ""
+    image_byte_length: int = 0
+    image_size: tuple[int, int] | None = None
+    backend_kind: str = ""
+    diagnostics: tuple[str, ...] = ()
 
 
 @runtime_checkable
@@ -402,6 +434,17 @@ class ActiveSceneController:
         self._mesh: MeshData | None = None
         self._mesh_ref = ""
         self._mesh_fingerprint: MeshFingerprint | None = None
+        self._scene_view_state = SceneViewState()
+        self._representation = "surface"
+        self._axes_visible = True
+        self._clipping_state = ActiveSceneClippingState()
+        self._active_named_selection_ids: tuple[str, ...] = ()
+        self._pending_active_scene_state: ActiveSceneState | None = None
+        self._active_scene_restore_result = ActiveSceneRestoreResult(
+            ActiveSceneRestoreStatus.PENDING,
+            ("ACTIVE_MESH_NOT_LOADED",),
+            ("No saved active scene is ready to restore.",),
+        )
         self._pick_mode = SelectionMode.NONE
         self._hover_target: SelectionTargetRef | None = None
         self._current_selection_target: SelectionTargetRef | None = None
@@ -431,6 +474,7 @@ class ActiveSceneController:
         self._mesh_quality_visibility_snapshot: dict[str, bool] | None = None
         self._interactive_result_dataset: object | None = None
         self._interactive_result_binding: ResultMeshBinding | None = None
+        self._interactive_result_ref_id = ""
         self._interactive_result_resolution: ResultMeshBindingResolution | None = None
         self._interactive_scalar_result: InteractiveScalarResult | None = None
         self._interactive_vector_result: ResultVectorGlyphSpec | None = None
@@ -478,6 +522,14 @@ class ActiveSceneController:
     @property
     def current_mesh_ref(self) -> str:
         return self._mesh_ref
+
+    @property
+    def pending_active_scene_state(self) -> ActiveSceneState | None:
+        return self._pending_active_scene_state
+
+    @property
+    def active_scene_restore_result(self) -> ActiveSceneRestoreResult:
+        return self._active_scene_restore_result
 
     @property
     def pick_mode(self) -> SelectionMode:
@@ -575,11 +627,17 @@ class ActiveSceneController:
         self._mesh = mesh
         self._mesh_ref = str(scene_input.mesh_ref or "")
         self._mesh_fingerprint = compute_mesh_fingerprint(mesh)
+        self._scene_view_state = scene_state
+        self._representation = _representation_from_scene_state(scene_state)
+        self._axes_visible = scene_state.render_options.show_axes
+        self._clipping_state = ActiveSceneClippingState()
         self._clear_transient_state(call_session=False)
         session = self._ensure_session()
         if session is None:
             self._resolve_and_display_named_selections()
             self._resolve_interactive_result_binding()
+            if self._pending_active_scene_state is not None:
+                self.restore_pending_active_scene_state()
             return self._fallback_scene_state(mesh, scene_state)
 
         replacing = bool(self._actor_records)
@@ -594,6 +652,8 @@ class ActiveSceneController:
             except Exception as exc:
                 self._fail_session(exc)
                 self._resolve_and_display_named_selections()
+                if self._pending_active_scene_state is not None:
+                    self.restore_pending_active_scene_state()
                 return self._fallback_scene_state(mesh, scene_state)
             self._actor_records.clear()
 
@@ -635,10 +695,14 @@ class ActiveSceneController:
             self._fail_session(exc)
             self._resolve_and_display_named_selections()
             self._resolve_interactive_result_binding()
+            if self._pending_active_scene_state is not None:
+                self.restore_pending_active_scene_state()
             return self._fallback_scene_state(mesh, scene_state)
 
         self._fallback_reason = ""
         self._state = SceneLifecycleState.READY_SCENE
+        if self._pending_active_scene_state is not None:
+            self.restore_pending_active_scene_state()
         if result is not None:
             return result
         return self._fallback_scene_state(mesh, scene_state)
@@ -650,6 +714,16 @@ class ActiveSceneController:
         """Install one thin GUI notification callback."""
 
         self._selection_listener = callback
+
+    def set_active_named_selection_ids(
+        self,
+        selection_ids: Sequence[str],
+    ) -> None:
+        """Record stable selected NamedSelection IDs without changing membership."""
+
+        self._active_named_selection_ids = tuple(
+            sorted({str(item) for item in selection_ids if str(item)})
+        )
 
     def set_pick_mode(self, mode: str | SelectionMode) -> bool:
         """Enable deterministic node/cell picking for the active mesh."""
@@ -825,11 +899,14 @@ class ActiveSceneController:
         self,
         result_dataset: object | None,
         binding: ResultMeshBinding | Mapping[str, object] | None,
+        *,
+        result_ref_id: str = "",
     ) -> ResultMeshBindingResolution | None:
         """Attach transient dataset data and resolve its persisted exact binding."""
 
         self.clear_interactive_results()
         self._interactive_result_dataset = result_dataset
+        self._interactive_result_ref_id = str(result_ref_id or "")
         if isinstance(binding, ResultMeshBinding):
             self._interactive_result_binding = binding
         elif isinstance(binding, Mapping):
@@ -1197,6 +1274,9 @@ class ActiveSceneController:
         return restored
 
     def set_view_state(self, scene_state: SceneViewState) -> None:
+        self._scene_view_state = scene_state
+        self._representation = _representation_from_scene_state(scene_state)
+        self._axes_visible = scene_state.render_options.show_axes
         session = self._session
         if session is None or self._state is SceneLifecycleState.CLOSED:
             return
@@ -1226,13 +1306,17 @@ class ActiveSceneController:
         return self._call_session("camera", "set_camera_preset", preset)
 
     def set_axes_visible(self, visible: bool) -> bool:
-        return self._call_session("axes", "set_axes_visible", bool(visible))
+        applied = self._call_session("axes", "set_axes_visible", bool(visible))
+        if applied:
+            self._axes_visible = bool(visible)
+        return applied
 
     def set_representation(self, mode: str) -> bool:
         if mode not in _REPRESENTATION_VISIBILITY:
             return False
         if not self._call_session("representation", "set_representation", mode):
             return False
+        self._representation = mode
         self._set_registry_representation(mode)
         if self._mesh_quality_visibility_snapshot is not None:
             self._mesh_quality_visibility_snapshot = {
@@ -1296,26 +1380,299 @@ class ActiveSceneController:
         normalized = axis.lower()
         if normalized not in {"x", "y", "z"}:
             return False
-        return self._call_session(
+        applied = self._call_session(
             "clipping",
             "enable_clipping",
             normalized,
             float(origin),
         )
+        if applied:
+            self._clipping_state = _clipping_from_axis(normalized, float(origin))
+        return applied
 
     def update_clipping(self, axis: str, origin: float) -> bool:
         normalized = axis.lower()
         if normalized not in {"x", "y", "z"}:
             return False
-        return self._call_session(
+        applied = self._call_session(
             "clipping",
             "update_clipping",
             normalized,
             float(origin),
         )
+        if applied:
+            self._clipping_state = _clipping_from_axis(normalized, float(origin))
+        return applied
 
     def clear_clipping(self) -> bool:
-        return self._call_session("clipping", "clear_clipping")
+        applied = self._call_session("clipping", "clear_clipping")
+        if applied:
+            self._clipping_state = ActiveSceneClippingState()
+        return applied
+
+    def snapshot_active_scene_state(self) -> ActiveSceneState | None:
+        """Snapshot only durable declarative state for the active in-memory mesh."""
+
+        fingerprint = self._mesh_fingerprint
+        if self._mesh is None or fingerprint is None or not self._mesh_ref:
+            return None
+        actor_visibility = tuple(
+            item
+            for semantic_id, record in sorted(self._actor_records.items())
+            if (
+                item := _semantic_visibility_entry(
+                    semantic_id,
+                    record.visible,
+                    mesh_ref=self._mesh_ref,
+                )
+            )
+            is not None
+        )
+        return ActiveSceneState(
+            schema=ACTIVE_SCENE_SCHEMA,
+            mesh_ref=self._mesh_ref,
+            mesh_fingerprint=fingerprint.digest,
+            camera=self._snapshot_camera_state(),
+            representation=self._representation,
+            axes_visible=self._axes_visible,
+            actor_visibility=actor_visibility,
+            visible_named_selection_ids=tuple(sorted(self._named_overlay_ids)),
+            active_named_selection_ids=self._active_named_selection_ids,
+            result_state=self._snapshot_result_state(),
+            mesh_quality_state=self._snapshot_mesh_quality_state(),
+            clipping_state=self._clipping_state,
+            selection_mode=self._pick_mode.value,
+        )
+
+    def set_pending_active_scene_state(
+        self,
+        state: ActiveSceneState | Mapping[str, object] | None,
+    ) -> ActiveSceneRestoreResult:
+        """Bind saved metadata without loading a mesh, result, or renderer."""
+
+        if state is None:
+            self._pending_active_scene_state = None
+            self._active_scene_restore_result = ActiveSceneRestoreResult(
+                ActiveSceneRestoreStatus.PENDING,
+                (),
+                ("No saved workspace state.",),
+            )
+            return self._active_scene_restore_result
+        try:
+            pending = (
+                state
+                if isinstance(state, ActiveSceneState)
+                else ActiveSceneState.from_dict(state)
+            )
+        except (TypeError, ValueError):
+            self._pending_active_scene_state = None
+            self._active_scene_restore_result = ActiveSceneRestoreResult(
+                ActiveSceneRestoreStatus.INVALID,
+                ("ACTIVE_SCENE_MALFORMED",),
+                ("Saved active-scene metadata is invalid.",),
+            )
+            return self._active_scene_restore_result
+        self._pending_active_scene_state = pending
+        self._active_scene_restore_result = ActiveSceneRestoreResult(
+            ActiveSceneRestoreStatus.PENDING,
+            ("ACTIVE_MESH_NOT_LOADED",),
+            ("Saved workspace state is pending an explicit mesh reload.",),
+        )
+        if self._mesh is not None:
+            return self.restore_pending_active_scene_state()
+        return self._active_scene_restore_result
+
+    def clear_saved_active_scene_state(self) -> None:
+        """Clear controller-owned pending metadata without touching report assets."""
+
+        self._pending_active_scene_state = None
+        self._active_scene_restore_result = ActiveSceneRestoreResult(
+            ActiveSceneRestoreStatus.PENDING,
+            (),
+            ("No saved workspace state.",),
+        )
+
+    def restore_pending_active_scene_state(self) -> ActiveSceneRestoreResult:
+        """Restore compatible components in deterministic fail-closed order."""
+
+        state = self._pending_active_scene_state
+        fingerprint = self._mesh_fingerprint
+        if state is None:
+            return self._active_scene_restore_result
+        if self._mesh is None or fingerprint is None:
+            self._active_scene_restore_result = ActiveSceneRestoreResult(
+                ActiveSceneRestoreStatus.PENDING,
+                ("ACTIVE_MESH_NOT_LOADED",),
+                ("Saved workspace state is pending an explicit mesh reload.",),
+            )
+            return self._active_scene_restore_result
+        if state.mesh_ref != self._mesh_ref:
+            return self._set_stale_restore(
+                "MESH_REF_MISMATCH",
+                "Saved workspace mesh reference does not match the active mesh.",
+            )
+        if state.mesh_fingerprint != fingerprint.digest:
+            return self._set_stale_restore(
+                "MESH_FINGERPRINT_MISMATCH",
+                "Saved workspace mesh fingerprint does not match the active mesh.",
+            )
+
+        reasons: list[str] = []
+        diagnostics: list[str] = []
+        session = self._session
+        renderer_available = (
+            session is not None
+            and self._state not in {SceneLifecycleState.FALLBACK, SceneLifecycleState.CLOSED}
+        )
+
+        if renderer_available:
+            if not self.set_representation(state.representation):
+                reasons.append("REPRESENTATION_UNSUPPORTED")
+                diagnostics.append("Saved representation is unavailable.")
+            if not self.set_axes_visible(state.axes_visible):
+                reasons.append("RENDERER_UNAVAILABLE")
+                diagnostics.append("Saved axes visibility could not be applied.")
+            apply_camera = getattr(session, "apply_camera_state", None)
+            if callable(apply_camera):
+                try:
+                    apply_camera(state.camera)
+                except Exception:
+                    reasons.append("CAMERA_INVALID")
+                    diagnostics.append("Saved camera could not be applied.")
+            else:
+                reasons.append("RENDERER_UNAVAILABLE")
+                diagnostics.append("The renderer cannot apply a saved camera.")
+        else:
+            reasons.append("RENDERER_UNAVAILABLE")
+            diagnostics.append(
+                self._fallback_reason or "The renderer backend is unavailable."
+            )
+
+        self._restore_named_selection_state(state, reasons, diagnostics)
+        self._restore_setup_visibility(state, reasons, diagnostics)
+        self._restore_mesh_quality_state(state, reasons, diagnostics)
+        self._restore_result_state(state, reasons, diagnostics)
+        self._restore_actor_visibility(state, reasons, diagnostics)
+        self._restore_clipping_state(state, reasons, diagnostics)
+        if state.selection_mode in {"node", "point", "cell"}:
+            self._pick_mode = SelectionMode.coerce(
+                "node" if state.selection_mode == "point" else state.selection_mode
+            )
+        self._active_named_selection_ids = tuple(
+            selection_id
+            for selection_id in state.active_named_selection_ids
+            if any(item.id == selection_id for item in self._named_selections)
+        )
+        if renderer_available:
+            try:
+                session.request_render()
+            except Exception:
+                reasons.append("RENDERER_UNAVAILABLE")
+                diagnostics.append("The restored scene could not be rendered.")
+
+        unique_reasons = tuple(dict.fromkeys(reasons))
+        status = (
+            ActiveSceneRestoreStatus.PARTIAL
+            if unique_reasons
+            else ActiveSceneRestoreStatus.RESTORED
+        )
+        self._active_scene_restore_result = ActiveSceneRestoreResult(
+            status,
+            unique_reasons,
+            tuple(dict.fromkeys(diagnostics)),
+        )
+        return self._active_scene_restore_result
+
+    def capture_active_scene_screenshot(
+        self,
+        request: ActiveSceneScreenshotRequest,
+    ) -> ActiveSceneScreenshotResult:
+        """Explicitly capture the current session and attach byte-level provenance."""
+
+        state = self.snapshot_active_scene_state()
+        if state is None or self._mesh is None:
+            return ActiveSceneScreenshotResult(
+                status="BLOCKED",
+                diagnostics=("Load an active in-memory mesh before capture.",),
+            )
+        session = self._ensure_session()
+        exporter = (
+            None
+            if session is None
+            else getattr(session, "export_screenshot_record", None)
+        )
+        if not callable(exporter):
+            return ActiveSceneScreenshotResult(
+                status="BLOCKED",
+                backend_kind=self.backend_kind,
+                diagnostics=(
+                    self._fallback_reason
+                    or "The active renderer does not support screenshot capture.",
+                ),
+            )
+        scene_state = _scene_view_state_from_active_scene(
+            state,
+            self._scene_view_state,
+            requested_size=request.requested_size,
+        )
+        try:
+            record = exporter(
+                request.output_path,
+                record_id=request.record_id,
+                scene_state=scene_state,
+                mesh=self._mesh,
+                mesh_ref=self._mesh_ref,
+                selection_ids=state.active_named_selection_ids,
+                caption=request.caption or None,
+                created_by="active-scene",
+            )
+            target = Path(request.output_path)
+            if not target.is_file() or str(getattr(record, "path", "")) != str(target):
+                raise RuntimeError("Expected screenshot file was not written.")
+            image_bytes = target.read_bytes()
+        except PyVistaUnavailableError:
+            return ActiveSceneScreenshotResult(
+                status="BLOCKED",
+                backend_kind=self.backend_kind,
+                diagnostics=("PyVista unavailable for active scene capture.",),
+            )
+        except Exception:
+            return ActiveSceneScreenshotResult(
+                status="FAILED",
+                backend_kind=self.backend_kind,
+                diagnostics=("The active scene screenshot could not be captured.",),
+            )
+        image_sha256 = hashlib.sha256(image_bytes).hexdigest()
+        image_size = _image_dimensions(image_bytes)
+        provenance = active_scene_provenance(
+            state,
+            image_sha256=image_sha256,
+            image_byte_length=len(image_bytes),
+            image_size=image_size,
+            capture_backend_kind=self.backend_kind,
+        )
+        metadata = {
+            **dict(getattr(record, "metadata", {}) or {}),
+            **request.metadata,
+            "osw.active_scene.provenance": provenance,
+        }
+        replacement_values: dict[str, object] = {
+            "caption": request.caption or getattr(record, "caption", None),
+            "scene_state": scene_state,
+            "metadata": metadata,
+        }
+        if request.path_kind is not None:
+            replacement_values["path_kind"] = request.path_kind
+        record = replace(record, **replacement_values)
+        return ActiveSceneScreenshotResult(
+            status="CAPTURED",
+            record=record,
+            active_scene_digest=provenance["active_scene_digest"],
+            image_sha256=image_sha256,
+            image_byte_length=len(image_bytes),
+            image_size=image_size,
+            backend_kind=self.backend_kind,
+        )
 
     def export_screenshot_record(
         self,
@@ -1384,6 +1741,10 @@ class ActiveSceneController:
         self._mesh = None
         self._mesh_ref = ""
         self._mesh_fingerprint = None
+        self._scene_view_state = SceneViewState()
+        self._representation = "surface"
+        self._axes_visible = True
+        self._clipping_state = ActiveSceneClippingState()
         self._clear_transient_state(call_session=False)
         self._named_selection_resolutions = {
             selection.id: resolve_named_selection(selection)
@@ -1438,10 +1799,325 @@ class ActiveSceneController:
         self._mesh = None
         self._mesh_ref = ""
         self._mesh_fingerprint = None
+        self._scene_view_state = SceneViewState()
+        self._representation = "surface"
+        self._axes_visible = True
+        self._clipping_state = ActiveSceneClippingState()
+        self._active_named_selection_ids = ()
+        self._pending_active_scene_state = None
+        self._active_scene_restore_result = ActiveSceneRestoreResult(
+            ActiveSceneRestoreStatus.PENDING,
+            (),
+            ("No saved workspace state.",),
+        )
         self._clear_transient_state(call_session=False)
         self._named_overlay_ids.clear()
         self._setup_overlay_ids.clear()
         self._setup_statuses = {}
+
+    def _snapshot_camera_state(self) -> ActiveSceneCameraState:
+        session = self._session
+        getter = None if session is None else getattr(session, "get_camera_state", None)
+        if callable(getter):
+            try:
+                value = getter()
+                if isinstance(value, ActiveSceneCameraState):
+                    return value
+                if isinstance(value, Mapping):
+                    return ActiveSceneCameraState.from_dict(value)
+                return ActiveSceneCameraState(
+                    position=getattr(value, "position", None),
+                    focal_point=getattr(value, "focal_point", None),
+                    view_up=getattr(value, "view_up", None),
+                    parallel_projection=bool(
+                        getattr(value, "parallel_projection", False)
+                    ),
+                    parallel_scale=getattr(value, "parallel_scale", None),
+                    view_preset=str(getattr(value, "view_preset", "") or ""),
+                )
+            except (TypeError, ValueError):
+                pass
+        camera = self._scene_view_state.camera
+        return ActiveSceneCameraState(
+            position=camera.position,
+            focal_point=camera.focal_point,
+            view_up=camera.view_up,
+            parallel_projection=camera.parallel_projection,
+            parallel_scale=camera.parallel_scale,
+            view_preset=str(camera.view_preset or ""),
+        )
+
+    def _snapshot_result_state(self) -> ActiveSceneResultState | None:
+        binding = self._interactive_result_binding
+        scalar = self._interactive_scalar_result
+        vector = self._interactive_vector_result
+        if binding is None and scalar is None and vector is None:
+            return None
+        range_mode = (
+            str(getattr(scalar, "range_mode", "AUTO")).split(".")[-1]
+            if scalar is not None
+            else "AUTO"
+        )
+        display_range = (
+            getattr(scalar, "display_range", None)
+            if range_mode == "MANUAL"
+            else None
+        )
+        return ActiveSceneResultState(
+            result_ref_id=self._interactive_result_ref_id,
+            result_dataset_id=str(
+                getattr(binding, "result_dataset_id", "")
+                or getattr(self._interactive_result_dataset, "dataset_id", "")
+            ),
+            binding_schema=str(getattr(binding, "schema", "") or ""),
+            mesh_fingerprint=str(
+                getattr(binding, "mesh_fingerprint", "")
+                or (
+                    self._mesh_fingerprint.digest
+                    if self._mesh_fingerprint is not None
+                    else ""
+                )
+            ),
+            scalar_field=str(getattr(scalar, "field_name", "") or ""),
+            scalar_component=str(getattr(scalar, "component", "") or ""),
+            scalar_association=str(getattr(scalar, "association", "") or ""),
+            range_mode=range_mode,
+            manual_min=display_range[0] if display_range is not None else None,
+            manual_max=display_range[1] if display_range is not None else None,
+            colormap=str(getattr(scalar, "colormap", "viridis") or "viridis"),
+            colorbar_visible=bool(
+                getattr(scalar, "colorbar_visible", True)
+            ),
+            vector_field=str(getattr(vector, "field_name", "") or ""),
+            vector_components=tuple(
+                getattr(vector, "selected_components", ()) or ()
+            ),
+            vector_association=str(
+                getattr(vector, "association", "") or ""
+            ),
+            vector_visible=bool(
+                vector is not None
+                and vector.applied
+                and RESULT_VECTOR_ACTOR_KEY in self._actor_records
+            ),
+            glyph_scale=float(getattr(vector, "scale", 1.0) or 1.0),
+            glyph_max_count=max(
+                1,
+                int(getattr(vector, "sampled_count", 500) or 500),
+            ),
+        )
+
+    def _snapshot_mesh_quality_state(self) -> MeshQualityViewState | None:
+        if (
+            self._mesh_quality_analysis is None
+            and not self._mesh_quality_highlight_visible
+        ):
+            return None
+        return MeshQualityViewState(
+            metric_schema=MESH_QUALITY_METRIC_SCHEMA,
+            threshold=self._mesh_quality_threshold,
+            highlight_visible=self._mesh_quality_highlight_visible,
+        )
+
+    def _set_stale_restore(
+        self,
+        reason_code: str,
+        diagnostic: str,
+    ) -> ActiveSceneRestoreResult:
+        self._active_scene_restore_result = ActiveSceneRestoreResult(
+            ActiveSceneRestoreStatus.STALE,
+            (reason_code,),
+            (diagnostic,),
+        )
+        return self._active_scene_restore_result
+
+    def _restore_named_selection_state(
+        self,
+        state: ActiveSceneState,
+        reasons: list[str],
+        diagnostics: list[str],
+    ) -> None:
+        requested = set(state.visible_named_selection_ids)
+        known = {selection.id for selection in self._named_selections}
+        for selection_id in sorted(requested - known):
+            reasons.append("NAMED_SELECTION_NOT_FOUND")
+            diagnostics.append(
+                f"Saved NamedSelection '{selection_id}' is not present."
+            )
+        session = self._session
+        for selection_id in tuple(self._named_overlay_ids):
+            if selection_id in requested:
+                continue
+            remover = (
+                None
+                if session is None
+                else getattr(session, "remove_named_selection_overlay", None)
+            )
+            if callable(remover):
+                try:
+                    remover(selection_id)
+                except Exception:
+                    reasons.append("RENDERER_UNAVAILABLE")
+                    diagnostics.append(
+                        f"NamedSelection '{selection_id}' visibility was not applied."
+                    )
+            self._named_overlay_ids.discard(selection_id)
+        for selection_id in sorted(requested & known):
+            resolution = self._named_selection_resolutions.get(selection_id)
+            if resolution is None or resolution.state is not ResolutionState.RESOLVED:
+                reasons.append("NAMED_SELECTION_NOT_RESOLVED")
+                diagnostics.append(
+                    f"NamedSelection '{selection_id}' is not exactly resolved."
+                )
+
+    def _restore_setup_visibility(
+        self,
+        state: ActiveSceneState,
+        reasons: list[str],
+        diagnostics: list[str],
+    ) -> None:
+        for item in state.actor_visibility:
+            semantic_id = _semantic_id_from_visibility(item)
+            if not semantic_id.startswith("setup:"):
+                continue
+            status = self._setup_statuses.get(item.source_id)
+            if status is None or str(getattr(status, "state", "")) != "READY":
+                reasons.append("SETUP_RECORD_NOT_READY")
+                diagnostics.append(
+                    f"Setup record '{item.source_id}' is not READY."
+                )
+
+    def _restore_mesh_quality_state(
+        self,
+        state: ActiveSceneState,
+        reasons: list[str],
+        diagnostics: list[str],
+    ) -> None:
+        quality = state.mesh_quality_state
+        if quality is None:
+            return
+        analysis = self.analyze_mesh_quality()
+        if analysis is None:
+            reasons.append("MESH_QUALITY_RECOMPUTE_UNAVAILABLE")
+            diagnostics.append("Mesh Diagnostics could not be recomputed.")
+            return
+        self.set_mesh_quality_threshold(quality.threshold)
+        if quality.highlight_visible and not self.set_mesh_quality_highlight_visible(
+            True
+        ):
+            reasons.append("RENDERER_UNAVAILABLE")
+            diagnostics.append("Mesh Diagnostics highlight could not be restored.")
+
+    def _restore_result_state(
+        self,
+        state: ActiveSceneState,
+        reasons: list[str],
+        diagnostics: list[str],
+    ) -> None:
+        result = state.result_state
+        if result is None:
+            return
+        if self._interactive_result_dataset is None:
+            reasons.append("RESULT_DATASET_NOT_AVAILABLE")
+            diagnostics.append(
+                f"Result dataset '{result.result_dataset_id}' is not loaded."
+            )
+            return
+        if (
+            result.result_ref_id
+            and result.result_ref_id != self._interactive_result_ref_id
+        ):
+            reasons.append("RESULT_REF_NOT_AVAILABLE")
+            diagnostics.append(
+                f"Result reference '{result.result_ref_id}' is not available."
+            )
+            return
+        resolution = self._interactive_result_resolution
+        if (
+            resolution is None
+            or str(getattr(resolution, "state", "")).split(".")[-1] != "RESOLVED"
+            or result.binding_schema != "osw.result_mesh_binding.v2"
+        ):
+            reasons.append("RESULT_BINDING_NOT_RESOLVED")
+            diagnostics.append("The saved result binding is not exactly resolved.")
+            return
+        if result.scalar_field:
+            scalar = self.set_scalar_result(
+                result.scalar_field,
+                component=result.scalar_component or None,
+                range_mode=result.range_mode,
+                manual_range=result.display_range,
+                colormap=result.colormap,
+                colorbar_visible=result.colorbar_visible,
+            )
+            if not scalar.applied:
+                reasons.append("RESULT_FIELD_NOT_AVAILABLE")
+                diagnostics.append(
+                    f"Result field '{result.scalar_field}' is not available."
+                )
+        if result.vector_visible and result.vector_field:
+            vector = self.set_vector_result(
+                result.vector_field,
+                components=result.vector_components or None,
+                maximum_glyph_count=result.glyph_max_count,
+                scale=result.glyph_scale,
+            )
+            if not vector.applied:
+                reasons.append("RESULT_FIELD_NOT_AVAILABLE")
+                diagnostics.append(
+                    f"Result vector field '{result.vector_field}' is not available."
+                )
+
+    def _restore_actor_visibility(
+        self,
+        state: ActiveSceneState,
+        reasons: list[str],
+        diagnostics: list[str],
+    ) -> None:
+        for item in state.actor_visibility:
+            semantic_id = _semantic_id_from_visibility(item)
+            if item.kind == "named_selection":
+                continue
+            if semantic_id not in self._actor_records:
+                if item.kind in {
+                    "mesh_quality_bad_cells",
+                    "scalar_result",
+                    "vector_result",
+                }:
+                    continue
+                reasons.append("ACTOR_VISIBILITY_TARGET_NOT_FOUND")
+                diagnostics.append(
+                    f"Saved actor target '{item.kind}:{item.source_id}' is unavailable."
+                )
+                continue
+            if not self.set_actor_visible(semantic_id, item.visible):
+                reasons.append("RENDERER_UNAVAILABLE")
+                diagnostics.append(
+                    f"Saved actor visibility for '{item.kind}:{item.source_id}' "
+                    "could not be applied."
+                )
+
+    def _restore_clipping_state(
+        self,
+        state: ActiveSceneState,
+        reasons: list[str],
+        diagnostics: list[str],
+    ) -> None:
+        clipping = state.clipping_state
+        if not clipping.enabled:
+            self._clipping_state = clipping
+            return
+        axis = _axis_from_clipping(clipping)
+        if axis is None:
+            reasons.append("CLIPPING_INVALID")
+            diagnostics.append(
+                "Saved clipping normal is not supported by the current axis control."
+            )
+            return
+        origin = clipping.origin["xyz".index(axis)]
+        if not self.enable_clipping(axis, origin):
+            reasons.append("RENDERER_UNAVAILABLE")
+            diagnostics.append("Saved clipping state could not be applied.")
 
     def _ensure_session(self) -> SceneRendererSessionProtocol | None:
         if self._session is not None:
@@ -1852,6 +2528,7 @@ class ActiveSceneController:
         if discard_binding:
             self._interactive_result_dataset = None
             self._interactive_result_binding = None
+            self._interactive_result_ref_id = ""
             self._interactive_result_resolution = None
 
     def _notify_selection_listener(self) -> None:
@@ -1897,6 +2574,147 @@ def _representation_from_scene_state(scene_state: SceneViewState) -> str:
     if options.show_edges:
         return "surface_with_edges"
     return "surface"
+
+
+def _semantic_visibility_entry(
+    semantic_id: str,
+    visible: bool,
+    *,
+    mesh_ref: str,
+) -> SemanticActorVisibility | None:
+    if semantic_id == "base_mesh":
+        return SemanticActorVisibility("base_mesh", mesh_ref, visible=visible)
+    if semantic_id == "wireframe":
+        return SemanticActorVisibility("wireframe", mesh_ref, visible=visible)
+    if semantic_id.startswith("setup:material:"):
+        return SemanticActorVisibility(
+            "material_assignment",
+            semantic_id.removeprefix("setup:material:"),
+            visible=visible,
+        )
+    if semantic_id.startswith("setup:fixed-support:"):
+        return SemanticActorVisibility(
+            "fixed_support",
+            semantic_id.removeprefix("setup:fixed-support:"),
+            visible=visible,
+        )
+    if semantic_id.startswith("setup:force:"):
+        return SemanticActorVisibility(
+            "force_load",
+            semantic_id.removeprefix("setup:force:"),
+            visible=visible,
+        )
+    if semantic_id == MESH_QUALITY_ACTOR_KEY:
+        return SemanticActorVisibility(
+            "mesh_quality_bad_cells",
+            MESH_QUALITY_METRIC_SCHEMA,
+            visible=visible,
+        )
+    if semantic_id == RESULT_SCALAR_ACTOR_KEY:
+        return SemanticActorVisibility(
+            "scalar_result",
+            RESULT_SCALAR_ACTOR_KEY,
+            visible=visible,
+        )
+    if semantic_id == RESULT_VECTOR_ACTOR_KEY:
+        return SemanticActorVisibility(
+            "vector_result",
+            RESULT_VECTOR_ACTOR_KEY,
+            visible=visible,
+        )
+    return None
+
+
+def _semantic_id_from_visibility(item: SemanticActorVisibility) -> str:
+    if item.kind == "base_mesh":
+        return "base_mesh"
+    if item.kind == "wireframe":
+        return "wireframe"
+    if item.kind == "material_assignment":
+        return f"setup:material:{item.source_id}"
+    if item.kind == "fixed_support":
+        return f"setup:fixed-support:{item.source_id}"
+    if item.kind == "force_load":
+        return f"setup:force:{item.source_id}"
+    if item.kind == "mesh_quality_bad_cells":
+        return MESH_QUALITY_ACTOR_KEY
+    if item.kind == "scalar_result":
+        return RESULT_SCALAR_ACTOR_KEY
+    if item.kind == "vector_result":
+        return RESULT_VECTOR_ACTOR_KEY
+    if item.kind == "named_selection":
+        return f"named_selection:{item.source_id}"
+    return ""
+
+
+def _clipping_from_axis(axis: str, origin: float) -> ActiveSceneClippingState:
+    index = "xyz".index(axis)
+    origin_values = [0.0, 0.0, 0.0]
+    normal_values = [0.0, 0.0, 0.0]
+    origin_values[index] = float(origin)
+    normal_values[index] = 1.0
+    return ActiveSceneClippingState(
+        enabled=True,
+        origin=tuple(origin_values),
+        normal=tuple(normal_values),
+    )
+
+
+def _axis_from_clipping(clipping: ActiveSceneClippingState) -> str | None:
+    normals = {
+        (1.0, 0.0, 0.0): "x",
+        (0.0, 1.0, 0.0): "y",
+        (0.0, 0.0, 1.0): "z",
+    }
+    return normals.get(clipping.normal)
+
+
+def _scene_view_state_from_active_scene(
+    state: ActiveSceneState,
+    fallback: SceneViewState,
+    *,
+    requested_size: tuple[int, int] | None,
+) -> SceneViewState:
+    show_surface = state.representation in {"surface", "surface_with_edges"}
+    show_edges = state.representation in {"wireframe", "surface_with_edges"}
+    camera = SceneCameraState(
+        position=state.camera.position,
+        focal_point=state.camera.focal_point,
+        view_up=state.camera.view_up,
+        parallel_projection=state.camera.parallel_projection,
+        parallel_scale=state.camera.parallel_scale,
+        view_preset=state.camera.view_preset or None,
+    )
+    options = SceneRenderOptions(
+        show_surface=show_surface,
+        show_edges=show_edges,
+        show_axes=state.axes_visible,
+        show_grid=fallback.render_options.show_grid,
+        show_bounds=fallback.render_options.show_bounds,
+        background=fallback.render_options.background,
+        color_by=fallback.render_options.color_by,
+        scalar_bar=fallback.render_options.scalar_bar,
+        screenshot_size=requested_size or fallback.render_options.screenshot_size,
+        metadata=fallback.render_options.metadata,
+    )
+    return replace(
+        fallback,
+        camera=camera,
+        render_options=options,
+        selected_selection_ids=state.active_named_selection_ids,
+    )
+
+
+def _image_dimensions(image_bytes: bytes) -> tuple[int, int] | None:
+    if (
+        len(image_bytes) >= 24
+        and image_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+        and image_bytes[12:16] == b"IHDR"
+    ):
+        width, height = struct.unpack(">II", image_bytes[16:24])
+        if width > 0 and height > 0:
+            return width, height
+    return None
 
 
 def _result_stable_key_index(
@@ -1975,6 +2793,7 @@ def _stable_entity_ids(
 
 __all__ = [
     "ActiveSceneController",
+    "ActiveSceneScreenshotResult",
     "SceneActorRecord",
     "SceneAdapterRendererFactory",
     "SceneAdapterRendererSession",

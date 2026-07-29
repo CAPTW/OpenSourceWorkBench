@@ -13,6 +13,7 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any
 
+from osw.core.workspace_3d import ActiveSceneCameraState
 from osw.gui.interactive_results_view_model import (
     RESULT_COLORBAR_ACTOR_KEY,
     RESULT_PROBE_ACTOR_KEY,
@@ -419,6 +420,55 @@ class PyVistaQtRendererSession:
             representation = "surface"
         self.set_representation(representation)
         self.set_axes_visible(options.show_axes)
+
+    def get_camera_state(self) -> ActiveSceneCameraState:
+        """Return pure camera values without exposing the native camera object."""
+
+        interactor = self._require_open_interactor()
+        camera_position = getattr(interactor, "camera_position", None)
+        position = focal_point = view_up = None
+        if camera_position is not None:
+            try:
+                position, focal_point, view_up = camera_position
+            except (TypeError, ValueError):
+                position = focal_point = view_up = None
+        camera = getattr(interactor, "camera", None)
+        return ActiveSceneCameraState(
+            position=position,
+            focal_point=focal_point,
+            view_up=view_up,
+            parallel_projection=bool(
+                getattr(camera, "parallel_projection", False)
+            ),
+            parallel_scale=getattr(camera, "parallel_scale", None),
+        )
+
+    def apply_camera_state(self, camera: ActiveSceneCameraState) -> None:
+        """Apply validated pure camera values to the current native session."""
+
+        interactor = self._require_open_interactor()
+        if (
+            camera.position is not None
+            and camera.focal_point is not None
+            and camera.view_up is not None
+        ):
+            interactor.camera_position = [
+                camera.position,
+                camera.focal_point,
+                camera.view_up,
+            ]
+        native_camera = getattr(interactor, "camera", None)
+        if native_camera is not None:
+            if camera.parallel_scale is not None:
+                native_camera.parallel_scale = camera.parallel_scale
+            if camera.parallel_projection:
+                enable = getattr(native_camera, "enable_parallel_projection", None)
+                if callable(enable):
+                    enable()
+            else:
+                disable = getattr(native_camera, "disable_parallel_projection", None)
+                if callable(disable):
+                    disable()
 
     def export_screenshot_record(
         self,

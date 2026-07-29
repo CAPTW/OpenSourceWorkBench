@@ -20,6 +20,7 @@ from .selection import (
 )
 from .units import UnitSystem
 from .validation import ProjectSchemaError, ValidationReport
+from .workspace_3d import ActiveSceneState
 
 LEGACY_PROJECT_SCHEMA_VERSION = "0.1"
 PATH_KIND_PROJECT_SCHEMA_VERSION = "0.2"
@@ -711,6 +712,7 @@ class Project:
     warnings: list[ProjectWarning]
     selections: list[NamedSelection]
     report_screenshots: list[ReportScreenshotAsset]
+    active_scene: ActiveSceneState | None
 
     def __init__(
         self,
@@ -737,10 +739,20 @@ class Project:
         report_config: ReportConfig | None = None,
         selections: Sequence[NamedSelection] | None = None,
         report_screenshots: Sequence[ReportScreenshotAsset] | None = None,
+        active_scene: ActiveSceneState | Mapping[str, Any] | None = None,
     ) -> None:
         schema_version_value = str(schema_version)
         named_selections = coerce_named_selections(selections)
         physics_setups = _physics_list(physics)
+        active_scene_state = (
+            None
+            if active_scene is None
+            else (
+                active_scene
+                if isinstance(active_scene, ActiveSceneState)
+                else ActiveSceneState.from_dict(active_scene)
+            )
+        )
         if (
             schema_version_value
             in {
@@ -758,6 +770,8 @@ class Project:
             }
             and _has_typed_solver_setup(physics_setups)
         ):
+            schema_version_value = ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
+        if active_scene_state is not None:
             schema_version_value = ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
         screenshot_assets = coerce_report_screenshots(report_screenshots)
         _ensure_report_screenshot_path_kind_envelope(
@@ -784,6 +798,7 @@ class Project:
         object.__setattr__(self, "warnings", list(warnings or []))
         object.__setattr__(self, "selections", named_selections)
         object.__setattr__(self, "report_screenshots", screenshot_assets)
+        object.__setattr__(self, "active_scene", active_scene_state)
 
     @property
     def unit_system(self) -> UnitSystem:
@@ -862,6 +877,8 @@ class Project:
             payload["report_screenshots"] = [
                 item.to_dict() for item in self.report_screenshots
             ]
+        if self.active_scene is not None:
+            payload["active_scene"] = self.active_scene.to_dict()
         return payload
 
     @classmethod
@@ -931,6 +948,11 @@ class Project:
                     ReportScreenshotAsset.from_dict(item)
                     for item in migrated.get("report_screenshots", [])
                 ],
+                active_scene=(
+                    None
+                    if migrated.get("active_scene") is None
+                    else ActiveSceneState.from_dict(migrated["active_scene"])
+                ),
             )
         except (TypeError, ValueError) as exc:
             raise ProjectSchemaError(f"Invalid OSW project schema: {exc}") from exc
@@ -1004,6 +1026,8 @@ def migrate_project_data(data: Mapping[str, Any]) -> dict[str, Any]:
         migrated["selections"] = []
     if "report_screenshots" not in migrated:
         migrated["report_screenshots"] = []
+    if "active_scene" not in migrated:
+        migrated["active_scene"] = None
     return migrated
 
 
@@ -1094,6 +1118,54 @@ def project_to_dict(project: Project) -> dict[str, Any]:
 
 def project_from_dict(data: object) -> Project:
     return Project.from_dict(data)
+
+
+def project_with(project: Project, **changes: object) -> Project:
+    """Return one bounded immutable Project copy without dropping additive fields."""
+
+    allowed = {
+        "metadata",
+        "units",
+        "materials",
+        "geometry",
+        "meshes",
+        "scripts",
+        "boundary_curves",
+        "physics",
+        "solvers",
+        "results",
+        "report",
+        "schema_version",
+        "plugins",
+        "warnings",
+        "selections",
+        "report_screenshots",
+        "active_scene",
+    }
+    unknown = sorted(set(changes) - allowed)
+    if unknown:
+        raise TypeError(f"Unsupported Project copy field(s): {', '.join(unknown)}")
+    values = {
+        "metadata": project.metadata,
+        "units": project.units,
+        "materials": project.materials,
+        "geometry": project.geometry,
+        "meshes": project.meshes,
+        "scripts": project.scripts,
+        "boundary_curves": project.boundary_curves,
+        "physics": project.physics,
+        "solvers": project.solvers,
+        "results": project.results,
+        "report": project.report,
+        "schema_version": project.schema_version,
+        "plugins": project.plugins,
+        "warnings": project.warnings,
+        "selections": project.selections,
+        "report_screenshots": project.report_screenshots,
+        "active_scene": project.active_scene,
+    }
+    values.update(changes)
+    return Project(**values)  # type: ignore[arg-type]
 
 
 def _validate_project_references(project: Project, report: ValidationReport) -> None:

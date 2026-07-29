@@ -13,6 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
+from osw.core.workspace_3d import ActiveSceneScreenshotRequest
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
 from osw.gui.workspace_scene_controller import ActiveSceneController
 from osw.gui.workspace_scene_view_model import (
@@ -102,6 +103,10 @@ _BINDING_HANDLER_MISSING_TEXT = (
 _NO_VECTOR_FIELDS_TEXT = "No compatible vector fields are available for glyph preview."
 _NO_VECTOR_FIELD_SELECTED_TEXT = "No compatible vector field is selected for glyph preview."
 _PERSISTED_BINDING_TEXT = "Persisted result/mesh binding metadata."
+_NO_SAVED_SCENE_TEXT = "No saved workspace state."
+_CLEAR_SAVED_SCENE_HANDLER_MISSING_TEXT = (
+    "Clear saved workspace state is not wired to the main window."
+)
 _MESH_REF_METADATA_KEYS = (
     "mesh_ref",
     "source_mesh_ref",
@@ -132,6 +137,7 @@ class MeshViewerPanel(_BaseWidget):
         self._result_field_lookup: dict[str, object] = {}
         self._result_vector_field_lookup: dict[str, object] = {}
         self._result_binding: object | None = None
+        self._result_ref_id = ""
         self._bind_result_callback: Callable[[], object] | None = None
         self._rebind_result_callback: Callable[[], object] | None = None
         self._capture_scene_screenshot_callback: (
@@ -152,6 +158,7 @@ class MeshViewerPanel(_BaseWidget):
         self._open_persisted_report_screenshot_manager_callback: (
             Callable[[], object] | None
         ) = None
+        self._clear_saved_active_scene_callback: Callable[[], object] | None = None
         self._binding_status_message = _NO_STAGED_BINDING_TEXT
         self._binding_persisted = False
 
@@ -280,6 +287,14 @@ class MeshViewerPanel(_BaseWidget):
         self.diagnostics_list = QtWidgets.QListWidget(self)
         self.diagnostics_list.setObjectName("oswMeshViewerDiagnostics")
 
+        self.saved_scene_status_label = QtWidgets.QLabel(_NO_SAVED_SCENE_TEXT, self)
+        self.saved_scene_status_label.setObjectName("oswSavedActiveSceneStatus")
+        self.saved_scene_status_label.setWordWrap(True)
+        self.clear_saved_scene_button = QtWidgets.QPushButton(
+            "Clear saved workspace state", self
+        )
+        self.clear_saved_scene_button.setObjectName("oswClearSavedActiveSceneButton")
+
         self.screenshot_status_label = QtWidgets.QLabel(_NO_STAGED_SCREENSHOTS_TEXT, self)
         self.screenshot_status_label.setObjectName("oswMeshViewerScreenshotStatus")
         self.screenshot_status_label.setWordWrap(True)
@@ -392,6 +407,11 @@ class MeshViewerPanel(_BaseWidget):
         layout.addWidget(self.result_probe_label)
         layout.addWidget(self.selected_result_table)
         layout.addWidget(self.status_label)
+        saved_scene_row = QtWidgets.QHBoxLayout()
+        saved_scene_row.addWidget(self.saved_scene_status_label)
+        saved_scene_row.addStretch(1)
+        saved_scene_row.addWidget(self.clear_saved_scene_button)
+        layout.addLayout(saved_scene_row)
 
         screenshots_row = QtWidgets.QHBoxLayout()
         screenshots_row.addWidget(self.screenshot_status_label)
@@ -434,6 +454,9 @@ class MeshViewerPanel(_BaseWidget):
         )
         self.manage_persisted_screenshots_button.clicked.connect(
             lambda _checked=False: self._on_manage_persisted_screenshots_requested()
+        )
+        self.clear_saved_scene_button.clicked.connect(
+            lambda _checked=False: self._on_clear_saved_scene_requested()
         )
         self.staged_screenshots_list.currentRowChanged.connect(
             lambda _row=-1: self._update_screenshot_action_buttons()
@@ -521,6 +544,10 @@ class MeshViewerPanel(_BaseWidget):
     def set_selected_selection_ids(self, selection_ids: object) -> None:
         """Record selected NamedSelection ids for the next preview build."""
         self._state.selected_selection_ids = tuple(str(item) for item in selection_ids)
+        if isinstance(self._adapter, ActiveSceneController):
+            self._adapter.set_active_named_selection_ids(
+                self._state.selected_selection_ids
+            )
 
     def set_result_dataset(self, result_dataset: object | None) -> None:
         """Attach an already-built result dataset whose fields can color the mesh.
@@ -543,10 +570,16 @@ class MeshViewerPanel(_BaseWidget):
         self._refresh_binding_status()
         self._render_state()
 
-    def set_result_binding(self, binding: object | None) -> None:
+    def set_result_binding(
+        self,
+        binding: object | None,
+        *,
+        result_ref_id: str = "",
+    ) -> None:
         """Attach one persisted binding to the transient controller projection."""
 
         self._result_binding = binding
+        self._result_ref_id = str(result_ref_id or "")
         self._sync_interactive_result_binding()
         if self.selected_result_field_id() is not None:
             self._apply_interactive_scalar_result(allow_render=False)
@@ -672,6 +705,15 @@ class MeshViewerPanel(_BaseWidget):
         """Connect the manager launcher to the MainWindow-owned dialog flow."""
         self._open_persisted_report_screenshot_manager_callback = callback
         self._render_screenshot_status()
+
+    def set_clear_saved_active_scene_callback(
+        self,
+        callback: Callable[[], object] | None,
+    ) -> None:
+        self._clear_saved_active_scene_callback = callback
+
+    def show_saved_active_scene_status(self, message: str) -> None:
+        self.saved_scene_status_label.setText(str(message))
 
     def show_persisted_report_screenshot_status(self, message: str) -> None:
         """Display MainWindow-owned persisted-record action diagnostics."""
@@ -859,6 +901,28 @@ class MeshViewerPanel(_BaseWidget):
             return None
 
         scene_state = self._state.scene_state
+        if isinstance(self._adapter, ActiveSceneController):
+            result = self._adapter.capture_active_scene_screenshot(
+                ActiveSceneScreenshotRequest(
+                    record_id=record_id,
+                    output_path=str(target_path),
+                    caption=caption or "",
+                )
+            )
+            if result.record is None:
+                if result.status == "BLOCKED":
+                    self._state.pyvista_available = False
+                self._state.status_message = (
+                    result.diagnostics[0]
+                    if result.diagnostics
+                    else _PYVISTA_MISSING_TEXT
+                )
+                self._render_state()
+                return None
+            self._state.screenshot_record = result.record
+            self._state.status_message = _CAPTURED_TEXT
+            self._render_state()
+            return result.record
         try:
             record = self._adapter.export_screenshot_record(
                 str(target_path),
@@ -919,6 +983,15 @@ class MeshViewerPanel(_BaseWidget):
         self._clear_scene_screenshots_callback()
         self._state.status_message = _CLEARED_SCREENSHOTS_TEXT
         self._render_state()
+
+    def _on_clear_saved_scene_requested(self) -> None:
+        callback = self._clear_saved_active_scene_callback
+        if callback is None:
+            self.saved_scene_status_label.setText(
+                _CLEAR_SAVED_SCENE_HANDLER_MISSING_TEXT
+            )
+            return
+        callback()
 
     def _staged_scene_screenshots(self) -> tuple[SceneScreenshotRecord, ...]:
         provider = self._scene_screenshot_candidates_provider
@@ -1100,6 +1173,7 @@ class MeshViewerPanel(_BaseWidget):
         self._adapter.set_interactive_result_dataset(
             self._result_dataset,
             self._result_binding,
+            result_ref_id=self._result_ref_id,
         )
         self._render_interactive_result_state()
 

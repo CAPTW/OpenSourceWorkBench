@@ -52,7 +52,7 @@ def _mesh() -> MeshData:
 class RecordingSceneAdapter:
     """Fake adapter that records export calls and optionally writes a dummy file."""
 
-    def __init__(self, write_image: bool = False) -> None:
+    def __init__(self, write_image: bool = True) -> None:
         self.write_image = write_image
         self.export_calls: list[str] = []
 
@@ -216,24 +216,28 @@ def test_passive_viewing_does_not_stage_screenshots(app: object) -> None:
     assert _staged_rows(panel) == []
 
 
-def test_report_export_includes_staged_and_leaves_project_unchanged(
+def test_report_export_requires_persisted_and_leaves_project_unchanged(
     app: object, tmp_path: Path
 ) -> None:
     adapter = RecordingSceneAdapter()
     window = _window(app=app, adapter=adapter)
-    before = window.current_project.to_dict()
     window.load_mesh_into_viewer(_mesh(), mesh_ref="mesh-1")
     shot = tmp_path / "scene.png"
     window._pick_scene_screenshot_target_path = lambda: str(shot)
     window.mesh_viewer.capture_button.click()
 
+    before = window.export_current_report(output_path=tmp_path / "before.html")
+    assert "3D Scene Screenshots" not in before.read_text(encoding="utf-8")
+
+    window._confirm_persist_scene_screenshots = lambda count: True
+    assert window.persist_staged_scene_screenshots() == 1
+    staged_project = window.current_project.to_dict()
     output = window.export_current_report(output_path=tmp_path / "report.html")
     html = output.read_text(encoding="utf-8")
 
     assert "3D Scene Screenshots" in html
     assert "scene.png" in html
-    # Staged screenshots are transient: no ProjectSchema mutation, no auto-save.
-    assert window.current_project.to_dict() == before
+    assert window.current_project.to_dict() == staged_project
 
 
 def test_no_staged_records_keeps_report_unchanged(app: object, tmp_path: Path) -> None:

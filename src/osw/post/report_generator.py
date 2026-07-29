@@ -654,6 +654,59 @@ def render_scene_screenshot_section(
 
 def _scene_screenshot_provenance_lines(metadata: Mapping[str, Any]) -> list[str]:
     lines: list[str] = []
+    active = metadata.get("active_scene_provenance")
+    if isinstance(active, Mapping):
+        schema = str(active.get("active_scene_schema") or "")
+        if schema:
+            lines.append(f"Active scene: {schema}")
+        fingerprint = str(active.get("mesh_fingerprint") or "")
+        if fingerprint:
+            shortened = (
+                f"{fingerprint[:12]}…" if len(fingerprint) > 12 else fingerprint
+            )
+            lines.append(f"Mesh fingerprint: {shortened}")
+        scalar = str(active.get("scalar_field") or "")
+        if scalar:
+            component = str(active.get("scalar_component") or "(default)")
+            association = str(active.get("scalar_association") or "(unspecified)")
+            lines.append(f"Scalar: {scalar} / {component} / {association}")
+        display_range = active.get("scalar_display_range")
+        if (
+            isinstance(display_range, Sequence)
+            and not isinstance(display_range, (str, bytes))
+            and len(display_range) == 2
+        ):
+            lines.append(
+                "Display range: "
+                f"{_format_provenance_number(display_range[0])} / "
+                f"{_format_provenance_number(display_range[1])}"
+            )
+        visible_selections = tuple(
+            active.get("visible_named_selection_ids") or ()
+        )
+        active_selections = tuple(
+            active.get("active_named_selection_ids") or ()
+        )
+        lines.append(
+            "Named selections: "
+            f"{len(visible_selections)} visible / {len(active_selections)} active"
+        )
+        visible_setup = tuple(active.get("visible_setup_actor_keys") or ())
+        lines.append(f"Setup overlays: {len(visible_setup)} visible")
+        quality_schema = str(active.get("mesh_quality_metric_schema") or "")
+        quality_threshold = active.get("mesh_quality_threshold")
+        if quality_schema and quality_threshold is not None:
+            lines.append(
+                "Mesh Diagnostics: "
+                f"{quality_schema} / threshold "
+                f"{_format_provenance_number(quality_threshold)}"
+            )
+        representation = str(active.get("representation") or "")
+        if representation:
+            lines.append(f"Representation: {representation}")
+        backend = str(active.get("capture_backend_kind") or "")
+        if backend:
+            lines.append(f"Capture backend: {backend}")
     mesh_ref = metadata.get("mesh_ref")
     if mesh_ref:
         lines.append(f"Mesh ref: {mesh_ref}")
@@ -675,6 +728,13 @@ def _scene_screenshot_provenance_lines(metadata: Mapping[str, Any]) -> list[str]
     if created_by:
         lines.append(f"Captured by: {created_by}")
     return lines
+
+
+def _format_provenance_number(value: object) -> str:
+    try:
+        return f"{float(value):.12g}"
+    except (TypeError, ValueError, OverflowError):
+        return "(invalid)"
 
 
 def _scene_screenshot_warning(figure: ReportModelFigure) -> str | None:

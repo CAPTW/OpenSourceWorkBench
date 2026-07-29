@@ -373,6 +373,42 @@ report integration, and full scene persistence remain deferred. This describes
 one isolated local feature branch: it is not integrated, pushed, hosted-CI
 validated, or live-PyVistaQt evidence.
 
+## 3D Workspace Persistence and Report Integration
+
+The chained local persistence gate adds the pure
+`osw.active_scene.v1` record to the existing Project schema `0.3`. An active
+scene stores only an exact mesh reference and fingerprint, pure camera and
+clipping values, bounded representation/selection preferences, semantic actor
+visibility, stable NamedSelection/setup references, a resolved result-view
+request, and the declarative Mesh Diagnostics request. It never stores mesh or
+result rows, backend indices, native handles, probes, selected-result tables,
+diagnostics caches, isolation snapshots, or scene-generation callbacks.
+Canonical UTF-8 JSON produces a deterministic active-scene digest.
+
+Only an explicit Project Save snapshots the current persistable scene. Project
+Open remains metadata-only: it does not read a mesh or result artifact, create a
+renderer, capture an image, or save the Project. After an explicit mesh load,
+restore requires the same logical mesh reference and exact
+`osw.mesh_identity.v1` fingerprint; otherwise it reports pending, partial,
+stale, or invalid state without mutating NamedSelections, solver setup, mesh
+data, or result data. Mesh Diagnostics values are recomputed rather than
+persisted, and result actors require an available exact resolved v2 binding.
+
+Screenshot capture is a separate explicit action against the current renderer
+session and the exact caller-selected path. Successful capture verifies the
+file, hashes its exact bytes, and attaches deterministic scene provenance to an
+immutable screenshot record. Capture alone remains Project-dirty neutral.
+Only explicit confirmation stages that metadata into
+`Project.report_screenshots`; it does not copy the image or auto-save. Report
+preview/export consumes persisted screenshot metadata only, performs no
+implicit capture, and renders compact path-private provenance plus the existing
+local-artifact caveat. The digest is deterministic; pixels are not claimed
+identical across GPU, driver, OS, Qt, VTK, or PyVista versions.
+
+Native report-path locality remains `DEFERRED_RETAINED`. This local chained
+feature is not integrated into `develop`, not pushed, not hosted-CI validated,
+and not live-PyVistaQt evidence.
+
 ## CHM CoolProp / Cantera Binding
 
 CHM support lives under `osw.solvers.coolprop` and `osw.solvers.cantera` as

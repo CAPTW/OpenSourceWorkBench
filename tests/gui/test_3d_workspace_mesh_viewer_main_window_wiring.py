@@ -169,8 +169,8 @@ def test_load_mesh_into_viewer_updates_panel_and_uses_fake_adapter(app: object) 
     assert "Nodes: 3" in panel.summary_label.text()
     assert panel.current_state().mesh_ref == "demo-mesh"
 
-    # The injected fake adapter is wired through the panel's own preview path.
-    panel.load_mesh_preview()
+    # One MainWindow load request updates the panel and active scene exactly once.
+    assert window.active_scene_controller.current_mesh_ref == "demo-mesh"
     assert len(adapter.load_calls) == 1
     _mesh_arg, scene_input, _scene_state = adapter.load_calls[0]
     assert scene_input.source_kind == "mesh"

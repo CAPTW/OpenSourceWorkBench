@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from osw.core.demo_project import create_heatsink_flow_demo_project
 from osw.core.executables import ExecutablePathRegistry
-from osw.core.project_schema import Project
+from osw.core.project_schema import Project, project_with
 from osw.core.report_asset import ReportAssetPathKind
 from osw.gui.project_document_context import (
     ProjectDocumentContext,
@@ -1632,12 +1632,14 @@ class MainWindow(_BaseMainWindow):
         if path is None:
             return self.save_project_as()
         try:
-            self._project_saver(self.current_project, path)
+            project_to_save = self._project_for_explicit_save()
+            self._project_saver(project_to_save, path)
         except Exception:
             self._project_error_reporter(
                 "Could not save the current project. The document binding was not changed."
             )
             return False
+        self.set_project(project_to_save)
         self._placeholder_action("Saved Project")
         self._project_dirty = False
         return True
@@ -1648,7 +1650,8 @@ class MainWindow(_BaseMainWindow):
             return False
         selected_path = str(selected)
         try:
-            self._project_saver(self.current_project, selected_path)
+            project_to_save = self._project_for_explicit_save()
+            self._project_saver(project_to_save, selected_path)
         except Exception:
             self._project_error_reporter(
                 "Could not save the current project. The document binding was not changed."
@@ -1662,6 +1665,7 @@ class MainWindow(_BaseMainWindow):
                 origin=ProjectDocumentOrigin.SAVED_AS,
                 generation=prior_context.generation + 1,
             )
+            self.set_project(project_to_save)
             self._placeholder_action("Saved Project As")
         except Exception:
             self._project_document_context = prior_context
@@ -1671,6 +1675,14 @@ class MainWindow(_BaseMainWindow):
             return False
         self._project_dirty = False
         return True
+
+    def _project_for_explicit_save(self) -> Project:
+        """Capture valid current scene metadata without reading any external file."""
+
+        snapshot = self.active_scene_controller.snapshot_active_scene_state()
+        if snapshot is None:
+            return self.current_project
+        return project_with(self.current_project, active_scene=snapshot)
 
     def set_project(self, project: Project, *, sync_workflow: bool = True) -> None:
         self.current_project = project
@@ -1685,12 +1697,17 @@ class MainWindow(_BaseMainWindow):
             project.primary_physics,
             materials=project.materials,
         )
+        if self.active_scene_controller.current_mesh_fingerprint is None:
+            self.active_scene_controller.set_pending_active_scene_state(
+                project.active_scene
+            )
         self._refresh_named_selection_panel()
         self._refresh_setup_overlay_panel()
         self._refresh_mesh_diagnostics_panel()
         self.refresh_results_from_project(update_report=False)
         self.generate_report_preview(log=False)
         self._refresh_persisted_report_screenshot_surfaces()
+        self._refresh_saved_active_scene_status()
 
     def _create_active_scene_controller(self) -> object:
         """Create the one lazy active-scene owner for the current document."""
@@ -1732,8 +1749,12 @@ class MainWindow(_BaseMainWindow):
             self.current_project.primary_physics,
             materials=self.current_project.materials,
         )
+        self.active_scene_controller.set_pending_active_scene_state(
+            self.current_project.active_scene
+        )
         self._apply_setup_visibility_to_current_controller()
         self._refresh_mesh_diagnostics_panel()
+        self._refresh_saved_active_scene_status()
         named_panel = getattr(self, "named_selection_panel", None)
         if named_panel is not None:
             picking_available = bool(
@@ -2141,7 +2162,8 @@ class MainWindow(_BaseMainWindow):
             warnings=tuple(getattr(self.workflow_session, "warnings", ())),
         )
         return self._add_scene_screenshot_preview_section(
-            summary, scene_screenshot_records=self._report_scene_screenshots()
+            summary,
+            scene_screenshot_records=self._persisted_report_scene_screenshots(),
         )
 
     def _add_scene_screenshot_preview_section(
@@ -2186,7 +2208,8 @@ class MainWindow(_BaseMainWindow):
                         f"{screenshot_path}"
                     )
                 else:
-                    content_blocks.append(f"Image path: {Path(screenshot_path)}")
+                    basename = screenshot_path.replace("\\", "/").rsplit("/", 1)[-1]
+                    content_blocks.append(f"Image: {basename}")
             else:
                 content_blocks.append("Image path: (no image path)")
 
@@ -2253,7 +2276,7 @@ class MainWindow(_BaseMainWindow):
                 *_result_tables_from_datasets(self._result_datasets_for_report()),
                 *tuple(getattr(self.workflow_session, "result_tables", ())),
             ),
-            scene_screenshots=self._report_scene_screenshots(),
+            scene_screenshots=self._persisted_report_scene_screenshots(),
             warnings=tuple(getattr(self.workflow_session, "warnings", ())),
         )
         if hasattr(self.properties_panel.report_preview_panel, "set_report_summary"):
@@ -2982,10 +3005,18 @@ class MainWindow(_BaseMainWindow):
                         self.open_persisted_report_screenshot_manager
                     )
                 )
+            if hasattr(self.mesh_viewer, "set_clear_saved_active_scene_callback"):
+                self.mesh_viewer.set_clear_saved_active_scene_callback(
+                    self._guard_document_callback(
+                        self.clear_saved_active_scene_state,
+                        stale_result=False,
+                    )
+                )
             layout.addWidget(self.mesh_viewer)
             if hasattr(self.mesh_viewer, "set_theme_tokens"):
                 self.mesh_viewer.set_theme_tokens(self.theme_manager.current_tokens)
         self._populate_mesh_viewer_from_latest()
+        self._refresh_saved_active_scene_status()
         self.mesh_viewer_dialog.show()
         self.mesh_viewer_dialog.raise_()
         self.mesh_viewer_dialog.activateWindow()
@@ -2998,6 +3029,40 @@ class MainWindow(_BaseMainWindow):
     def persisted_report_screenshot_assets(self) -> tuple[object, ...]:
         """Return the current Project-owned persisted screenshot assets."""
         return tuple(getattr(self.current_project, "report_screenshots", ()) or ())
+
+    def clear_saved_active_scene_state(self) -> bool:
+        """Explicitly clear only saved workspace metadata and mark the Project dirty."""
+
+        if self.current_project.active_scene is None:
+            self.active_scene_controller.clear_saved_active_scene_state()
+            self._refresh_saved_active_scene_status()
+            return False
+        self.current_project = project_with(self.current_project, active_scene=None)
+        self.workflow_session.project = self.current_project
+        self.active_scene_controller.clear_saved_active_scene_state()
+        self._project_dirty = True
+        self._refresh_saved_active_scene_status()
+        return True
+
+    def _refresh_saved_active_scene_status(self) -> None:
+        panel = self.mesh_viewer
+        if panel is None or not hasattr(panel, "show_saved_active_scene_status"):
+            return
+        result = self.active_scene_controller.active_scene_restore_result
+        if self.current_project.active_scene is None:
+            message = "No saved workspace state"
+        else:
+            labels = {
+                "PENDING": "Pending mesh reload",
+                "RESTORED": "Restored",
+                "PARTIAL": "Partially restored",
+                "STALE": "Stale mesh",
+                "INVALID": "Invalid saved state",
+            }
+            message = labels.get(str(result.status), str(result.status))
+            if result.reason_codes:
+                message = f"{message}: {', '.join(result.reason_codes)}"
+        panel.show_saved_active_scene_status(message)
 
     def _transient_scene_screenshot_ids(self) -> tuple[str, ...]:
         return tuple(
@@ -3089,6 +3154,17 @@ class MainWindow(_BaseMainWindow):
             records.append(record)
         return tuple(records)
 
+    def _persisted_report_scene_screenshots(
+        self,
+    ) -> tuple[SceneScreenshotRecord, ...]:
+        """Return persisted Project report assets only; never capture a scene."""
+
+        from osw.post.report_model import report_assets_to_scene_screenshots
+
+        return report_assets_to_scene_screenshots(
+            self.current_project.report_screenshots
+        )
+
     def persist_staged_scene_screenshots(self) -> int:
         """Persist staged scene screenshots into project report assets (opt-in).
 
@@ -3102,12 +3178,25 @@ class MainWindow(_BaseMainWindow):
         candidates = self._scene_screenshot_candidates
         if not candidates:
             return 0
+        candidate_ids = [record.id for record in candidates]
+        persisted_ids = {
+            asset.id for asset in self.current_project.report_screenshots
+        }
+        if (
+            len(candidate_ids) != len(set(candidate_ids))
+            or any(record_id in persisted_ids for record_id in candidate_ids)
+        ):
+            self._show_persisted_report_screenshot_status(
+                "Duplicate scene screenshot IDs must be resolved before staging."
+            )
+            return -2
         if not self._confirm_persist_scene_screenshots(len(candidates)):
             return -1
         from osw.post.report_model import scene_screenshots_to_report_assets
 
         assets = scene_screenshots_to_report_assets(candidates)
         self.set_project(_project_with_report_screenshots(self.current_project, assets))
+        self._project_dirty = True
         return len(assets)
 
     def _confirm_persist_scene_screenshots(self, count: int) -> bool:
@@ -3460,15 +3549,13 @@ class MainWindow(_BaseMainWindow):
         """
 
         self.open_mesh_viewer()
-        if (
-            getattr(self.central_viewport_panel, "interactive_available", False)
-            and hasattr(self.central_viewport_panel, "set_mesh")
-        ):
+        if hasattr(self.central_viewport_panel, "set_mesh"):
             self.central_viewport_panel.set_mesh(mesh, mesh_ref=mesh_ref)
         if self.mesh_viewer is not None and hasattr(self.mesh_viewer, "set_mesh"):
             self.mesh_viewer.set_mesh(mesh, mesh_ref=mesh_ref)
             self._sync_mesh_viewer_result_datasets()
         self._refresh_mesh_diagnostics_panel()
+        self._refresh_saved_active_scene_status()
         return self.mesh_viewer_dialog
 
     def _sync_mesh_viewer_result_datasets(self) -> None:
@@ -3489,6 +3576,7 @@ class MainWindow(_BaseMainWindow):
         if not hasattr(self.mesh_viewer, "set_result_binding"):
             return
         binding = None
+        result_ref_id = ""
         if associated is not None:
             candidates = self._result_ref_candidates_for_dataset(associated)
             if len(candidates) == 1:
@@ -3499,7 +3587,14 @@ class MainWindow(_BaseMainWindow):
                 binding = result_mesh_binding_from_metadata(
                     candidates[0].result_ref.metadata
                 )
-        self.mesh_viewer.set_result_binding(binding)
+                result_ref_id = str(
+                    getattr(candidates[0].result_ref, "id", "")
+                    or getattr(candidates[0].result_ref, "ref_id", "")
+                )
+        self.mesh_viewer.set_result_binding(
+            binding,
+            result_ref_id=result_ref_id,
+        )
 
     def _mesh_viewer_result_dataset_candidates(self) -> tuple[object, ...]:
         if self.last_result_datasets:
@@ -3655,7 +3750,13 @@ class MainWindow(_BaseMainWindow):
             self.mesh_viewer,
             "set_result_binding",
         ):
-            self.mesh_viewer.set_result_binding(bridge.binding)
+            self.mesh_viewer.set_result_binding(
+                bridge.binding,
+                result_ref_id=str(
+                    getattr(bridge.result_ref, "id", "")
+                    or getattr(bridge.result_ref, "ref_id", "")
+                ),
+            )
         self._placeholder_action(message)
         return True
 
@@ -3848,24 +3949,7 @@ def _project_replacing_named_selections(
 ) -> Project:
     """Return a Project copy with exact durable NamedSelections preserved."""
 
-    return Project(
-        metadata=project.metadata,
-        units=project.units,
-        materials=project.materials,
-        geometry=project.geometry,
-        meshes=project.meshes,
-        scripts=project.scripts,
-        boundary_curves=project.boundary_curves,
-        physics=project.physics,
-        solvers=project.solvers,
-        results=project.results,
-        report=project.report,
-        schema_version=project.schema_version,
-        plugins=project.plugins,
-        warnings=project.warnings,
-        selections=selections,
-        report_screenshots=project.report_screenshots,
-    )
+    return project_with(project, selections=selections)
 
 
 def _setup_record_from_payload(record_id: str, payload: Mapping[str, object]) -> object:
@@ -3970,24 +4054,7 @@ def _project_replacing_primary_physics(project: Project, setup: object) -> Proje
         physics[0] = setup
     else:
         physics.append(setup)
-    return Project(
-        metadata=project.metadata,
-        units=project.units,
-        materials=project.materials,
-        geometry=project.geometry,
-        meshes=project.meshes,
-        scripts=project.scripts,
-        boundary_curves=project.boundary_curves,
-        physics=physics,
-        solvers=project.solvers,
-        results=project.results,
-        report=project.report,
-        schema_version=project.schema_version,
-        plugins=project.plugins,
-        warnings=project.warnings,
-        selections=project.selections,
-        report_screenshots=project.report_screenshots,
-    )
+    return project_with(project, physics=physics)
 
 
 def _project_with_report_screenshots(project: Project, assets: object) -> Project:
@@ -4012,24 +4079,7 @@ def _project_replacing_report_screenshots(
     project: Project, assets: Sequence[object]
 ) -> Project:
     """Return a Project copy with the exact ordered screenshot asset list."""
-    return Project(
-        metadata=project.metadata,
-        units=project.units,
-        materials=project.materials,
-        geometry=project.geometry,
-        meshes=project.meshes,
-        scripts=project.scripts,
-        boundary_curves=project.boundary_curves,
-        physics=project.physics,
-        solvers=project.solvers,
-        results=project.results,
-        report=project.report,
-        schema_version=project.schema_version,
-        plugins=project.plugins,
-        warnings=project.warnings,
-        selections=project.selections,
-        report_screenshots=assets,
-    )
+    return project_with(project, report_screenshots=assets)
 
 
 def _project_with_mesh_ref(project: Project, mesh_ref: object) -> Project:
@@ -4040,24 +4090,7 @@ def _project_with_mesh_ref(project: Project, mesh_ref: object) -> Project:
         and getattr(mesh, "path", "") != getattr(mesh_ref, "path", "")
     ]
     meshes.append(mesh_ref)
-    return Project(
-        metadata=project.metadata,
-        units=project.units,
-        materials=project.materials,
-        geometry=project.geometry,
-        meshes=meshes,
-        scripts=project.scripts,
-        boundary_curves=project.boundary_curves,
-        physics=project.physics,
-        solvers=project.solvers,
-        results=project.results,
-        report=project.report,
-        schema_version=project.schema_version,
-        plugins=project.plugins,
-        warnings=project.warnings,
-        selections=project.selections,
-        report_screenshots=project.report_screenshots,
-    )
+    return project_with(project, meshes=meshes)
 
 
 def _project_with_replaced_result_ref(
@@ -4067,24 +4100,7 @@ def _project_with_replaced_result_ref(
 ) -> Project:
     results = list(project.results)
     results[result_index] = result_ref
-    return Project(
-        metadata=project.metadata,
-        units=project.units,
-        materials=project.materials,
-        geometry=project.geometry,
-        meshes=project.meshes,
-        scripts=project.scripts,
-        boundary_curves=project.boundary_curves,
-        physics=project.physics,
-        solvers=project.solvers,
-        results=results,
-        report=project.report,
-        schema_version=project.schema_version,
-        plugins=project.plugins,
-        warnings=project.warnings,
-        selections=project.selections,
-        report_screenshots=project.report_screenshots,
-    )
+    return project_with(project, results=results)
 
 
 def _project_with_script_ref(project: Project, script_ref: object) -> Project:
@@ -4095,24 +4111,7 @@ def _project_with_script_ref(project: Project, script_ref: object) -> Project:
         and getattr(script, "path", "") != getattr(script_ref, "path", "")
     ]
     scripts.append(script_ref)
-    return Project(
-        metadata=project.metadata,
-        units=project.units,
-        materials=project.materials,
-        geometry=project.geometry,
-        meshes=project.meshes,
-        scripts=scripts,
-        boundary_curves=project.boundary_curves,
-        physics=project.physics,
-        solvers=project.solvers,
-        results=project.results,
-        report=project.report,
-        schema_version=project.schema_version,
-        plugins=project.plugins,
-        warnings=project.warnings,
-        selections=project.selections,
-        report_screenshots=project.report_screenshots,
-    )
+    return project_with(project, scripts=scripts)
 
 
 def _project_with_boundary_curve(project: Project, curve: object) -> Project:
@@ -4122,24 +4121,7 @@ def _project_with_boundary_curve(project: Project, curve: object) -> Project:
         if getattr(item, "curve_id", "") != getattr(curve, "curve_id", "")
     ]
     curves.append(curve)
-    return Project(
-        metadata=project.metadata,
-        units=project.units,
-        materials=project.materials,
-        geometry=project.geometry,
-        meshes=project.meshes,
-        scripts=project.scripts,
-        boundary_curves=curves,
-        physics=project.physics,
-        solvers=project.solvers,
-        results=project.results,
-        report=project.report,
-        schema_version=project.schema_version,
-        plugins=project.plugins,
-        warnings=project.warnings,
-        selections=project.selections,
-        report_screenshots=project.report_screenshots,
-    )
+    return project_with(project, boundary_curves=curves)
 
 
 def _dataset_identifier(result_dataset: object) -> str:

@@ -49,7 +49,7 @@ def _mesh() -> MeshData:
 class RecordingSceneAdapter:
     """Fake adapter that optionally writes a dummy screenshot file."""
 
-    def __init__(self, write_image: bool = False) -> None:
+    def __init__(self, write_image: bool = True) -> None:
         self.write_image = write_image
         self.export_calls: list[str] = []
 
@@ -160,6 +160,8 @@ def test_caption_appears_in_preview_and_export(app: object, tmp_path: Path) -> N
     panel.staged_screenshots_list.setCurrentRow(0)
     panel._prompt_scene_screenshot_caption = lambda current: "Iso temperature"
     panel.edit_caption_button.click()
+    window._confirm_persist_scene_screenshots = lambda count: True
+    assert window.persist_staged_scene_screenshots() == 1
 
     preview_summary = window.generate_report_preview()
     section = _scene_section(preview_summary)

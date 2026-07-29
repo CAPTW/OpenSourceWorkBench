@@ -48,7 +48,7 @@ def _mesh() -> MeshData:
 class RecordingSceneAdapter:
     """Fake adapter that records export calls and optionally writes a dummy file."""
 
-    def __init__(self, write_image: bool = False) -> None:
+    def __init__(self, write_image: bool = True) -> None:
         self.write_image = write_image
         self.export_calls: list[str] = []
 
@@ -108,7 +108,7 @@ def _window(*, app: object, adapter: object) -> object:
     return MainWindow(mesh_scene_adapter_factory=lambda: adapter)
 
 
-def test_capture_button_stages_scene_screenshot_for_report_export(
+def test_capture_button_requires_confirmed_persistence_for_report_export(
     app: object, tmp_path: Path
 ) -> None:
     adapter = RecordingSceneAdapter()
@@ -131,13 +131,20 @@ def test_capture_button_stages_scene_screenshot_for_report_export(
         "captured scene screenshot" in window.mesh_viewer.status_label.text().lower()
     )
 
+    transient = window.export_current_report(output_path=tmp_path / "transient.html")
+    assert "3D Scene Screenshots" not in transient.read_text(encoding="utf-8")
+    assert window.current_project.to_dict() == before
+
+    window._confirm_persist_scene_screenshots = lambda count: True
+    assert window.persist_staged_scene_screenshots() == 1
+    staged_project = window.current_project.to_dict()
     output = window.export_current_report(output_path=tmp_path / "report.html")
     html = output.read_text(encoding="utf-8")
 
     assert "3D Scene Screenshots" in html
     assert "scene.png" in html
-    assert "Scene screenshot image missing" in html
-    assert window.current_project.to_dict() == before
+    assert "Scene screenshot image missing" not in html
+    assert window.current_project.to_dict() == staged_project
 
 
 def test_capture_without_mesh_does_not_stage_candidate(

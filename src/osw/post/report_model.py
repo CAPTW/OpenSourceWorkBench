@@ -285,6 +285,11 @@ def scene_screenshot_to_report_figure(record: SceneScreenshotRecord) -> ReportFi
         "is_validation_evidence": False,
         "scene_metadata": dict(record.metadata),
     }
+    active_scene_provenance = record.metadata.get(
+        "osw.active_scene.provenance"
+    )
+    if isinstance(active_scene_provenance, Mapping):
+        metadata["active_scene_provenance"] = dict(active_scene_provenance)
     if path_kind is not None:
         metadata["path_kind"] = path_kind.value
     if unresolved_without_resolver:
