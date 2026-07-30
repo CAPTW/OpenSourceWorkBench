@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from osw.core.selection_resolution import NODE_ORDINAL_NAMESPACE
 from osw.gui.workspace_scene_controller import (
     ActiveSceneController,
     SceneLifecycleState,
@@ -415,6 +416,11 @@ def test_pyvistaqt_partial_initialization_failure_closes_created_interactor() ->
 def test_pyvistaqt_picking_and_semantic_selection_overlays_are_session_local() -> None:
     from osw.gui.workspace_scene_pyvistaqt import PyVistaQtRendererSession
 
+    controller = ActiveSceneController(RecordingInteractiveFactory())
+    controller.attach_host(object())
+    _load(controller)
+    controller.set_pick_mode("node")
+
     fake_pyvista = FakePyVista()
     interactor = FakeInteractor()
     session = PyVistaQtRendererSession(
@@ -430,28 +436,61 @@ def test_pyvistaqt_picking_and_semantic_selection_overlays_are_session_local() -
         mesh_fingerprint=compute_mesh_fingerprint(mesh),
     )
     events: list[dict[str, object]] = []
+    notifications: list[object] = []
+    controller.set_selection_listener(
+        lambda: notifications.append(controller.current_selection_target)
+    )
 
-    session.replace_actor("base_mesh", payload, generation=7)
-    session.replace_actor("wireframe", payload, generation=7)
-    session.set_pick_mode("node", events.append)
+    session_generation = controller.generation
+    session.replace_actor("base_mesh", payload, generation=session_generation)
+    session.replace_actor("wireframe", payload, generation=session_generation)
+    session.set_pick_mode(
+        "node",
+        controller.guard_callback(controller.handle_pick, stale_result=False),
+    )
     point_callback = interactor.point_pick_kwargs["callback"]
     assert callable(point_callback)
-    point_callback(SimpleNamespace(GetPointId=lambda: 2))
+    picked_point = (91.25, 92.5, 93.75)
+    point_callback(picked_point, SimpleNamespace(GetPointId=lambda: 2))
 
-    assert events == [
-        {
-            "generation": 7,
-            "mesh_ref": "mesh-1",
-            "mesh_fingerprint": payload.mesh_fingerprint.digest,
-            "entity_kind": "node",
-            "backend_index": 2,
-            "intent": "replace",
-        }
-    ]
+    target = controller.current_selection_target
+    assert target is not None
+    assert target.kind.value == "node"
+    assert target.ids == (2,)
+    assert target.locator is not None
+    assert target.locator.id_namespace == NODE_ORDINAL_NAMESPACE
+    assert target.locator.entity_ids == (2,)
+    assert target.locator.mesh_ref == "mesh-1"
+    assert target.locator.mesh_fingerprint == payload.mesh_fingerprint.digest
+    assert notifications == [target]
+    assert events == []
 
-    session.set_hover_entities("node", (0,), 7)
-    session.set_current_selection("node", (0, 2), 7)
-    session.set_named_selection_overlay("selection-1", "cell", (0,), 7)
+    controller.clear_current_selection()
+    notifications.clear()
+    point_callback(
+        (81.25, 82.5, 83.75),
+        SimpleNamespace(GetPointId=lambda: -1),
+    )
+    assert controller.current_selection_target is None
+    assert notifications == []
+
+    _load(controller, _mesh(x_offset=4.0))
+    notifications.clear()
+    point_callback(
+        (71.25, 72.5, 73.75),
+        SimpleNamespace(GetPointId=lambda: 1),
+    )
+    assert controller.current_selection_target is None
+    assert notifications == []
+
+    session.set_hover_entities("node", (0,), session_generation)
+    session.set_current_selection("node", (0, 2), session_generation)
+    session.set_named_selection_overlay(
+        "selection-1",
+        "cell",
+        (0,),
+        session_generation,
+    )
     assert {
         "hover",
         "current_selection",
@@ -464,14 +503,17 @@ def test_pyvistaqt_picking_and_semantic_selection_overlays_are_session_local() -
     picked_cells = FakeDataSet()
     picked_cells.cell_data["_osw_transient_cell_index"] = (0,)
     cell_callback(picked_cells)
-    assert events[-1]["entity_kind"] == "cell"
-    assert events[-1]["backend_index"] == 0
+    assert len(events) == 1
+    assert events[0]["entity_kind"] == "cell"
+    assert events[0]["backend_index"] == 0
+    assert notifications == []
 
     session.clear_hover()
     session.clear_current_selection()
     session.remove_named_selection_overlay("selection-1")
     assert set(session.semantic_actor_ids) == {"base_mesh", "wireframe"}
     session.close()
+    controller.close()
     assert interactor.disable_picking_calls >= 1
 
 

@@ -966,8 +966,12 @@ class PyVistaQtRendererSession:
             )
             cell_data["_osw_transient_cell_index"] = tuple(range(cell_count))
 
-    def _on_native_point_pick(self, picked: object) -> None:
-        point_index = _native_point_index(picked)
+    def _on_native_point_pick(
+        self,
+        _picked_point: object,
+        picker: object,
+    ) -> None:
+        point_index = _native_point_index(picker)
         if point_index is not None:
             self._emit_pick(point_index)
 
