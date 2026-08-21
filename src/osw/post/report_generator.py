@@ -701,6 +701,17 @@ def _scene_screenshot_provenance_lines(metadata: Mapping[str, Any]) -> list[str]
                 f"{quality_schema} / threshold "
                 f"{_format_provenance_number(quality_threshold)}"
             )
+        vector_field = str(active.get("vector_field") or "")
+        if active.get("vector_visible") and vector_field:
+            lines.append(f"Vector glyphs: {vector_field}")
+        deformation_mode = str(active.get("deformation_mode") or "")
+        deformation_field = str(active.get("deformation_field") or "")
+        if deformation_mode and deformation_mode != "ORIGINAL":
+            field_label = deformation_field or "displacement"
+            lines.append(f"Deformed shape: {deformation_mode} / {field_label}")
+        isolated_actor_id = str(active.get("isolated_actor_id") or "")
+        if isolated_actor_id:
+            lines.append(f"Isolated actor: {isolated_actor_id}")
         representation = str(active.get("representation") or "")
         if representation:
             lines.append(f"Representation: {representation}")

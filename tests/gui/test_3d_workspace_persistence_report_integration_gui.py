@@ -273,3 +273,103 @@ def test_report_preview_consumes_only_persisted_screenshots(
     rendered = "\n".join(section.content_blocks)
     assert "Active scene: osw.active_scene.v1" in rendered
     assert str(tmp_path) not in rendered
+
+
+def test_capture_embeds_state_and_restore_rejects_changed_fingerprint(
+    app: object,
+    tmp_path: Path,
+) -> None:
+    from osw.core.workspace_3d import ActiveSceneRestoreStatus
+
+    adapter = CaptureAdapter()
+    window = _window(app, adapter)
+    original = _mesh()
+    window.load_mesh_into_viewer(original, mesh_ref="mesh-1")
+    window.mesh_viewer.surface_toggle.setChecked(False)
+    window.mesh_viewer.edge_toggle.setChecked(True)
+    window.mesh_viewer.axis_toggle.setChecked(False)
+    window.mesh_viewer.load_mesh_preview()
+    window._project_dirty = False
+    window._pick_scene_screenshot_target_path = lambda: str(tmp_path / "scene.png")
+
+    record = window.capture_scene_screenshot_to_report_candidates()
+
+    assert record is not None
+    assert record.metadata["osw.active_scene.state"]["representation"]
+    assert record.metadata["osw.active_scene.provenance"]["active_scene_digest"]
+    assert window.project_dirty is False
+
+    restored = window.restore_scene_from_report_capture(record)
+    assert restored.status in {
+        ActiveSceneRestoreStatus.RESTORED,
+        ActiveSceneRestoreStatus.PARTIAL,
+    }
+
+    window.load_mesh_into_viewer(_mesh(offset=4.0), mesh_ref="mesh-1")
+    stale = window.restore_scene_from_report_capture(record)
+    assert stale.status is ActiveSceneRestoreStatus.STALE
+    assert stale.reason_codes == ("MESH_FINGERPRINT_MISMATCH",)
+    window.close()
+    assert window.active_scene_controller.pending_active_scene_state is None
+
+
+def test_save_reopen_export_and_restore_persisted_capture(
+    app: object,
+    tmp_path: Path,
+) -> None:
+    from osw.core.project_schema import Project
+    from osw.core.workspace_3d import ActiveSceneRestoreStatus
+
+    saved: list[object] = []
+    target = tmp_path / "project.osw.json"
+    first = _window(
+        app,
+        CaptureAdapter(),
+        project_save_path_picker=lambda: str(target),
+        project_saver=lambda project, path: saved.append((project, path)),
+    )
+    mesh = _mesh()
+    first.load_mesh_into_viewer(mesh, mesh_ref="mesh-1")
+    first.mesh_viewer.surface_toggle.setChecked(False)
+    first.mesh_viewer.edge_toggle.setChecked(True)
+    first.mesh_viewer.load_mesh_preview()
+    first._pick_scene_screenshot_target_path = lambda: str(tmp_path / "scene.png")
+    assert first.capture_scene_screenshot_to_report_candidates() is not None
+    first._confirm_persist_scene_screenshots = lambda count: True
+    assert first.persist_staged_scene_screenshots() == 1
+    assert first.save_project_as() is True
+    report_path = first.export_report(tmp_path / "report.html")
+    assert report_path.is_file()
+    assert "Active scene: osw.active_scene.v1" in report_path.read_text(encoding="utf-8")
+    saved_project = saved[0][0]
+    first.close()
+
+    second = _window(
+        app,
+        CaptureAdapter(),
+        project_open_path_picker=lambda: str(target),
+        project_loader=lambda path: Project.from_dict(saved_project.to_dict()),
+    )
+    assert second.open_project() is True
+    assert second.active_scene_controller.active_scene_restore_result.status is (
+        ActiveSceneRestoreStatus.PENDING
+    )
+    second.load_mesh_into_viewer(mesh, mesh_ref="mesh-1")
+    assert second.active_scene_controller.active_scene_restore_result.status in {
+        ActiveSceneRestoreStatus.RESTORED,
+        ActiveSceneRestoreStatus.PARTIAL,
+    }
+    assert len(second.current_project.report_screenshots) == 1
+    restored = second.restore_scene_from_report_capture(
+        second.current_project.report_screenshots[0]
+    )
+    assert restored.status in {
+        ActiveSceneRestoreStatus.RESTORED,
+        ActiveSceneRestoreStatus.PARTIAL,
+    }
+    second.load_mesh_into_viewer(_mesh(offset=3.0), mesh_ref="mesh-1")
+    stale = second.restore_scene_from_report_capture(
+        second.current_project.report_screenshots[0]
+    )
+    assert stale.status is ActiveSceneRestoreStatus.STALE
+    second.close()

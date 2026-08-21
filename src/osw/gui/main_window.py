@@ -3444,6 +3444,12 @@ class MainWindow(_BaseMainWindow):
                 self.mesh_viewer.set_open_persisted_report_screenshot_manager_callback(
                     self._guard_document_callback(self.open_persisted_report_screenshot_manager)
                 )
+            if hasattr(self.mesh_viewer, "set_restore_scene_from_capture_callback"):
+                self.mesh_viewer.set_restore_scene_from_capture_callback(
+                    self._guard_document_callback(
+                        self.restore_scene_from_report_capture,
+                    )
+                )
             if hasattr(self.mesh_viewer, "set_clear_saved_active_scene_callback"):
                 self.mesh_viewer.set_clear_saved_active_scene_callback(
                     self._guard_document_callback(
@@ -3666,6 +3672,7 @@ class MainWindow(_BaseMainWindow):
                 edit_callback=self.update_persisted_report_screenshot_caption,
                 remove_callback=self.remove_persisted_report_screenshot,
                 relink_callback=self.relink_persisted_report_screenshot,
+                restore_callback=self.restore_scene_from_report_capture,
             )
         manager = self.persisted_report_screenshot_manager
         manager.refresh_records()
@@ -3875,6 +3882,49 @@ class MainWindow(_BaseMainWindow):
         if manager is not None and hasattr(manager, "show_status"):
             manager.show_status(message)
         return False
+
+    def restore_scene_from_report_capture(self, source: object) -> object:
+        """Restore a stored capture's logical scene without mutating report assets."""
+
+        from osw.core.workspace_3d import captured_active_scene_state
+
+        record = self._resolve_report_capture_source(source)
+        state = captured_active_scene_state(record if record is not None else source)
+        result = self.active_scene_controller.restore_captured_active_scene(
+            state if state is not None else source
+        )
+        self._refresh_saved_active_scene_status()
+        manager = getattr(self, "persisted_report_screenshot_manager", None)
+        if manager is not None and hasattr(manager, "show_status"):
+            status = str(getattr(result, "status", "") or "")
+            if status == "STALE":
+                manager.show_status("Selected capture is stale for the active mesh.")
+            elif status in {"RESTORED", "PARTIAL"}:
+                manager.show_status("Restored the logical scene from the selected capture.")
+            else:
+                manager.show_status("The selected capture could not restore the current scene.")
+        return result
+
+    def _resolve_report_capture_source(self, source: object) -> object | None:
+        if source is None:
+            return None
+        asset = getattr(source, "expected_asset", None)
+        if asset is not None:
+            return asset
+        record_id = str(getattr(source, "id", "") or getattr(source, "expected_id", "") or "")
+        if not record_id and isinstance(source, str):
+            record_id = source
+        if record_id:
+            for record in self._scene_screenshot_candidates:
+                if getattr(record, "id", "") == record_id:
+                    return record
+            for asset in self.current_project.report_screenshots:
+                if getattr(asset, "id", "") == record_id:
+                    return asset
+        metadata = getattr(source, "metadata", None)
+        if metadata is not None or hasattr(source, "to_dict"):
+            return source
+        return None
 
     def capture_scene_screenshot_to_report_candidates(self) -> SceneScreenshotRecord | None:
         """Capture an active viewer scene screenshot into report candidates."""

@@ -12,9 +12,13 @@ from math import isfinite
 from typing import Any
 
 ACTIVE_SCENE_SCHEMA = "osw.active_scene.v1"
+ACTIVE_SCENE_STATE_METADATA_KEY = "osw.active_scene.state"
+ACTIVE_SCENE_PROVENANCE_METADATA_KEY = "osw.active_scene.provenance"
 _MESH_FINGERPRINT_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 _REPRESENTATIONS = frozenset({"surface", "wireframe", "surface_with_edges"})
 _SELECTION_MODES = frozenset({"none", "node", "point", "cell", "setup"})
+_DEFORMATION_MODES = frozenset({"ORIGINAL", "DEFORMED", "OVERLAY"})
+_SCALE_MODES = frozenset({"AUTO", "MANUAL"})
 _ACTOR_KINDS = frozenset(
     {
         "base_mesh",
@@ -28,6 +32,8 @@ _ACTOR_KINDS = frozenset(
         "mesh_quality_bad_cells",
         "scalar_result",
         "vector_result",
+        "deformed_result",
+        "original_reference",
     }
 )
 
@@ -195,6 +201,11 @@ class ActiveSceneResultState:
     vector_visible: bool = False
     glyph_scale: float = 1.0
     glyph_max_count: int = 500
+    vector_scale_mode: str = "AUTO"
+    deformation_field: str = ""
+    deformation_mode: str = "ORIGINAL"
+    deformation_scale_mode: str = "AUTO"
+    deformation_manual_scale: float = 1.0
 
     def __post_init__(self) -> None:
         for name in (
@@ -207,6 +218,7 @@ class ActiveSceneResultState:
             "colormap",
             "vector_field",
             "vector_association",
+            "deformation_field",
         ):
             object.__setattr__(self, name, str(getattr(self, name) or ""))
         fingerprint = str(self.mesh_fingerprint or "").lower()
@@ -214,7 +226,7 @@ class ActiveSceneResultState:
             raise ValueError("result_state.mesh_fingerprint must be a SHA-256 hex digest.")
         object.__setattr__(self, "mesh_fingerprint", fingerprint)
         mode = str(self.range_mode or "AUTO").upper()
-        if mode not in {"AUTO", "MANUAL"}:
+        if mode not in _SCALE_MODES:
             raise ValueError("result_state.range_mode must be AUTO or MANUAL.")
         object.__setattr__(self, "range_mode", mode)
         minimum = _optional_finite(self.manual_min, name="result_state.manual_min")
@@ -234,8 +246,24 @@ class ActiveSceneResultState:
         count = int(self.glyph_max_count)
         if count <= 0 or count > 100_000:
             raise ValueError("result_state.glyph_max_count must be between 1 and 100000.")
+        vector_scale_mode = str(self.vector_scale_mode or "AUTO").upper()
+        if vector_scale_mode not in _SCALE_MODES:
+            raise ValueError("result_state.vector_scale_mode must be AUTO or MANUAL.")
+        deformation_mode = str(self.deformation_mode or "ORIGINAL").upper()
+        if deformation_mode not in _DEFORMATION_MODES:
+            raise ValueError("result_state.deformation_mode must be ORIGINAL, DEFORMED, or OVERLAY.")
+        deformation_scale_mode = str(self.deformation_scale_mode or "AUTO").upper()
+        if deformation_scale_mode not in _SCALE_MODES:
+            raise ValueError("result_state.deformation_scale_mode must be AUTO or MANUAL.")
+        deformation_scale = float(self.deformation_manual_scale)
+        if not isfinite(deformation_scale) or deformation_scale <= 0.0:
+            raise ValueError("result_state.deformation_manual_scale must be finite and positive.")
         object.__setattr__(self, "glyph_scale", scale)
         object.__setattr__(self, "glyph_max_count", count)
+        object.__setattr__(self, "vector_scale_mode", vector_scale_mode)
+        object.__setattr__(self, "deformation_mode", deformation_mode)
+        object.__setattr__(self, "deformation_scale_mode", deformation_scale_mode)
+        object.__setattr__(self, "deformation_manual_scale", deformation_scale)
         object.__setattr__(self, "colorbar_visible", bool(self.colorbar_visible))
         object.__setattr__(self, "vector_visible", bool(self.vector_visible))
 
@@ -265,6 +293,11 @@ class ActiveSceneResultState:
             "vector_visible": self.vector_visible,
             "glyph_scale": self.glyph_scale,
             "glyph_max_count": self.glyph_max_count,
+            "vector_scale_mode": self.vector_scale_mode,
+            "deformation_field": self.deformation_field,
+            "deformation_mode": self.deformation_mode,
+            "deformation_scale_mode": self.deformation_scale_mode,
+            "deformation_manual_scale": self.deformation_manual_scale,
         }
 
     @classmethod
@@ -289,6 +322,11 @@ class ActiveSceneResultState:
             vector_visible=bool(data.get("vector_visible", False)),
             glyph_scale=data.get("glyph_scale", 1.0),
             glyph_max_count=data.get("glyph_max_count", 500),
+            vector_scale_mode=str(data.get("vector_scale_mode", "AUTO")),
+            deformation_field=str(data.get("deformation_field", "")),
+            deformation_mode=str(data.get("deformation_mode", "ORIGINAL")),
+            deformation_scale_mode=str(data.get("deformation_scale_mode", "AUTO")),
+            deformation_manual_scale=data.get("deformation_manual_scale", 1.0),
         )
 
 
@@ -427,6 +465,7 @@ class ActiveSceneState:
     result_state: ActiveSceneResultState | None = None
     mesh_quality_state: MeshQualityViewState | None = None
     clipping_state: ActiveSceneClippingState = field(default_factory=ActiveSceneClippingState)
+    isolated_actor_id: str = ""
     selection_mode: str = "none"
     extensions: dict[str, Any] = field(default_factory=dict)
 
@@ -505,6 +544,7 @@ class ActiveSceneState:
         object.__setattr__(self, "result_state", result_state)
         object.__setattr__(self, "mesh_quality_state", quality_state)
         object.__setattr__(self, "clipping_state", clipping)
+        object.__setattr__(self, "isolated_actor_id", str(self.isolated_actor_id or ""))
         object.__setattr__(self, "selection_mode", selection_mode)
         object.__setattr__(self, "extensions", _json_extensions(self.extensions))
 
@@ -526,6 +566,7 @@ class ActiveSceneState:
                 self.mesh_quality_state.to_dict() if self.mesh_quality_state is not None else None
             ),
             "clipping_state": self.clipping_state.to_dict(),
+            "isolated_actor_id": self.isolated_actor_id,
             "selection_mode": self.selection_mode,
             "extensions": dict(self.extensions),
         }
@@ -560,6 +601,7 @@ class ActiveSceneState:
                 else MeshQualityViewState.from_dict(data["mesh_quality_state"])
             ),
             clipping_state=ActiveSceneClippingState.from_dict(data.get("clipping_state", {})),
+            isolated_actor_id=str(data.get("isolated_actor_id", "")),
             selection_mode=str(data.get("selection_mode", "none")),
             extensions=dict(_mapping(data.get("extensions", {}), name="active_scene.extensions")),
         )
@@ -688,8 +730,16 @@ def active_scene_provenance(
         "vector_field": result.vector_field if result else "",
         "vector_components": list(result.vector_components) if result else [],
         "vector_association": result.vector_association if result else "",
+        "vector_visible": result.vector_visible if result else False,
+        "vector_scale_mode": result.vector_scale_mode if result else "",
         "glyph_scale": result.glyph_scale if result else None,
         "glyph_max_count": result.glyph_max_count if result else None,
+        "deformation_field": result.deformation_field if result else "",
+        "deformation_mode": result.deformation_mode if result else "",
+        "deformation_scale_mode": result.deformation_scale_mode if result else "",
+        "deformation_manual_scale": (
+            result.deformation_manual_scale if result else None
+        ),
         "visible_named_selection_ids": list(state.visible_named_selection_ids),
         "active_named_selection_ids": list(state.active_named_selection_ids),
         "visible_setup_actor_keys": list(visible_setup),
@@ -701,6 +751,7 @@ def active_scene_provenance(
         "camera": state.camera.to_dict(),
         "representation": state.representation,
         "axes_visible": state.axes_visible,
+        "isolated_actor_id": state.isolated_actor_id,
         "clipping": state.clipping_state.to_dict(),
         "image_sha256": str(image_sha256),
         "image_byte_length": int(image_byte_length),
@@ -713,8 +764,150 @@ def active_scene_provenance(
     }
 
 
+def captured_active_scene_state(source: object) -> ActiveSceneState | None:
+    """Extract a validated ActiveSceneState from capture metadata or a record."""
+
+    if isinstance(source, ActiveSceneState):
+        return source
+    if isinstance(source, Mapping):
+        if str(source.get("schema", "")) == ACTIVE_SCENE_SCHEMA:
+            try:
+                return ActiveSceneState.from_dict(source)
+            except (TypeError, ValueError):
+                return None
+        raw_state = source.get(ACTIVE_SCENE_STATE_METADATA_KEY)
+        if isinstance(raw_state, Mapping):
+            try:
+                return ActiveSceneState.from_dict(raw_state)
+            except (TypeError, ValueError):
+                return None
+        metadata = source
+    else:
+        metadata = getattr(source, "metadata", None)
+        if isinstance(metadata, Mapping):
+            nested = metadata.get(ACTIVE_SCENE_STATE_METADATA_KEY)
+            if isinstance(nested, Mapping):
+                try:
+                    return ActiveSceneState.from_dict(nested)
+                except (TypeError, ValueError):
+                    return None
+        else:
+            metadata = None
+    if not isinstance(metadata, Mapping):
+        return None
+    provenance = metadata.get(ACTIVE_SCENE_PROVENANCE_METADATA_KEY)
+    if not isinstance(provenance, Mapping):
+        provenance = metadata.get("active_scene_provenance")
+    if not isinstance(provenance, Mapping):
+        return None
+    return _active_scene_state_from_provenance(provenance)
+
+
+def _active_scene_state_from_provenance(provenance: Mapping[str, Any]) -> ActiveSceneState | None:
+    mesh_ref = str(provenance.get("mesh_ref", "") or "")
+    fingerprint = str(provenance.get("mesh_fingerprint", "") or "")
+    if not mesh_ref or not fingerprint:
+        return None
+    result_state = None
+    if any(
+        provenance.get(key)
+        for key in (
+            "result_dataset_id",
+            "result_ref_id",
+            "scalar_field",
+            "vector_field",
+            "deformation_field",
+        )
+    ):
+        display_range = provenance.get("scalar_display_range")
+        minimum = None
+        maximum = None
+        if (
+            isinstance(display_range, Sequence)
+            and not isinstance(display_range, (str, bytes))
+            and len(display_range) == 2
+        ):
+            minimum, maximum = display_range
+        range_mode = str(provenance.get("scalar_range_mode", "AUTO") or "AUTO").upper()
+        if range_mode == "MANUAL" and (minimum is None or maximum is None):
+            range_mode = "AUTO"
+        try:
+            result_state = ActiveSceneResultState(
+            result_ref_id=str(provenance.get("result_ref_id", "") or ""),
+            result_dataset_id=str(provenance.get("result_dataset_id", "") or ""),
+            binding_schema=str(provenance.get("result_binding_schema", "") or ""),
+            mesh_fingerprint=fingerprint,
+            scalar_field=str(provenance.get("scalar_field", "") or ""),
+            scalar_component=str(provenance.get("scalar_component", "") or ""),
+            scalar_association=str(provenance.get("scalar_association", "") or ""),
+            range_mode=range_mode,
+            manual_min=minimum,
+            manual_max=maximum,
+            colormap=str(provenance.get("colormap", "viridis") or "viridis"),
+            colorbar_visible=bool(provenance.get("colorbar_visible", False)),
+            vector_field=str(provenance.get("vector_field", "") or ""),
+            vector_components=tuple(provenance.get("vector_components", ()) or ()),
+            vector_association=str(provenance.get("vector_association", "") or ""),
+            vector_visible=bool(provenance.get("vector_visible", False)),
+            glyph_scale=provenance.get("glyph_scale", 1.0) or 1.0,
+            glyph_max_count=provenance.get("glyph_max_count", 500) or 500,
+            vector_scale_mode=str(provenance.get("vector_scale_mode", "AUTO") or "AUTO"),
+            deformation_field=str(provenance.get("deformation_field", "") or ""),
+            deformation_mode=str(provenance.get("deformation_mode", "ORIGINAL") or "ORIGINAL"),
+            deformation_scale_mode=str(
+                provenance.get("deformation_scale_mode", "AUTO") or "AUTO"
+            ),
+            deformation_manual_scale=provenance.get("deformation_manual_scale", 1.0) or 1.0,
+        )
+        except (TypeError, ValueError):
+            result_state = None
+    quality = None
+    quality_schema = str(provenance.get("mesh_quality_metric_schema", "") or "")
+    if quality_schema:
+        try:
+            quality = MeshQualityViewState(
+                metric_schema=quality_schema,
+                threshold=provenance.get("mesh_quality_threshold", 0.0),
+                highlight_visible=bool(provenance.get("mesh_quality_highlight_visible", False)),
+            )
+        except (TypeError, ValueError):
+            quality = None
+    camera = provenance.get("camera", {})
+    clipping = provenance.get("clipping", {})
+    try:
+        return ActiveSceneState(
+            mesh_ref=mesh_ref,
+            mesh_fingerprint=fingerprint,
+            camera=(
+                camera
+                if isinstance(camera, ActiveSceneCameraState)
+                else ActiveSceneCameraState.from_dict(camera or {})
+            ),
+            representation=str(provenance.get("representation", "surface") or "surface"),
+            axes_visible=bool(provenance.get("axes_visible", True)),
+            visible_named_selection_ids=tuple(
+                provenance.get("visible_named_selection_ids", ()) or ()
+            ),
+            active_named_selection_ids=tuple(
+                provenance.get("active_named_selection_ids", ()) or ()
+            ),
+            result_state=result_state,
+            mesh_quality_state=quality,
+            clipping_state=(
+                clipping
+                if isinstance(clipping, ActiveSceneClippingState)
+                else ActiveSceneClippingState.from_dict(clipping or {})
+            ),
+            isolated_actor_id=str(provenance.get("isolated_actor_id", "") or ""),
+        )
+    except (TypeError, ValueError):
+        return None
+
+
 __all__ = [
+    "ACTIVE_SCENE_PROVENANCE_METADATA_KEY",
     "ACTIVE_SCENE_SCHEMA",
+    "ACTIVE_SCENE_STATE_METADATA_KEY",
     "ActiveSceneCameraState",
     "ActiveSceneClippingState",
     "ActiveSceneRestoreResult",
@@ -726,4 +919,5 @@ __all__ = [
     "SemanticActorVisibility",
     "active_scene_provenance",
     "active_scene_state_digest",
+    "captured_active_scene_state",
 ]

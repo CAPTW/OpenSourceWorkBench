@@ -80,6 +80,17 @@ def _state() -> object:
             manual_max=10.0,
             colormap="viridis",
             colorbar_visible=True,
+            vector_field="disp",
+            vector_components=("ux", "uy", "uz"),
+            vector_association="point",
+            vector_visible=True,
+            glyph_scale=2.0,
+            glyph_max_count=250,
+            vector_scale_mode="MANUAL",
+            deformation_field="disp",
+            deformation_mode="DEFORMED",
+            deformation_scale_mode="MANUAL",
+            deformation_manual_scale=1.5,
         ),
         mesh_quality_state=quality_type(
             metric_schema="osw.mesh_quality.edge_aspect_ratio.v1",
@@ -91,6 +102,7 @@ def _state() -> object:
             origin=(0.5, 0.0, 0.0),
             normal=(1.0, 0.0, 0.0),
         ),
+        isolated_actor_id="base_mesh",
         selection_mode="cell",
         extensions={"org.opensolver.note": {"value": "보존"}},
     )
@@ -138,6 +150,9 @@ def test_active_scene_round_trip_and_digest_are_deterministic() -> None:
         "selection-1",
         "selection-2",
     ]
+    assert payload["isolated_actor_id"] == "base_mesh"
+    assert payload["result_state"]["deformation_mode"] == "DEFORMED"
+    assert payload["result_state"]["vector_scale_mode"] == "MANUAL"
     setup_mode_payload = {**payload, "selection_mode": "setup"}
     assert state_type.from_dict(setup_mode_payload).selection_mode == "setup"
 
@@ -172,6 +187,44 @@ def test_active_scene_rejects_malformed_camera_clipping_actor_and_extensions() -
             mesh_fingerprint="a" * 64,
             extensions={"org.opensolver.bytes": b"not-json"},
         )
+    with pytest.raises(ValueError, match="deformation_mode"):
+        _result_type(
+            result_dataset_id="dataset-1",
+            deformation_mode="WARPED",
+        )
+
+
+def test_captured_active_scene_state_prefers_embedded_state_over_provenance() -> None:
+    from osw.core.workspace_3d import (
+        ACTIVE_SCENE_PROVENANCE_METADATA_KEY,
+        ACTIVE_SCENE_STATE_METADATA_KEY,
+        active_scene_provenance,
+        captured_active_scene_state,
+    )
+
+    state = _state()
+    metadata = {
+        ACTIVE_SCENE_STATE_METADATA_KEY: state.to_dict(),
+        ACTIVE_SCENE_PROVENANCE_METADATA_KEY: active_scene_provenance(
+            state,
+            image_sha256="d" * 64,
+            image_byte_length=8,
+            image_size=(4, 4),
+            capture_backend_kind="unit",
+        ),
+    }
+
+    restored = captured_active_scene_state(metadata)
+    provenance_only = captured_active_scene_state(
+        {ACTIVE_SCENE_PROVENANCE_METADATA_KEY: metadata[ACTIVE_SCENE_PROVENANCE_METADATA_KEY]}
+    )
+
+    assert restored == state
+    assert provenance_only is not None
+    assert provenance_only.mesh_fingerprint == state.mesh_fingerprint
+    assert provenance_only.result_state is not None
+    assert provenance_only.result_state.deformation_mode == "DEFORMED"
+    assert captured_active_scene_state({}) is None
 
 
 @pytest.mark.parametrize("version", ["0.1", "0.2", "0.3"])

@@ -86,6 +86,13 @@ _PERSISTED_SCREENSHOTS_COUNT_TEMPLATE = "Persisted report screenshots: {count}"
 _MANAGE_PERSISTED_HANDLER_MISSING_TEXT = (
     "Persisted screenshot management is not wired to the main window."
 )
+_RESTORE_CAPTURE_HANDLER_MISSING_TEXT = (
+    "Restore view from scene capture is not wired to the main window."
+)
+_RESTORE_CAPTURE_NO_SELECTION_TEXT = "Select a staged scene screenshot first."
+_RESTORE_CAPTURE_APPLIED_TEXT = "Restored the logical scene from the selected capture."
+_RESTORE_CAPTURE_STALE_TEXT = "The selected capture is stale for the active mesh."
+_RESTORE_CAPTURE_FAILED_TEXT = "The selected capture could not restore the current scene."
 _PYVISTA_MISSING_TEXT = (
     "PyVista unavailable -- install the visualization extra to render 3D scenes."
 )
@@ -149,6 +156,7 @@ class MeshViewerPanel(_BaseWidget):
         self._persist_scene_screenshots_callback: Callable[[], object] | None = None
         self._persisted_report_screenshots_provider: Callable[[], Sequence[object]] | None = None
         self._open_persisted_report_screenshot_manager_callback: Callable[[], object] | None = None
+        self._restore_scene_from_capture_callback: Callable[[object], object] | None = None
         self._clear_saved_active_scene_callback: Callable[[], object] | None = None
         self._binding_status_message = _NO_STAGED_BINDING_TEXT
         self._binding_persisted = False
@@ -453,6 +461,12 @@ class MeshViewerPanel(_BaseWidget):
         )
         self.persist_screenshots_button.setObjectName("oswMeshViewerPersistScreenshotsButton")
         self.persist_screenshots_button.setEnabled(False)
+        self.restore_capture_button = QtWidgets.QPushButton(
+            "Restore view from selected capture",
+            self,
+        )
+        self.restore_capture_button.setObjectName("oswMeshViewerRestoreCaptureButton")
+        self.restore_capture_button.setEnabled(False)
         self.persisted_screenshots_status_label = QtWidgets.QLabel(
             _PERSISTED_SCREENSHOTS_COUNT_TEMPLATE.format(count=0), self
         )
@@ -571,6 +585,7 @@ class MeshViewerPanel(_BaseWidget):
         screenshot_actions_row.addWidget(self.edit_caption_button)
         screenshot_actions_row.addWidget(self.remove_screenshot_button)
         screenshot_actions_row.addWidget(self.persist_screenshots_button)
+        screenshot_actions_row.addWidget(self.restore_capture_button)
         screenshot_actions_row.addStretch(1)
         layout.addLayout(screenshot_actions_row)
 
@@ -596,6 +611,9 @@ class MeshViewerPanel(_BaseWidget):
         )
         self.persist_screenshots_button.clicked.connect(
             lambda _checked=False: self._on_persist_screenshots_requested()
+        )
+        self.restore_capture_button.clicked.connect(
+            lambda _checked=False: self._on_restore_capture_requested()
         )
         self.manage_persisted_screenshots_button.clicked.connect(
             lambda _checked=False: self._on_manage_persisted_screenshots_requested()
@@ -892,6 +910,12 @@ class MeshViewerPanel(_BaseWidget):
     ) -> None:
         """Connect the manager launcher to the MainWindow-owned dialog flow."""
         self._open_persisted_report_screenshot_manager_callback = callback
+        self._render_screenshot_status()
+
+    def set_restore_scene_from_capture_callback(
+        self, callback: Callable[[object], object] | None
+    ) -> None:
+        self._restore_scene_from_capture_callback = callback
         self._render_screenshot_status()
 
     def set_clear_saved_active_scene_callback(
@@ -1248,6 +1272,9 @@ class MeshViewerPanel(_BaseWidget):
         self.persist_screenshots_button.setEnabled(
             count > 0 and self._persist_scene_screenshots_callback is not None
         )
+        self.restore_capture_button.setEnabled(
+            has_selection and self._restore_scene_from_capture_callback is not None
+        )
         self.manage_persisted_screenshots_button.setEnabled(
             bool(self._persisted_report_screenshots())
             and self._open_persisted_report_screenshot_manager_callback is not None
@@ -1323,6 +1350,26 @@ class MeshViewerPanel(_BaseWidget):
         self._state.status_message = (
             _SCREENSHOT_REMOVED_TEXT if removed else _UNIDENTIFIED_SCREENSHOT_TEXT
         )
+        self._render_state()
+
+    def _on_restore_capture_requested(self) -> None:
+        if self._restore_scene_from_capture_callback is None:
+            self._state.status_message = _RESTORE_CAPTURE_HANDLER_MISSING_TEXT
+            self._render_state()
+            return
+        record = self._selected_staged_record()
+        if record is None:
+            self._state.status_message = _RESTORE_CAPTURE_NO_SELECTION_TEXT
+            self._render_state()
+            return
+        result = self._restore_scene_from_capture_callback(record)
+        status = str(getattr(result, "status", "") or "")
+        if status in {"RESTORED", "PARTIAL"}:
+            self._state.status_message = _RESTORE_CAPTURE_APPLIED_TEXT
+        elif status == "STALE":
+            self._state.status_message = _RESTORE_CAPTURE_STALE_TEXT
+        else:
+            self._state.status_message = _RESTORE_CAPTURE_FAILED_TEXT
         self._render_state()
 
     def _on_persist_screenshots_requested(self) -> None:

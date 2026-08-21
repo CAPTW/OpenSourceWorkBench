@@ -50,7 +50,9 @@ from osw.core.solver_setup import (
 )
 from osw.core.units import UnitSystem
 from osw.core.workspace_3d import (
+    ACTIVE_SCENE_PROVENANCE_METADATA_KEY,
     ACTIVE_SCENE_SCHEMA,
+    ACTIVE_SCENE_STATE_METADATA_KEY,
     ActiveSceneCameraState,
     ActiveSceneClippingState,
     ActiveSceneRestoreResult,
@@ -61,6 +63,7 @@ from osw.core.workspace_3d import (
     MeshQualityViewState,
     SemanticActorVisibility,
     active_scene_provenance,
+    captured_active_scene_state,
 )
 from osw.gui.interactive_results_view_model import (
     RESULT_COLORBAR_ACTOR_KEY,
@@ -1299,6 +1302,7 @@ class ActiveSceneController:
         else:
             self._interactive_result_binding = None
         self._resolve_interactive_result_binding()
+        self._restore_result_state_after_binding()
         return self._interactive_result_resolution
 
     def set_scalar_result(
@@ -2316,6 +2320,7 @@ class ActiveSceneController:
             result_state=self._snapshot_result_state(),
             mesh_quality_state=self._snapshot_mesh_quality_state(),
             clipping_state=self._clipping_state,
+            isolated_actor_id=self._snapshot_isolated_actor_id(),
             selection_mode=self._pick_mode.value,
         )
 
@@ -2424,6 +2429,7 @@ class ActiveSceneController:
         self._restore_mesh_quality_state(state, reasons, diagnostics)
         self._restore_result_state(state, reasons, diagnostics)
         self._restore_actor_visibility(state, reasons, diagnostics)
+        self._restore_isolation_state(state, reasons, diagnostics)
         self._restore_clipping_state(state, reasons, diagnostics)
         if state.selection_mode in {"node", "point", "cell"}:
             self._pick_mode = SelectionMode.coerce(
@@ -2522,7 +2528,8 @@ class ActiveSceneController:
         metadata = {
             **dict(getattr(record, "metadata", {}) or {}),
             **request.metadata,
-            "osw.active_scene.provenance": provenance,
+            ACTIVE_SCENE_STATE_METADATA_KEY: state.to_dict(),
+            ACTIVE_SCENE_PROVENANCE_METADATA_KEY: provenance,
         }
         replacement_values: dict[str, object] = {
             "caption": request.caption or getattr(record, "caption", None),
@@ -2541,6 +2548,25 @@ class ActiveSceneController:
             image_size=image_size,
             backend_kind=self.backend_kind,
         )
+
+    def restore_captured_active_scene(
+        self,
+        source: ActiveSceneState | Mapping[str, object] | object,
+    ) -> ActiveSceneRestoreResult:
+        """Restore a stored capture's logical scene when the exact mesh is still valid."""
+
+        try:
+            state = captured_active_scene_state(source)
+        except (TypeError, ValueError):
+            state = None
+        if state is None:
+            self._active_scene_restore_result = ActiveSceneRestoreResult(
+                ActiveSceneRestoreStatus.INVALID,
+                ("CAPTURE_SCENE_STATE_MISSING",),
+                ("The selected scene capture does not contain restorable workspace state.",),
+            )
+            return self._active_scene_restore_result
+        return self.set_pending_active_scene_state(state)
 
     def export_screenshot_record(
         self,
@@ -2722,47 +2748,86 @@ class ActiveSceneController:
         binding = self._interactive_result_binding
         scalar = self._interactive_scalar_result
         vector = self._interactive_vector_result
-        if binding is None and scalar is None and vector is None:
+        session = self._interactive_result_state
+        if (
+            binding is None
+            and scalar is None
+            and vector is None
+            and not session.active_result_id
+            and not session.vector_field_id
+            and not session.deformation_field_id
+        ):
             return None
         range_mode = (
-            str(getattr(scalar, "range_mode", "AUTO")).split(".")[-1]
+            str(getattr(scalar, "range_mode", session.range_mode or "AUTO")).split(".")[-1]
             if scalar is not None
-            else "AUTO"
+            else str(session.range_mode or "AUTO")
         )
         display_range = getattr(scalar, "display_range", None) if range_mode == "MANUAL" else None
+        if display_range is None and range_mode == "MANUAL":
+            display_range = session.manual_range
         return ActiveSceneResultState(
             result_ref_id=self._interactive_result_ref_id,
             result_dataset_id=str(
                 getattr(binding, "result_dataset_id", "")
                 or getattr(self._interactive_result_dataset, "dataset_id", "")
+                or session.active_result_id
             ),
             binding_schema=str(getattr(binding, "schema", "") or ""),
             mesh_fingerprint=str(
                 getattr(binding, "mesh_fingerprint", "")
                 or (self._mesh_fingerprint.digest if self._mesh_fingerprint is not None else "")
             ),
-            scalar_field=str(getattr(scalar, "field_name", "") or ""),
+            scalar_field=str(getattr(scalar, "field_name", "") or session.active_field_id or ""),
             scalar_component=str(getattr(scalar, "component", "") or ""),
             scalar_association=str(getattr(scalar, "association", "") or ""),
             range_mode=range_mode,
             manual_min=display_range[0] if display_range is not None else None,
             manual_max=display_range[1] if display_range is not None else None,
-            colormap=str(getattr(scalar, "colormap", "viridis") or "viridis"),
-            colorbar_visible=bool(getattr(scalar, "colorbar_visible", True)),
-            vector_field=str(getattr(vector, "field_name", "") or ""),
+            colormap=str(getattr(scalar, "colormap", session.colormap) or "viridis"),
+            colorbar_visible=bool(getattr(scalar, "colorbar_visible", session.colorbar_visible)),
+            vector_field=str(getattr(vector, "field_name", "") or session.vector_field_id or ""),
             vector_components=tuple(getattr(vector, "selected_components", ()) or ()),
             vector_association=str(getattr(vector, "association", "") or ""),
             vector_visible=bool(
-                vector is not None
-                and vector.applied
-                and RESULT_VECTOR_ACTOR_KEY in self._actor_records
+                self._interactive_result_state.vector_visible
+                or (
+                    vector is not None
+                    and vector.applied
+                    and RESULT_VECTOR_ACTOR_KEY in self._actor_records
+                )
             ),
-            glyph_scale=float(getattr(vector, "scale", 1.0) or 1.0),
+            glyph_scale=float(
+                self._interactive_result_state.vector_manual_scale
+                or getattr(vector, "scale", 1.0)
+                or 1.0
+            ),
             glyph_max_count=max(
                 1,
-                int(getattr(vector, "sampled_count", 500) or 500),
+                int(self._interactive_result_state.vector_max_glyph_count or 500),
+            ),
+            vector_scale_mode=str(
+                self._interactive_result_state.vector_scale_mode or "AUTO"
+            ),
+            deformation_field=str(self._interactive_result_state.deformation_field_id or ""),
+            deformation_mode=str(self._interactive_result_state.deformation_mode or "ORIGINAL"),
+            deformation_scale_mode=str(
+                self._interactive_result_state.deformation_scale_mode or "AUTO"
+            ),
+            deformation_manual_scale=float(
+                self._interactive_result_state.deformation_manual_scale or 1.0
             ),
         )
+
+    def _snapshot_isolated_actor_id(self) -> str:
+        if self._isolation_snapshot is None:
+            return ""
+        isolated = [
+            semantic_id
+            for semantic_id, record in self._actor_records.items()
+            if record.isolation_eligible and record.visible
+        ]
+        return isolated[0] if len(isolated) == 1 else ""
 
     def _snapshot_mesh_quality_state(self) -> MeshQualityViewState | None:
         if self._mesh_quality_analysis is None and not self._mesh_quality_highlight_visible:
@@ -2914,6 +2979,18 @@ class ActiveSceneController:
             reasons.append("RESULT_BINDING_NOT_RESOLVED")
             diagnostics.append("The saved result binding is not exactly resolved.")
             return
+        if result.deformation_field and result.deformation_mode != "ORIGINAL":
+            deformation = self.set_deformed_result(
+                result.deformation_field,
+                mode=result.deformation_mode,
+                scale_mode=result.deformation_scale_mode,
+                manual_scale=result.deformation_manual_scale,
+            )
+            if not deformation.applied:
+                reasons.append("RESULT_FIELD_NOT_AVAILABLE")
+                diagnostics.append(
+                    f"Result deformation field '{result.deformation_field}' is not available."
+                )
         if result.scalar_field:
             scalar = self.set_scalar_result(
                 result.scalar_field,
@@ -2932,10 +3009,79 @@ class ActiveSceneController:
                 components=result.vector_components or None,
                 maximum_glyph_count=result.glyph_max_count,
                 scale=result.glyph_scale,
+                scale_mode=result.vector_scale_mode,
             )
             if not vector.applied:
                 reasons.append("RESULT_FIELD_NOT_AVAILABLE")
                 diagnostics.append(f"Result vector field '{result.vector_field}' is not available.")
+
+    def _restore_result_state_after_binding(self) -> None:
+        state = self._pending_active_scene_state
+        fingerprint = self._mesh_fingerprint
+        saved = None if state is None else state.result_state
+        current_dataset_id = str(
+            getattr(self._interactive_result_dataset, "dataset_id", "") or ""
+        )
+        if (
+            state is None
+            or saved is None
+            or self._mesh is None
+            or fingerprint is None
+            or self._active_scene_restore_result.status is ActiveSceneRestoreStatus.STALE
+            or state.mesh_fingerprint != fingerprint.digest
+            or (
+                saved.result_dataset_id
+                and current_dataset_id
+                and saved.result_dataset_id != current_dataset_id
+            )
+            or (
+                saved.result_ref_id
+                and self._interactive_result_ref_id
+                and saved.result_ref_id != self._interactive_result_ref_id
+            )
+        ):
+            return
+        reasons = [
+            code
+            for code in self._active_scene_restore_result.reason_codes
+            if code
+            not in {
+                "RESULT_DATASET_NOT_AVAILABLE",
+                "RESULT_REF_NOT_AVAILABLE",
+                "RESULT_BINDING_NOT_RESOLVED",
+                "RESULT_FIELD_NOT_AVAILABLE",
+            }
+        ]
+        diagnostics = [
+            item
+            for item in self._active_scene_restore_result.diagnostics
+            if "result" not in item.casefold()
+        ]
+        self._restore_result_state(state, reasons, diagnostics)
+        unique_reasons = tuple(dict.fromkeys(reasons))
+        status = (
+            ActiveSceneRestoreStatus.PARTIAL
+            if unique_reasons
+            else ActiveSceneRestoreStatus.RESTORED
+        )
+        self._active_scene_restore_result = ActiveSceneRestoreResult(
+            status,
+            unique_reasons,
+            tuple(dict.fromkeys(diagnostics)),
+        )
+
+    def _restore_isolation_state(
+        self,
+        state: ActiveSceneState,
+        reasons: list[str],
+        diagnostics: list[str],
+    ) -> None:
+        isolated_id = str(state.isolated_actor_id or "")
+        if not isolated_id:
+            return
+        if not self.isolate_actor(isolated_id):
+            reasons.append("ISOLATED_ACTOR_NOT_FOUND")
+            diagnostics.append(f"Saved isolated actor '{isolated_id}' is unavailable.")
 
     def _restore_actor_visibility(
         self,
@@ -2952,6 +3098,8 @@ class ActiveSceneController:
                     "mesh_quality_bad_cells",
                     "scalar_result",
                     "vector_result",
+                    "deformed_result",
+                    "original_reference",
                 }:
                     continue
                 reasons.append("ACTOR_VISIBILITY_TARGET_NOT_FOUND")
@@ -4136,6 +4284,18 @@ def _semantic_visibility_entry(
             RESULT_VECTOR_ACTOR_KEY,
             visible=visible,
         )
+    if semantic_id == RESULT_DEFORMED_ACTOR_KEY:
+        return SemanticActorVisibility(
+            "deformed_result",
+            RESULT_DEFORMED_ACTOR_KEY,
+            visible=visible,
+        )
+    if semantic_id == RESULT_ORIGINAL_REFERENCE_ACTOR_KEY:
+        return SemanticActorVisibility(
+            "original_reference",
+            RESULT_ORIGINAL_REFERENCE_ACTOR_KEY,
+            visible=visible,
+        )
     return None
 
 
@@ -4160,6 +4320,10 @@ def _semantic_id_from_visibility(item: SemanticActorVisibility) -> str:
         return RESULT_SCALAR_ACTOR_KEY
     if item.kind == "vector_result":
         return RESULT_VECTOR_ACTOR_KEY
+    if item.kind == "deformed_result":
+        return RESULT_DEFORMED_ACTOR_KEY
+    if item.kind == "original_reference":
+        return RESULT_ORIGINAL_REFERENCE_ACTOR_KEY
     if item.kind == "named_selection":
         return f"named_selection:{item.source_id}"
     return ""

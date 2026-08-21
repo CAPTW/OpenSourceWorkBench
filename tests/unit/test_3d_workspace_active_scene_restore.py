@@ -5,7 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from osw.core.result_dataset import ResultDataset
+from dataclasses import replace
+
+from osw.core.result_dataset import ResultDataset, ResultField, ResultRow
 from osw.core.result_mesh_binding import (
     RESULT_MESH_BINDING_SCHEMA_V2,
     ResultMeshBinding,
@@ -359,3 +361,150 @@ def test_capture_request_writes_only_explicit_external_target(tmp_path: Path) ->
     assert result.record.path == str(target)
     assert result.image_sha256
     assert result.image_byte_length == target.stat().st_size
+    assert result.record.metadata["osw.active_scene.state"]["mesh_ref"] == "mesh-1"
+    assert result.record.metadata["osw.active_scene.provenance"]["active_scene_digest"]
+
+
+def test_restore_captured_scene_is_exact_then_stale_after_fingerprint_change(
+    tmp_path: Path,
+) -> None:
+    from osw.core.workspace_3d import (
+        ActiveSceneRestoreStatus,
+        ActiveSceneScreenshotRequest,
+    )
+
+    class CaptureSession(SceneSession):
+        capabilities = SceneSession.capabilities | frozenset({"scene-screenshot"})
+
+        def export_screenshot_record(self, path: str, **kwargs: object) -> object:
+            from osw.post.scene_model import build_screenshot_record
+
+            Path(path).write_bytes(b"\x89PNG\r\n\x1a\n" + b"scene-bytes")
+            return build_screenshot_record(
+                path,
+                record_id=str(kwargs["record_id"]),
+                scene_state=kwargs["scene_state"],
+                mesh_ref=str(kwargs["mesh_ref"]),
+            )
+
+    original = _mesh()
+    changed = _mesh(offset=5.0)
+    session = CaptureSession()
+    controller = ActiveSceneController(SceneFactory(session))
+    controller.load_mesh(
+        original,
+        mesh_input_ref("mesh-1"),
+        scene_view_state_from_toggles(show_edges=False, show_axes=True),
+    )
+    controller.set_representation("wireframe")
+    capture = controller.capture_active_scene_screenshot(
+        ActiveSceneScreenshotRequest(
+            record_id="shot-1",
+            output_path=str(tmp_path / "shot.png"),
+        )
+    )
+    assert capture.record is not None
+
+    restored = controller.restore_captured_active_scene(capture.record)
+    assert restored.status is ActiveSceneRestoreStatus.RESTORED
+    assert session.representations[-1] == "wireframe"
+
+    controller.load_mesh(
+        changed,
+        mesh_input_ref("mesh-1"),
+        scene_view_state_from_toggles(),
+    )
+    before_stale = list(session.representations)
+    stale = controller.restore_captured_active_scene(capture.record)
+    assert stale.status is ActiveSceneRestoreStatus.STALE
+    assert stale.reason_codes == ("MESH_FINGERPRINT_MISMATCH",)
+    assert session.representations == before_stale
+
+
+def test_snapshot_and_restore_preserve_deformed_and_vector_result_state() -> None:
+    from osw.core.workspace_3d import ActiveSceneRestoreStatus
+
+    mesh = _mesh()
+    fingerprint = compute_mesh_fingerprint(mesh)
+    dataset = ResultDataset(
+        dataset_id="dataset-1",
+        source="memory",
+        solver="fixture",
+        analysis_type="static",
+        fields=(
+            ResultField(
+                name="disp",
+                location="node",
+                components=("ux", "uy", "uz"),
+                rows=(
+                    ResultRow(0, {"ux": 0.1, "uy": 0.0, "uz": 0.0}),
+                    ResultRow(1, {"ux": 0.0, "uy": 0.1, "uz": 0.0}),
+                    ResultRow(2, {"ux": 0.0, "uy": 0.0, "uz": 0.1}),
+                ),
+                unit="mm",
+            ),
+        ),
+        metadata={
+            "mesh_length_unit": "mm",
+            "field_semantics": {
+                "disp": {
+                    "semantic_role": "displacement",
+                    "quantity_dimension": "length",
+                    "coordinate_system": "global_cartesian",
+                }
+            },
+        },
+    )
+    binding = ResultMeshBinding(
+        schema=RESULT_MESH_BINDING_SCHEMA_V2,
+        mesh_ref="mesh-1",
+        result_dataset_id=dataset.dataset_id,
+        mesh_identity_schema=MESH_IDENTITY_SCHEMA,
+        mesh_fingerprint=fingerprint.digest,
+        mesh_signature={"node_count": 3, "cell_count": 1},
+    )
+    controller = ActiveSceneController(SceneFactory())
+    controller.load_mesh(
+        mesh,
+        mesh_input_ref("mesh-1"),
+        scene_view_state_from_toggles(),
+    )
+    controller.set_interactive_result_dataset(
+        dataset,
+        binding,
+        result_ref_id="result-ref-1",
+    )
+    controller._interactive_result_state = replace(
+        controller.interactive_result_state,
+        vector_field_id="disp",
+        vector_visible=True,
+        vector_max_glyph_count=80,
+        vector_scale_mode="MANUAL",
+        vector_manual_scale=2.5,
+        deformation_field_id="disp",
+        deformation_mode="DEFORMED",
+        deformation_scale_mode="MANUAL",
+        deformation_manual_scale=1.25,
+    )
+
+    snapshot = controller.snapshot_active_scene_state()
+    assert snapshot is not None
+    assert snapshot.result_state is not None
+    assert snapshot.result_state.deformation_mode == "DEFORMED"
+    assert snapshot.result_state.vector_visible is True
+    assert snapshot.result_state.glyph_max_count == 80
+
+    fresh = ActiveSceneController(SceneFactory())
+    fresh.set_pending_active_scene_state(snapshot)
+    fresh.load_mesh(mesh, mesh_input_ref("mesh-1"), scene_view_state_from_toggles())
+    assert fresh.active_scene_restore_result.status is ActiveSceneRestoreStatus.PARTIAL
+    assert "RESULT_DATASET_NOT_AVAILABLE" in fresh.active_scene_restore_result.reason_codes
+
+    fresh.set_interactive_result_dataset(dataset, binding, result_ref_id="result-ref-1")
+    assert fresh.active_scene_restore_result.status in {
+        ActiveSceneRestoreStatus.RESTORED,
+        ActiveSceneRestoreStatus.PARTIAL,
+    }
+    restored_state = fresh.interactive_result_state
+    assert restored_state.deformation_field_id == "disp"
+    assert restored_state.vector_field_id == "disp"

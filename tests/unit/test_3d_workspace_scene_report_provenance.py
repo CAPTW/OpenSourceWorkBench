@@ -46,6 +46,10 @@ def _active_state() -> object:
             manual_max=250.0,
             colormap="viridis",
             colorbar_visible=True,
+            vector_field="disp",
+            vector_visible=True,
+            deformation_field="disp",
+            deformation_mode="DEFORMED",
         ),
         mesh_quality_state=MeshQualityViewState(
             metric_schema="osw.mesh_quality.edge_aspect_ratio.v1",
@@ -118,6 +122,8 @@ def test_report_provenance_lines_are_deterministic_compact_and_path_free(
     assert "Named selections: 1 visible / 1 active" in rendered
     assert "Setup overlays: 1 visible" in rendered
     assert "Mesh Diagnostics: osw.mesh_quality.edge_aspect_ratio.v1 / threshold 8" in rendered
+    assert "Vector glyphs: disp" in rendered
+    assert "Deformed shape: DEFORMED / disp" in rendered
     assert "Representation: surface_with_edges" in rendered
     assert "Capture backend: fake-current-session" in rendered
     assert str(tmp_path) not in rendered

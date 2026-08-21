@@ -48,7 +48,7 @@ class InteractiveResultSessionState:
     stale_reason: str = ""
 
     def to_dict(self) -> dict[str, object]:
-        """Return JSON-compatible state for the next persistence gate."""
+        """Return JSON-compatible transient state mirrored by ActiveSceneResultState."""
 
         return {
             "active_result_id": self.active_result_id,

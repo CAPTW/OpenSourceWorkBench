@@ -56,6 +56,7 @@ class PersistedReportScreenshotManager(_BaseDialog):
         edit_callback: TargetCallback,
         remove_callback: TargetCallback,
         relink_callback: TargetCallback,
+        restore_callback: TargetCallback | None = None,
     ) -> None:
         if QtWidgets is None:
             raise PySide6UnavailableError(pyside6_missing_message())
@@ -70,6 +71,7 @@ class PersistedReportScreenshotManager(_BaseDialog):
         self._edit_callback = edit_callback
         self._remove_callback = remove_callback
         self._relink_callback = relink_callback
+        self._restore_callback = restore_callback
         # Presentation snapshots only. MainWindow revalidates every target
         # against the current Project before any mutation.
         self._targets: tuple[PersistedReportScreenshotTarget, ...] = ()
@@ -114,6 +116,10 @@ class PersistedReportScreenshotManager(_BaseDialog):
             "Relink selected screenshot...", self
         )
         self.relink_button.setObjectName("oswPersistedScreenshotManagerRelinkButton")
+        self.restore_button = QtWidgets.QPushButton(
+            "Restore view from selected capture", self
+        )
+        self.restore_button.setObjectName("oswPersistedScreenshotManagerRestoreButton")
         self.close_button = QtWidgets.QPushButton("Close", self)
         self.close_button.setObjectName("oswPersistedScreenshotManagerCloseButton")
 
@@ -121,6 +127,7 @@ class PersistedReportScreenshotManager(_BaseDialog):
         actions.addWidget(self.edit_button)
         actions.addWidget(self.remove_button)
         actions.addWidget(self.relink_button)
+        actions.addWidget(self.restore_button)
         actions.addStretch(1)
         actions.addWidget(self.close_button)
 
@@ -134,6 +141,7 @@ class PersistedReportScreenshotManager(_BaseDialog):
         self.edit_button.clicked.connect(lambda _checked=False: self._dispatch_edit())
         self.remove_button.clicked.connect(lambda _checked=False: self._dispatch_remove())
         self.relink_button.clicked.connect(lambda _checked=False: self._dispatch_relink())
+        self.restore_button.clicked.connect(lambda _checked=False: self._dispatch_restore())
         self.close_button.clicked.connect(self.close)
         self.refresh_records()
 
@@ -189,6 +197,7 @@ class PersistedReportScreenshotManager(_BaseDialog):
         self.edit_button.setEnabled(enabled)
         self.remove_button.setEnabled(enabled)
         self.relink_button.setEnabled(enabled)
+        self.restore_button.setEnabled(enabled and self._restore_callback is not None)
 
     def _target_or_diagnostic(self) -> PersistedReportScreenshotTarget | None:
         target = self.selected_target()
@@ -222,6 +231,15 @@ class PersistedReportScreenshotManager(_BaseDialog):
             self.show_status(_CALLBACK_MISSING_TEXT)
             return
         self._relink_callback(target)
+
+    def _dispatch_restore(self) -> None:
+        target = self._target_or_diagnostic()
+        if target is None:
+            return
+        if self._restore_callback is None:
+            self.show_status(_CALLBACK_MISSING_TEXT)
+            return
+        self._restore_callback(target)
 
 
 def persisted_report_screenshot_states(
