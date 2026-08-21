@@ -20,6 +20,14 @@ from osw.mesh.identity import compute_mesh_fingerprint
 from osw.mesh.mesh_model import MeshCellBlock, MeshData
 
 
+class _Provider:
+    provider_schema = "osw.mesh_quality.provider.projection-fixture.v1"
+    provider_version = "1"
+
+    def evaluate(self, _mesh: MeshData) -> tuple[float, ...]:
+        return (0.25,)
+
+
 def _api() -> tuple[object, object]:
     quality = import_module("osw.mesh.quality")
     try:
@@ -143,6 +151,16 @@ def _load(controller: ActiveSceneController, mesh: MeshData | None = None) -> No
     )
 
 
+def _analyze(mesh: MeshData, **kwargs: object) -> object:
+    from osw.mesh.quality import analyze_mesh_cell_quality
+
+    return analyze_mesh_cell_quality(
+        mesh,
+        threshold=float(kwargs.get("threshold", 0.0)),
+        provider=_Provider(),
+    )
+
+
 def test_threshold_reuses_analysis_and_replaces_one_exact_semantic_actor() -> None:
     quality, projection = _api()
     calls: list[str] = []
@@ -152,6 +170,7 @@ def test_threshold_reuses_analysis_and_replaces_one_exact_semantic_actor() -> No
         return quality.analyze_mesh_cell_quality(
             mesh,
             zero_edge_tolerance=zero_edge_tolerance,
+            provider=_Provider(),
         )
 
     factory = RecordingDiagnosticsFactory()
@@ -165,42 +184,42 @@ def test_threshold_reuses_analysis_and_replaces_one_exact_semantic_actor() -> No
     assert analysis is controller.analyze_mesh_quality()
     assert calls == ["analyze"]
 
-    assert controller.set_mesh_quality_threshold(2.0) is True
+    assert controller.set_mesh_quality_threshold(0.3) is True
     assert controller.set_mesh_quality_highlight_visible(True) is True
     first = controller.mesh_quality_view_model
     assert first.bad_cell_keys == ("0:0",)
     assert first.table_bad_cell_keys == first.bad_cell_keys
     assert set(factory.session.actors) >= {
-        "mesh_quality:bad_cells",
+        "mesh_bad_elements",
         "named_selection:keep",
         "setup:force:keep",
     }
-    first_payload = factory.session.actors["mesh_quality:bad_cells"]
-    assert first_payload.actor_key == "mesh_quality:bad_cells"
+    first_payload = factory.session.actors["mesh_bad_elements"]
+    assert first_payload.actor_key == "mesh_bad_elements"
     assert first_payload.stable_cell_keys == first.bad_cell_keys
     assert first_payload.entity_indices == (0,)
 
-    assert controller.set_mesh_quality_threshold(3.0) is True
-    second_payload = factory.session.actors["mesh_quality:bad_cells"]
+    assert controller.set_mesh_quality_threshold(0.5) is True
+    second_payload = factory.session.actors["mesh_bad_elements"]
     assert second_payload is not first_payload
     assert calls == ["analyze"]
-    assert list(factory.session.actors).count("mesh_quality:bad_cells") == 1
+    assert list(factory.session.actors).count("mesh_bad_elements") == 1
 
-    assert controller.set_mesh_quality_threshold(10.0) is True
-    assert "mesh_quality:bad_cells" not in factory.session.actors
+    assert controller.set_mesh_quality_threshold(-1.0) is True
+    assert "mesh_bad_elements" not in factory.session.actors
     assert controller.mesh_quality_view_model.bad_cell_keys == ()
     assert calls == ["analyze"]
-    assert projection.MESH_QUALITY_ACTOR_KEY == "mesh_quality:bad_cells"
+    assert projection.MESH_BAD_ELEMENTS_ACTOR_KEY == "mesh_bad_elements"
 
 
 def test_isolate_restore_clear_are_idempotent_and_preserve_unrelated_actors() -> None:
     _api()
     factory = RecordingDiagnosticsFactory()
-    controller = ActiveSceneController(factory)
+    controller = ActiveSceneController(factory, mesh_quality_analyzer=_analyze)
     _load(controller)
     controller.set_representation("wireframe")
     controller.analyze_mesh_quality()
-    controller.set_mesh_quality_threshold(2.0)
+    controller.set_mesh_quality_threshold(0.3)
     controller.set_mesh_quality_highlight_visible(True)
     before = {
         key: record.visible
@@ -214,21 +233,19 @@ def test_isolate_restore_clear_are_idempotent_and_preserve_unrelated_actors() ->
     assert controller.mesh_quality_view_model.isolated is True
     assert controller.actor_records["base_mesh"].visible is False
     assert controller.actor_records["wireframe"].visible is False
-    controller.set_mesh_quality_threshold(3.0)
+    controller.set_mesh_quality_threshold(0.5)
     assert "named_selection:keep" in factory.session.actors
     assert "setup:force:keep" in factory.session.actors
 
     assert controller.restore_mesh_quality_visibility() is True
     assert controller.restore_mesh_quality_visibility() is True
     assert controller.mesh_quality_view_model.isolated is False
-    assert {
-        key: controller.actor_records[key].visible for key in before
-    } == before
+    assert {key: controller.actor_records[key].visible for key in before} == before
 
     cached = controller.mesh_quality_analysis
     assert controller.clear_mesh_quality_overlay() is True
     assert controller.mesh_quality_analysis is cached
-    assert "mesh_quality:bad_cells" not in factory.session.actors
+    assert "mesh_bad_elements" not in factory.session.actors
     assert "named_selection:keep" in factory.session.actors
     assert "setup:force:keep" in factory.session.actors
 
@@ -236,19 +253,19 @@ def test_isolate_restore_clear_are_idempotent_and_preserve_unrelated_actors() ->
 def test_zero_bad_or_disabling_highlight_restores_an_isolated_base_mesh() -> None:
     _api()
     factory = RecordingDiagnosticsFactory()
-    controller = ActiveSceneController(factory)
+    controller = ActiveSceneController(factory, mesh_quality_analyzer=_analyze)
     _load(controller)
     controller.analyze_mesh_quality()
-    controller.set_mesh_quality_threshold(2.0)
+    controller.set_mesh_quality_threshold(0.3)
     controller.set_mesh_quality_highlight_visible(True)
     controller.set_mesh_quality_isolated(True)
 
-    assert controller.set_mesh_quality_threshold(10.0) is True
+    assert controller.set_mesh_quality_threshold(-1.0) is True
     assert controller.actor_records["base_mesh"].visible is True
     assert controller.mesh_quality_view_model.isolated is False
-    assert "mesh_quality:bad_cells" not in factory.session.actors
+    assert "mesh_bad_elements" not in factory.session.actors
 
-    controller.set_mesh_quality_threshold(2.0)
+    controller.set_mesh_quality_threshold(0.3)
     controller.set_mesh_quality_isolated(True)
     assert controller.set_mesh_quality_highlight_visible(False) is True
     assert controller.actor_records["base_mesh"].visible is True
@@ -265,6 +282,7 @@ def test_mesh_replacement_invalidates_fingerprint_cache_actor_and_restoration() 
         return quality.analyze_mesh_cell_quality(
             mesh,
             zero_edge_tolerance=zero_edge_tolerance,
+            provider=_Provider(),
         )
 
     factory = RecordingDiagnosticsFactory()
@@ -274,15 +292,17 @@ def test_mesh_replacement_invalidates_fingerprint_cache_actor_and_restoration() 
     )
     _load(controller)
     first = controller.analyze_mesh_quality()
-    controller.set_mesh_quality_threshold(2.0)
+    controller.set_mesh_quality_threshold(0.3)
     controller.set_mesh_quality_highlight_visible(True)
     controller.set_mesh_quality_isolated(True)
 
     _load(controller, _mesh(rewire=True))
 
-    assert controller.mesh_quality_analysis is None
-    assert controller.mesh_quality_view_model.analysis_available is False
-    assert "mesh_quality:bad_cells" not in factory.session.actors
+    assert controller.mesh_quality_analysis is not None
+    assert controller.mesh_quality_analysis.status.value == "stale"
+    assert controller.mesh_quality_view_model.analysis_available is True
+    assert controller.mesh_quality_view_model.overlay_actions_enabled is False
+    assert "mesh_bad_elements" not in factory.session.actors
     second = controller.analyze_mesh_quality()
     assert first.mesh_fingerprint.digest != second.mesh_fingerprint.digest
     assert calls == ["analyze", "analyze"]
@@ -305,7 +325,10 @@ class FailingFactory:
 
 def test_renderer_fallback_retains_analysis_table_but_disables_overlay_actions() -> None:
     _api()
-    controller = ActiveSceneController(FailingFactory())
+    controller = ActiveSceneController(
+        FailingFactory(),
+        mesh_quality_analyzer=_analyze,
+    )
     _load(controller)
 
     analysis = controller.analyze_mesh_quality()
@@ -328,9 +351,18 @@ def test_pyvista_session_replaces_one_transient_bad_cell_collection_actor() -> N
     class Actor:
         def __init__(self) -> None:
             self.visible = True
+            self.mapper = object()
 
         def SetVisibility(self, visible: bool) -> None:
             self.visible = bool(visible)
+
+    class ScalarBarActor(Actor):
+        def __init__(self, title: str) -> None:
+            super().__init__()
+            self._title = title
+
+        def GetTitle(self) -> str:
+            return self._title
 
     class DataSet:
         def __init__(self) -> None:
@@ -351,6 +383,7 @@ def test_pyvista_session_replaces_one_transient_bad_cell_collection_actor() -> N
         def __init__(self) -> None:
             self.add_calls: list[dict[str, object]] = []
             self.removed: list[object] = []
+            self.removed_scalar_bars: list[str] = []
 
         def set_background(self, _color: str) -> None:
             return None
@@ -375,6 +408,12 @@ def test_pyvista_session_replaces_one_transient_bad_cell_collection_actor() -> N
         def remove_actor(self, actor: object, **_kwargs: object) -> None:
             self.removed.append(actor)
 
+        def add_scalar_bar(self, *, title: str, **_kwargs: object) -> ScalarBarActor:
+            return ScalarBarActor(title)
+
+        def remove_scalar_bar(self, title: str, **_kwargs: object) -> None:
+            self.removed_scalar_bars.append(title)
+
         def clear_plane_widgets(self) -> None:
             return None
 
@@ -382,8 +421,8 @@ def test_pyvista_session_replaces_one_transient_bad_cell_collection_actor() -> N
             return None
 
     mesh = _mesh()
-    analysis = quality.analyze_mesh_cell_quality(mesh)
-    overlay = projection.build_mesh_quality_overlay_spec(analysis, threshold=2.0)
+    analysis = quality.analyze_mesh_cell_quality(mesh, provider=_Provider())
+    overlay = projection.build_mesh_quality_overlay_spec(analysis, threshold=0.3)
     assert overlay is not None
     interactor = Interactor()
     session = renderer_api.PyVistaQtRendererSession(
@@ -398,18 +437,24 @@ def test_pyvista_session_replaces_one_transient_bad_cell_collection_actor() -> N
     )
 
     session.replace_actor("base_mesh", base_payload, generation=1)
-    session.replace_actor(projection.MESH_QUALITY_ACTOR_KEY, overlay, generation=1)
+    session.replace_actor(projection.MESH_BAD_ELEMENTS_ACTOR_KEY, overlay, generation=1)
     first_actor = interactor.add_calls[-1]["actor"]
-    session.replace_actor(projection.MESH_QUALITY_ACTOR_KEY, overlay, generation=1)
+    session.replace_actor(projection.MESH_BAD_ELEMENTS_ACTOR_KEY, overlay, generation=1)
 
     assert set(session.semantic_actor_ids) == {
         "base_mesh",
-        "mesh_quality:bad_cells",
+        "mesh_bad_elements",
     }
     assert interactor.removed == [first_actor]
     assert interactor.add_calls[-1]["dataset"].extracted_cells == (0,)
-    assert interactor.add_calls[-1]["name"] == "osw-mesh_quality:bad_cells"
+    assert interactor.add_calls[-1]["name"] == "osw-mesh_bad_elements"
 
-    session.remove_actor(projection.MESH_QUALITY_ACTOR_KEY)
+    session.remove_actor(projection.MESH_BAD_ELEMENTS_ACTOR_KEY)
     assert session.semantic_actor_ids == ("base_mesh",)
+    specs = projection.build_mesh_diagnostics_overlay_specs(analysis)
+    assert specs.quality is not None and specs.scalar_bar is not None
+    session.replace_actor(specs.quality.actor_key, specs.quality, generation=1)
+    session.replace_actor(specs.scalar_bar.actor_key, specs.scalar_bar, generation=1)
+    session.remove_actor(specs.scalar_bar.actor_key)
+    assert interactor.removed_scalar_bars == [specs.scalar_bar.title]
     session.close()

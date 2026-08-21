@@ -50,6 +50,7 @@ class PropertiesPanel(_BaseWidget):
         self._script_by_label: dict[str, object] = {}
         self._curve_by_label: dict[str, object] = {}
         self._setup_properties: dict[str, str] = {}
+        self._mesh_diagnostics_properties: dict[str, str] = {}
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -102,6 +103,8 @@ class PropertiesPanel(_BaseWidget):
             return _workflow_step_for_selection(self._selection)
         if name in self._setup_properties:
             return self._setup_properties[name]
+        if name in self._mesh_diagnostics_properties:
+            return self._mesh_diagnostics_properties[name]
         mesh = self._selected_mesh_ref()
         if mesh is not None:
             return _mesh_row_value(mesh, name)
@@ -201,6 +204,67 @@ class PropertiesPanel(_BaseWidget):
     def setup_property_rows(self) -> dict[str, str]:
         return dict(self._setup_properties)
 
+    def set_mesh_diagnostics_view_model(self, view_model: object) -> None:
+        cell_types = (
+            ", ".join(
+                f"{name}:{count}"
+                for name, count in getattr(view_model, "cell_type_distribution", ())
+            )
+            or "none"
+        )
+        diagnostics = tuple(getattr(view_model, "diagnostics", ()) or ())
+        display_range = tuple(getattr(view_model, "display_range", (-1.0, 1.0)))
+        self._mesh_diagnostics_properties = {
+            "Status": str(getattr(view_model, "status", "idle")),
+            "Metric": str(getattr(view_model, "metric_label", "Scaled Jacobian")),
+            "Metric ID": str(getattr(view_model, "metric_schema", "")),
+            "Provider": str(getattr(view_model, "provider_schema", "")),
+            "Provider version": str(getattr(view_model, "provider_version", "")),
+            "Mesh fingerprint": str(getattr(view_model, "mesh_fingerprint", ""))[:16],
+            "Quality digest": str(getattr(view_model, "digest", "")),
+            "Nodes": str(getattr(view_model, "node_count", 0)),
+            "Cells": str(getattr(view_model, "cell_count", 0)),
+            "Blocks": str(getattr(view_model, "block_count", 0)),
+            "Cell types": cell_types,
+            "Surface cells": str(getattr(view_model, "surface_cell_count", 0)),
+            "Volume cells": str(getattr(view_model, "volume_cell_count", 0)),
+            "Bounds": str(getattr(view_model, "bounding_box_text", "unavailable")),
+            "Extents": str(getattr(view_model, "extents_text", "unavailable")),
+            "Diagonal": _diagnostic_number(getattr(view_model, "diagonal", None)),
+            "Referenced points": str(getattr(view_model, "referenced_point_count", 0)),
+            "Orphan points": str(getattr(view_model, "orphan_point_count", 0)),
+            "Covered": str(getattr(view_model, "covered_count", 0)),
+            "Coverage ratio": (f"{100.0 * float(getattr(view_model, 'coverage_ratio', 0.0)):.1f}%"),
+            "Bad": str(getattr(view_model, "bad_count", 0)),
+            "Inverted": str(getattr(view_model, "inverted_count", 0)),
+            "Degenerate": str(getattr(view_model, "degenerate_count", 0)),
+            "Threshold bad": str(getattr(view_model, "threshold_bad_count", 0)),
+            "Acceptable": str(getattr(view_model, "acceptable_count", 0)),
+            "Invalid": str(getattr(view_model, "invalid_count", 0)),
+            "Uncovered": str(getattr(view_model, "unsupported_count", 0)),
+            "Threshold": f"{float(getattr(view_model, 'threshold', 0.0)):g}",
+            "Range mode": str(getattr(view_model, "range_mode", "auto")),
+            "Display range": f"{display_range[0]:g} .. {display_range[1]:g}",
+            "Minimum": _diagnostic_number(getattr(view_model, "minimum", None)),
+            "Maximum": _diagnostic_number(getattr(view_model, "maximum", None)),
+            "Mean": _diagnostic_number(getattr(view_model, "mean", None)),
+            "Median": _diagnostic_number(getattr(view_model, "median", None)),
+            "Population stddev": _diagnostic_number(getattr(view_model, "population_stddev", None)),
+            "p05 / p25 / p75 / p95": " / ".join(
+                _diagnostic_number(getattr(view_model, name, None))
+                for name in ("p05", "p25", "p75", "p95")
+            ),
+            "Diagnostic": diagnostics[-1] if diagnostics else "none",
+        }
+        self._refresh_mesh_diagnostics_properties_table()
+
+    def clear_mesh_diagnostics_view_model(self) -> None:
+        self._mesh_diagnostics_properties = {}
+        self._refresh_mesh_diagnostics_properties_table()
+
+    def mesh_diagnostics_property_rows(self) -> dict[str, str]:
+        return dict(self._mesh_diagnostics_properties)
+
     def _refresh_setup_properties_table(self) -> None:
         table = self.setup_properties_table
         table.clear()
@@ -209,6 +273,15 @@ class PropertiesPanel(_BaseWidget):
             item.setToolTip(1, value)
             table.addTopLevelItem(item)
         self.setup_properties_group.setVisible(bool(self._setup_properties))
+
+    def _refresh_mesh_diagnostics_properties_table(self) -> None:
+        table = self.mesh_diagnostics_properties_table
+        table.clear()
+        for key, value in self._mesh_diagnostics_properties.items():
+            item = QtWidgets.QTreeWidgetItem((key, value))
+            item.setToolTip(1, value)
+            table.addTopLevelItem(item)
+        self.mesh_diagnostics_properties_group.setVisible(bool(self._mesh_diagnostics_properties))
 
     def reset_demo_data(self) -> None:
         self.material_section.set_material_library("builtin")
@@ -290,6 +363,22 @@ class PropertiesPanel(_BaseWidget):
         self.solver_settings_section = SolverSettingsSection(content)
         self.plugins_section = PluginsSection(content)
         self.report_preview_panel = ReportPreviewPanel(content)
+        self.mesh_diagnostics_properties_group = QtWidgets.QGroupBox(
+            "MESH DIAGNOSTICS",
+            content,
+        )
+        self.mesh_diagnostics_properties_group.setObjectName("oswMeshDiagnosticsPropertiesSection")
+        diagnostics_layout = QtWidgets.QVBoxLayout(self.mesh_diagnostics_properties_group)
+        self.mesh_diagnostics_properties_table = QtWidgets.QTreeWidget(
+            self.mesh_diagnostics_properties_group
+        )
+        self.mesh_diagnostics_properties_table.setObjectName("oswMeshDiagnosticsPropertiesTable")
+        self.mesh_diagnostics_properties_table.setColumnCount(2)
+        self.mesh_diagnostics_properties_table.setHeaderLabels(("Property", "Value"))
+        self.mesh_diagnostics_properties_table.header().setStretchLastSection(True)
+        self.mesh_diagnostics_properties_table.setRootIsDecorated(False)
+        diagnostics_layout.addWidget(self.mesh_diagnostics_properties_table)
+        self.mesh_diagnostics_properties_group.setVisible(False)
         self.setup_properties_group = QtWidgets.QGroupBox(
             "SOLVER SETUP",
             content,
@@ -309,6 +398,7 @@ class PropertiesPanel(_BaseWidget):
         setup_layout.addWidget(self.setup_properties_table)
         self.setup_properties_group.setVisible(False)
         for section in (
+            self.mesh_diagnostics_properties_group,
             self.setup_properties_group,
             self.material_section,
             self.boundary_conditions_section,
@@ -508,6 +598,15 @@ def _script_label(script: object) -> str:
 
         return Path(path).name
     return str(getattr(script, "id", ""))
+
+
+def _diagnostic_number(value: object) -> str:
+    if value is None:
+        return "unavailable"
+    try:
+        return f"{float(value):.8g}"
+    except (TypeError, ValueError):
+        return "unavailable"
 
 
 def _script_info(script: object) -> dict[str, object]:

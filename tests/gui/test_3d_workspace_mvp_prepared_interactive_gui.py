@@ -486,9 +486,10 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         RESULT_VECTOR_ACTOR_KEY,
     )
     from osw.gui.main_window import MainWindow
-    from osw.gui.mesh_diagnostics_view_model import MESH_QUALITY_ACTOR_KEY
+    from osw.gui.mesh_diagnostics_view_model import MESH_BAD_ELEMENTS_ACTOR_KEY
     from osw.gui.workspace_scene_pyvistaqt import PyVistaQtRendererSession
     from osw.mesh.identity import compute_mesh_fingerprint
+    from osw.mesh.quality import MeshDiagnosticsStatus
     from osw.post.result_probe import ResultProbeRequest, ResultProbeStatus
 
     assert QtWidgets.QApplication.instance() is None
@@ -903,14 +904,14 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         assert analysis is not None
         assert analysis.mesh_fingerprint.digest == _MESH_FINGERPRINT
         assert analysis.evaluated_count == 2
-        assert analysis.minimum == pytest.approx(math.sqrt(2.0))
-        assert analysis.maximum == pytest.approx(math.sqrt(257.0))
-        assert controller.set_mesh_quality_threshold(5.0)
+        assert analysis.minimum == pytest.approx(0.005502776507288309)
+        assert analysis.maximum == pytest.approx(0.7071067811865476)
+        assert controller.set_mesh_quality_threshold(0.1)
         assert controller.set_mesh_quality_highlight_visible(True)
         diagnostics = controller.mesh_quality_view_model
         assert diagnostics.bad_cell_keys == ("0:1",)
         assert diagnostics.table_bad_cell_keys == ("0:1",)
-        assert MESH_QUALITY_ACTOR_KEY in controller.actor_records
+        assert MESH_BAD_ELEMENTS_ACTOR_KEY in controller.actor_records
 
         colorbar_record = controller.actor_records[RESULT_COLORBAR_ACTOR_KEY]
         assert colorbar_record.category == "helper"
@@ -939,7 +940,7 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         assert RESULT_SCALAR_ACTOR_KEY not in controller.actor_records
         assert RESULT_COLORBAR_ACTOR_KEY not in controller.actor_records
         assert RESULT_VECTOR_ACTOR_KEY in controller.actor_records
-        assert MESH_QUALITY_ACTOR_KEY in controller.actor_records
+        assert MESH_BAD_ELEMENTS_ACTOR_KEY in controller.actor_records
         visibility_before_isolate = {
             semantic_id: _actor_visibility(session._actors[semantic_id])
             for semantic_id in ("base_mesh", "wireframe", RESULT_VECTOR_ACTOR_KEY)
@@ -948,7 +949,7 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         assert not _actor_visibility(session._actors["base_mesh"])
         assert not _actor_visibility(session._actors["wireframe"])
         assert _actor_visibility(session._actors[RESULT_VECTOR_ACTOR_KEY])
-        assert _actor_visibility(session._actors[MESH_QUALITY_ACTOR_KEY])
+        assert _actor_visibility(session._actors[MESH_BAD_ELEMENTS_ACTOR_KEY])
         assert controller.restore_mesh_quality_visibility()
         assert {
             semantic_id: _actor_visibility(session._actors[semantic_id])
@@ -962,7 +963,7 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         )
         assert scalar.applied is True
         assert RESULT_VECTOR_ACTOR_KEY in controller.actor_records
-        assert MESH_QUALITY_ACTOR_KEY in controller.actor_records
+        assert MESH_BAD_ELEMENTS_ACTOR_KEY in controller.actor_records
 
         probe = controller.probe_result(
             ResultProbeRequest(
@@ -986,7 +987,7 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
             RESULT_SCALAR_ACTOR_KEY,
             RESULT_COLORBAR_ACTOR_KEY,
             RESULT_VECTOR_ACTOR_KEY,
-            MESH_QUALITY_ACTOR_KEY,
+            MESH_BAD_ELEMENTS_ACTOR_KEY,
             RESULT_PROBE_ACTOR_KEY,
         }
         assert expected_actors.issubset(controller.actor_records)
@@ -994,7 +995,11 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         assert len(session.semantic_actor_ids) == len(set(session.semantic_actor_ids))
         assert set(session._actors) == set(session.semantic_actor_ids)
         assert (
-            len(tuple(key for key in session.semantic_actor_ids if key == MESH_QUALITY_ACTOR_KEY))
+            len(
+                tuple(
+                    key for key in session.semantic_actor_ids if key == MESH_BAD_ELEMENTS_ACTOR_KEY
+                )
+            )
             == 1
         )
         for semantic_id in expected_actors:
@@ -1002,7 +1007,7 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
             assert native_actor is not None, semantic_id
             assert bool(renderer.HasViewProp(native_actor))
         assert _actor_visibility(session._actors[RESULT_VECTOR_ACTOR_KEY])
-        assert _actor_visibility(session._actors[MESH_QUALITY_ACTOR_KEY])
+        assert _actor_visibility(session._actors[MESH_BAD_ELEMENTS_ACTOR_KEY])
         assert _actor_visibility(session._actors[RESULT_PROBE_ACTOR_KEY])
         print("OSW_PREPARED_ACTOR_COHABITATION_PASS", flush=True)
 
@@ -1080,8 +1085,16 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         assert controller.generation == old_generation + 1
         assert controller.current_mesh_fingerprint == replacement_fingerprint
         assert controller.current_selection_target is None
-        assert controller.mesh_quality_analysis is None
-        assert controller.mesh_quality_view_model.analysis_available is False
+        stale_diagnostics = controller.mesh_quality_analysis
+        assert stale_diagnostics is not None
+        assert stale_diagnostics.status is MeshDiagnosticsStatus.STALE
+        assert stale_diagnostics.mesh_fingerprint == primary_fingerprint
+        assert stale_diagnostics.mesh_fingerprint != replacement_fingerprint
+        assert stale_diagnostics.diagnostics[-1].endswith("diagnostic indices were not rebound.")
+        stale_diagnostics_view = controller.mesh_quality_view_model
+        assert stale_diagnostics_view.analysis_available is True
+        assert stale_diagnostics_view.status == "stale"
+        assert stale_diagnostics_view.overlay_actions_enabled is False
         assert controller.interactive_result_resolution is not None
         assert (
             controller.interactive_result_resolution.state is ResultMeshBindingResolutionState.STALE

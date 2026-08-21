@@ -248,8 +248,34 @@ if QtCore is not None:
                 )
             self.finished.emit(self._operation_id, result)
 
+    class _MeshDiagnosticsWorker(QtCore.QObject):  # type: ignore[misc]
+        """Evaluate one immutable request away from the GUI thread."""
+
+        finished = QtCore.Signal(object, object, object)
+
+        def __init__(
+            self,
+            request: object,
+            evaluator: Callable[[object], object],
+        ) -> None:
+            super().__init__()
+            self._request = request
+            self._evaluator = evaluator
+
+        @QtCore.Slot()
+        def run(self) -> None:
+            result: object | None = None
+            error: object | None = None
+            try:
+                result = self._evaluator(self._request)
+            except Exception as exc:  # pragma: no cover - defensive worker seam
+                error = f"{type(exc).__name__}: {exc}"
+            self.finished.emit(self._request, result, error)
+            QtCore.QThread.currentThread().quit()
+
 else:
     _MetadataMeshLoadWorker = None
+    _MeshDiagnosticsWorker = None
 
 
 class MainWindow(_BaseMainWindow):
@@ -278,6 +304,8 @@ class MainWindow(_BaseMainWindow):
         project_saver: ProjectSaver | None = None,
         project_error_reporter: ProjectFileErrorReporter | None = None,
         setup_preview_provider: Callable[[Project, object, str], object] | None = None,
+        mesh_quality_analyzer: Callable[..., object] | None = None,
+        mesh_diagnostics_async: bool = True,
         **legacy_kwargs: object,
     ) -> None:
         if QtCore is None or QtGui is None or QtWidgets is None:
@@ -336,6 +364,10 @@ class MainWindow(_BaseMainWindow):
         self._last_persisted_report_screenshot_status = ""
         self._mesh_scene_adapter_factory = mesh_scene_adapter_factory
         self._scene_renderer_factory = scene_renderer_factory
+        self._mesh_quality_analyzer = mesh_quality_analyzer
+        self._mesh_diagnostics_async = bool(mesh_diagnostics_async)
+        self._mesh_diagnostics_thread: object | None = None
+        self._mesh_diagnostics_worker: object | None = None
         self.active_scene_controller = self._create_active_scene_controller()
         self._result_mesh_binding_confirmation = result_mesh_binding_confirmation
         self._result_mesh_binding_target_selector = result_mesh_binding_target_selector
@@ -498,13 +530,30 @@ class MainWindow(_BaseMainWindow):
         self.mesh_diagnostics_panel.thresholdChanged.connect(
             self._on_mesh_diagnostics_threshold_changed
         )
+        self.mesh_diagnostics_panel.rangeChanged.connect(self._on_mesh_diagnostics_range_changed)
+        self.mesh_diagnostics_panel.coloringToggled.connect(
+            self._on_mesh_diagnostics_coloring_toggled
+        )
         self.mesh_diagnostics_panel.highlightToggled.connect(
             self._on_mesh_diagnostics_highlight_toggled
+        )
+        self.mesh_diagnostics_panel.filterModeChanged.connect(
+            self._on_mesh_diagnostics_filter_changed
         )
         self.mesh_diagnostics_panel.isolateToggled.connect(
             self._on_mesh_diagnostics_isolate_toggled
         )
         self.mesh_diagnostics_panel.restoreRequested.connect(self._on_mesh_diagnostics_restore)
+        self.mesh_diagnostics_panel.selectBadRequested.connect(self._on_mesh_diagnostics_select_bad)
+        self.mesh_diagnostics_panel.createNamedSelectionRequested.connect(
+            self._on_mesh_diagnostics_create_named_selection
+        )
+        self.mesh_diagnostics_panel.exportJsonRequested.connect(
+            lambda: self._on_mesh_diagnostics_export("json")
+        )
+        self.mesh_diagnostics_panel.exportCsvRequested.connect(
+            lambda: self._on_mesh_diagnostics_export("csv")
+        )
         self.mesh_diagnostics_panel.clearRequested.connect(self._on_mesh_diagnostics_clear)
         self.active_scene_controller.set_selection_listener(self._refresh_named_selection_panel)
         picking_available = bool(
@@ -672,12 +721,27 @@ class MainWindow(_BaseMainWindow):
     def _on_project_tree_selection_changed(self, current: object, _previous: object) -> None:
         if current is not None and hasattr(self.properties_panel, "set_node_selection"):
             self.properties_panel.set_node_selection(current.text(0))
+        if self._handle_project_tree_mesh_diagnostics(current):
+            self.properties_panel.clear_setup_record()
+            return
+        self.properties_panel.clear_mesh_diagnostics_view_model()
         if self._handle_project_tree_setup(current):
             return
         self.properties_panel.clear_setup_record()
         if self._handle_project_tree_named_selection(current):
             return
         self._handle_project_tree_mesh_selection(current)
+
+    def _handle_project_tree_mesh_diagnostics(self, current: object | None) -> bool:
+        if current is None:
+            return False
+        kind = str(current.data(0, QtCore.Qt.ItemDataRole.UserRole) or "")
+        if kind != "mesh_diagnostics":
+            return False
+        self.properties_panel.set_mesh_diagnostics_view_model(
+            self.active_scene_controller.mesh_quality_view_model
+        )
+        return True
 
     def _handle_project_tree_setup(self, current: object | None) -> bool:
         if current is None:
@@ -1694,7 +1758,10 @@ class MainWindow(_BaseMainWindow):
                 )
 
                 factory = PyVistaQtRendererFactory()
-        return ActiveSceneController(factory)
+        return ActiveSceneController(
+            factory,
+            mesh_quality_analyzer=self._mesh_quality_analyzer,
+        )
 
     def _replace_active_scene_controller(self) -> None:
         """Close the previous document scene before installing a fresh owner."""
@@ -2175,26 +2242,122 @@ class MainWindow(_BaseMainWindow):
         panel = getattr(self, "mesh_diagnostics_panel", None)
         if panel is None:
             return
-        panel.set_view_model(self.active_scene_controller.mesh_quality_view_model)
+        view_model = self.active_scene_controller.mesh_quality_view_model
+        panel.set_view_model(view_model)
+        tree = getattr(self, "project_tree_panel", None)
+        setter = getattr(tree, "set_mesh_diagnostics_view_model", None)
+        if callable(setter):
+            setter(view_model)
+        current = getattr(self.project_tree, "currentItem", lambda: None)()
+        if (
+            current is not None
+            and str(current.data(0, QtCore.Qt.ItemDataRole.UserRole) or "") == "mesh_diagnostics"
+        ):
+            self.properties_panel.set_mesh_diagnostics_view_model(view_model)
 
     def _on_mesh_diagnostics_analyze(self) -> None:
         panel = self.mesh_diagnostics_panel
+        if self._mesh_diagnostics_thread is not None:
+            panel.set_status("Mesh Diagnostics analysis is already running.")
+            return
         try:
-            analysis = self.active_scene_controller.analyze_mesh_quality()
-        except ValueError as exc:
-            panel.set_status(str(exc))
+            request = self.active_scene_controller.begin_mesh_quality_analysis()
+        except (TypeError, ValueError) as exc:
+            panel.set_status(f"{type(exc).__name__}: {exc}")
+            return
+        if request is None:
+            panel.set_status("Load an in-memory mesh before running Mesh Diagnostics.")
+            return
+        panel.set_running(True)
+        if not self._mesh_diagnostics_async or _MeshDiagnosticsWorker is None:
+            try:
+                result = self.active_scene_controller.evaluate_mesh_quality_request(request)
+            except Exception as exc:
+                self._finish_mesh_diagnostics_analysis(
+                    request,
+                    None,
+                    f"{type(exc).__name__}: {exc}",
+                )
+            else:
+                self._finish_mesh_diagnostics_analysis(request, result, None)
+            return
+        thread = QtCore.QThread(self)
+        worker = _MeshDiagnosticsWorker(
+            request,
+            self.active_scene_controller.evaluate_mesh_quality_request,
+        )
+        worker.moveToThread(thread)
+        thread.started.connect(worker.run)
+        worker.finished.connect(self._finish_mesh_diagnostics_analysis)
+        worker.finished.connect(thread.quit)
+        worker.finished.connect(worker.deleteLater)
+        thread.finished.connect(thread.deleteLater)
+        thread.finished.connect(self._clear_mesh_diagnostics_worker)
+        self._mesh_diagnostics_thread = thread
+        self._mesh_diagnostics_worker = worker
+        thread.start()
+
+    def _finish_mesh_diagnostics_analysis(
+        self,
+        request: object,
+        result: object | None,
+        error: object | None,
+    ) -> None:
+        panel = self.mesh_diagnostics_panel
+        panel.set_running(False)
+        if error is not None:
+            self.active_scene_controller.fail_mesh_quality_analysis(request)
+            self._refresh_mesh_diagnostics_panel()
+            panel.set_status(str(error))
+            return
+        if result is None or not self.active_scene_controller.complete_mesh_quality_analysis(
+            request,
+            result,
+        ):
+            self._refresh_mesh_diagnostics_panel()
+            panel.set_status(
+                "Discarded a stale Mesh Diagnostics result after scene replacement or close."
+            )
             return
         self._refresh_mesh_diagnostics_panel()
-        if analysis is None:
-            panel.set_status("Load an in-memory mesh before running Mesh Diagnostics.")
+
+    def _clear_mesh_diagnostics_worker(self) -> None:
+        self._mesh_diagnostics_thread = None
+        self._mesh_diagnostics_worker = None
 
     def _on_mesh_diagnostics_threshold_changed(self, threshold: float) -> None:
         if not self.active_scene_controller.set_mesh_quality_threshold(threshold):
             self.mesh_diagnostics_panel.set_status(
-                "Bad-cell threshold must be finite and positive."
+                "Bad-cell threshold must be finite and within [-1, 1]."
             )
             return
         self._refresh_mesh_diagnostics_panel()
+
+    def _on_mesh_diagnostics_range_changed(
+        self,
+        mode: str,
+        manual_range: object | None,
+    ) -> None:
+        resolved = (
+            tuple(float(value) for value in manual_range)
+            if isinstance(manual_range, (tuple, list))
+            else None
+        )
+        if not self.active_scene_controller.set_mesh_quality_range(mode, resolved):
+            self.mesh_diagnostics_panel.set_status(
+                "Manual range requires finite minimum < maximum."
+            )
+            return
+        self._refresh_mesh_diagnostics_panel()
+
+    def _on_mesh_diagnostics_coloring_toggled(self, visible: bool) -> None:
+        applied = self.active_scene_controller.set_mesh_quality_coloring_visible(visible)
+        self._refresh_mesh_diagnostics_panel()
+        if visible and not applied:
+            self.mesh_diagnostics_panel.set_status(
+                self.active_scene_controller.fallback_reason
+                or "Quality coloring requires a ready analysis and native renderer."
+            )
 
     def _on_mesh_diagnostics_highlight_toggled(self, visible: bool) -> None:
         applied = self.active_scene_controller.set_mesh_quality_highlight_visible(visible)
@@ -2211,9 +2374,79 @@ class MainWindow(_BaseMainWindow):
         if isolated and not applied:
             self.mesh_diagnostics_panel.set_status("Isolate requires a visible bad-cell highlight.")
 
+    def _on_mesh_diagnostics_filter_changed(self, mode: str) -> None:
+        applied = self.active_scene_controller.set_mesh_quality_filter_mode(mode)
+        self._refresh_mesh_diagnostics_panel()
+        if mode != "clear" and not applied:
+            self.mesh_diagnostics_panel.set_status(
+                "Diagnostic filtering is unavailable while generic isolation is active."
+            )
+
     def _on_mesh_diagnostics_restore(self) -> None:
         if self.active_scene_controller.restore_mesh_quality_visibility():
-            self.mesh_diagnostics_panel.set_status("Restored the pre-isolate base mesh visibility.")
+            self._refresh_mesh_diagnostics_panel()
+            self.mesh_diagnostics_panel.set_status("Restored pre-filter scene visibility.")
+
+    def _on_mesh_diagnostics_select_bad(self) -> None:
+        if self.active_scene_controller.select_mesh_quality_bad_cells():
+            self._refresh_named_selection_panel()
+            self.mesh_diagnostics_panel.set_status(
+                "Selected bad elements with canonical block:local cell identities."
+            )
+            return
+        self.mesh_diagnostics_panel.set_status("No canonical bad elements are available.")
+
+    def _on_mesh_diagnostics_create_named_selection(self, name: str) -> None:
+        if not self.active_scene_controller.select_mesh_quality_bad_cells():
+            self.mesh_diagnostics_panel.set_status("No canonical bad elements are available.")
+            return
+        resolved_name = str(name or "Bad elements").strip() or "Bad elements"
+        digest = str(getattr(self.active_scene_controller.mesh_quality_analysis, "digest", ""))
+        self._on_create_named_selection(
+            resolved_name,
+            f"Created from Scaled Jacobian diagnostics {digest[:12]}.",
+        )
+        self.mesh_diagnostics_panel.set_status(
+            f"Created NamedSelection '{resolved_name}' from bad elements."
+        )
+
+    def _on_mesh_diagnostics_export(self, format_name: str) -> None:
+        suffix = ".json" if format_name == "json" else ".csv"
+        selected, _filter = QtWidgets.QFileDialog.getSaveFileName(
+            self,
+            "Export Mesh Diagnostics",
+            f"mesh-diagnostics{suffix}",
+            "JSON (*.json)" if format_name == "json" else "CSV (*.csv)",
+        )
+        if selected:
+            self.export_mesh_diagnostics(format_name, selected)
+
+    def export_mesh_diagnostics(
+        self,
+        format_name: str,
+        output_path: str | Path,
+    ) -> Path | None:
+        """Explicitly write one deterministic advisory diagnostics export."""
+
+        analysis = self.active_scene_controller.mesh_quality_analysis
+        if analysis is None:
+            return None
+        from osw.mesh.diagnostics_export import (
+            build_mesh_diagnostics_report_summary,
+            write_mesh_diagnostics_csv,
+            write_mesh_diagnostics_json,
+        )
+
+        summary = build_mesh_diagnostics_report_summary(analysis)
+        normalized = str(format_name).strip().lower()
+        if normalized == "json":
+            target = write_mesh_diagnostics_json(output_path, summary)
+        elif normalized == "csv":
+            target = write_mesh_diagnostics_csv(output_path, summary)
+        else:
+            raise ValueError("Mesh Diagnostics export format must be json or csv.")
+        self.mesh_diagnostics_panel.set_status(f"Exported Mesh Diagnostics: {target.name}")
+        return target
 
     def _on_mesh_diagnostics_clear(self) -> None:
         self.active_scene_controller.clear_mesh_quality_overlay()
@@ -2223,6 +2456,25 @@ class MainWindow(_BaseMainWindow):
     def closeEvent(self, event: object) -> None:
         """Close renderer resources before Qt tears down child widgets."""
 
+        self.active_scene_controller.cancel_mesh_quality_analysis()
+        thread = self._mesh_diagnostics_thread
+        if thread is not None:
+            request_interruption = getattr(thread, "requestInterruption", None)
+            if callable(request_interruption):
+                request_interruption()
+            quit_thread = getattr(thread, "quit", None)
+            if callable(quit_thread):
+                quit_thread()
+            wait = getattr(thread, "wait", None)
+            if callable(wait) and not wait(5000):
+                ignore = getattr(event, "ignore", None)
+                if callable(ignore):
+                    ignore()
+                self.mesh_diagnostics_panel.set_status(
+                    "Waiting for the current Mesh Diagnostics provider call to finish "
+                    "before closing safely."
+                )
+                return
         self.active_scene_controller.close()
         super().closeEvent(event)
 

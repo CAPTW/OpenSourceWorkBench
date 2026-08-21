@@ -297,25 +297,64 @@ class MeshQualityViewState:
     """Declarative quality request; computed values and bad-cell IDs stay transient."""
 
     metric_schema: str
-    threshold: float = 10.0
+    threshold: float = 0.0
     highlight_visible: bool = False
+    coloring_visible: bool = False
+    filter_mode: str = "clear"
+    range_mode: str = "auto"
+    manual_min: float | None = None
+    manual_max: float | None = None
 
     def __post_init__(self) -> None:
         schema = str(self.metric_schema or "")
-        if schema != "osw.mesh_quality.edge_aspect_ratio.v1":
+        supported = {
+            "osw.mesh_quality.edge_aspect_ratio.v1",
+            "osw.mesh_quality.scaled_jacobian.v1",
+        }
+        if schema not in supported:
             raise ValueError("Unsupported active-scene mesh quality metric schema.")
         threshold = float(self.threshold)
-        if not isfinite(threshold) or threshold <= 0.0:
-            raise ValueError("Mesh quality threshold must be finite and positive.")
+        if (
+            not isfinite(threshold)
+            or (schema == "osw.mesh_quality.edge_aspect_ratio.v1" and threshold <= 0.0)
+            or (schema == "osw.mesh_quality.scaled_jacobian.v1" and not -1.0 <= threshold <= 1.0)
+        ):
+            raise ValueError("Mesh quality threshold is invalid for the selected metric.")
+        filter_mode = str(self.filter_mode or "clear").strip().lower()
+        if filter_mode not in {"clear", "hide_bad", "isolate_bad"}:
+            raise ValueError("Mesh quality filter mode is invalid.")
+        range_mode = str(self.range_mode or "auto").strip().lower()
+        if range_mode not in {"auto", "manual"}:
+            raise ValueError("Mesh quality range mode is invalid.")
+        manual_min = None if self.manual_min is None else float(self.manual_min)
+        manual_max = None if self.manual_max is None else float(self.manual_max)
+        if range_mode == "manual" and (
+            manual_min is None
+            or manual_max is None
+            or not isfinite(manual_min)
+            or not isfinite(manual_max)
+            or manual_min >= manual_max
+        ):
+            raise ValueError("Manual mesh quality range requires finite min < max.")
         object.__setattr__(self, "metric_schema", schema)
         object.__setattr__(self, "threshold", threshold)
         object.__setattr__(self, "highlight_visible", bool(self.highlight_visible))
+        object.__setattr__(self, "coloring_visible", bool(self.coloring_visible))
+        object.__setattr__(self, "filter_mode", filter_mode)
+        object.__setattr__(self, "range_mode", range_mode)
+        object.__setattr__(self, "manual_min", manual_min)
+        object.__setattr__(self, "manual_max", manual_max)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "metric_schema": self.metric_schema,
             "threshold": self.threshold,
             "highlight_visible": self.highlight_visible,
+            "coloring_visible": self.coloring_visible,
+            "filter_mode": self.filter_mode,
+            "range_mode": self.range_mode,
+            "manual_min": self.manual_min,
+            "manual_max": self.manual_max,
         }
 
     @classmethod
@@ -323,8 +362,18 @@ class MeshQualityViewState:
         data = _mapping(value, name="active_scene.mesh_quality_state")
         return cls(
             metric_schema=str(data.get("metric_schema", "")),
-            threshold=data.get("threshold", 10.0),
+            threshold=data.get(
+                "threshold",
+                10.0
+                if data.get("metric_schema") == "osw.mesh_quality.edge_aspect_ratio.v1"
+                else 0.0,
+            ),
             highlight_visible=bool(data.get("highlight_visible", False)),
+            coloring_visible=bool(data.get("coloring_visible", False)),
+            filter_mode=str(data.get("filter_mode", "clear")),
+            range_mode=str(data.get("range_mode", "auto")),
+            manual_min=data.get("manual_min"),
+            manual_max=data.get("manual_max"),
         )
 
 

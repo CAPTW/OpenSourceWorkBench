@@ -44,6 +44,24 @@ def _mesh() -> MeshData:
     )
 
 
+class _Provider:
+    provider_schema = "osw.mesh_quality.provider.gui-fixture.v1"
+    provider_version = "1"
+
+    def evaluate(self, _mesh_data: MeshData) -> tuple[float, ...]:
+        return (0.25,)
+
+
+def _analyze(mesh: MeshData, **kwargs: object) -> object:
+    from osw.mesh.quality import analyze_mesh_cell_quality
+
+    return analyze_mesh_cell_quality(
+        mesh,
+        threshold=float(kwargs.get("threshold", 0.0)),
+        provider=_Provider(),
+    )
+
+
 class GuiDiagnosticsSession:
     backend_kind = "fake-gui-diagnostics"
     capabilities = frozenset(
@@ -115,10 +133,10 @@ def test_panel_shows_preview_metric_table_and_validates_threshold(
 ) -> None:
     view_api, panel_api = _api()
     quality = import_module("osw.mesh.quality")
-    analysis = quality.analyze_mesh_cell_quality(_mesh())
+    analysis = quality.analyze_mesh_cell_quality(_mesh(), provider=_Provider())
     view_model = view_api.build_mesh_diagnostics_view_model(
         analysis,
-        threshold=2.0,
+        threshold=0.3,
         mesh_label="active-mesh",
         renderer_available=True,
     )
@@ -127,8 +145,9 @@ def test_panel_shows_preview_metric_table_and_validates_threshold(
     panel.set_view_model(view_model)
 
     assert panel.objectName() == "oswMeshDiagnosticsPanel"
-    assert panel.metric_label.text() == "Edge aspect ratio preview"
-    assert "preview" in panel.metric_claim_label.text().lower()
+    assert panel.metric_label.text() == "Scaled Jacobian"
+    assert "negative values indicate inverted" in panel.metric_claim_label.text().lower()
+    assert "not a universal solver-acceptance standard" in (panel.metric_claim_label.text().lower())
     assert panel.node_count_label.text() == "3"
     assert panel.cell_count_label.text() == "1"
     assert panel.bad_count_label.text() == "1 (100.0%)"
@@ -148,10 +167,14 @@ def test_panel_shows_preview_metric_table_and_validates_threshold(
     panel.threshold_edit.setText("nan")
     panel.apply_threshold_button.click()
     assert thresholds == []
-    assert "finite positive" in panel.status_label.text().lower()
+    assert "finite" in panel.status_label.text().lower()
     panel.threshold_edit.setText("3.5")
     panel.apply_threshold_button.click()
-    assert thresholds == [3.5]
+    assert thresholds == []
+    assert "within [-1, 1]" in panel.status_label.text()
+    panel.threshold_edit.setText("0.4")
+    panel.apply_threshold_button.click()
+    assert thresholds == [0.4]
     assert "repair" in panel.deferred_scope_label.text().lower()
     del app
 
@@ -171,6 +194,8 @@ def test_main_window_routes_transient_actions_without_dirtying_or_writing(
         project=project,
         scene_renderer_factory=factory,
         project_saver=lambda *_args: save_calls.append(object()),
+        mesh_quality_analyzer=_analyze,
+        mesh_diagnostics_async=False,
     )
     selections_before = tuple(window.current_project.selections)
     setup_before = window.current_project.primary_physics
@@ -198,7 +223,7 @@ def test_main_window_routes_transient_actions_without_dirtying_or_writing(
         assert window.mesh_diagnostics_panel.table.rowCount() == 1
         assert window.project_dirty is False
 
-        window.mesh_diagnostics_panel.threshold_edit.setText("2")
+        window.mesh_diagnostics_panel.threshold_edit.setText("0.3")
         window.mesh_diagnostics_panel.apply_threshold_button.click()
         window.mesh_diagnostics_panel.highlight_check.setChecked(True)
         window.mesh_diagnostics_panel.isolate_check.setChecked(True)
@@ -215,10 +240,7 @@ def test_main_window_routes_transient_actions_without_dirtying_or_writing(
         old_controller = window.active_scene_controller
         window._replace_active_scene_controller()
         assert old_controller is not window.active_scene_controller
-        assert (
-            window.mesh_diagnostics_panel.analysis_state_label.text()
-            == "No mesh analysis."
-        )
+        assert window.mesh_diagnostics_panel.analysis_state_label.text() == "Not evaluated."
     finally:
         os.chdir(prior_cwd)
         window.close()
@@ -249,6 +271,8 @@ def test_renderer_fallback_keeps_metadata_and_table_with_explicit_diagnostic(
     window = MainWindow(
         project=Project(metadata=ProjectMetadata(name="Fallback")),
         scene_renderer_factory=FailingFactory(),
+        mesh_quality_analyzer=_analyze,
+        mesh_diagnostics_async=False,
     )
     try:
         window.active_scene_controller.load_mesh(

@@ -550,6 +550,86 @@ class ProjectTreePanel(_BaseWidget):
                 return item
         return None
 
+    def mesh_diagnostics_item(self) -> object | None:
+        for item in self._tree_items():
+            kind = str(item.data(0, QtCore.Qt.ItemDataRole.UserRole) or "")
+            if kind == "mesh_diagnostics":
+                return item
+        return None
+
+    def set_mesh_diagnostics_view_model(self, view_model: object) -> None:
+        """Project one transient diagnostics child under Mesh without Project mutation."""
+
+        item = self.mesh_diagnostics_item()
+        if item is None:
+            mesh_group = next(
+                (
+                    candidate
+                    for candidate in self._tree_items()
+                    if candidate.text(0) == "Mesh"
+                    and str(candidate.data(0, QtCore.Qt.ItemDataRole.UserRole) or "") == "group"
+                ),
+                None,
+            )
+            if mesh_group is None:
+                return
+            item = self._build_item(
+                ProjectTreeNode(
+                    "Mesh Diagnostics",
+                    kind="mesh_diagnostics",
+                    icon_key="mesh",
+                )
+            )
+            mesh_group.addChild(item)
+            mesh_group.setExpanded(True)
+        status = str(getattr(view_model, "status", "idle") or "idle")
+        invalid_count = int(getattr(view_model, "invalid_count", 0) or 0)
+        status_label = {
+            "idle": "Not evaluated",
+            "running": "Running",
+            "ready": "Invalid" if invalid_count else "Ready",
+            "partial_coverage": "Partial",
+            "stale": "Stale",
+            "unavailable_optional_dependency": "Unavailable",
+            "failed": "Failed",
+            "cancelled": "Cancelled",
+        }.get(status, status.replace("_", " ").title())
+        metric_label = str(getattr(view_model, "metric_label", "Scaled Jacobian"))
+        provider = str(getattr(view_model, "provider_schema", "") or "not evaluated")
+        provider_version = str(getattr(view_model, "provider_version", "") or "not evaluated")
+        bad_count = int(getattr(view_model, "bad_count", 0) or 0)
+        covered = int(getattr(view_model, "covered_count", 0) or 0)
+        total = int(getattr(view_model, "cell_count", 0) or 0)
+        item.setText(0, f"Diagnostics — {metric_label}")
+        item.setText(1, f"{status_label} · {bad_count} bad · {covered}/{total}")
+        payload = {
+            "diagnostics": "mesh",
+            "status": status,
+            "mesh_fingerprint": str(getattr(view_model, "mesh_fingerprint", "") or ""),
+            "quality_digest": str(getattr(view_model, "digest", "") or ""),
+        }
+        item.setData(0, QtCore.Qt.ItemDataRole.UserRole + 2, payload)
+        item.setToolTip(
+            0,
+            (
+                f"{metric_label} status: {status_label}\n"
+                f"Provider: {provider} / {provider_version}\n"
+                f"Covered cells: {covered}/{total}\nBad cells: {bad_count}"
+            ),
+        )
+        self.tree.setColumnWidth(1, 220)
+
+    def select_mesh_diagnostics(self, *, emit: bool = True) -> bool:
+        item = self.mesh_diagnostics_item()
+        if item is None:
+            return False
+        blocked = self.tree.blockSignals(not emit)
+        try:
+            self.tree.setCurrentItem(item)
+        finally:
+            self.tree.blockSignals(blocked)
+        return True
+
     def current_setup_id(self) -> str:
         current = self.tree.currentItem()
         if current is None:

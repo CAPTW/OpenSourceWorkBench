@@ -10,6 +10,7 @@ from .conversion import (
     convert_mesh_to_vtu,
     export_mesh,
 )
+from .diagnostics import MeshSummary, build_mesh_summary
 from .gmsh_adapter import (
     GmshAdapter,
     GmshAdapterError,
@@ -66,8 +67,10 @@ from .meshio_bridge import (
     write_mesh,
 )
 from .quality import (
+    MeshQualityAnalysis,
     MeshQualityMetrics,
     MeshQualityWarning,
+    analyze_mesh_cell_quality,
     analyze_mesh_quality,
 )
 
@@ -98,11 +101,15 @@ __all__ = [
     "MeshInfo",
     "MeshModel",
     "MeshQualityMetrics",
+    "MeshQualityAnalysis",
     "MeshQualityWarning",
+    "MeshSummary",
     "MeshSizeControl",
     "PhysicalGroupMetadata",
     "SUPPORTED_EXPORT_FORMATS",
+    "analyze_mesh_cell_quality",
     "analyze_mesh_quality",
+    "build_mesh_summary",
     "build_mesh_info",
     "convert_gmsh_msh_to_vtu",
     "convert_result_to_mesh_ref",

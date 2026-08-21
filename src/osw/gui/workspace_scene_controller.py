@@ -14,6 +14,8 @@ import struct
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from enum import Enum
+from inspect import Parameter, signature
+from math import isfinite
 from pathlib import Path
 from types import MappingProxyType
 from typing import Protocol, runtime_checkable
@@ -71,10 +73,15 @@ from osw.gui.interactive_results_view_model import (
     build_scalar_overlay_spec,
 )
 from osw.gui.mesh_diagnostics_view_model import (
+    MESH_BAD_ELEMENTS_ACTOR_KEY,
+    MESH_DIAGNOSTIC_GOOD_ELEMENTS_ACTOR_KEY,
     MESH_QUALITY_ACTOR_KEY,
+    MESH_QUALITY_SCALARBAR_ACTOR_KEY,
     MeshDiagnosticsViewModel,
+    MeshQualityOverlaySpec,
+    MeshQualityScalarBarSpec,
+    build_mesh_diagnostics_overlay_specs,
     build_mesh_diagnostics_view_model,
-    build_mesh_quality_overlay_spec,
 )
 from osw.gui.setup_overlay_view_model import build_setup_overlay_specs
 from osw.gui.workspace_scene_view_model import (
@@ -84,10 +91,14 @@ from osw.gui.workspace_scene_view_model import (
 from osw.mesh.identity import MeshFingerprint, compute_mesh_fingerprint
 from osw.mesh.mesh_model import MeshData
 from osw.mesh.quality import (
+    DEFAULT_DEGENERATE_EPSILON,
+    DEFAULT_MESH_QUALITY_THRESHOLD,
     MESH_QUALITY_METRIC_SCHEMA,
     MESH_QUALITY_TOPOLOGY_RULES,
+    MeshDiagnosticsStatus,
     MeshQualityAnalysis,
     analyze_mesh_cell_quality,
+    reclassify_mesh_quality,
 )
 from osw.post.pyvista_scene import (
     PyVistaSceneConfig,
@@ -191,6 +202,19 @@ class ActiveSceneScreenshotResult:
     image_size: tuple[int, int] | None = None
     backend_kind: str = ""
     diagnostics: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class MeshQualityAnalysisRequest:
+    """Immutable identity for one background-safe quality request."""
+
+    request_id: int
+    generation: int
+    mesh_ref: str
+    mesh_fingerprint: str
+    mesh: MeshData
+    threshold: float
+    degenerate_epsilon: float
 
 
 @runtime_checkable
@@ -492,9 +516,16 @@ class ActiveSceneController:
             MeshQualityAnalysis,
         ] = {}
         self._mesh_quality_analysis: MeshQualityAnalysis | None = None
-        self._mesh_quality_threshold = 10.0
+        self._mesh_quality_threshold = DEFAULT_MESH_QUALITY_THRESHOLD
+        self._mesh_quality_degenerate_epsilon = DEFAULT_DEGENERATE_EPSILON
+        self._mesh_quality_status = MeshDiagnosticsStatus.IDLE
+        self._mesh_quality_coloring_visible = False
         self._mesh_quality_highlight_visible = False
+        self._mesh_quality_filter_mode = "clear"
+        self._mesh_quality_layer_snapshot: dict[str, bool] | None = None
         self._mesh_quality_visibility_snapshot: dict[str, bool] | None = None
+        self._mesh_quality_next_request_id = 0
+        self._mesh_quality_active_request: MeshQualityAnalysisRequest | None = None
         self._interactive_result_dataset: object | None = None
         self._interactive_result_binding: ResultMeshBinding | None = None
         self._interactive_result_ref_id = ""
@@ -639,16 +670,36 @@ class ActiveSceneController:
         return self._mesh_quality_analysis
 
     @property
+    def mesh_quality_status(self) -> MeshDiagnosticsStatus:
+        return self._mesh_quality_status
+
+    @property
+    def mesh_quality_filter_mode(self) -> str:
+        return self._mesh_quality_filter_mode
+
+    @property
     def mesh_quality_view_model(self) -> MeshDiagnosticsViewModel:
-        return build_mesh_diagnostics_view_model(
+        view_model = build_mesh_diagnostics_view_model(
             self._mesh_quality_analysis,
             threshold=self._mesh_quality_threshold,
             mesh_label=self._mesh_ref,
             renderer_available=self._mesh_quality_renderer_available(),
             backend_reason=self._fallback_reason,
+            quality_coloring_visible=self._mesh_quality_coloring_visible,
             highlight_visible=self._mesh_quality_highlight_visible,
-            isolated=self._mesh_quality_visibility_snapshot is not None,
+            filter_mode=self._mesh_quality_filter_mode,
         )
+        if view_model.status != self._mesh_quality_status.value:
+            view_model = replace(
+                view_model,
+                status=self._mesh_quality_status.value,
+                overlay_actions_enabled=False,
+                quality_coloring_visible=False,
+                highlight_visible=False,
+                filter_mode="clear",
+                isolated=False,
+            )
+        return view_model
 
     @property
     def interactive_result_resolution(
@@ -699,13 +750,24 @@ class ActiveSceneController:
 
         if self._state is SceneLifecycleState.CLOSED:
             raise RuntimeError("Active scene controller is closed.")
-        self._reset_mesh_quality_state(discard_cache=True)
+        incoming_fingerprint = compute_mesh_fingerprint(mesh)
+        previous_analysis = self._mesh_quality_analysis
+        previous_fingerprint = self._mesh_fingerprint
+        same_quality_identity = bool(
+            previous_analysis is not None
+            and previous_fingerprint is not None
+            and previous_fingerprint.digest == incoming_fingerprint.digest
+        )
+        self._prepare_mesh_quality_replacement(
+            same_fingerprint=same_quality_identity,
+            previous_analysis=previous_analysis,
+        )
         self._reset_interactive_result_state(discard_binding=False)
         self._generation += 1
         generation = self._generation
         self._mesh = mesh
         self._mesh_ref = str(scene_input.mesh_ref or "")
-        self._mesh_fingerprint = compute_mesh_fingerprint(mesh)
+        self._mesh_fingerprint = incoming_fingerprint
         self._scene_view_state = scene_state
         self._representation = _representation_from_scene_state(scene_state)
         self._axes_visible = scene_state.render_options.show_axes
@@ -716,6 +778,8 @@ class ActiveSceneController:
         if session is None:
             self._resolve_and_display_named_selections()
             self._resolve_interactive_result_binding()
+            if same_quality_identity:
+                self._recompute_same_fingerprint_mesh_quality(previous_analysis)
             if self._pending_active_scene_state is not None:
                 self.restore_pending_active_scene_state()
             self._notify_selection_listener()
@@ -782,6 +846,8 @@ class ActiveSceneController:
 
         self._fallback_reason = ""
         self._state = SceneLifecycleState.READY_SCENE
+        if same_quality_identity:
+            self._recompute_same_fingerprint_mesh_quality(previous_analysis)
         if self._pending_active_scene_state is not None:
             self.restore_pending_active_scene_state()
         self._notify_selection_listener()
@@ -1221,8 +1287,13 @@ class ActiveSceneController:
         if spec is None:
             return result
         if self._interactive_result_visibility_snapshot is None:
+            quality_snapshot = self._mesh_quality_layer_snapshot
             self._interactive_result_visibility_snapshot = {
-                semantic_id: self._actor_records[semantic_id].visible
+                semantic_id: (
+                    bool(quality_snapshot[semantic_id])
+                    if quality_snapshot is not None and semantic_id in quality_snapshot
+                    else self._actor_records[semantic_id].visible
+                )
                 for semantic_id in ("base_mesh", "wireframe")
                 if semantic_id in self._actor_records
             }
@@ -1236,6 +1307,27 @@ class ActiveSceneController:
             self._remove_result_actor(RESULT_COLORBAR_ACTOR_KEY)
         else:
             self._replace_result_actor(RESULT_COLORBAR_ACTOR_KEY, colorbar)
+        if self._mesh_quality_coloring_visible:
+            if self._mesh_quality_layer_snapshot is None:
+                self._mesh_quality_layer_snapshot = {}
+            for semantic_id in ("base_mesh", "wireframe"):
+                if semantic_id in self._actor_records:
+                    self._mesh_quality_layer_snapshot[semantic_id] = False
+            self._mesh_quality_layer_snapshot[RESULT_SCALAR_ACTOR_KEY] = True
+            if colorbar is None:
+                self._mesh_quality_layer_snapshot.pop(RESULT_COLORBAR_ACTOR_KEY, None)
+            else:
+                self._mesh_quality_layer_snapshot[RESULT_COLORBAR_ACTOR_KEY] = True
+            self._set_mesh_quality_visibility(
+                {
+                    "base_mesh": False,
+                    "wireframe": False,
+                    RESULT_SCALAR_ACTOR_KEY: False,
+                    RESULT_COLORBAR_ACTOR_KEY: False,
+                    MESH_QUALITY_ACTOR_KEY: True,
+                    MESH_QUALITY_SCALARBAR_ACTOR_KEY: True,
+                }
+            )
         return result
 
     def set_vector_result(
@@ -1374,9 +1466,17 @@ class ActiveSceneController:
         snapshot = self._interactive_result_visibility_snapshot
         restored = True
         if snapshot is not None:
-            for semantic_id, visible in snapshot.items():
-                if semantic_id in self._actor_records:
-                    restored = self.set_actor_visible(semantic_id, visible) and restored
+            if self._mesh_quality_coloring_visible:
+                if self._mesh_quality_layer_snapshot is None:
+                    self._mesh_quality_layer_snapshot = {}
+                self._mesh_quality_layer_snapshot.update(snapshot)
+                self._mesh_quality_layer_snapshot.pop(RESULT_SCALAR_ACTOR_KEY, None)
+                self._mesh_quality_layer_snapshot.pop(RESULT_COLORBAR_ACTOR_KEY, None)
+                restored = self._refresh_mesh_quality_resources()
+            else:
+                for semantic_id, visible in snapshot.items():
+                    if semantic_id in self._actor_records:
+                        restored = self.set_actor_visible(semantic_id, visible) and restored
         if restored:
             self._interactive_result_visibility_snapshot = None
         return restored
@@ -1398,9 +1498,9 @@ class ActiveSceneController:
     def analyze_mesh_quality(
         self,
         *,
-        zero_edge_tolerance: float = 1e-12,
+        zero_edge_tolerance: float = DEFAULT_DEGENERATE_EPSILON,
     ) -> MeshQualityAnalysis | None:
-        """Analyze the active in-memory mesh once per exact geometry cache key."""
+        """Synchronously execute the same request/commit seam used by the GUI worker."""
 
         mesh = self._mesh
         fingerprint = self._mesh_fingerprint
@@ -1414,99 +1514,315 @@ class ActiveSceneController:
             tolerance,
         )
         analysis = self._mesh_quality_cache.get(cache_key)
-        if analysis is None:
-            analysis = self._mesh_quality_analyzer(
-                mesh,
-                zero_edge_tolerance=tolerance,
+        if analysis is not None:
+            analysis = reclassify_mesh_quality(
+                analysis,
+                threshold=self._mesh_quality_threshold,
             )
-            if analysis.mesh_fingerprint.digest != fingerprint.digest:
-                raise ValueError(
-                    "Mesh Diagnostics analysis does not match the active mesh fingerprint."
-                )
-            self._mesh_quality_cache[cache_key] = analysis
-        self._mesh_quality_analysis = analysis
-        if self._mesh_quality_highlight_visible:
-            self._refresh_mesh_quality_actor()
-        return analysis
+            self._mesh_quality_analysis = analysis
+            self._mesh_quality_status = analysis.status
+            self._refresh_mesh_quality_resources()
+            return analysis
+        request = self.begin_mesh_quality_analysis(
+            degenerate_epsilon=tolerance,
+        )
+        if request is None:
+            return None
+        try:
+            analysis = self._call_mesh_quality_analyzer(request)
+        except Exception:
+            if self._mesh_quality_active_request == request:
+                self._mesh_quality_active_request = None
+                self._mesh_quality_status = MeshDiagnosticsStatus.FAILED
+            raise
+        if not self.complete_mesh_quality_analysis(request, analysis):
+            return None
+        return self._mesh_quality_analysis
+
+    def begin_mesh_quality_analysis(
+        self,
+        *,
+        degenerate_epsilon: float = DEFAULT_DEGENERATE_EPSILON,
+    ) -> MeshQualityAnalysisRequest | None:
+        """Capture immutable mesh identity for one optional background request."""
+
+        if (
+            self._mesh is None
+            or self._mesh_fingerprint is None
+            or self._mesh_quality_active_request is not None
+            or self._state in {SceneLifecycleState.CLOSING, SceneLifecycleState.CLOSED}
+        ):
+            return None
+        epsilon = float(degenerate_epsilon)
+        if not isfinite(epsilon) or epsilon < 0.0:
+            raise ValueError("Degenerate epsilon must be finite and non-negative.")
+        self._mesh_quality_next_request_id += 1
+        request = MeshQualityAnalysisRequest(
+            request_id=self._mesh_quality_next_request_id,
+            generation=self._generation,
+            mesh_ref=self._mesh_ref,
+            mesh_fingerprint=self._mesh_fingerprint.digest,
+            mesh=self._mesh,
+            threshold=self._mesh_quality_threshold,
+            degenerate_epsilon=epsilon,
+        )
+        self._mesh_quality_active_request = request
+        self._mesh_quality_status = MeshDiagnosticsStatus.RUNNING
+        return request
+
+    def complete_mesh_quality_analysis(
+        self,
+        request: MeshQualityAnalysisRequest,
+        analysis: MeshQualityAnalysis,
+    ) -> bool:
+        """Accept only the still-current request and exact mesh fingerprint."""
+
+        active = self._mesh_quality_active_request
+        fingerprint = self._mesh_fingerprint
+        if (
+            active is None
+            or request.request_id != active.request_id
+            or request.generation != self._generation
+            or fingerprint is None
+            or request.mesh_fingerprint != fingerprint.digest
+            or request.mesh_ref != self._mesh_ref
+            or analysis.mesh_fingerprint.digest != fingerprint.digest
+            or self._state in {SceneLifecycleState.CLOSING, SceneLifecycleState.CLOSED}
+        ):
+            return False
+        classified = reclassify_mesh_quality(
+            analysis,
+            threshold=self._mesh_quality_threshold,
+        )
+        classified = replace(classified, mesh_ref=request.mesh_ref)
+        cache_key = (
+            fingerprint.digest,
+            MESH_QUALITY_METRIC_SCHEMA,
+            MESH_QUALITY_TOPOLOGY_RULES,
+            request.degenerate_epsilon,
+        )
+        self._mesh_quality_cache[cache_key] = classified
+        self._mesh_quality_analysis = classified
+        self._mesh_quality_status = classified.status
+        self._mesh_quality_degenerate_epsilon = request.degenerate_epsilon
+        self._mesh_quality_active_request = None
+        self._refresh_mesh_quality_resources()
+        return True
+
+    def evaluate_mesh_quality_request(
+        self,
+        request: MeshQualityAnalysisRequest,
+    ) -> MeshQualityAnalysis:
+        """Pure worker entry point; committing the result remains a GUI-thread action."""
+
+        return self._call_mesh_quality_analyzer(request)
+
+    def cancel_mesh_quality_analysis(self) -> bool:
+        """Invalidate one in-flight result without touching mesh or Project state."""
+
+        if self._mesh_quality_active_request is None:
+            return False
+        self._mesh_quality_active_request = None
+        self._mesh_quality_status = MeshDiagnosticsStatus.CANCELLED
+        return True
+
+    def fail_mesh_quality_analysis(
+        self,
+        request: MeshQualityAnalysisRequest,
+    ) -> bool:
+        """Commit a worker failure only when its request is still current."""
+
+        active = self._mesh_quality_active_request
+        if active is None or active.request_id != request.request_id:
+            return False
+        self._mesh_quality_active_request = None
+        self._mesh_quality_status = MeshDiagnosticsStatus.FAILED
+        return True
 
     def set_mesh_quality_threshold(self, threshold: float) -> bool:
         """Derive a new bad-cell subset without recomputing mesh geometry."""
 
         try:
-            build_mesh_diagnostics_view_model(
-                self._mesh_quality_analysis,
-                threshold=float(threshold),
-                mesh_label=self._mesh_ref,
-                renderer_available=self._mesh_quality_renderer_available(),
-                backend_reason=self._fallback_reason,
+            normalized = float(threshold)
+            if not isfinite(normalized) or not -1.0 <= normalized <= 1.0:
+                raise ValueError
+            if self._mesh_quality_analysis is not None:
+                self._mesh_quality_analysis = reclassify_mesh_quality(
+                    self._mesh_quality_analysis,
+                    threshold=normalized,
+                )
+        except (TypeError, ValueError):
+            return False
+        self._mesh_quality_threshold = normalized
+        if self._mesh_quality_analysis is not None:
+            self._mesh_quality_status = self._mesh_quality_analysis.status
+            if (
+                not self.mesh_quality_view_model.bad_cell_keys
+                and self._mesh_quality_filter_mode != "clear"
+            ):
+                self.set_mesh_quality_filter_mode("clear")
+            return self._refresh_mesh_quality_resources()
+        return True
+
+    def set_mesh_quality_range(
+        self,
+        mode: str,
+        manual_range: tuple[float, float] | None = None,
+    ) -> bool:
+        """Update only color projection bounds from cached quality values."""
+
+        analysis = self._mesh_quality_analysis
+        if analysis is None:
+            return False
+        try:
+            self._mesh_quality_analysis = reclassify_mesh_quality(
+                analysis,
+                threshold=self._mesh_quality_threshold,
+                range_mode=mode,
+                manual_range=manual_range,
             )
         except (TypeError, ValueError):
             return False
-        self._mesh_quality_threshold = float(threshold)
-        if self._mesh_quality_highlight_visible:
-            return self._refresh_mesh_quality_actor()
-        return True
+        self._mesh_quality_status = self._mesh_quality_analysis.status
+        return self._refresh_mesh_quality_resources()
 
-    def set_mesh_quality_highlight_visible(self, visible: bool) -> bool:
-        """Show or remove the one semantic bad-cell actor."""
+    def set_mesh_quality_coloring_visible(self, visible: bool) -> bool:
+        """Enable one Scaled Jacobian cell-color layer and one scalar bar."""
 
         if not visible:
-            self.restore_mesh_quality_visibility()
-            self._mesh_quality_highlight_visible = False
-            self._remove_mesh_quality_actor()
-            return True
-        if self._mesh_quality_analysis is None or not self._mesh_quality_renderer_available():
-            return False
-        self._mesh_quality_highlight_visible = True
-        return self._refresh_mesh_quality_actor()
-
-    def set_mesh_quality_isolated(self, isolated: bool) -> bool:
-        """Hide only base/wireframe actors while preserving unrelated overlays."""
-
-        if not isolated:
-            return self.restore_mesh_quality_visibility()
+            if self._mesh_quality_filter_mode != "clear":
+                self.set_mesh_quality_filter_mode("clear")
+            self._mesh_quality_coloring_visible = False
+            self._remove_mesh_quality_actor(MESH_QUALITY_ACTOR_KEY)
+            self._remove_mesh_quality_actor(MESH_QUALITY_SCALARBAR_ACTOR_KEY)
+            return self._restore_mesh_quality_layer_visibility()
         if (
-            not self._mesh_quality_highlight_visible
-            or MESH_QUALITY_ACTOR_KEY not in self._actor_records
+            self._mesh_quality_analysis is None
             or not self._mesh_quality_renderer_available()
-            or self._interactive_result_visibility_snapshot is not None
+            or self._isolation_snapshot is not None
+            or self._mesh_quality_status
+            not in {MeshDiagnosticsStatus.READY, MeshDiagnosticsStatus.PARTIAL_COVERAGE}
         ):
             return False
-        if self._mesh_quality_visibility_snapshot is not None:
+        self._mesh_quality_coloring_visible = True
+        return self._refresh_mesh_quality_resources()
+
+    def set_mesh_quality_highlight_visible(self, visible: bool) -> bool:
+        """Show or remove the canonical bad-element highlight actor."""
+
+        if not visible:
+            if self._mesh_quality_filter_mode != "clear":
+                self.set_mesh_quality_filter_mode("clear")
+            self._mesh_quality_highlight_visible = False
+            self._remove_mesh_quality_actor(MESH_BAD_ELEMENTS_ACTOR_KEY)
             return True
-        snapshot = {
-            semantic_id: self._actor_records[semantic_id].visible
-            for semantic_id in ("base_mesh", "wireframe")
-            if semantic_id in self._actor_records
-        }
-        self._mesh_quality_visibility_snapshot = snapshot
-        for semantic_id in snapshot:
-            if not self.set_actor_visible(semantic_id, False):
-                self._mesh_quality_visibility_snapshot = None
+        if (
+            self._mesh_quality_analysis is None
+            or not self.mesh_quality_view_model.bad_cell_keys
+            or not self._mesh_quality_renderer_available()
+            or self._isolation_snapshot is not None
+        ):
+            return False
+        self._mesh_quality_highlight_visible = True
+        return self._refresh_mesh_quality_resources()
+
+    def set_mesh_quality_filter_mode(self, mode: str) -> bool:
+        """Apply highlight/hide/isolate/clear without mutating mesh connectivity."""
+
+        normalized = str(mode or "clear").strip().lower()
+        if normalized == "highlight":
+            if not self.set_mesh_quality_filter_mode("clear"):
                 return False
-        return True
+            return self.set_mesh_quality_highlight_visible(True)
+        if normalized not in {"clear", "hide_bad", "isolate_bad"}:
+            return False
+        if normalized == "clear":
+            restored = self._restore_mesh_quality_filter_visibility()
+            self._mesh_quality_filter_mode = "clear"
+            self._remove_mesh_quality_actor(MESH_DIAGNOSTIC_GOOD_ELEMENTS_ACTOR_KEY)
+            return restored
+        if (
+            self._isolation_snapshot is not None
+            or self._mesh_quality_analysis is None
+            or not self.mesh_quality_view_model.bad_cell_keys
+            or not self._mesh_quality_renderer_available()
+        ):
+            return False
+        if self._mesh_quality_visibility_snapshot is None:
+            self._mesh_quality_visibility_snapshot = {
+                semantic_id: self._actor_records[semantic_id].visible
+                for semantic_id in (
+                    "base_mesh",
+                    "wireframe",
+                    MESH_QUALITY_ACTOR_KEY,
+                    MESH_BAD_ELEMENTS_ACTOR_KEY,
+                    RESULT_SCALAR_ACTOR_KEY,
+                )
+                if semantic_id in self._actor_records
+            }
+        self._mesh_quality_highlight_visible = True
+        self._mesh_quality_filter_mode = normalized
+        if not self._refresh_mesh_quality_resources():
+            return False
+        if normalized == "hide_bad":
+            visibility = {
+                "base_mesh": False,
+                "wireframe": False,
+                MESH_QUALITY_ACTOR_KEY: False,
+                MESH_BAD_ELEMENTS_ACTOR_KEY: False,
+                RESULT_SCALAR_ACTOR_KEY: False,
+                MESH_DIAGNOSTIC_GOOD_ELEMENTS_ACTOR_KEY: True,
+            }
+        else:
+            self._remove_mesh_quality_actor(MESH_DIAGNOSTIC_GOOD_ELEMENTS_ACTOR_KEY)
+            visibility = {
+                "base_mesh": False,
+                "wireframe": False,
+                MESH_QUALITY_ACTOR_KEY: False,
+                MESH_BAD_ELEMENTS_ACTOR_KEY: True,
+                RESULT_SCALAR_ACTOR_KEY: False,
+            }
+        return self._set_mesh_quality_visibility(visibility)
+
+    def set_mesh_quality_isolated(self, isolated: bool) -> bool:
+        """Compatibility wrapper for the diagnostic isolate-bad filter."""
+
+        return self.set_mesh_quality_filter_mode("isolate_bad" if isolated else "clear")
 
     def restore_mesh_quality_visibility(self) -> bool:
-        """Restore the diagnostics-local base/wireframe visibility snapshot."""
+        """Compatibility wrapper for clearing diagnostic hide/isolate state."""
 
-        snapshot = self._mesh_quality_visibility_snapshot
-        if snapshot is None:
-            return True
-        restored = True
-        for semantic_id, visible in snapshot.items():
-            if semantic_id in self._actor_records:
-                restored = self.set_actor_visible(semantic_id, visible) and restored
-        if restored:
-            self._mesh_quality_visibility_snapshot = None
-        return restored
+        return self.set_mesh_quality_filter_mode("clear")
+
+    def select_mesh_quality_bad_cells(self) -> bool:
+        """Promote the bad subset into the canonical transient cell selection."""
+
+        view_model = self.mesh_quality_view_model
+        analysis = self._mesh_quality_analysis
+        fingerprint = self._mesh_fingerprint
+        if (
+            analysis is None
+            or fingerprint is None
+            or analysis.status
+            not in {MeshDiagnosticsStatus.READY, MeshDiagnosticsStatus.PARTIAL_COVERAGE}
+            or analysis.mesh_fingerprint.digest != fingerprint.digest
+            or not view_model.bad_cell_keys
+            or self._mesh is None
+        ):
+            return False
+        self._apply_current_selection_ids(EntityKind.CELL, view_model.bad_cell_keys)
+        self._sync_active_named_selection_from_current()
+        self._notify_selection_listener()
+        return self._current_selection_resolution.state is ResolutionState.RESOLVED
 
     def clear_mesh_quality_overlay(self) -> bool:
         """Clear transient emphasis while retaining same-fingerprint analysis."""
 
-        restored = self.restore_mesh_quality_visibility()
+        restored = self.set_mesh_quality_filter_mode("clear")
+        self._mesh_quality_coloring_visible = False
         self._mesh_quality_highlight_visible = False
         self._remove_mesh_quality_actor()
-        return restored
+        return self._restore_mesh_quality_layer_visibility() and restored
 
     def set_view_state(self, scene_state: SceneViewState) -> None:
         self._scene_view_state = scene_state
@@ -1556,10 +1872,20 @@ class ActiveSceneController:
         self._representation = mode
         self._set_registry_representation(mode)
         if self._mesh_quality_visibility_snapshot is not None:
-            self._mesh_quality_visibility_snapshot = {
-                key: bool(value) for key, value in _REPRESENTATION_VISIBILITY[mode].items()
-            }
-            for semantic_id in self._mesh_quality_visibility_snapshot:
+            self._mesh_quality_visibility_snapshot.update(
+                {key: bool(value) for key, value in _REPRESENTATION_VISIBILITY[mode].items()}
+            )
+            for semantic_id in _REPRESENTATION_VISIBILITY[mode]:
+                if semantic_id in self._actor_records:
+                    self.set_actor_visible(semantic_id, False)
+        if (
+            self._mesh_quality_layer_snapshot is not None
+            and not self._mesh_quality_layer_snapshot.get(RESULT_SCALAR_ACTOR_KEY, False)
+        ):
+            self._mesh_quality_layer_snapshot.update(
+                {key: bool(value) for key, value in _REPRESENTATION_VISIBILITY[mode].items()}
+            )
+            for semantic_id in _REPRESENTATION_VISIBILITY[mode]:
                 if semantic_id in self._actor_records:
                     self.set_actor_visible(semantic_id, False)
         if self._interactive_result_visibility_snapshot is not None:
@@ -1605,6 +1931,8 @@ class ActiveSceneController:
         return self.set_actor_visible(semantic_id, False)
 
     def isolate_actor(self, semantic_id: str) -> bool:
+        if self._mesh_quality_filter_mode != "clear":
+            return False
         record = self._actor_records.get(semantic_id)
         if record is None or not record.isolation_eligible:
             return False
@@ -2175,6 +2503,25 @@ class ActiveSceneController:
             metric_schema=MESH_QUALITY_METRIC_SCHEMA,
             threshold=self._mesh_quality_threshold,
             highlight_visible=self._mesh_quality_highlight_visible,
+            coloring_visible=self._mesh_quality_coloring_visible,
+            filter_mode=self._mesh_quality_filter_mode,
+            range_mode=(
+                self._mesh_quality_analysis.range_mode
+                if self._mesh_quality_analysis is not None
+                else "auto"
+            ),
+            manual_min=(
+                self._mesh_quality_analysis.display_range[0]
+                if self._mesh_quality_analysis is not None
+                and self._mesh_quality_analysis.range_mode == "manual"
+                else None
+            ),
+            manual_max=(
+                self._mesh_quality_analysis.display_range[1]
+                if self._mesh_quality_analysis is not None
+                and self._mesh_quality_analysis.range_mode == "manual"
+                else None
+            ),
         )
 
     def _set_stale_restore(
@@ -2254,9 +2601,24 @@ class ActiveSceneController:
             diagnostics.append("Mesh Diagnostics could not be recomputed.")
             return
         self.set_mesh_quality_threshold(quality.threshold)
+        if quality.range_mode == "manual" and self._mesh_quality_analysis is not None:
+            self._mesh_quality_analysis = reclassify_mesh_quality(
+                self._mesh_quality_analysis,
+                threshold=quality.threshold,
+                range_mode="manual",
+                manual_range=(float(quality.manual_min), float(quality.manual_max)),
+            )
+        if quality.coloring_visible and not self.set_mesh_quality_coloring_visible(True):
+            reasons.append("RENDERER_UNAVAILABLE")
+            diagnostics.append("Mesh Diagnostics quality coloring could not be restored.")
         if quality.highlight_visible and not self.set_mesh_quality_highlight_visible(True):
             reasons.append("RENDERER_UNAVAILABLE")
             diagnostics.append("Mesh Diagnostics highlight could not be restored.")
+        if quality.filter_mode != "clear" and not self.set_mesh_quality_filter_mode(
+            quality.filter_mode
+        ):
+            reasons.append("RENDERER_UNAVAILABLE")
+            diagnostics.append("Mesh Diagnostics filter mode could not be restored.")
 
     def _restore_result_state(
         self,
@@ -2773,81 +3135,263 @@ class ActiveSceneController:
             and "mesh-quality-overlays" in self.capabilities
         )
 
-    def _refresh_mesh_quality_actor(self) -> bool:
+    def _call_mesh_quality_analyzer(
+        self,
+        request: MeshQualityAnalysisRequest,
+    ) -> MeshQualityAnalysis:
+        analyzer = self._mesh_quality_analyzer
+        kwargs: dict[str, float] = {}
+        try:
+            parameters = signature(analyzer).parameters
+        except (TypeError, ValueError):
+            parameters = {}
+        accepts_kwargs = any(
+            parameter.kind is Parameter.VAR_KEYWORD for parameter in parameters.values()
+        )
+        if accepts_kwargs or "threshold" in parameters:
+            kwargs["threshold"] = request.threshold
+        if accepts_kwargs or "degenerate_epsilon" in parameters:
+            kwargs["degenerate_epsilon"] = request.degenerate_epsilon
+        elif accepts_kwargs or "zero_edge_tolerance" in parameters:
+            kwargs["zero_edge_tolerance"] = request.degenerate_epsilon
+        analysis = analyzer(request.mesh, **kwargs)
+        if not isinstance(analysis, MeshQualityAnalysis):
+            raise TypeError("Mesh Diagnostics analyzer returned an incompatible result.")
+        if analysis.mesh_fingerprint.digest != request.mesh_fingerprint:
+            raise ValueError(
+                "Mesh Diagnostics analysis does not match the requested mesh fingerprint."
+            )
+        return analysis
+
+    def _refresh_mesh_quality_resources(self) -> bool:
         analysis = self._mesh_quality_analysis
         fingerprint = self._mesh_fingerprint
         if (
             analysis is None
             or fingerprint is None
             or analysis.mesh_fingerprint.digest != fingerprint.digest
+            or analysis.status
+            not in {MeshDiagnosticsStatus.READY, MeshDiagnosticsStatus.PARTIAL_COVERAGE}
         ):
             self._remove_mesh_quality_actor()
             return False
-        spec = build_mesh_quality_overlay_spec(
-            analysis,
-            threshold=self._mesh_quality_threshold,
-            visible=True,
-        )
-        if spec is None:
-            self.restore_mesh_quality_visibility()
+        if not self._mesh_quality_renderer_available():
             self._remove_mesh_quality_actor()
-            return True
+            return not (
+                self._mesh_quality_coloring_visible
+                or self._mesh_quality_highlight_visible
+                or self._mesh_quality_filter_mode != "clear"
+            )
+        specs = build_mesh_diagnostics_overlay_specs(analysis)
         view_model = self.mesh_quality_view_model
-        if spec.stable_cell_keys != view_model.bad_cell_keys:
+        if specs.bad is not None and specs.bad.stable_cell_keys != view_model.bad_cell_keys:
             raise RuntimeError(
                 "Mesh Diagnostics table and semantic actor cell identities diverged."
             )
-        if not self._mesh_quality_renderer_available():
-            self._remove_mesh_quality_actor()
-            return False
-        if (
-            self._isolation_snapshot is not None
-            and MESH_QUALITY_ACTOR_KEY not in self._actor_records
-            and not self.clear_isolation()
-        ):
-            return False
+        if self._mesh_quality_coloring_visible:
+            if specs.quality is None or specs.scalar_bar is None:
+                return False
+            if self._mesh_quality_layer_snapshot is None:
+                self._mesh_quality_layer_snapshot = {
+                    semantic_id: self._actor_records[semantic_id].visible
+                    for semantic_id in (
+                        "base_mesh",
+                        "wireframe",
+                        RESULT_SCALAR_ACTOR_KEY,
+                        RESULT_COLORBAR_ACTOR_KEY,
+                    )
+                    if semantic_id in self._actor_records
+                }
+            if not self._replace_mesh_quality_resource(specs.quality):
+                return False
+            if not self._replace_mesh_quality_resource(specs.scalar_bar):
+                return False
+            if not self._set_mesh_quality_visibility(
+                {
+                    "base_mesh": False,
+                    "wireframe": False,
+                    RESULT_SCALAR_ACTOR_KEY: False,
+                    RESULT_COLORBAR_ACTOR_KEY: False,
+                    MESH_QUALITY_ACTOR_KEY: True,
+                    MESH_QUALITY_SCALARBAR_ACTOR_KEY: True,
+                }
+            ):
+                return False
+        else:
+            self._remove_mesh_quality_actor(MESH_QUALITY_ACTOR_KEY)
+            self._remove_mesh_quality_actor(MESH_QUALITY_SCALARBAR_ACTOR_KEY)
+
+        needs_bad = self._mesh_quality_highlight_visible or (
+            self._mesh_quality_filter_mode in {"hide_bad", "isolate_bad"}
+        )
+        if needs_bad and specs.bad is not None:
+            if not self._replace_mesh_quality_resource(specs.bad):
+                return False
+        else:
+            self._remove_mesh_quality_actor(MESH_BAD_ELEMENTS_ACTOR_KEY)
+
+        if self._mesh_quality_filter_mode == "hide_bad" and specs.good is not None:
+            if not self._replace_mesh_quality_resource(specs.good):
+                return False
+        elif self._mesh_quality_filter_mode != "hide_bad":
+            self._remove_mesh_quality_actor(MESH_DIAGNOSTIC_GOOD_ELEMENTS_ACTOR_KEY)
         session = self._session
-        assert session is not None
+        if session is not None:
+            try:
+                session.request_render()
+            except Exception as exc:
+                self._fail_session(exc)
+                return False
+        return True
+
+    def _replace_mesh_quality_resource(
+        self,
+        spec: MeshQualityOverlaySpec | MeshQualityScalarBarSpec,
+    ) -> bool:
+        session = self._session
+        if session is None:
+            return False
+        semantic_id = spec.actor_key
         try:
-            previous = self._actor_records.get(MESH_QUALITY_ACTOR_KEY)
-            session.replace_actor(
-                MESH_QUALITY_ACTOR_KEY,
-                spec,
+            previous = self._actor_records.get(semantic_id)
+            session.replace_actor(semantic_id, spec, generation=self._generation)
+            visible = bool(getattr(spec, "visible", True))
+            if previous is not None:
+                visible = previous.visible
+            self._actor_records[semantic_id] = _scene_actor_record(
+                semantic_id,
                 generation=self._generation,
+                visible=visible,
             )
-            self._actor_records[MESH_QUALITY_ACTOR_KEY] = _scene_actor_record(
-                MESH_QUALITY_ACTOR_KEY,
-                generation=self._generation,
-                visible=True if previous is None else previous.visible,
-            )
-            session.set_actor_visible(
-                MESH_QUALITY_ACTOR_KEY,
-                self._actor_records[MESH_QUALITY_ACTOR_KEY].visible,
-            )
-            session.request_render()
+            setter = getattr(session, "set_actor_visible", None)
+            if callable(setter):
+                setter(semantic_id, visible)
         except Exception as exc:
             self._fail_session(exc)
             return False
         return True
 
-    def _remove_mesh_quality_actor(self) -> None:
-        self._actor_records.pop(MESH_QUALITY_ACTOR_KEY, None)
+    def _set_mesh_quality_visibility(self, visibility: Mapping[str, bool]) -> bool:
         session = self._session
         if session is None:
-            return
-        remover = getattr(session, "remove_actor", None)
-        if not callable(remover):
-            return
+            return False
+        setter = getattr(session, "set_actor_visible", None)
+        if not callable(setter):
+            return False
         try:
-            remover(MESH_QUALITY_ACTOR_KEY)
+            for semantic_id, visible in visibility.items():
+                record = self._actor_records.get(semantic_id)
+                if record is None:
+                    continue
+                setter(semantic_id, bool(visible))
+                self._actor_records[semantic_id] = replace(record, visible=bool(visible))
         except Exception as exc:
             self._fail_session(exc)
+            return False
+        return True
+
+    def _restore_mesh_quality_filter_visibility(self) -> bool:
+        snapshot = self._mesh_quality_visibility_snapshot
+        if snapshot is None:
+            return True
+        restored = self._set_mesh_quality_visibility(snapshot)
+        if restored:
+            self._mesh_quality_visibility_snapshot = None
+        return restored
+
+    def _restore_mesh_quality_layer_visibility(self) -> bool:
+        snapshot = self._mesh_quality_layer_snapshot
+        if snapshot is None:
+            return True
+        restored = self._set_mesh_quality_visibility(snapshot)
+        if restored:
+            self._mesh_quality_layer_snapshot = None
+        return restored
+
+    def _remove_mesh_quality_actor(self, semantic_id: str | None = None) -> None:
+        semantic_ids = (
+            (semantic_id,)
+            if semantic_id is not None
+            else (
+                MESH_QUALITY_ACTOR_KEY,
+                MESH_BAD_ELEMENTS_ACTOR_KEY,
+                MESH_DIAGNOSTIC_GOOD_ELEMENTS_ACTOR_KEY,
+                MESH_QUALITY_SCALARBAR_ACTOR_KEY,
+            )
+        )
+        session = self._session
+        remover = None if session is None else getattr(session, "remove_actor", None)
+        for actor_id in semantic_ids:
+            self._actor_records.pop(actor_id, None)
+            if not callable(remover):
+                continue
+            try:
+                remover(actor_id)
+            except Exception as exc:
+                self._fail_session(exc)
+                return
+
+    def _prepare_mesh_quality_replacement(
+        self,
+        *,
+        same_fingerprint: bool,
+        previous_analysis: MeshQualityAnalysis | None,
+    ) -> None:
+        had_active_request = self._mesh_quality_active_request is not None
+        self._mesh_quality_active_request = None
+        self._remove_mesh_quality_actor()
+        self._mesh_quality_layer_snapshot = None
+        self._mesh_quality_visibility_snapshot = None
+        if same_fingerprint:
+            self._mesh_quality_cache.clear()
+            self._mesh_quality_analysis = None
+            self._mesh_quality_status = MeshDiagnosticsStatus.IDLE
+            return
+        self._mesh_quality_cache.clear()
+        self._mesh_quality_coloring_visible = False
+        self._mesh_quality_highlight_visible = False
+        self._mesh_quality_filter_mode = "clear"
+        self._mesh_quality_threshold = DEFAULT_MESH_QUALITY_THRESHOLD
+        self._mesh_quality_degenerate_epsilon = DEFAULT_DEGENERATE_EPSILON
+        if previous_analysis is None:
+            self._mesh_quality_analysis = None
+            self._mesh_quality_status = (
+                MeshDiagnosticsStatus.STALE if had_active_request else MeshDiagnosticsStatus.IDLE
+            )
+            return
+        self._mesh_quality_analysis = replace(
+            previous_analysis,
+            status=MeshDiagnosticsStatus.STALE,
+            diagnostics=(
+                *previous_analysis.diagnostics,
+                "Active mesh fingerprint changed; diagnostic indices were not rebound.",
+            ),
+        )
+        self._mesh_quality_status = MeshDiagnosticsStatus.STALE
+
+    def _recompute_same_fingerprint_mesh_quality(
+        self,
+        previous_analysis: MeshQualityAnalysis | None,
+    ) -> None:
+        analysis = self.analyze_mesh_quality()
+        if (
+            analysis is not None
+            and previous_analysis is not None
+            and previous_analysis.range_mode == "manual"
+        ):
+            self.set_mesh_quality_range("manual", previous_analysis.display_range)
 
     def _reset_mesh_quality_state(self, *, discard_cache: bool) -> None:
+        self._mesh_quality_active_request = None
         self._remove_mesh_quality_actor()
         self._mesh_quality_analysis = None
-        self._mesh_quality_threshold = 10.0
+        self._mesh_quality_status = MeshDiagnosticsStatus.IDLE
+        self._mesh_quality_threshold = DEFAULT_MESH_QUALITY_THRESHOLD
+        self._mesh_quality_degenerate_epsilon = DEFAULT_DEGENERATE_EPSILON
+        self._mesh_quality_coloring_visible = False
         self._mesh_quality_highlight_visible = False
+        self._mesh_quality_filter_mode = "clear"
+        self._mesh_quality_layer_snapshot = None
         self._mesh_quality_visibility_snapshot = None
         if discard_cache:
             self._mesh_quality_cache.clear()
@@ -2954,14 +3498,21 @@ def _scene_actor_record(
         or semantic_id.startswith("named_selection:")
         or semantic_id.startswith("active_named_selection:")
     )
-    result = semantic_id in {
+    diagnostic = semantic_id in {
         MESH_QUALITY_ACTOR_KEY,
+        MESH_BAD_ELEMENTS_ACTOR_KEY,
+        MESH_DIAGNOSTIC_GOOD_ELEMENTS_ACTOR_KEY,
+    }
+    result = semantic_id in {
         RESULT_SCALAR_ACTOR_KEY,
         RESULT_VECTOR_ACTOR_KEY,
         RESULT_PROBE_ACTOR_KEY,
     }
     setup = semantic_id.startswith(("setup_target:", "setup_glyph:"))
-    helper = selection or semantic_id == RESULT_COLORBAR_ACTOR_KEY
+    helper = selection or semantic_id in {
+        RESULT_COLORBAR_ACTOR_KEY,
+        MESH_QUALITY_SCALARBAR_ACTOR_KEY,
+    }
     category = (
         "selection"
         if selection
@@ -2969,6 +3520,8 @@ def _scene_actor_record(
         if setup
         else "helper"
         if helper
+        else "diagnostic"
+        if diagnostic
         else "result"
         if result
         else "geometry"
@@ -3049,7 +3602,7 @@ def _semantic_visibility_entry(
             semantic_id.removeprefix("setup_glyph:"),
             visible=visible,
         )
-    if semantic_id == MESH_QUALITY_ACTOR_KEY:
+    if semantic_id == MESH_BAD_ELEMENTS_ACTOR_KEY:
         return SemanticActorVisibility(
             "mesh_quality_bad_cells",
             MESH_QUALITY_METRIC_SCHEMA,
@@ -3086,7 +3639,7 @@ def _semantic_id_from_visibility(item: SemanticActorVisibility) -> str:
     if item.kind == "setup_glyph":
         return f"setup_glyph:{item.source_id}"
     if item.kind == "mesh_quality_bad_cells":
-        return MESH_QUALITY_ACTOR_KEY
+        return MESH_BAD_ELEMENTS_ACTOR_KEY
     if item.kind == "scalar_result":
         return RESULT_SCALAR_ACTOR_KEY
     if item.kind == "vector_result":

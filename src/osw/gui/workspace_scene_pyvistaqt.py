@@ -26,8 +26,12 @@ from osw.gui.interactive_results_view_model import (
     ScalarResultOverlaySpec,
 )
 from osw.gui.mesh_diagnostics_view_model import (
+    MESH_BAD_ELEMENTS_ACTOR_KEY,
+    MESH_DIAGNOSTIC_GOOD_ELEMENTS_ACTOR_KEY,
     MESH_QUALITY_ACTOR_KEY,
+    MESH_QUALITY_SCALARBAR_ACTOR_KEY,
     MeshQualityOverlaySpec,
+    MeshQualityScalarBarSpec,
 )
 from osw.gui.setup_overlay_view_model import SetupOverlaySpec
 from osw.gui.workspace_scene_controller import (
@@ -339,12 +343,22 @@ class PyVistaQtRendererSession:
             self._payloads[semantic_id] = (payload, generation)
             self._visibility.setdefault(semantic_id, payload.visible)
             return self._replace_setup_actor(semantic_id, payload)
-        if semantic_id == MESH_QUALITY_ACTOR_KEY:
+        if semantic_id in {
+            MESH_QUALITY_ACTOR_KEY,
+            MESH_BAD_ELEMENTS_ACTOR_KEY,
+            MESH_DIAGNOSTIC_GOOD_ELEMENTS_ACTOR_KEY,
+        }:
             if not isinstance(payload, MeshQualityOverlaySpec):
                 raise TypeError("Mesh quality actor requires a MeshQualityOverlaySpec.")
             self._payloads[semantic_id] = (payload, generation)
             self._visibility.setdefault(semantic_id, payload.visible)
             return self._replace_mesh_quality_actor(semantic_id, payload)
+        if semantic_id == MESH_QUALITY_SCALARBAR_ACTOR_KEY:
+            if not isinstance(payload, MeshQualityScalarBarSpec):
+                raise TypeError("Mesh quality scalar bar requires its scalar-bar spec.")
+            self._payloads[semantic_id] = (payload, generation)
+            self._visibility.setdefault(semantic_id, payload.visible)
+            return self._replace_mesh_quality_scalar_bar(semantic_id, payload)
         if semantic_id == RESULT_SCALAR_ACTOR_KEY:
             if not isinstance(payload, ScalarResultOverlaySpec):
                 raise TypeError("Scalar result actor requires a scalar overlay spec.")
@@ -705,6 +719,9 @@ class PyVistaQtRendererSession:
         if isinstance(payload, MeshQualityOverlaySpec):
             self._replace_mesh_quality_actor(semantic_id, payload)
             return
+        if isinstance(payload, MeshQualityScalarBarSpec):
+            self._replace_mesh_quality_scalar_bar(semantic_id, payload)
+            return
         if isinstance(payload, ScalarResultOverlaySpec):
             self._replace_scalar_result_actor(semantic_id, payload)
             return
@@ -837,17 +854,54 @@ class PyVistaQtRendererSession:
         )
         extractor = getattr(dataset, "extract_cells", None)
         if not callable(extractor):
-            raise RuntimeError("The interactive backend cannot extract bad mesh cells.")
+            raise RuntimeError("The interactive backend cannot extract diagnostic cells.")
         subset = extractor(list(payload.entity_indices))
-        actor = self._require_open_interactor().add_mesh(
-            subset,
-            name=f"osw-{semantic_id}",
-            color="#f59e0b",
-            opacity=0.75,
-            show_edges=True,
-            reset_camera=False,
-            render=False,
-        )
+        if payload.role == "quality":
+            if len(payload.values) != len(payload.entity_indices):
+                raise RuntimeError(
+                    "Mesh quality scalar values do not match the extracted cell count."
+                )
+            subset.cell_data[payload.scalar_name] = payload.values
+            actor = self._require_open_interactor().add_mesh(
+                subset,
+                name=f"osw-{semantic_id}",
+                scalars=payload.scalar_name,
+                clim=payload.display_range,
+                cmap=payload.colormap,
+                show_scalar_bar=False,
+                show_edges=True,
+                pickable=False,
+                reset_camera=False,
+                render=False,
+            )
+        else:
+            color = "#f43f5e" if payload.role == "bad" else "#94a3b8"
+            actor = self._require_open_interactor().add_mesh(
+                subset,
+                name=f"osw-{semantic_id}",
+                color=color,
+                opacity=0.82 if payload.role == "bad" else 1.0,
+                show_edges=payload.role == "bad",
+                pickable=False,
+                reset_camera=False,
+                render=False,
+            )
+        self._actors[semantic_id] = actor
+        _set_native_visibility(actor, self._visibility[semantic_id])
+        return actor
+
+    def _replace_mesh_quality_scalar_bar(
+        self,
+        semantic_id: str,
+        payload: MeshQualityScalarBarSpec,
+    ) -> object:
+        self._remove_native_actor(semantic_id)
+        scalar_actor = self._actors.get(payload.scalar_actor_key)
+        mapper = getattr(scalar_actor, "mapper", None)
+        add_scalar_bar = getattr(self._require_open_interactor(), "add_scalar_bar", None)
+        if mapper is None or not callable(add_scalar_bar):
+            raise RuntimeError("Mesh quality scalar bar is unavailable in this backend.")
+        actor = add_scalar_bar(title=payload.title, mapper=mapper, render=False)
         self._actors[semantic_id] = actor
         _set_native_visibility(actor, self._visibility[semantic_id])
         return actor
@@ -1094,7 +1148,10 @@ class PyVistaQtRendererSession:
         actor = self._actors.pop(semantic_id, None)
         if actor is None or self._interactor is None:
             return
-        if semantic_id == RESULT_COLORBAR_ACTOR_KEY:
+        if semantic_id in {
+            RESULT_COLORBAR_ACTOR_KEY,
+            MESH_QUALITY_SCALARBAR_ACTOR_KEY,
+        }:
             remove_scalar_bar = getattr(self._interactor, "remove_scalar_bar", None)
             get_title = getattr(actor, "GetTitle", None)
             title = str(get_title()) if callable(get_title) else ""
@@ -1277,7 +1334,13 @@ class PyVistaQtRendererFactory:
 
 def _is_isolation_eligible(semantic_id: str) -> bool:
     return not (
-        semantic_id in {"hover", "current_selection", RESULT_COLORBAR_ACTOR_KEY}
+        semantic_id
+        in {
+            "hover",
+            "current_selection",
+            RESULT_COLORBAR_ACTOR_KEY,
+            MESH_QUALITY_SCALARBAR_ACTOR_KEY,
+        }
         or semantic_id.startswith("named_selection:")
         or semantic_id.startswith("active_named_selection:")
     )

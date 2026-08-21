@@ -780,13 +780,13 @@ def test_3d_workspace_mvp_end_to_end_round_trip(
     assert analysis is not None
     assert analysis.mesh_fingerprint.digest == fingerprint.digest
     assert analysis.evaluated_count == 1
-    assert controller.set_mesh_quality_threshold(2.0)
+    assert controller.set_mesh_quality_threshold(1.0)
     assert controller.set_mesh_quality_highlight_visible(True)
     diagnostics_model = controller.mesh_quality_view_model
-    assert diagnostics_model.metric_schema == "osw.mesh_quality.edge_aspect_ratio.v1"
+    assert diagnostics_model.metric_schema == "osw.mesh_quality.scaled_jacobian.v1"
     assert diagnostics_model.bad_count == 1
     assert diagnostics_model.bad_cell_keys == diagnostics_model.table_bad_cell_keys
-    quality_payload = session.actors["mesh_quality:bad_cells"]
+    quality_payload = session.actors["mesh_bad_elements"]
     assert quality_payload.stable_cell_keys == diagnostics_model.bad_cell_keys
     actors_before_isolate = set(session.actors)
     assert controller.set_mesh_quality_isolated(True)
@@ -888,7 +888,7 @@ def test_3d_workspace_mvp_end_to_end_round_trip(
     assert "Active scene: osw.active_scene.v1" in rendered_preview
     assert fingerprint.digest[:12] in rendered_preview
     assert "temperature" in rendered_preview
-    assert "edge_aspect_ratio" in rendered_preview
+    assert "scaled_jacobian" in rendered_preview
     assert str(tmp_path) not in rendered_preview
     exported = window.export_current_report(output_path=report_path)
     assert exported == report_path
@@ -938,7 +938,7 @@ def test_3d_workspace_mvp_end_to_end_round_trip(
         item.state is SetupReadiness.READY
         for item in reopened.active_scene_controller.setup_statuses.values()
     )
-    assert "mesh_quality:bad_cells" in reopen_factory.current.actors
+    assert "mesh_bad_elements" in reopen_factory.current.actors
 
     reopened.last_result_datasets = [dataset]
     reopened._sync_mesh_viewer_result_datasets()
@@ -1116,7 +1116,7 @@ def test_3d_workspace_mvp_renderer_fallback_preserves_nonrendering_flow(
 
     analysis = controller.analyze_mesh_quality()
     assert analysis is not None and analysis.evaluated_count == 1
-    assert controller.set_mesh_quality_threshold(2.0)
+    assert controller.set_mesh_quality_threshold(1.0)
     assert controller.mesh_quality_view_model.bad_cell_keys == ("0:0",)
     assert controller.set_mesh_quality_highlight_visible(True) is False
     assert controller.set_mesh_quality_isolated(True) is False

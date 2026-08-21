@@ -1,24 +1,26 @@
-"""Pure contracts for fingerprint-bound preview mesh diagnostics."""
+"""Focused Scaled Jacobian topology, classification, and failure contracts."""
 
 from __future__ import annotations
 
 import math
-from importlib import import_module
+from dataclasses import FrozenInstanceError
 
 import pytest
 
-from osw.core.selection_resolution import CELL_ORDINAL_NAMESPACE
 from osw.mesh.mesh_model import MeshCellBlock, MeshData
 
 
-def _quality_api() -> object:
-    api = import_module("osw.mesh.quality")
-    if not hasattr(api, "analyze_mesh_cell_quality"):
-        pytest.fail(
-            "fingerprint-bound per-cell mesh-quality analysis is missing",
-            pytrace=False,
-        )
-    return api
+class Provider:
+    provider_schema = "osw.mesh_quality.provider.unit-fixture.v1"
+    provider_version = "1"
+
+    def __init__(self, values: tuple[float, ...]) -> None:
+        self.values = values
+        self.meshes: list[MeshData] = []
+
+    def evaluate(self, mesh: MeshData) -> tuple[float, ...]:
+        self.meshes.append(mesh)
+        return self.values
 
 
 def _mesh(
@@ -26,285 +28,239 @@ def _mesh(
     points: tuple[tuple[float, float, float], ...],
     connectivity: tuple[int, ...],
 ) -> MeshData:
-    return MeshData(
-        points=points,
-        cells=(MeshCellBlock(cell_type, (connectivity,)),),
-    )
+    return MeshData(points=points, cells=(MeshCellBlock(cell_type, (connectivity,)),))
 
 
 @pytest.mark.parametrize(
-    ("cell_type", "points", "connectivity", "expected"),
+    ("cell_type", "points", "connectivity"),
     [
         (
-            "line",
-            ((0.0, 0.0, 0.0), (2.0, 0.0, 0.0)),
-            (0, 1),
-            1.0,
-        ),
-        (
             "triangle",
-            ((0.0, 0.0, 0.0), (2.0, 0.0, 0.0), (0.0, 1.0, 0.0)),
+            ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)),
             (0, 1, 2),
-            math.sqrt(5.0),
         ),
         (
             "quad",
             (
                 (0.0, 0.0, 0.0),
-                (2.0, 0.0, 0.0),
-                (2.0, 1.0, 0.0),
+                (1.0, 0.0, 0.0),
+                (1.0, 1.0, 0.0),
                 (0.0, 1.0, 0.0),
             ),
             (0, 1, 2, 3),
-            2.0,
         ),
         (
             "tetra",
             (
                 (0.0, 0.0, 0.0),
-                (2.0, 0.0, 0.0),
+                (1.0, 0.0, 0.0),
                 (0.0, 1.0, 0.0),
                 (0.0, 0.0, 1.0),
             ),
             (0, 1, 2, 3),
-            math.sqrt(5.0),
-        ),
-        (
-            "hexahedron",
-            (
-                (0.0, 0.0, 0.0),
-                (2.0, 0.0, 0.0),
-                (2.0, 1.0, 0.0),
-                (0.0, 1.0, 0.0),
-                (0.0, 0.0, 1.0),
-                (2.0, 0.0, 1.0),
-                (2.0, 1.0, 1.0),
-                (0.0, 1.0, 1.0),
-            ),
-            (0, 1, 2, 3, 4, 5, 6, 7),
-            2.0,
-        ),
-        (
-            "wedge",
-            (
-                (0.0, 0.0, 0.0),
-                (2.0, 0.0, 0.0),
-                (0.0, 1.0, 0.0),
-                (0.0, 0.0, 1.0),
-                (2.0, 0.0, 1.0),
-                (0.0, 1.0, 1.0),
-            ),
-            (0, 1, 2, 3, 4, 5),
-            math.sqrt(5.0),
-        ),
-        (
-            "pyramid",
-            (
-                (0.0, 0.0, 0.0),
-                (2.0, 0.0, 0.0),
-                (2.0, 1.0, 0.0),
-                (0.0, 1.0, 0.0),
-                (1.0, 0.5, 1.0),
-            ),
-            (0, 1, 2, 3, 4),
-            2.0,
         ),
     ],
 )
-def test_linear_topologies_use_explicit_edges(
+def test_v1_coverage_is_exactly_triangle_quad_and_linear_tetra(
     cell_type: str,
     points: tuple[tuple[float, float, float], ...],
     connectivity: tuple[int, ...],
-    expected: float,
 ) -> None:
-    api = _quality_api()
-
-    analysis = api.analyze_mesh_cell_quality(
-        _mesh(cell_type, points, connectivity)
+    from osw.mesh.quality import (
+        MESH_QUALITY_METRIC_SCHEMA,
+        MeshCellQualityStatus,
+        analyze_mesh_cell_quality,
     )
 
-    assert analysis.metric_schema == "osw.mesh_quality.edge_aspect_ratio.v1"
-    assert analysis.metric_label == "Edge aspect ratio preview"
-    assert analysis.evaluated_count == 1
-    assert analysis.unsupported_count == 0
-    assert analysis.invalid_count == 0
-    assert analysis.degenerate_count == 0
-    assert analysis.records[0].status is api.MeshCellQualityStatus.EVALUATED
-    assert analysis.records[0].value == pytest.approx(expected)
-    assert analysis.records[0].entity_kind == "cell"
-    assert analysis.records[0].id_namespace == CELL_ORDINAL_NAMESPACE
-    assert analysis.records[0].stable_cell_key == "0:0"
-    assert analysis.records[0].mesh_fingerprint == analysis.mesh_fingerprint.digest
+    provider = Provider((0.75,))
+    analysis = analyze_mesh_cell_quality(
+        _mesh(cell_type, points, connectivity),
+        provider=provider,
+    )
+
+    assert analysis.metric_schema == MESH_QUALITY_METRIC_SCHEMA
+    assert analysis.metric_schema == "osw.mesh_quality.scaled_jacobian.v1"
+    assert analysis.records[0].status is MeshCellQualityStatus.EVALUATED
+    assert analysis.records[0].value == 0.75
+    assert provider.meshes[0].cells[0].cell_type == cell_type
 
 
 @pytest.mark.parametrize(
-    "cell_type",
+    "cell_type,node_count",
     [
-        "line3",
-        "triangle6",
-        "quad8",
-        "quad9",
-        "tetra10",
-        "hexahedron20",
+        ("polygon", 4),
+        ("tetra10", 10),
+        ("hexahedron", 8),
+        ("hexahedron20", 20),
+        ("wedge", 6),
+        ("pyramid", 5),
+        ("unknown", 3),
     ],
 )
-def test_high_order_topology_fails_closed_without_corner_guessing(
+def test_out_of_scope_topologies_are_named_uncovered_before_provider(
     cell_type: str,
+    node_count: int,
 ) -> None:
-    api = _quality_api()
-    points = tuple((float(index), 0.0, 0.0) for index in range(20))
-
-    analysis = api.analyze_mesh_cell_quality(
-        _mesh(cell_type, points, tuple(range(3)))
+    from osw.mesh.quality import (
+        MeshCellQualityStatus,
+        MeshQualityCategory,
+        analyze_mesh_cell_quality,
     )
 
-    record = analysis.records[0]
-    assert record.status is api.MeshCellQualityStatus.UNSUPPORTED
-    assert record.reason == "UNSUPPORTED_HIGH_ORDER_TOPOLOGY"
-    assert record.value is None
-    assert analysis.unsupported_count == 1
+    points = tuple((float(index), float(index % 2), 0.0) for index in range(node_count))
+    provider = Provider(())
+    result = analyze_mesh_cell_quality(
+        _mesh(cell_type, points, tuple(range(node_count))),
+        provider=provider,
+    )
+
+    assert provider.meshes == []
+    assert result.records[0].status is MeshCellQualityStatus.UNCOVERED
+    assert result.records[0].category is MeshQualityCategory.UNCOVERED
+    assert "NOT_COVERED" in result.records[0].reason
+    assert result.topology_summaries[0].cell_type == cell_type
 
 
-def test_unknown_and_malformed_linear_cells_are_not_treated_as_good() -> None:
-    api = _quality_api()
+def test_invalid_supported_arity_and_provider_nan_fail_closed() -> None:
+    from osw.mesh.quality import (
+        MeshCellQualityStatus,
+        MeshQualityCategory,
+        analyze_mesh_cell_quality,
+    )
+
+    mesh = MeshData(
+        points=((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)),
+        cells=(MeshCellBlock("triangle", ((0, 1), (0, 1, 2))),),
+    )
+    provider = Provider((math.nan,))
+    result = analyze_mesh_cell_quality(mesh, provider=provider)
+
+    assert provider.meshes[0].cells == (MeshCellBlock("triangle", ((0, 1, 2),)),)
+    assert tuple(record.status for record in result.records) == (
+        MeshCellQualityStatus.INVALID,
+        MeshCellQualityStatus.INVALID,
+    )
+    assert all(record.category is MeshQualityCategory.INVALID for record in result.records)
+    assert result.bad_cell_keys == ("0:0", "0:1")
+
+
+def test_classification_priority_is_inverted_degenerate_threshold_then_acceptable() -> None:
+    from osw.mesh.quality import MeshQualityCategory, analyze_mesh_cell_quality
+
+    mesh = MeshData(
+        points=(
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0),
+            (0.0, 0.0, 1.0),
+        ),
+        cells=(
+            MeshCellBlock(
+                "tetra",
+                ((0, 1, 2, 3), (0, 1, 2, 3), (0, 1, 2, 3), (0, 1, 2, 3)),
+            ),
+        ),
+    )
+    result = analyze_mesh_cell_quality(
+        mesh,
+        threshold=0.2,
+        provider=Provider((-0.5, 0.0, 0.1, 0.9)),
+    )
+    assert tuple(record.category for record in result.records) == (
+        MeshQualityCategory.INVERTED,
+        MeshQualityCategory.DEGENERATE,
+        MeshQualityCategory.THRESHOLD_BAD,
+        MeshQualityCategory.ACCEPTABLE,
+    )
+    assert result.bad_cell_keys == ("0:0", "0:1", "0:2")
+
+
+def test_bad_membership_obeys_threshold_even_for_inverted_and_degenerate_categories() -> None:
+    from osw.mesh.quality import analyze_mesh_cell_quality, reclassify_mesh_quality
+
+    mesh = MeshData(
+        points=(
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0),
+            (0.0, 0.0, 1.0),
+        ),
+        cells=(MeshCellBlock("tetra", ((0, 1, 2, 3),) * 3),),
+    )
+    analysis = analyze_mesh_cell_quality(
+        mesh,
+        threshold=-1.0,
+        provider=Provider((-0.5, 0.0, 0.5)),
+    )
+
+    assert analysis.bad_cell_keys == ()
+    changed = reclassify_mesh_quality(analysis, threshold=0.0)
+    assert changed.bad_cell_keys == ("0:0", "0:1")
+
+
+@pytest.mark.parametrize(
+    "threshold",
+    [math.inf, -math.inf, math.nan, -1.0000001, 1.0000001],
+)
+def test_threshold_requires_a_finite_value_within_metric_range(threshold: float) -> None:
+    from osw.mesh.quality import analyze_mesh_cell_quality
+
+    with pytest.raises(ValueError, match=r"finite and within \[-1, 1\]"):
+        analyze_mesh_cell_quality(
+            _mesh(
+                "triangle",
+                ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)),
+                (0, 1, 2),
+            ),
+            threshold=threshold,
+            provider=Provider((1.0,)),
+        )
+
+
+def test_result_records_are_frozen_and_connectivity_order_changes_fingerprint() -> None:
+    from osw.mesh.quality import analyze_mesh_cell_quality
+
     points = (
         (0.0, 0.0, 0.0),
         (1.0, 0.0, 0.0),
         (0.0, 1.0, 0.0),
         (0.0, 0.0, 1.0),
     )
-    mesh = MeshData(
-        points=points,
-        cells=(
-            MeshCellBlock("polygon", ((0, 1, 2),)),
-            MeshCellBlock("triangle", ((0, 1),)),
-            MeshCellBlock("line", ((0, 1, 2),)),
-        ),
+    first = analyze_mesh_cell_quality(
+        _mesh("tetra", points, (0, 1, 2, 3)),
+        provider=Provider((1.0,)),
     )
-
-    analysis = api.analyze_mesh_cell_quality(mesh)
-
-    assert [record.stable_cell_key for record in analysis.records] == [
-        "0:0",
-        "1:0",
-        "2:0",
-    ]
-    assert [record.status for record in analysis.records] == [
-        api.MeshCellQualityStatus.UNSUPPORTED,
-        api.MeshCellQualityStatus.INVALID,
-        api.MeshCellQualityStatus.INVALID,
-    ]
-    assert [record.reason for record in analysis.records] == [
-        "UNSUPPORTED_CELL_TYPE",
-        "INSUFFICIENT_CONNECTIVITY",
-        "INVALID_CONNECTIVITY",
-    ]
-    assert analysis.unsupported_count == 1
-    assert analysis.invalid_count == 2
-
-
-def test_degenerate_cells_are_explicit_and_thresholded_with_stable_keys() -> None:
-    api = _quality_api()
-    mesh = MeshData(
-        points=(
-            (0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0),
-            (1.0, 0.0, 0.0),
-            (0.0, 1.0, 0.0),
-        ),
-        cells=(
-            MeshCellBlock("triangle", ((0, 1, 2),)),
-            MeshCellBlock("triangle", ((0, 2, 3),)),
-        ),
+    second = analyze_mesh_cell_quality(
+        _mesh("tetra", points, (0, 2, 1, 3)),
+        provider=Provider((-1.0,)),
     )
-
-    analysis = api.analyze_mesh_cell_quality(mesh)
-    bad = api.derive_bad_cell_records(analysis, threshold=1.0)
-
-    assert analysis.degenerate_count == 1
-    assert analysis.records[0].reason == "ZERO_OR_NEAR_ZERO_EDGE"
-    assert analysis.records[0].value is None
-    assert tuple(record.stable_cell_key for record in bad) == ("0:0", "1:0")
-    assert api.derive_bad_cell_records(analysis, threshold=math.sqrt(2.0)) == (
-        analysis.records[0],
-    )
-
-
-@pytest.mark.parametrize("threshold", [0.0, -1.0, math.inf, -math.inf, math.nan])
-def test_bad_threshold_requires_a_finite_positive_value(threshold: float) -> None:
-    api = _quality_api()
-    analysis = api.analyze_mesh_cell_quality(
-        _mesh(
-            "line",
-            ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0)),
-            (0, 1),
-        )
-    )
-
-    with pytest.raises(ValueError, match="finite and positive"):
-        api.derive_bad_cell_records(analysis, threshold=threshold)
-
-
-def test_exact_fingerprint_and_order_change_for_same_count_topology() -> None:
-    api = _quality_api()
-    baseline = _mesh(
-        "triangle",
-        ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)),
-        (0, 1, 2),
-    )
-    rewired = _mesh(
-        "triangle",
-        baseline.points,
-        (0, 2, 1),
-    )
-
-    first = api.analyze_mesh_cell_quality(baseline)
-    second = api.analyze_mesh_cell_quality(rewired)
-
-    assert first.mesh_fingerprint.cell_count == second.mesh_fingerprint.cell_count
-    assert first.mesh_fingerprint.point_count == second.mesh_fingerprint.point_count
     assert first.mesh_fingerprint.digest != second.mesh_fingerprint.digest
-    assert first.records[0].stable_cell_key == second.records[0].stable_cell_key
-    assert first.records[0].mesh_fingerprint != second.records[0].mesh_fingerprint
+    with pytest.raises(FrozenInstanceError):
+        first.records[0].value = 2.0  # type: ignore[misc]
 
 
-def test_nonfinite_geometry_and_out_of_range_connectivity_fail_closed() -> None:
-    api = _quality_api()
-
-    with pytest.raises(api.MeshQualityAnalysisError, match="exact mesh fingerprint"):
-        api.analyze_mesh_cell_quality(
-            _mesh(
-                "line",
-                ((math.nan, 0.0, 0.0), (1.0, 0.0, 0.0)),
-                (0, 1),
-            )
-        )
-    with pytest.raises(api.MeshQualityAnalysisError, match="exact mesh fingerprint"):
-        api.analyze_mesh_cell_quality(
-            _mesh(
-                "line",
-                ((0.0, 0.0, 0.0),),
-                (0, 2),
-            )
-        )
-
-
-def test_legacy_aggregate_contract_remains_block_local_and_unchanged() -> None:
-    api = _quality_api()
-    mesh = MeshData(
-        points=((0.0, 0.0, 0.0),),
-        cells=(
-            MeshCellBlock("line", ((0, 2),)),
-            MeshCellBlock("line", ((0, 3),)),
-        ),
+def test_identity_failure_precedes_provider_and_legacy_aggregate_remains_available() -> None:
+    from osw.mesh.quality import (
+        MeshQualityAnalysisError,
+        analyze_mesh_cell_quality,
+        analyze_mesh_quality,
     )
 
-    metrics = api.analyze_mesh_quality(mesh)
+    invalid = MeshData(
+        points=((0.0, 0.0, 0.0),),
+        cells=(MeshCellBlock("triangle", ((0, 1, 2),)),),
+    )
+    provider = Provider((1.0,))
+    with pytest.raises(MeshQualityAnalysisError, match="exact mesh fingerprint"):
+        analyze_mesh_cell_quality(invalid, provider=provider)
+    assert provider.meshes == []
 
-    assert [warning.element_index for warning in metrics.warnings] == [0, 0]
-    assert [warning.code for warning in metrics.warnings] == [
-        "invalid_connectivity",
-        "invalid_connectivity",
-    ]
-    assert metrics.to_dict()["warnings"][0]["element_index"] == 0
-    assert metrics.report_lines()[0:2] == ("nodes=1", "elements=2")
+    legacy = analyze_mesh_quality(
+        MeshData(
+            points=((0.0, 0.0, 0.0), (2.0, 0.0, 0.0), (0.0, 1.0, 0.0)),
+            cells=(MeshCellBlock("triangle", ((0, 1, 2),)),),
+        )
+    )
+    assert legacy.node_count == 3
+    assert legacy.element_count == 1
+    assert legacy.max_aspect_ratio == pytest.approx(math.sqrt(5.0))
