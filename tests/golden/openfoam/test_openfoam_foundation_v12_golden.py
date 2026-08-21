@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from helpers import assert_text_matches_golden
-
 from osw.solvers.openfoam.case_generator import (
     OpenFoamCavityConfig,
     OpenFoamDuctConfig,

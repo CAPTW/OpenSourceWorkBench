@@ -134,8 +134,17 @@ hardware-backed AUTHOR/RESTORE/STALE fresh-process journey, an optional
 dependency present/absent matrix, and user-facing MVP limitation closure. The
 posture is `MVP_FEATURE_COMPLETE_FOR_INTEGRATION_REVIEW_WITH_DOCUMENTED_LIMITATIONS`.
 It is not a production-ready, certified, or all-topology claim. Native locality
-remains `DEFERRED_RETAINED`. The next selected but unexecuted gate is
-`OSW-3D-WORKSPACE-MVP-INTEGRATION-AND-RELEASE-CANDIDATE-READINESS`.
+remains `DEFERRED_RETAINED`.
+
+The follow-on local integration gate
+`OSW-3D-WORKSPACE-MVP-INTEGRATION-AND-RELEASE-CANDIDATE-READINESS` fast-forwards
+the complete 17-commit 3D MVP chain from `develop`
+`3fb4ffa577115d008e3472aa8460959c1aa20a66` through feature HEAD
+`c33e7e5d0489094f1a0f55436dba681bb7bc15e5`, then applies bounded RC repairs
+for whole-tree Ruff and an isolated offscreen GUI document-lifecycle hang.
+Package metadata remains `0.1.5rc1`; version/tag/publication stay deferred to
+`OSW-3D-WORKSPACE-MVP-RELEASE-CANDIDATE-BUILD-TAGGING-AND-PUBLICATION-AUTHORIZATION`.
+Native locality remains `DEFERRED_RETAINED`.
 
 **Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
 

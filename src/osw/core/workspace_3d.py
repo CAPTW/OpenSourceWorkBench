@@ -251,7 +251,9 @@ class ActiveSceneResultState:
             raise ValueError("result_state.vector_scale_mode must be AUTO or MANUAL.")
         deformation_mode = str(self.deformation_mode or "ORIGINAL").upper()
         if deformation_mode not in _DEFORMATION_MODES:
-            raise ValueError("result_state.deformation_mode must be ORIGINAL, DEFORMED, or OVERLAY.")
+            raise ValueError(
+                "result_state.deformation_mode must be ORIGINAL, DEFORMED, or OVERLAY."
+            )
         deformation_scale_mode = str(self.deformation_scale_mode or "AUTO").upper()
         if deformation_scale_mode not in _SCALE_MODES:
             raise ValueError("result_state.deformation_scale_mode must be AUTO or MANUAL.")
@@ -737,9 +739,7 @@ def active_scene_provenance(
         "deformation_field": result.deformation_field if result else "",
         "deformation_mode": result.deformation_mode if result else "",
         "deformation_scale_mode": result.deformation_scale_mode if result else "",
-        "deformation_manual_scale": (
-            result.deformation_manual_scale if result else None
-        ),
+        "deformation_manual_scale": (result.deformation_manual_scale if result else None),
         "visible_named_selection_ids": list(state.visible_named_selection_ids),
         "active_named_selection_ids": list(state.active_named_selection_ids),
         "visible_setup_actor_keys": list(visible_setup),
@@ -833,32 +833,32 @@ def _active_scene_state_from_provenance(provenance: Mapping[str, Any]) -> Active
             range_mode = "AUTO"
         try:
             result_state = ActiveSceneResultState(
-            result_ref_id=str(provenance.get("result_ref_id", "") or ""),
-            result_dataset_id=str(provenance.get("result_dataset_id", "") or ""),
-            binding_schema=str(provenance.get("result_binding_schema", "") or ""),
-            mesh_fingerprint=fingerprint,
-            scalar_field=str(provenance.get("scalar_field", "") or ""),
-            scalar_component=str(provenance.get("scalar_component", "") or ""),
-            scalar_association=str(provenance.get("scalar_association", "") or ""),
-            range_mode=range_mode,
-            manual_min=minimum,
-            manual_max=maximum,
-            colormap=str(provenance.get("colormap", "viridis") or "viridis"),
-            colorbar_visible=bool(provenance.get("colorbar_visible", False)),
-            vector_field=str(provenance.get("vector_field", "") or ""),
-            vector_components=tuple(provenance.get("vector_components", ()) or ()),
-            vector_association=str(provenance.get("vector_association", "") or ""),
-            vector_visible=bool(provenance.get("vector_visible", False)),
-            glyph_scale=provenance.get("glyph_scale", 1.0) or 1.0,
-            glyph_max_count=provenance.get("glyph_max_count", 500) or 500,
-            vector_scale_mode=str(provenance.get("vector_scale_mode", "AUTO") or "AUTO"),
-            deformation_field=str(provenance.get("deformation_field", "") or ""),
-            deformation_mode=str(provenance.get("deformation_mode", "ORIGINAL") or "ORIGINAL"),
-            deformation_scale_mode=str(
-                provenance.get("deformation_scale_mode", "AUTO") or "AUTO"
-            ),
-            deformation_manual_scale=provenance.get("deformation_manual_scale", 1.0) or 1.0,
-        )
+                result_ref_id=str(provenance.get("result_ref_id", "") or ""),
+                result_dataset_id=str(provenance.get("result_dataset_id", "") or ""),
+                binding_schema=str(provenance.get("result_binding_schema", "") or ""),
+                mesh_fingerprint=fingerprint,
+                scalar_field=str(provenance.get("scalar_field", "") or ""),
+                scalar_component=str(provenance.get("scalar_component", "") or ""),
+                scalar_association=str(provenance.get("scalar_association", "") or ""),
+                range_mode=range_mode,
+                manual_min=minimum,
+                manual_max=maximum,
+                colormap=str(provenance.get("colormap", "viridis") or "viridis"),
+                colorbar_visible=bool(provenance.get("colorbar_visible", False)),
+                vector_field=str(provenance.get("vector_field", "") or ""),
+                vector_components=tuple(provenance.get("vector_components", ()) or ()),
+                vector_association=str(provenance.get("vector_association", "") or ""),
+                vector_visible=bool(provenance.get("vector_visible", False)),
+                glyph_scale=provenance.get("glyph_scale", 1.0) or 1.0,
+                glyph_max_count=provenance.get("glyph_max_count", 500) or 500,
+                vector_scale_mode=str(provenance.get("vector_scale_mode", "AUTO") or "AUTO"),
+                deformation_field=str(provenance.get("deformation_field", "") or ""),
+                deformation_mode=str(provenance.get("deformation_mode", "ORIGINAL") or "ORIGINAL"),
+                deformation_scale_mode=str(
+                    provenance.get("deformation_scale_mode", "AUTO") or "AUTO"
+                ),
+                deformation_manual_scale=provenance.get("deformation_manual_scale", 1.0) or 1.0,
+            )
         except (TypeError, ValueError):
             result_state = None
     quality = None

@@ -524,6 +524,24 @@ def test_successful_open_retires_every_document_bound_surface(qapp: object) -> N
     assert window.preferences_dialog is preferences
 
 
+def test_failed_document_replace_does_not_block_on_critical_dialog(
+    qapp: object,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    window = _window(
+        qapp,
+        project_open_path_picker=lambda: "loaded.osw.json",
+        project_loader=lambda _path: _project("Loaded"),
+    )
+
+    def fail_set_project(_project: object, *, sync_workflow: bool = True) -> None:
+        raise RuntimeError("forced document replace failure")
+
+    monkeypatch.setattr(window, "set_project", fail_set_project)
+
+    assert window.open_project() is False
+
+
 def test_document_generation_callback_ignores_stale_dialog_signal(qapp: object) -> None:
     calls: list[str] = []
     window = _window(qapp)

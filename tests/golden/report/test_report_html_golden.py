@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from helpers import assert_text_matches_golden
-
 from osw.core.project_schema import MeshRef, Project, ProjectMetadata, ReportConfig, ResultRef
 from osw.post.report_generator import render_report_summary_html
 from osw.post.report_sections import build_report_summary

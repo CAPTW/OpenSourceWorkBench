@@ -77,12 +77,41 @@ def drain_top_level_widgets(max_passes: int = _MAX_DRAIN_PASSES) -> int:
         # Flush queued DeferredDelete events so the C++ widgets are destroyed
         # now instead of accumulating across the whole session, then let any
         # follow-up deletions post before the next pass.
-        QtCore.QCoreApplication.sendPostedEvents(
-            None, QtCore.QEvent.Type.DeferredDelete
-        )
+        QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
         app.processEvents()
 
     return len(QtWidgets.QApplication.topLevelWidgets())
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _nonblocking_offscreen_critical_dialogs() -> object:
+    """Keep offscreen GUI tests from hanging on modal QMessageBox.critical.
+
+    Product code may report document-open failures through a blocking dialog.
+    Headless ``offscreen`` pytest has no user to dismiss it, so the default
+    reporter must return immediately and leave the failure to assertions.
+    """
+    if not PYSIDE6_AVAILABLE:
+        yield
+        return
+
+    from PySide6 import QtWidgets
+
+    def _nonblocking_critical(
+        _parent: object,
+        _title: object,
+        _text: object,
+        *args: object,
+        **kwargs: object,
+    ) -> object:
+        return QtWidgets.QMessageBox.StandardButton.Ok
+
+    original = QtWidgets.QMessageBox.critical
+    QtWidgets.QMessageBox.critical = staticmethod(_nonblocking_critical)
+    try:
+        yield
+    finally:
+        QtWidgets.QMessageBox.critical = original
 
 
 @pytest.fixture(scope="session")

@@ -23,6 +23,7 @@ from osw.gui.workspace_scene_controller import ActiveSceneController
 from osw.gui.workspace_scene_view_model import mesh_input_ref, scene_view_state_from_toggles
 from osw.mesh.identity import MESH_IDENTITY_SCHEMA, compute_mesh_fingerprint
 from osw.mesh.mesh_model import MeshCellBlock, MeshData
+from osw.mesh.quality import analyze_mesh_cell_quality
 from osw.post.result_deformation import DeformationMode
 from osw.post.result_field_catalog import ResultBindingStatus
 from osw.post.result_probe import ResultProbeRequest, ResultProbeStatus
@@ -199,9 +200,27 @@ class ResultFactory:
         return self.session
 
 
+class _QualityProvider:
+    provider_schema = "osw.mesh_quality.provider.interactive-result-fixture.v1"
+    provider_version = "1"
+
+    def evaluate(self, mesh: MeshData) -> tuple[float, ...]:
+        count = sum(len(block.data) for block in mesh.cells)
+        return tuple(0.75 if index % 2 == 0 else 0.25 for index in range(count))
+
+
+def _analyze_quality(mesh: MeshData, **kwargs: object) -> object:
+    allowed = {
+        key: value
+        for key, value in kwargs.items()
+        if key in {"threshold", "degenerate_epsilon", "zero_edge_tolerance"}
+    }
+    return analyze_mesh_cell_quality(mesh, provider=_QualityProvider(), **allowed)
+
+
 def _controller() -> tuple[ActiveSceneController, ResultSession]:
     factory = ResultFactory()
-    controller = ActiveSceneController(factory)
+    controller = ActiveSceneController(factory, mesh_quality_analyzer=_analyze_quality)
     mesh = _mesh()
     controller.load_mesh(mesh, mesh_input_ref("mesh-1"), scene_view_state_from_toggles())
     controller.set_interactive_result_dataset(_dataset(), _binding(mesh), result_ref_id="ref-1")

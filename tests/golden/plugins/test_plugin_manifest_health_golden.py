@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from helpers import assert_json_matches_golden
-
 from osw.plugins.health import build_plugin_health_record, plugin_health_records_as_json
 from osw.plugins.manifest import PluginManifest
 
@@ -32,9 +31,7 @@ def test_plugin_manifest_health_output_matches_golden_fixture() -> None:
         manifest,
         source="tests/golden/plugins/osw-plugin.json",
     )
-    expected = (Path(__file__).with_name("plugin_health_records.json")).read_text(
-        encoding="utf-8"
-    )
+    expected = (Path(__file__).with_name("plugin_health_records.json")).read_text(encoding="utf-8")
 
     assert_json_matches_golden(
         plugin_health_records_as_json((record,)),

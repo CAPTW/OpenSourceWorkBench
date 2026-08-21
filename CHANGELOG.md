@@ -6,6 +6,17 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### 3D Workspace MVP Local Integration And RC Readiness
+
+- Fast-forwarded the complete local 3D Workspace MVP feature chain onto
+  `develop` after whole-tree Ruff/QA closure, isolated GUI document-lifecycle
+  hang repair, optional-dependency matrix, local wheel/sdist metadata checks,
+  and installed-package smoke. Package metadata remains `0.1.5rc1` until a
+  separate RC build/tag/publication gate. This is local integration-review
+  readiness with documented limits, not a tag, push, publication, production,
+  certification, all-topology, or native-locality claim. Native report-asset
+  resolution remains `DEFERRED_RETAINED`.
+
 ### 3D Workspace MVP End-To-End Validation
 
 - Validated the complete local 3D Workspace MVP user journey on the persistence

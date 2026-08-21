@@ -178,6 +178,10 @@ PyVistaQt aggregates may crash on Windows; do not replace this visible path
 with offscreen mode. This MVP is for integration review with documented
 limitations. It is not production-ready or industrially certified.
 
+Local installed-package smoke, after a no-isolation wheel build, must import
+`osw` from the install target rather than this source checkout. Package version
+remains `0.1.5rc1` until a separate RC build/tag gate.
+
 ## Optional Dependencies
 
 Install only the extras needed for the workflow you are testing:

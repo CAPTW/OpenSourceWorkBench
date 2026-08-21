@@ -2127,9 +2127,10 @@ class MainWindow(_BaseMainWindow):
             panel.clear_named_selection(emit=False)
             self.project_tree_panel.clear_named_selection(emit=False)
         mesh_viewer = getattr(self, "mesh_viewer", None)
-        if mesh_viewer is not None:
+        sync_result_selection = getattr(mesh_viewer, "sync_result_selection", None)
+        if callable(sync_result_selection):
             locator = None if target is None else target.locator
-            mesh_viewer.sync_result_selection(
+            sync_result_selection(
                 "" if locator is None else locator.entity_kind.value,
                 () if locator is None else locator.entity_ids,
             )

@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
-
-from dataclasses import replace
 
 from osw.core.result_dataset import ResultDataset, ResultField, ResultRow
 from osw.core.result_mesh_binding import (
@@ -69,9 +68,7 @@ class SceneSession:
         self.actors.clear()
         self.visibility.clear()
 
-    def replace_actor(
-        self, semantic_id: str, payload: object, *, generation: int
-    ) -> object:
+    def replace_actor(self, semantic_id: str, payload: object, *, generation: int) -> object:
         self.actors[semantic_id] = (payload, generation)
         self.visibility[semantic_id] = True
         return SimpleNamespace(warnings=(), rendered=True)
@@ -296,9 +293,7 @@ def test_missing_result_dataset_yields_partial_restore_without_auto_load() -> No
 
     mesh = _mesh()
     controller = ActiveSceneController(SceneFactory())
-    controller.set_pending_active_scene_state(
-        _saved_state(mesh, result_unavailable=True)
-    )
+    controller.set_pending_active_scene_state(_saved_state(mesh, result_unavailable=True))
 
     controller.load_mesh(
         mesh,

@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from helpers import assert_text_matches_golden
-
 from osw.core.materials import IsotropicElastic, Material
 from osw.core.units import Quantity
 from osw.mesh.mesh_model import MeshCellBlock, MeshData
@@ -45,9 +44,7 @@ def cantilever_case() -> CalculixLinearStaticCase:
             CalculixNodeSet("FIXED", (1, 4, 5, 8)),
             CalculixNodeSet("TIP", (2, 3, 6, 7)),
         ),
-        boundary_conditions=(
-            CalculixBoundaryCondition.fixed(name="fixed-left", node_set="FIXED"),
-        ),
+        boundary_conditions=(CalculixBoundaryCondition.fixed(name="fixed-left", node_set="FIXED"),),
         loads=(
             CalculixLoad.force(
                 name="tip-force",
@@ -60,9 +57,7 @@ def cantilever_case() -> CalculixLinearStaticCase:
 
 
 def test_cantilever_input_deck_matches_golden_fixture() -> None:
-    expected = Path(__file__).with_name("cantilever_linear_static.inp").read_text(
-        encoding="utf-8"
-    )
+    expected = Path(__file__).with_name("cantilever_linear_static.inp").read_text(encoding="utf-8")
 
     assert_text_matches_golden(
         generate_calculix_input_deck(cantilever_case()),

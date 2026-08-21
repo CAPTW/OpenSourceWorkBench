@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from helpers import assert_json_matches_golden
-
 from osw.mesh.conversion import SUPPORTED_EXPORT_FORMATS, MeshExportArtifact
 
 
