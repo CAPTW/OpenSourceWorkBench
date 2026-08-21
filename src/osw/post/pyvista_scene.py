@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from array import array
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from importlib import import_module
@@ -16,6 +17,20 @@ from osw.post.scene_model import (
     SceneViewState,
     build_screenshot_record,
 )
+
+_SURFACE_CELL_TYPES = frozenset({"triangle", "quad", "polygon"})
+_UNSTRUCTURED_CELL_TYPES = frozenset({*_SURFACE_CELL_TYPES, "tetra"})
+_FIXED_CELL_NODE_COUNTS = {
+    "triangle": 3,
+    "quad": 4,
+    "tetra": 4,
+}
+_PYVISTA_CELL_TYPE_NAMES = {
+    "triangle": "TRIANGLE",
+    "quad": "QUAD",
+    "polygon": "POLYGON",
+    "tetra": "TETRA",
+}
 
 
 class PyVistaUnavailableError(RuntimeError):
@@ -194,13 +209,80 @@ def render_field_view(
     )
 
 
-def mesh_data_to_polydata(mesh_data: MeshData, *, pyvista_module: Any | None = None) -> Any:
-    """Convert supported surface cell blocks to a PyVista PolyData-like object."""
+def mesh_data_to_pyvista_dataset(
+    mesh_data: MeshData,
+    *,
+    pyvista_module: Any | None = None,
+) -> Any:
+    """Convert renderable surface/tetra cells to a native PyVista dataset."""
 
+    if not mesh_data.points:
+        raise ValueError("PyVista dataset conversion requires non-empty mesh points.")
+    populated_types = _populated_cell_types(mesh_data.cells)
+    if not populated_types:
+        raise ValueError(
+            "PyVista dataset conversion requires non-empty triangle, quad, polygon, "
+            "or tetra connectivity."
+        )
+    unsupported = populated_types.difference(_UNSTRUCTURED_CELL_TYPES)
+    if unsupported:
+        raise ValueError("Unsupported PyVista cell types: " + ", ".join(sorted(unsupported)) + ".")
+    if "tetra" not in populated_types:
+        return mesh_data_to_polydata(mesh_data, pyvista_module=pyvista_module)
+
+    blocks = _validated_cell_blocks(
+        mesh_data,
+        supported_types=_UNSTRUCTURED_CELL_TYPES,
+        conversion_name="PyVista UnstructuredGrid conversion",
+    )
+    point_fields = _validated_point_fields(mesh_data)
+    cell_fields = _validated_cell_fields(mesh_data, blocks)
     module = pyvista_module if pyvista_module is not None else _load_pyvista()
-    points = [list(point) for point in mesh_data.points]
-    faces = _surface_faces(mesh_data.cells)
-    return module.PolyData(points, faces)
+    cells = array("q")
+    cell_types = array("B")
+    for block in blocks:
+        vtk_cell_type = _pyvista_cell_type(module, block.cell_type)
+        for row in block.data:
+            cells.extend((len(row), *row))
+            cell_types.append(vtk_cell_type)
+    dataset = module.UnstructuredGrid(
+        cells,
+        cell_types,
+        [list(point) for point in mesh_data.points],
+    )
+    _attach_mesh_fields(dataset, point_fields=point_fields, cell_fields=cell_fields)
+    return dataset
+
+
+def mesh_data_to_polydata(mesh_data: MeshData, *, pyvista_module: Any | None = None) -> Any:
+    """Convert supported surface cells to the compatibility ``PolyData`` path."""
+
+    if not mesh_data.points:
+        raise ValueError("PyVista surface conversion requires non-empty mesh points.")
+    populated_types = _populated_cell_types(mesh_data.cells)
+    unsupported = populated_types.difference(_SURFACE_CELL_TYPES)
+    if unsupported:
+        raise ValueError(
+            "Unsupported cell types for PyVista PolyData conversion: "
+            + ", ".join(sorted(unsupported))
+            + "."
+        )
+    blocks = _validated_cell_blocks(
+        mesh_data,
+        supported_types=_SURFACE_CELL_TYPES,
+        conversion_name="PyVista PolyData conversion",
+    )
+    faces = _surface_faces(blocks)
+    if not faces:
+        raise ValueError(
+            "PyVista surface conversion requires non-empty triangle, quad, or polygon connectivity."
+        )
+    point_fields = _validated_point_fields(mesh_data)
+    cell_fields = _validated_cell_fields(mesh_data, blocks)
+    module = pyvista_module if pyvista_module is not None else _load_pyvista()
+    dataset = module.PolyData([list(point) for point in mesh_data.points], faces)
+    _attach_mesh_fields(dataset, point_fields=point_fields, cell_fields=cell_fields)
+    return dataset
 
 
 class PyVistaScene:
@@ -221,7 +303,7 @@ class PyVistaScene:
     def add_mesh(self, mesh_data: MeshData) -> PyVistaSceneState:
         self.close()
         module = self._require_pyvista()
-        dataset = mesh_data_to_polydata(mesh_data, pyvista_module=module)
+        dataset = mesh_data_to_pyvista_dataset(mesh_data, pyvista_module=module)
         self._attach_scalar_field(dataset, mesh_data)
 
         plotter = module.Plotter(off_screen=self.config.off_screen)
@@ -341,7 +423,7 @@ def _load_pyvista() -> ModuleType:
         raise PyVistaUnavailableError(pyvista_missing_message()) from exc
 
 
-def _surface_faces(cells: tuple[MeshCellBlock, ...]) -> list[int]:
+def _surface_faces(cells: Sequence[MeshCellBlock]) -> list[int]:
     faces: list[int] = []
     for block in cells:
         if block.cell_type not in {"triangle", "quad", "polygon"}:
@@ -349,6 +431,122 @@ def _surface_faces(cells: tuple[MeshCellBlock, ...]) -> list[int]:
         for row in block.data:
             faces.extend([len(row), *row])
     return faces
+
+
+def _populated_cell_types(cells: Sequence[MeshCellBlock]) -> frozenset[str]:
+    return frozenset(block.cell_type for block in cells if block.count > 0 or bool(block.data))
+
+
+def _validated_cell_blocks(
+    mesh_data: MeshData,
+    *,
+    supported_types: frozenset[str],
+    conversion_name: str,
+) -> tuple[MeshCellBlock, ...]:
+    blocks = tuple(block for block in mesh_data.cells if block.count > 0 or bool(block.data))
+    if not blocks:
+        raise ValueError(f"{conversion_name} requires non-empty connectivity.")
+    unsupported = {block.cell_type for block in blocks}.difference(supported_types)
+    if unsupported:
+        raise ValueError(
+            f"Unsupported cell types for {conversion_name}: " + ", ".join(sorted(unsupported)) + "."
+        )
+    point_count = len(mesh_data.points)
+    for block in blocks:
+        if block.count != len(block.data):
+            raise ValueError(
+                f"{conversion_name} cell block '{block.cell_type}' declares "
+                f"{block.count} cells but provides {len(block.data)} connectivity rows."
+            )
+        for row in block.data:
+            expected = _FIXED_CELL_NODE_COUNTS.get(block.cell_type)
+            if expected is not None and len(row) != expected:
+                raise ValueError(
+                    f"{conversion_name} cell type '{block.cell_type}' requires "
+                    f"{expected} point indices; received {len(row)}."
+                )
+            if block.cell_type == "polygon" and len(row) < 3:
+                raise ValueError(
+                    f"{conversion_name} polygon cells require at least 3 point indices."
+                )
+            invalid_indices = tuple(index for index in row if not 0 <= index < point_count)
+            if invalid_indices:
+                raise ValueError(
+                    f"{conversion_name} cell type '{block.cell_type}' contains "
+                    f"out-of-range point indices: {invalid_indices}."
+                )
+    return blocks
+
+
+def _pyvista_cell_type(module: Any, cell_type: str) -> int:
+    cell_type_enum = getattr(module, "CellType", None)
+    enum_name = _PYVISTA_CELL_TYPE_NAMES[cell_type]
+    value = getattr(cell_type_enum, enum_name, None)
+    if value is None:
+        raise RuntimeError(f"PyVista does not expose the required CellType.{enum_name} value.")
+    return int(value)
+
+
+def _validated_point_fields(mesh_data: MeshData) -> dict[str, object]:
+    point_count = len(mesh_data.points)
+    fields: dict[str, object] = {}
+    for name, values in mesh_data.point_data.items():
+        actual = _field_length(values, association="Point", name=name)
+        if actual != point_count:
+            raise ValueError(
+                f"Point data field '{name}' has {actual} values; expected {point_count}."
+            )
+        fields[name] = values
+    return fields
+
+
+def _validated_cell_fields(
+    mesh_data: MeshData,
+    blocks: Sequence[MeshCellBlock],
+) -> dict[str, object]:
+    block_counts = tuple(len(block.data) for block in blocks)
+    cell_count = sum(block_counts)
+    fields: dict[str, object] = {}
+    for name, values in mesh_data.cell_data.items():
+        actual = _field_length(values, association="Cell", name=name)
+        if actual == len(block_counts) and _is_blockwise_cell_field(values, block_counts):
+            fields[name] = tuple(item for block_values in values for item in block_values)
+            continue
+        if actual != cell_count:
+            raise ValueError(
+                f"Cell data field '{name}' has {actual} values; expected {cell_count}."
+            )
+        fields[name] = values
+    return fields
+
+
+def _field_length(values: object, *, association: str, name: str) -> int:
+    try:
+        return len(values)  # type: ignore[arg-type]
+    except TypeError as exc:
+        raise ValueError(f"{association} data field '{name}' must be a sized sequence.") from exc
+
+
+def _is_blockwise_cell_field(values: object, block_counts: Sequence[int]) -> bool:
+    try:
+        return all(
+            len(block_values) == expected_count
+            for block_values, expected_count in zip(values, block_counts, strict=True)  # type: ignore[arg-type]
+        )
+    except (TypeError, ValueError):
+        return False
+
+
+def _attach_mesh_fields(
+    dataset: Any,
+    *,
+    point_fields: dict[str, object],
+    cell_fields: dict[str, object],
+) -> None:
+    for name, values in point_fields.items():
+        dataset.point_data[name] = values
+    for name, values in cell_fields.items():
+        dataset.cell_data[name] = values
 
 
 def _has_scalar(mesh_data: MeshData, scalar_field: str | None) -> bool:

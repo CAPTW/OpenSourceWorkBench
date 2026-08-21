@@ -34,7 +34,7 @@ from osw.gui.workspace_scene_controller import (
 from osw.post.pyvista_scene import (
     PyVistaSceneConfig,
     build_scene_state,
-    mesh_data_to_polydata,
+    mesh_data_to_pyvista_dataset,
 )
 from osw.post.result_field_mapping import ResultVectorGlyphSpec
 from osw.post.scene_model import (
@@ -278,9 +278,7 @@ class PyVistaQtRendererSession:
             return self._replace_setup_actor(semantic_id, payload)
         if semantic_id == MESH_QUALITY_ACTOR_KEY:
             if not isinstance(payload, MeshQualityOverlaySpec):
-                raise TypeError(
-                    "Mesh quality actor requires a MeshQualityOverlaySpec."
-                )
+                raise TypeError("Mesh quality actor requires a MeshQualityOverlaySpec.")
             self._payloads[semantic_id] = (payload, generation)
             self._visibility[semantic_id] = payload.visible
             return self._replace_mesh_quality_actor(semantic_id, payload)
@@ -316,9 +314,7 @@ class PyVistaQtRendererSession:
         self._replace_native_actor(semantic_id)
         mesh = payload.mesh
         scene_state = payload.scene_state
-        config = PyVistaSceneConfig(
-            **scene_state.render_options.to_pyvista_config_dict()
-        )
+        config = PyVistaSceneConfig(**scene_state.render_options.to_pyvista_config_dict())
         return build_scene_state(mesh, config=config, rendered=True)
 
     def remove_actor(self, semantic_id: str) -> None:
@@ -437,9 +433,7 @@ class PyVistaQtRendererSession:
             position=position,
             focal_point=focal_point,
             view_up=view_up,
-            parallel_projection=bool(
-                getattr(camera, "parallel_projection", False)
-            ),
+            parallel_projection=bool(getattr(camera, "parallel_projection", False)),
             parallel_scale=getattr(camera, "parallel_scale", None),
         )
 
@@ -488,9 +482,7 @@ class PyVistaQtRendererSession:
         interactor = self._require_open_interactor()
         screenshot = getattr(interactor, "screenshot", None)
         if not callable(screenshot):
-            raise RuntimeError(
-                "The active PyVistaQt session does not support screenshot capture."
-            )
+            raise RuntimeError("The active PyVistaQt session does not support screenshot capture.")
         screenshot(str(target))
         return build_screenshot_record(
             str(target),
@@ -585,7 +577,7 @@ class PyVistaQtRendererSession:
         self._remove_native_actor(semantic_id)
         mesh = payload.mesh
         scene_state = payload.scene_state
-        dataset = mesh_data_to_polydata(mesh, pyvista_module=self._pyvista)
+        dataset = mesh_data_to_pyvista_dataset(mesh, pyvista_module=self._pyvista)
         self._attach_scalar_field(dataset, mesh, scene_state)
         self._attach_transient_pick_indices(dataset, mesh)
         if self._clip_axis is not None:
@@ -621,7 +613,7 @@ class PyVistaQtRendererSession:
             if base_payload is None:
                 raise RuntimeError("Material overlays require an active mesh.")
             mesh_payload = base_payload[0]
-            dataset = mesh_data_to_polydata(
+            dataset = mesh_data_to_pyvista_dataset(
                 mesh_payload.mesh,
                 pyvista_module=self._pyvista,
             )
@@ -678,18 +670,14 @@ class PyVistaQtRendererSession:
             "",
         )
         if active_fingerprint != payload.mesh_fingerprint:
-            raise RuntimeError(
-                "Mesh quality overlay fingerprint does not match the active mesh."
-            )
-        dataset = mesh_data_to_polydata(
+            raise RuntimeError("Mesh quality overlay fingerprint does not match the active mesh.")
+        dataset = mesh_data_to_pyvista_dataset(
             mesh_payload.mesh,
             pyvista_module=self._pyvista,
         )
         extractor = getattr(dataset, "extract_cells", None)
         if not callable(extractor):
-            raise RuntimeError(
-                "The interactive backend cannot extract bad mesh cells."
-            )
+            raise RuntimeError("The interactive backend cannot extract bad mesh cells.")
         subset = extractor(list(payload.entity_indices))
         actor = self._require_open_interactor().add_mesh(
             subset,
@@ -720,10 +708,8 @@ class PyVistaQtRendererSession:
             "",
         )
         if active_fingerprint != payload.mesh_fingerprint:
-            raise RuntimeError(
-                "Scalar result overlay fingerprint does not match the active mesh."
-            )
-        dataset = mesh_data_to_polydata(
+            raise RuntimeError("Scalar result overlay fingerprint does not match the active mesh.")
+        dataset = mesh_data_to_pyvista_dataset(
             mesh_payload.mesh,
             pyvista_module=self._pyvista,
         )
@@ -792,10 +778,8 @@ class PyVistaQtRendererSession:
             "",
         )
         if active_fingerprint != payload.mesh_fingerprint:
-            raise RuntimeError(
-                "Result probe overlay fingerprint does not match the active mesh."
-            )
-        dataset = mesh_data_to_polydata(
+            raise RuntimeError("Result probe overlay fingerprint does not match the active mesh.")
+        dataset = mesh_data_to_pyvista_dataset(
             mesh_payload.mesh,
             pyvista_module=self._pyvista,
         )
@@ -860,8 +844,7 @@ class PyVistaQtRendererSession:
         if not callable(arrow) or payload.direction is None:
             return self._pyvista.PolyData(list(payload.points))
         arrows = [
-            arrow(start=point, direction=payload.direction, scale=0.1)
-            for point in payload.points
+            arrow(start=point, direction=payload.direction, scale=0.1) for point in payload.points
         ]
         if not arrows:
             return self._pyvista.PolyData([])
@@ -893,7 +876,7 @@ class PyVistaQtRendererSession:
         if not indices:
             return
         mesh = payload.mesh
-        dataset = mesh_data_to_polydata(mesh, pyvista_module=self._pyvista)
+        dataset = mesh_data_to_pyvista_dataset(mesh, pyvista_module=self._pyvista)
         self._attach_transient_pick_indices(dataset, mesh)
         if entity_kind == "node":
             extractor = getattr(dataset, "extract_points", None)
@@ -904,9 +887,7 @@ class PyVistaQtRendererSession:
                     include_cells=False,
                 )
             else:
-                subset = self._pyvista.PolyData(
-                    [mesh.points[index] for index in indices]
-                )
+                subset = self._pyvista.PolyData([mesh.points[index] for index in indices])
             actor = self._require_open_interactor().add_mesh(
                 subset,
                 name=f"osw-{semantic_id}",
@@ -919,9 +900,7 @@ class PyVistaQtRendererSession:
         else:
             extractor = getattr(dataset, "extract_cells", None)
             if not callable(extractor):
-                raise RuntimeError(
-                    "The interactive backend cannot extract selected cells."
-                )
+                raise RuntimeError("The interactive backend cannot extract selected cells.")
             subset = extractor(list(indices))
             actor = self._require_open_interactor().add_mesh(
                 subset,
@@ -939,6 +918,17 @@ class PyVistaQtRendererSession:
         actor = self._actors.pop(semantic_id, None)
         if actor is None or self._interactor is None:
             return
+        if semantic_id == RESULT_COLORBAR_ACTOR_KEY:
+            remove_scalar_bar = getattr(self._interactor, "remove_scalar_bar", None)
+            get_title = getattr(actor, "GetTitle", None)
+            title = str(get_title()) if callable(get_title) else ""
+            if callable(remove_scalar_bar) and title:
+                try:
+                    remove_scalar_bar(title, render=False)
+                except (KeyError, ValueError):
+                    pass
+                else:
+                    return
         remove_actor = getattr(self._interactor, "remove_actor", None)
         if callable(remove_actor):
             with suppress(Exception):
@@ -961,8 +951,7 @@ class PyVistaQtRendererSession:
         cell_data = getattr(dataset, "cell_data", None)
         if cell_data is not None:
             cell_count = sum(
-                int(getattr(block, "count", 0))
-                for block in getattr(mesh, "cells", ())
+                int(getattr(block, "count", 0)) for block in getattr(mesh, "cells", ())
             )
             cell_data["_osw_transient_cell_index"] = tuple(range(cell_count))
 
@@ -1051,9 +1040,7 @@ class PyVistaQtRendererFactory:
 
     def create_session(self) -> PyVistaQtRendererSession:
         if self._host_parent is None:
-            raise SceneRendererInitializationError(
-                "The central 3D renderer host is not attached."
-            )
+            raise SceneRendererInitializationError("The central 3D renderer host is not attached.")
         try:
             pyvista_module = self._module_loader("pyvista")
         except (ImportError, ModuleNotFoundError) as exc:
@@ -1064,9 +1051,7 @@ class PyVistaQtRendererFactory:
         try:
             pyvistaqt_module = self._module_loader("pyvistaqt")
         except (ImportError, ModuleNotFoundError) as exc:
-            raise SceneRendererInitializationError(
-                pyvistaqt_missing_message()
-            ) from exc
+            raise SceneRendererInitializationError(pyvistaqt_missing_message()) from exc
         interactor_factory = getattr(pyvistaqt_module, "QtInteractor", None)
         if not callable(interactor_factory):
             raise SceneRendererInitializationError(
