@@ -66,6 +66,25 @@ class SelectionMode(StrEnum):
             return cls.NONE
 
 
+class SelectionOperation(StrEnum):
+    """How one picked entity changes the transient current selection."""
+
+    REPLACE = "replace"
+    ADD = "add"
+    TOGGLE = "toggle"
+    SUBTRACT = "subtract"
+
+    @classmethod
+    def coerce(cls, value: object) -> SelectionOperation:
+        if isinstance(value, SelectionOperation):
+            return value
+        text = str(value or "").strip().lower()
+        try:
+            return cls(text)
+        except ValueError:
+            return cls.REPLACE
+
+
 # MVP-active entity kinds are renderable/usable in the v0.1 workspace slice.
 # Other kinds serialize and validate but are flagged as not-yet-MVP.
 MVP_ACTIVE_ENTITY_KINDS: frozenset[EntityKind] = frozenset(
@@ -271,6 +290,11 @@ class SelectionTargetRef:
                 report.add_error(
                     f"{path}.locator.entity_kind",
                     "Locator entity kind must match its selection target.",
+                )
+            if self.locator.entity_ids != self.ids:
+                report.add_error(
+                    f"{path}.locator.entity_ids",
+                    "Locator entity IDs must match their canonical selection target IDs.",
                 )
             if self.mesh_ref and self.locator.mesh_ref != self.mesh_ref:
                 report.add_error(
@@ -551,6 +575,7 @@ __all__ = [
     "EntityKind",
     "NamedSelection",
     "SelectionMode",
+    "SelectionOperation",
     "SelectionState",
     "SelectionTargetRef",
     "coerce_boundary_target_ref",

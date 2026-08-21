@@ -127,6 +127,75 @@ def test_mesh_completion_indicator_is_present(app: object) -> None:
     assert panel.items_by_label["mesh.msh"].text(1) == "✓"
 
 
+def test_project_tree_named_selection_nodes_use_stable_payload_and_runtime_state(
+    app: object,
+) -> None:
+    from osw.core.project_schema import Project, ProjectMetadata
+    from osw.core.selection import (
+        EntityKind,
+        EntityLocator,
+        NamedSelection,
+        SelectionTargetRef,
+    )
+    from osw.core.selection_resolution import ResolutionResult, ResolutionState
+    from osw.gui.widgets.project_tree_panel import ProjectTreePanel
+
+    locator = EntityLocator(
+        identity_schema="osw.mesh_identity.v1",
+        mesh_ref="mesh-1",
+        mesh_fingerprint="a" * 64,
+        entity_kind=EntityKind.NODE,
+        id_namespace="osw.mesh.point_ordinal.v1",
+        entity_ids=(0, 2),
+    )
+    selection = NamedSelection(
+        id="selection-stable",
+        name="Supports",
+        entity_kind=EntityKind.NODE,
+        targets=(
+            SelectionTargetRef(
+                kind=EntityKind.NODE,
+                ids=(0, 2),
+                mesh_ref="mesh-1",
+                locator=locator,
+            ),
+        ),
+        source_mesh_ref="mesh-1",
+    )
+    panel = ProjectTreePanel()
+    panel.set_project(
+        Project(
+            metadata=ProjectMetadata(name="Selection Tree"),
+            selections=(selection,),
+        )
+    )
+
+    item = panel.named_selection_item(selection.id)
+    assert item is not None
+    assert item.parent().text(0) == "Named Selections"
+    assert panel.item_payload(item) == {
+        "selection_id": selection.id,
+        "entity_kind": "node",
+        "mesh_ref": "mesh-1",
+        "mesh_fingerprint": "a" * 64,
+    }
+
+    panel.set_named_selection_resolutions(
+        {
+            selection.id: ResolutionResult(
+                state=ResolutionState.STALE,
+                reason_code="MESH_FINGERPRINT_MISMATCH",
+                message="The loaded mesh identity differs from this selection.",
+            )
+        },
+        active_selection_ids=(selection.id,),
+    )
+    assert item.text(1) == "STALE"
+    assert "loaded mesh identity differs" in item.toolTip(0)
+    assert panel.select_named_selection(selection.id, emit=False)
+    assert panel.current_named_selection_id() == selection.id
+
+
 def test_filtering_for_mesh_hides_unrelated_leaf_nodes(app: object) -> None:
     from osw.gui.widgets.project_tree_panel import ProjectTreePanel
 

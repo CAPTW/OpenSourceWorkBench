@@ -120,6 +120,7 @@ class PyVistaQtRendererSession:
         self._clip_origin = 0.0
         self._pick_mode: str | None = None
         self._pick_callback: Callable[[object], object] | None = None
+        self._selection_operation = "replace"
         self._closed = False
         try:
             self._interactor = interactor_factory(
@@ -218,6 +219,12 @@ class PyVistaQtRendererSession:
         self._pick_mode = None
         self._pick_callback = None
 
+    def set_selection_operation(self, operation: str) -> None:
+        normalized = str(operation or "").strip().lower()
+        if normalized not in {"replace", "add", "toggle", "subtract"}:
+            raise ValueError(f"Unsupported selection operation: {operation}")
+        self._selection_operation = normalized
+
     def set_hover_entities(
         self,
         entity_kind: str,
@@ -277,6 +284,25 @@ class PyVistaQtRendererSession:
 
     def remove_named_selection_overlay(self, selection_id: str) -> None:
         self._remove_native_actor(f"named_selection:{selection_id}")
+
+    def set_active_named_selection_overlay(
+        self,
+        selection_id: str,
+        entity_kind: str,
+        indices: tuple[int, ...],
+        generation: int,
+    ) -> None:
+        self._set_selection_overlay(
+            f"active_named_selection:{selection_id}",
+            entity_kind,
+            indices,
+            generation,
+            color="#f472b6",
+            opacity=1.0,
+        )
+
+    def remove_active_named_selection_overlay(self, selection_id: str) -> None:
+        self._remove_native_actor(f"active_named_selection:{selection_id}")
 
     def replace_actor(
         self,
@@ -997,6 +1023,7 @@ class PyVistaQtRendererSession:
                 color=color,
                 point_size=12,
                 render_points_as_spheres=True,
+                pickable=False,
                 reset_camera=False,
                 render=False,
             )
@@ -1011,6 +1038,7 @@ class PyVistaQtRendererSession:
                 color=color,
                 opacity=opacity,
                 show_edges=True,
+                pickable=False,
                 reset_camera=False,
                 render=False,
             )
@@ -1086,7 +1114,7 @@ class PyVistaQtRendererSession:
                 "mesh_fingerprint": payload.mesh_fingerprint.digest,
                 "entity_kind": mode,
                 "backend_index": int(backend_index),
-                "intent": "replace",
+                "intent": self._selection_operation,
             }
         )
 
@@ -1171,6 +1199,7 @@ def _is_isolation_eligible(semantic_id: str) -> bool:
     return not (
         semantic_id in {"hover", "current_selection", RESULT_COLORBAR_ACTOR_KEY}
         or semantic_id.startswith("named_selection:")
+        or semantic_id.startswith("active_named_selection:")
     )
 
 

@@ -733,11 +733,26 @@ def test_pyvistaqt_picking_and_semantic_selection_overlays_are_session_local() -
         (0,),
         session_generation,
     )
+    session.set_active_named_selection_overlay(
+        "selection-1",
+        "cell",
+        (0,),
+        session_generation,
+    )
     assert {
         "hover",
         "current_selection",
         "named_selection:selection-1",
+        "active_named_selection:selection-1",
     }.issubset(set(session.semantic_actor_ids))
+    assert all(
+        call.get("pickable") is False
+        for call in interactor.add_calls
+        if str(call.get("name", "")).startswith(
+            ("osw-hover", "osw-current_selection", "osw-named_selection")
+        )
+        or str(call.get("name", "")).startswith("osw-active_named_selection")
+    )
 
     session.set_actor_visible("base_mesh", False)
     assert "hover" not in session.semantic_actor_ids
@@ -746,6 +761,7 @@ def test_pyvistaqt_picking_and_semantic_selection_overlays_are_session_local() -
     session.set_current_selection("node", (0,), session_generation)
 
     session.set_pick_mode("cell", events.append)
+    session.set_selection_operation("subtract")
     cell_callback = interactor.cell_pick_kwargs["callback"]
     assert callable(cell_callback)
     picked_cells = FakeDataSet()
@@ -754,10 +770,12 @@ def test_pyvistaqt_picking_and_semantic_selection_overlays_are_session_local() -
     assert len(events) == 1
     assert events[0]["entity_kind"] == "cell"
     assert events[0]["backend_index"] == 0
+    assert events[0]["intent"] == "subtract"
     assert notifications == []
 
     session.clear_selection_highlights()
     session.remove_named_selection_overlay("selection-1")
+    session.remove_active_named_selection_overlay("selection-1")
     assert set(session.semantic_actor_ids) == {"base_mesh", "wireframe"}
     session.close()
     controller.close()

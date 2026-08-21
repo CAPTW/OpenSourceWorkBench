@@ -28,6 +28,7 @@ from osw.core.selection import (
     EntityLocator,
     NamedSelection,
     SelectionMode,
+    SelectionOperation,
     SelectionTargetRef,
 )
 from osw.core.selection_resolution import (
@@ -231,6 +232,8 @@ class SceneRendererSessionProtocol(Protocol):
         callback: Callable[[object], object],
     ) -> None: ...
 
+    def set_selection_operation(self, operation: str) -> None: ...
+
     def disable_picking(self) -> None: ...
 
     def set_hover_entities(
@@ -262,6 +265,16 @@ class SceneRendererSessionProtocol(Protocol):
     ) -> None: ...
 
     def remove_named_selection_overlay(self, selection_id: str) -> None: ...
+
+    def set_active_named_selection_overlay(
+        self,
+        selection_id: str,
+        entity_kind: str,
+        indices: tuple[int, ...],
+        generation: int,
+    ) -> None: ...
+
+    def remove_active_named_selection_overlay(self, selection_id: str) -> None: ...
 
     def close(self) -> None: ...
 
@@ -433,12 +446,14 @@ class ActiveSceneController:
             ("No saved active scene is ready to restore.",),
         )
         self._pick_mode = SelectionMode.NONE
+        self._selection_operation = SelectionOperation.REPLACE
         self._hover_target: SelectionTargetRef | None = None
         self._current_selection_target: SelectionTargetRef | None = None
         self._current_selection_resolution = ResolutionResult()
         self._named_selections: tuple[NamedSelection, ...] = ()
         self._named_selection_resolutions: dict[str, ResolutionResult] = {}
         self._named_overlay_ids: set[str] = set()
+        self._active_named_overlay_ids: set[str] = set()
         self._solver_setup: object | None = None
         self._setup_materials: tuple[object, ...] = ()
         self._setup_statuses: dict[str, SetupRecordStatus] = {}
@@ -533,6 +548,10 @@ class ActiveSceneController:
         return self._pick_mode
 
     @property
+    def selection_operation(self) -> SelectionOperation:
+        return self._selection_operation
+
+    @property
     def hover_target(self) -> SelectionTargetRef | None:
         return self._hover_target
 
@@ -547,6 +566,10 @@ class ActiveSceneController:
     @property
     def named_selection_resolutions(self) -> Mapping[str, ResolutionResult]:
         return MappingProxyType(dict(self._named_selection_resolutions))
+
+    @property
+    def active_named_selection_ids(self) -> tuple[str, ...]:
+        return self._active_named_selection_ids
 
     @property
     def setup_statuses(self) -> Mapping[str, SetupRecordStatus]:
@@ -636,6 +659,7 @@ class ActiveSceneController:
             self._resolve_interactive_result_binding()
             if self._pending_active_scene_state is not None:
                 self.restore_pending_active_scene_state()
+            self._notify_selection_listener()
             return self._fallback_scene_state(mesh, scene_state)
 
         replacing = bool(self._actor_records)
@@ -650,6 +674,7 @@ class ActiveSceneController:
                 self._resolve_and_display_named_selections()
                 if self._pending_active_scene_state is not None:
                     self.restore_pending_active_scene_state()
+                self._notify_selection_listener()
                 return self._fallback_scene_state(mesh, scene_state)
             self._actor_records.clear()
 
@@ -693,12 +718,14 @@ class ActiveSceneController:
             self._resolve_interactive_result_binding()
             if self._pending_active_scene_state is not None:
                 self.restore_pending_active_scene_state()
+            self._notify_selection_listener()
             return self._fallback_scene_state(mesh, scene_state)
 
         self._fallback_reason = ""
         self._state = SceneLifecycleState.READY_SCENE
         if self._pending_active_scene_state is not None:
             self.restore_pending_active_scene_state()
+        self._notify_selection_listener()
         if result is not None:
             return result
         return self._fallback_scene_state(mesh, scene_state)
@@ -714,12 +741,15 @@ class ActiveSceneController:
     def set_active_named_selection_ids(
         self,
         selection_ids: Sequence[str],
-    ) -> None:
-        """Record stable selected NamedSelection IDs without changing membership."""
+    ) -> bool:
+        """Activate exact NamedSelections without changing their membership."""
 
         self._active_named_selection_ids = tuple(
             sorted({str(item) for item in selection_ids if str(item)})
         )
+        applied = self._resolve_and_display_active_named_selections()
+        self._notify_selection_listener()
+        return applied
 
     def set_pick_mode(self, mode: str | SelectionMode) -> bool:
         """Enable deterministic node/cell picking for the active mesh."""
@@ -733,6 +763,22 @@ class ActiveSceneController:
         configured = self._configure_session_picking()
         self._notify_selection_listener()
         return configured
+
+    def set_selection_operation(
+        self,
+        operation: str | SelectionOperation,
+    ) -> bool:
+        """Set how subsequent native picks mutate the transient selection."""
+
+        normalized = SelectionOperation.coerce(operation)
+        self._selection_operation = normalized
+        applied = self._call_session(
+            "picking",
+            "set_selection_operation",
+            normalized.value,
+        )
+        self._notify_selection_listener()
+        return applied
 
     def disable_picking(self) -> bool:
         """Disable picking and clear incompatible transient state."""
@@ -761,7 +807,7 @@ class ActiveSceneController:
             or self._current_selection_target.locator is None
             else self._current_selection_target.locator.entity_ids
         )
-        intent = pick.intent.lower()
+        intent = str(pick.intent or self._selection_operation.value).lower()
         if intent == "replace":
             next_ids = (entity_id,)
         elif intent == "add":
@@ -777,34 +823,39 @@ class ActiveSceneController:
                     pick.entity_kind,
                     (*current_ids, entity_id),
                 )
+        elif intent == "subtract":
+            next_ids = tuple(item for item in current_ids if item != entity_id)
         else:
             return False
 
         if not next_ids:
             self.clear_current_selection()
             return True
-        self._current_selection_target = self._target_for_ids(
-            pick.entity_kind,
-            next_ids,
+        self._apply_current_selection_ids(pick.entity_kind, next_ids)
+        self._sync_active_named_selection_from_current()
+        self._notify_selection_listener()
+        return True
+
+    def invert_current_selection(self) -> bool:
+        """Select the exact complement of the current node/cell selection."""
+
+        entity_kind = _entity_kind_for_mode(self._pick_mode)
+        if self._mesh is None or entity_kind is None:
+            return False
+        current_ids = (
+            ()
+            if self._current_selection_target is None
+            or self._current_selection_target.locator is None
+            else self._current_selection_target.locator.entity_ids
         )
-        assert self._mesh is not None
-        self._current_selection_resolution = resolve_selection_target(
-            self._current_selection_target,
-            mesh=self._mesh,
-            mesh_ref=self._mesh_ref,
-        )
-        highlighted = self._call_session(
-            "selection-overlays",
-            "set_current_selection",
-            pick.entity_kind.value,
-            self._current_selection_resolution.transient_indices,
-            self._generation,
-        )
-        if highlighted:
-            self._actor_records["current_selection"] = _scene_actor_record(
-                "current_selection",
-                generation=self._generation,
-            )
+        domain_ids = _entity_domain_ids(self._mesh, entity_kind)
+        current_set = set(current_ids)
+        next_ids = tuple(item for item in domain_ids if item not in current_set)
+        if not next_ids:
+            self.clear_current_selection()
+            return True
+        self._apply_current_selection_ids(entity_kind, next_ids)
+        self._sync_active_named_selection_from_current()
         self._notify_selection_listener()
         return True
 
@@ -852,6 +903,7 @@ class ActiveSceneController:
         """Clear current committed transient picks without deleting named data."""
 
         self._current_selection_target = None
+        self._active_named_selection_ids = ()
         self._current_selection_resolution = ResolutionResult(
             state=ResolutionState.UNRESOLVED,
             reason_code="CURRENT_SELECTION_EMPTY",
@@ -862,6 +914,7 @@ class ActiveSceneController:
             "clear_current_selection",
         )
         self._actor_records.pop("current_selection", None)
+        self._resolve_and_display_active_named_selections()
         self._notify_selection_listener()
         return True
 
@@ -891,6 +944,12 @@ class ActiveSceneController:
         """Retain Project selections and resolve them only against loaded memory."""
 
         self._named_selections = tuple(selections)
+        known_ids = {selection.id for selection in self._named_selections}
+        self._active_named_selection_ids = tuple(
+            selection_id
+            for selection_id in self._active_named_selection_ids
+            if selection_id in known_ids
+        )
         self._resolve_and_display_named_selections()
         self._notify_selection_listener()
 
@@ -1617,6 +1676,7 @@ class ActiveSceneController:
             for selection_id in state.active_named_selection_ids
             if any(item.id == selection_id for item in self._named_selections)
         )
+        self._resolve_and_display_active_named_selections()
         if renderer_available:
             try:
                 session.request_render()
@@ -1797,6 +1857,7 @@ class ActiveSceneController:
             selection.id: resolve_named_selection(selection) for selection in self._named_selections
         }
         self._named_overlay_ids.clear()
+        self._active_named_overlay_ids.clear()
         self._setup_overlay_ids.clear()
         self._setup_statuses = {}
         session = self._session
@@ -1859,6 +1920,7 @@ class ActiveSceneController:
         )
         self._clear_transient_state(call_session=False)
         self._named_overlay_ids.clear()
+        self._active_named_overlay_ids.clear()
         self._setup_overlay_ids.clear()
         self._setup_statuses = {}
 
@@ -2158,6 +2220,8 @@ class ActiveSceneController:
         session = self._session
         self._session = None
         self._actor_records.clear()
+        self._named_overlay_ids.clear()
+        self._active_named_overlay_ids.clear()
         self._mesh_quality_highlight_visible = False
         self._mesh_quality_visibility_snapshot = None
         self._interactive_result_visibility_snapshot = None
@@ -2219,12 +2283,19 @@ class ActiveSceneController:
         if self._mesh is None or self._mesh_fingerprint is None:
             return False
         callback = self.guard_callback(self.handle_pick, stale_result=False)
-        return self._call_session(
+        configured = self._call_session(
             "picking",
             "set_pick_mode",
             self._pick_mode.value,
             callback,
         )
+        if configured:
+            self._call_session(
+                "picking",
+                "set_selection_operation",
+                self._selection_operation.value,
+            )
+        return configured
 
     def _pick_matches_current_scene(self, event: ScenePickEvent) -> bool:
         expected_kind = _entity_kind_for_mode(self._pick_mode)
@@ -2283,6 +2354,52 @@ class ActiveSceneController:
             mesh_ref=self._mesh_ref,
             locator=locator,
         )
+
+    def _apply_current_selection_ids(
+        self,
+        entity_kind: EntityKind,
+        entity_ids: Sequence[int | str],
+    ) -> None:
+        self._current_selection_target = self._target_for_ids(
+            entity_kind,
+            entity_ids,
+        )
+        assert self._mesh is not None
+        self._current_selection_resolution = resolve_selection_target(
+            self._current_selection_target,
+            mesh=self._mesh,
+            mesh_ref=self._mesh_ref,
+        )
+        highlighted = self._call_session(
+            "selection-overlays",
+            "set_current_selection",
+            entity_kind.value,
+            self._current_selection_resolution.transient_indices,
+            self._generation,
+        )
+        if highlighted:
+            self._actor_records["current_selection"] = _scene_actor_record(
+                "current_selection",
+                generation=self._generation,
+            )
+
+    def _sync_active_named_selection_from_current(self) -> None:
+        target = self._current_selection_target
+        if target is None or target.locator is None:
+            return
+        matches = tuple(
+            selection.id
+            for selection in self._named_selections
+            if len(selection.targets) == 1
+            and selection.targets[0].locator == target.locator
+            and self._named_selection_resolutions.get(
+                selection.id,
+                ResolutionResult(),
+            ).state
+            is ResolutionState.RESOLVED
+        )
+        self._active_named_selection_ids = matches if len(matches) == 1 else ()
+        self._resolve_and_display_active_named_selections()
 
     def _clear_transient_state(self, *, call_session: bool) -> None:
         self._hover_target = None
@@ -2346,7 +2463,67 @@ class ActiveSceneController:
                 self._fail_session(exc)
                 return
             self._named_overlay_ids.add(selection.id)
+        self._resolve_and_display_active_named_selections()
         self._refresh_setup_overlays()
+
+    def _resolve_and_display_active_named_selections(self) -> bool:
+        session = self._session
+        if session is not None and "selection-overlays" in self.capabilities:
+            remover = getattr(
+                session,
+                "remove_active_named_selection_overlay",
+                None,
+            )
+            for selection_id in tuple(self._active_named_overlay_ids):
+                if callable(remover):
+                    try:
+                        remover(selection_id)
+                    except Exception as exc:
+                        self._fail_session(exc)
+                        return False
+                self._actor_records.pop(
+                    f"active_named_selection:{selection_id}",
+                    None,
+                )
+            self._active_named_overlay_ids.clear()
+
+        if not self._active_named_selection_ids:
+            return True
+        if session is None or "selection-overlays" not in self.capabilities:
+            return False
+        method = getattr(session, "set_active_named_selection_overlay", None)
+        if not callable(method):
+            return False
+
+        selections = {selection.id: selection for selection in self._named_selections}
+        all_applied = True
+        for selection_id in self._active_named_selection_ids:
+            selection = selections.get(selection_id)
+            resolution = self._named_selection_resolutions.get(selection_id)
+            if (
+                selection is None
+                or resolution is None
+                or resolution.state is not ResolutionState.RESOLVED
+            ):
+                all_applied = False
+                continue
+            try:
+                method(
+                    selection_id,
+                    selection.entity_kind.value,
+                    resolution.transient_indices,
+                    self._generation,
+                )
+            except Exception as exc:
+                self._fail_session(exc)
+                return False
+            semantic_id = f"active_named_selection:{selection_id}"
+            self._active_named_overlay_ids.add(selection_id)
+            self._actor_records[semantic_id] = _scene_actor_record(
+                semantic_id,
+                generation=self._generation,
+            )
+        return all_applied
 
     def _refresh_setup_overlays(self) -> None:
         if self._isolation_snapshot is not None and not self.clear_isolation():
@@ -2581,8 +2758,10 @@ def _scene_actor_record(
     generation: int,
     visible: bool = True,
 ) -> SceneActorRecord:
-    selection = semantic_id in {"hover", "current_selection"} or semantic_id.startswith(
-        "named_selection:"
+    selection = (
+        semantic_id in {"hover", "current_selection"}
+        or semantic_id.startswith("named_selection:")
+        or semantic_id.startswith("active_named_selection:")
     )
     result = semantic_id in {
         MESH_QUALITY_ACTOR_KEY,
@@ -2841,6 +3020,21 @@ def _stable_entity_ids(
         return int(pieces[0]), int(pieces[1])
 
     return tuple(sorted(unique, key=cell_key))
+
+
+def _entity_domain_ids(
+    mesh: MeshData,
+    entity_kind: EntityKind,
+) -> tuple[int | str, ...]:
+    if entity_kind is EntityKind.NODE:
+        return tuple(range(len(mesh.points)))
+    if entity_kind is EntityKind.CELL:
+        return tuple(
+            f"{block_ordinal}:{local_ordinal}"
+            for block_ordinal, block in enumerate(mesh.cells)
+            for local_ordinal in range(block.count)
+        )
+    return ()
 
 
 __all__ = [

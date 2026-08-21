@@ -144,6 +144,26 @@ def test_legacy_index_only_selection_is_preserved_but_never_silently_resolved() 
     assert result.transient_indices == ()
 
 
+def test_target_and_locator_identity_mismatch_is_invalid_not_silently_rebound() -> None:
+    api = _resolution_api()
+    target = SelectionTargetRef(
+        kind="node",
+        ids=(1,),
+        mesh_ref="mesh-1",
+        locator=_node_locator(ids=(0,)),
+    )
+
+    result = api.resolve_selection_target(
+        target,
+        mesh=_mesh(),
+        mesh_ref="mesh-1",
+    )
+
+    assert result.state is api.ResolutionState.INVALID
+    assert result.reason_code == "TARGET_LOCATOR_IDENTITY_MISMATCH"
+    assert result.transient_indices == ()
+
+
 def test_malformed_unknown_and_ambiguous_locators_are_invalid() -> None:
     api = _resolution_api()
     fingerprint = _identity_api().compute_mesh_fingerprint(_mesh())

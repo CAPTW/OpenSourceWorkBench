@@ -334,6 +334,9 @@ class PickingSession:
         self.callback = callback
         self.calls.append(("pick_mode", mode))
 
+    def set_selection_operation(self, operation: str) -> None:
+        self.calls.append(("selection_operation", operation))
+
     def disable_picking(self) -> None:
         self.callback = None
         self.calls.append(("disable_picking",))
@@ -373,6 +376,20 @@ class PickingSession:
 
     def remove_named_selection_overlay(self, selection_id: str) -> None:
         self.calls.append(("remove_named", selection_id))
+
+    def set_active_named_selection_overlay(
+        self,
+        selection_id: str,
+        entity_kind: str,
+        indices: tuple[int, ...],
+        generation: int,
+    ) -> None:
+        self.calls.append(
+            ("active_named", selection_id, entity_kind, indices, generation)
+        )
+
+    def remove_active_named_selection_overlay(self, selection_id: str) -> None:
+        self.calls.append(("remove_active_named", selection_id))
 
     def close(self) -> None:
         self.closed = True
@@ -493,3 +510,99 @@ def test_controller_toggle_clear_replacement_and_stale_callbacks_are_determinist
     controller.close()
     assert ("disable_picking",) in session.calls
     assert session.closed
+
+
+def test_controller_subtract_invert_and_operation_forwarding_are_deterministic() -> (
+    None
+):
+    _selection_api, api, _identity_api = _apis()
+    controller, session = _loaded_controller()
+    assert controller.set_pick_mode("node")
+    assert controller.set_selection_operation("add")
+    assert ("selection_operation", "add") in session.calls
+    fingerprint = controller.current_mesh_fingerprint
+    assert fingerprint is not None
+
+    for backend_index in (0, 1, 2):
+        assert session.emit(
+            {
+                "generation": controller.generation,
+                "mesh_ref": "mesh-1",
+                "mesh_fingerprint": fingerprint.digest,
+                "entity_kind": "node",
+                "backend_index": backend_index,
+                "intent": "add",
+            }
+        )
+    assert controller.current_selection_target is not None
+    assert controller.current_selection_target.locator is not None
+    assert controller.current_selection_target.locator.entity_ids == (0, 1, 2)
+
+    assert session.emit(
+        {
+            "generation": controller.generation,
+            "mesh_ref": "mesh-1",
+            "mesh_fingerprint": fingerprint.digest,
+            "entity_kind": "node",
+            "backend_index": 1,
+            "intent": "subtract",
+        }
+    )
+    assert controller.current_selection_target.locator.entity_ids == (0, 2)
+    assert controller.invert_current_selection()
+    assert controller.current_selection_target.locator.entity_ids == (1,)
+    assert controller.current_selection_resolution.state is api.ResolutionState.RESOLVED
+    assert ("current", "node", (1,), controller.generation) in session.calls
+
+
+def test_named_selection_activation_restores_only_on_exact_fingerprint() -> None:
+    _selection_api, api, _identity_api = _apis()
+    controller, session = _loaded_controller()
+    selection = NamedSelection(
+        id="selection-active",
+        name="Active Nodes",
+        entity_kind="node",
+        targets=(_durable_target(entity_ids=(0, 2)),),
+        source_mesh_ref="mesh-1",
+    )
+    controller.set_named_selections((selection,))
+
+    assert controller.set_active_named_selection_ids((selection.id,))
+    assert controller.active_named_selection_ids == (selection.id,)
+    assert (
+        "active_named",
+        selection.id,
+        "node",
+        (0, 2),
+        controller.generation,
+    ) in session.calls
+    assert controller.clear_current_selection()
+    assert controller.active_named_selection_ids == ()
+    assert ("remove_active_named", selection.id) in session.calls
+    assert controller.set_active_named_selection_ids((selection.id,))
+
+    controller.load_mesh(
+        _mesh(),
+        mesh_input_ref("mesh-1"),
+        scene_view_state_from_toggles(),
+    )
+    assert controller.named_selection_resolutions[selection.id].state is (
+        api.ResolutionState.RESOLVED
+    )
+    assert any(
+        call[:2] == ("active_named", selection.id)
+        and call[3] == (0, 2)
+        and call[4] == controller.generation
+        for call in session.calls
+    )
+
+    controller.load_mesh(
+        _mesh(moved=True),
+        mesh_input_ref("mesh-1"),
+        scene_view_state_from_toggles(),
+    )
+    assert controller.named_selection_resolutions[selection.id].state is (
+        api.ResolutionState.STALE
+    )
+    assert controller.active_named_selection_ids == (selection.id,)
+    assert ("remove_active_named", selection.id) in session.calls

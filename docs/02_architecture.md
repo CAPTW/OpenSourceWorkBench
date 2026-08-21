@@ -263,13 +263,18 @@ are not persisted.
 
 The existing document `ActiveSceneController` maps generation-guarded point and
 cell callbacks into durable locators and keeps hover, current transient
-selection, and persisted NamedSelection overlays separate. One session owns
-the semantic `hover`, `current_selection`, and `named_selection:<stable-id>`
-native actors. Replace/add/toggle/clear are deterministic; mesh replacement
-clears transient state and re-resolves persisted selections. The bounded GUI
-supports Node/Cell modes and NamedSelection create, rename, target replacement,
-and reference-checked delete. Face/Edge picking, selection invert, solver setup
-overlays, result probes, and solver execution remain deferred.
+selection, persisted NamedSelection overlays, and the active NamedSelection
+emphasis separate. One session owns the semantic `hover`, `current_selection`,
+`named_selection:<stable-id>`, and `active_named_selection:<stable-id>` native
+actors; all helper actors are non-pickable. Replace/add/toggle/subtract/clear
+and domain-bounded invert are deterministic. Project Tree items carry stable
+selection IDs, exact resolution state, and synchronize activation with the
+native scene. Save/reopen preserves durable selections; exact fingerprints
+restore them, while mismatches remain visibly stale and never rebind ordinal
+indices. The bounded GUI supports Node/Cell modes, canonical entity metadata,
+and NamedSelection create, rename, target replacement, and reference-checked
+delete. Face/Edge picking, solver execution, and topology-independent entity
+identity remain deferred.
 
 ## 3D Workspace Solver Setup Overlays
 

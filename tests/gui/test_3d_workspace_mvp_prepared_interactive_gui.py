@@ -757,6 +757,57 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         print("OSW_PREPARED_NATIVE_POINT_EVENT_PASS", flush=True)
 
         controller.set_selection_listener(None)
+        assert controller.set_selection_operation("add")
+        assert session._selection_operation == "add"
+        assert controller.handle_pick(
+            {
+                "generation": controller.generation,
+                "mesh_ref": _MESH_REF,
+                "mesh_fingerprint": _MESH_FINGERPRINT,
+                "entity_kind": "node",
+                "backend_index": 2,
+                "intent": "add",
+            }
+        )
+        assert controller.current_selection_target is not None
+        assert controller.current_selection_target.ids == (1, 2)
+        assert controller.set_selection_operation("subtract")
+        assert controller.handle_pick(
+            {
+                "generation": controller.generation,
+                "mesh_ref": _MESH_REF,
+                "mesh_fingerprint": _MESH_FINGERPRINT,
+                "entity_kind": "node",
+                "backend_index": 1,
+                "intent": "subtract",
+            }
+        )
+        assert controller.current_selection_target is not None
+        assert controller.current_selection_target.ids == (2,)
+        assert controller.invert_current_selection()
+        assert controller.current_selection_target is not None
+        assert controller.current_selection_target.ids == (0, 1, 3, 4, 5, 6, 7)
+
+        from osw.core.selection_resolution import create_named_selection
+
+        prepared_selection = create_named_selection(
+            (),
+            controller.current_selection_target,
+            controller.current_selection_resolution,
+            selection_id="prepared-active-nodes",
+            name="Prepared Active Nodes",
+        )[0]
+        controller.set_named_selections((prepared_selection,))
+        assert controller.set_active_named_selection_ids((prepared_selection.id,))
+        assert controller.active_named_selection_ids == (prepared_selection.id,)
+        assert "named_selection:prepared-active-nodes" in session.semantic_actor_ids
+        assert "active_named_selection:prepared-active-nodes" in session.semantic_actor_ids
+        assert bool(
+            renderer.HasViewProp(session._actors["active_named_selection:prepared-active-nodes"])
+        )
+        print("OSW_PREPARED_NATIVE_MULTI_NAMED_SELECTION_PASS", flush=True)
+
+        assert controller.set_selection_operation("replace")
         assert controller.set_pick_mode("cell")
         cell_notifications: list[object] = []
         controller.set_selection_listener(

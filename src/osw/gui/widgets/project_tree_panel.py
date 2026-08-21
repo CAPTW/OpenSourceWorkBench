@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -166,6 +167,26 @@ def _project_to_tree_node(project: Project) -> ProjectTreeNode:
                     for ref in project.mesh_refs
                 ),
             ),
+            *(
+                (
+                    ProjectTreeNode(
+                        "Named Selections",
+                        kind="group",
+                        icon_key="selection",
+                        children=tuple(
+                            ProjectTreeNode(
+                                selection.name or selection.id,
+                                kind="named_selection",
+                                icon_key="selection",
+                                data=_named_selection_payload(selection),
+                            )
+                            for selection in project.selections
+                        ),
+                    ),
+                )
+                if project.selections
+                else ()
+            ),
             ProjectTreeNode(
                 "Physics",
                 kind="group",
@@ -250,6 +271,24 @@ def _mesh_ref_payload(ref: object) -> tuple[tuple[str, str], ...]:
     if mesh_ref:
         payload["mesh_ref"] = mesh_ref
     return tuple(payload.items())
+
+
+def _named_selection_payload(selection: object) -> tuple[tuple[str, str], ...]:
+    payload = {
+        "selection_id": str(getattr(selection, "id", "") or ""),
+        "entity_kind": str(
+            getattr(getattr(selection, "entity_kind", ""), "value", "")
+            or getattr(selection, "entity_kind", "")
+            or ""
+        ),
+        "mesh_ref": str(getattr(selection, "source_mesh_ref", "") or ""),
+    }
+    targets = tuple(getattr(selection, "targets", ()) or ())
+    locator = getattr(targets[0], "locator", None) if targets else None
+    fingerprint = str(getattr(locator, "mesh_fingerprint", "") or "")
+    if fingerprint:
+        payload["mesh_fingerprint"] = fingerprint
+    return tuple((key, value) for key, value in payload.items() if value)
 
 
 def _physics_nodes(project: Project) -> list[ProjectTreeNode]:
@@ -425,6 +464,74 @@ class ProjectTreePanel(_BaseWidget):
     def selected_item_payload(self) -> dict[str, str]:
         return self.item_payload(self.tree.currentItem())
 
+    def named_selection_item(self, selection_id: str) -> object | None:
+        for item in self._tree_items():
+            if self.item_payload(item).get("selection_id") == selection_id:
+                return item
+        return None
+
+    def current_named_selection_id(self) -> str:
+        current = self.tree.currentItem()
+        if current is None:
+            return ""
+        kind = str(current.data(0, QtCore.Qt.ItemDataRole.UserRole) or "")
+        if kind != "named_selection":
+            return ""
+        return self.item_payload(current).get("selection_id", "")
+
+    def select_named_selection(self, selection_id: str, *, emit: bool = True) -> bool:
+        item = self.named_selection_item(selection_id)
+        if item is None:
+            return False
+        blocked = self.tree.blockSignals(not emit)
+        try:
+            self.tree.setCurrentItem(item)
+        finally:
+            self.tree.blockSignals(blocked)
+        return True
+
+    def clear_named_selection(self, *, emit: bool = True) -> None:
+        if not self.current_named_selection_id():
+            return
+        blocked = self.tree.blockSignals(not emit)
+        try:
+            self.tree.setCurrentItem(None)
+            self.tree.clearSelection()
+        finally:
+            self.tree.blockSignals(blocked)
+
+    def set_named_selection_resolutions(
+        self,
+        resolutions: Mapping[str, object],
+        *,
+        active_selection_ids: tuple[str, ...] = (),
+    ) -> None:
+        active = set(active_selection_ids)
+        for item in self._tree_items():
+            selection_id = self.item_payload(item).get("selection_id", "")
+            if not selection_id:
+                continue
+            resolution = resolutions.get(selection_id)
+            state = str(getattr(resolution, "state", "UNRESOLVED"))
+            if "." in state:
+                state = state.rsplit(".", 1)[-1]
+            item.setText(1, state)
+            item.setData(0, QtCore.Qt.ItemDataRole.UserRole + 3, state)
+            item.setToolTip(
+                0,
+                str(
+                    getattr(
+                        resolution,
+                        "message",
+                        "Selection resolution has not been evaluated.",
+                    )
+                ),
+            )
+            font = item.font(0)
+            font.setBold(selection_id in active)
+            item.setFont(0, font)
+        self.tree.setColumnWidth(1, 82)
+
     def filter_tree(self, text: str) -> None:
         query = text.strip().casefold()
         for top_index in range(self.tree.topLevelItemCount()):
@@ -536,6 +643,18 @@ class ProjectTreePanel(_BaseWidget):
                     QtGui.QBrush(QtGui.QColor(self._current_tokens.success)),
                 )
 
+    def _tree_items(self) -> tuple[object, ...]:
+        items: list[object] = []
+
+        def visit(item: object) -> None:
+            items.append(item)
+            for index in range(item.childCount()):
+                visit(item.child(index))
+
+        for index in range(self.tree.topLevelItemCount()):
+            visit(self.tree.topLevelItem(index))
+        return tuple(items)
+
     def _build_icons(self, tokens: ThemeTokens) -> dict[str, object]:
         # Purple/yellow are centralized category accents required by the visual spec.
         category_colors = {
@@ -544,6 +663,7 @@ class ProjectTreePanel(_BaseWidget):
             "geometry_file": tokens.success,
             "mesh": "#9b6dff",
             "mesh_file": "#9b6dff",
+            "selection": "#c084fc",
             "physics": tokens.warning,
             "curve": tokens.info,
             "curve_file": tokens.info,

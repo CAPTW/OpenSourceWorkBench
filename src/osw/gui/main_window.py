@@ -483,8 +483,14 @@ class MainWindow(_BaseMainWindow):
         self.named_selection_panel.pickModeChanged.connect(
             self._on_entity_pick_mode_changed
         )
+        self.named_selection_panel.selectionOperationChanged.connect(
+            self._on_selection_operation_changed
+        )
         self.named_selection_panel.clearRequested.connect(
             self._on_clear_current_selection
+        )
+        self.named_selection_panel.invertRequested.connect(
+            self._on_invert_current_selection
         )
         self.named_selection_panel.createRequested.connect(
             self._on_create_named_selection
@@ -551,6 +557,9 @@ class MainWindow(_BaseMainWindow):
         if picking_available:
             self.active_scene_controller.set_pick_mode(
                 self.named_selection_panel.mode_selector.currentText().lower()
+            )
+            self.active_scene_controller.set_selection_operation(
+                self.named_selection_panel.operation_selector.currentText().lower()
             )
 
         center_splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical, container)
@@ -702,7 +711,20 @@ class MainWindow(_BaseMainWindow):
     def _on_project_tree_selection_changed(self, current: object, _previous: object) -> None:
         if current is not None and hasattr(self.properties_panel, "set_node_selection"):
             self.properties_panel.set_node_selection(current.text(0))
+        if self._handle_project_tree_named_selection(current):
+            return
         self._handle_project_tree_mesh_selection(current)
+
+    def _handle_project_tree_named_selection(self, current: object | None) -> bool:
+        if current is None:
+            return False
+        kind = str(current.data(0, QtCore.Qt.ItemDataRole.UserRole) or "")
+        payload = self._project_tree_item_payload(current)
+        selection_id = payload.get("selection_id", "")
+        if kind != "named_selection" or not selection_id:
+            return False
+        self._activate_named_selection(selection_id, source="project_tree")
+        return True
 
     def _handle_project_tree_mesh_selection(self, current: object | None) -> None:
         if current is None:
@@ -1769,6 +1791,9 @@ class MainWindow(_BaseMainWindow):
                 self.active_scene_controller.set_pick_mode(
                     named_panel.mode_selector.currentText().lower()
                 )
+                self.active_scene_controller.set_selection_operation(
+                    named_panel.operation_selector.currentText().lower()
+                )
             self._refresh_named_selection_panel()
 
     def _on_entity_pick_mode_changed(self, mode: str) -> None:
@@ -1787,6 +1812,28 @@ class MainWindow(_BaseMainWindow):
                 "The active renderer does not provide entity picking.",
                 error=True,
             )
+
+    def _on_selection_operation_changed(self, operation: str) -> None:
+        if self.active_scene_controller.set_selection_operation(operation):
+            self.named_selection_panel.set_status(
+                f"{operation.title()} selection operation is active."
+            )
+            return
+        self.named_selection_panel.set_status(
+            "The active renderer cannot change the selection operation.",
+            error=True,
+        )
+
+    def _on_invert_current_selection(self) -> None:
+        if self.active_scene_controller.invert_current_selection():
+            self.named_selection_panel.set_status(
+                "Current selection inverted within the active entity domain."
+            )
+            return
+        self.named_selection_panel.set_status(
+            "Load a mesh and choose Node or Cell mode before inverting.",
+            error=True,
+        )
 
     def _on_clear_current_selection(self) -> None:
         self.active_scene_controller.clear_current_selection()
@@ -1820,6 +1867,7 @@ class MainWindow(_BaseMainWindow):
                     selections,
                 )
             )
+            self._project_dirty = True
         except NamedSelectionLifecycleError as exc:
             self.named_selection_panel.set_status(str(exc), error=True)
             return
@@ -1850,6 +1898,7 @@ class MainWindow(_BaseMainWindow):
                     selections,
                 )
             )
+            self._project_dirty = True
         except NamedSelectionLifecycleError as exc:
             self.named_selection_panel.set_status(str(exc), error=True)
             return
@@ -1880,6 +1929,7 @@ class MainWindow(_BaseMainWindow):
                     selections,
                 )
             )
+            self._project_dirty = True
         except NamedSelectionLifecycleError as exc:
             self.named_selection_panel.set_status(str(exc), error=True)
             return
@@ -1911,6 +1961,7 @@ class MainWindow(_BaseMainWindow):
                     selections,
                 )
             )
+            self._project_dirty = True
         except NamedSelectionLifecycleError as exc:
             self.named_selection_panel.set_status(str(exc), error=True)
             return
@@ -1919,11 +1970,19 @@ class MainWindow(_BaseMainWindow):
         )
 
     def _on_named_selection_activated(self, selection_id: str) -> None:
+        self._activate_named_selection(selection_id, source="named_selection_panel")
+
+    def _activate_named_selection(self, selection_id: str, *, source: str) -> None:
+        self.active_scene_controller.set_active_named_selection_ids((selection_id,))
         resolution = self.active_scene_controller.named_selection_resolutions.get(
             selection_id
         )
         if resolution is not None:
             self.named_selection_panel.set_status(resolution.message)
+        if source != "named_selection_panel":
+            self.named_selection_panel.select_named_selection(selection_id, emit=False)
+        if source != "project_tree":
+            self.project_tree_panel.select_named_selection(selection_id, emit=False)
         panel = getattr(self, "setup_overlay_panel", None)
         if panel is not None:
             panel.set_selection_filter(selection_id)
@@ -1939,15 +1998,38 @@ class MainWindow(_BaseMainWindow):
             if target is not None and target.locator is not None
             else 0
         )
+        metadata: dict[str, object] | None = None
+        if target is not None and target.locator is not None:
+            locator = target.locator
+            metadata = {
+                "entity_kind": locator.entity_kind.value,
+                "entity_ids": locator.entity_ids,
+                "mesh_ref": locator.mesh_ref,
+                "mesh_fingerprint": locator.mesh_fingerprint,
+                "identity_schema": locator.identity_schema,
+                "id_namespace": locator.id_namespace,
+            }
         panel.set_current_selection(
             count=count,
             resolution_state=resolution.state.value,
             status=resolution.message,
+            metadata=metadata,
         )
         panel.set_named_selections(
             self.current_project.selections,
             self.active_scene_controller.named_selection_resolutions,
         )
+        active_ids = self.active_scene_controller.active_named_selection_ids
+        self.project_tree_panel.set_named_selection_resolutions(
+            self.active_scene_controller.named_selection_resolutions,
+            active_selection_ids=active_ids,
+        )
+        if len(active_ids) == 1:
+            panel.select_named_selection(active_ids[0], emit=False)
+            self.project_tree_panel.select_named_selection(active_ids[0], emit=False)
+        elif not active_ids:
+            panel.clear_named_selection(emit=False)
+            self.project_tree_panel.clear_named_selection(emit=False)
         self._refresh_setup_overlay_panel()
 
     @property

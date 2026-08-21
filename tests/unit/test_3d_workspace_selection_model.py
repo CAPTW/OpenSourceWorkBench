@@ -11,6 +11,7 @@ from osw.core.selection import (
     EntityLocator,
     NamedSelection,
     SelectionMode,
+    SelectionOperation,
     SelectionState,
     SelectionTargetRef,
 )
@@ -37,6 +38,17 @@ def test_selection_mode_values_and_coerce() -> None:
     }
     assert SelectionMode.coerce("cell") is SelectionMode.CELL
     assert SelectionMode.coerce("bogus") is SelectionMode.NONE
+
+
+def test_selection_operation_values_and_coerce() -> None:
+    assert {operation.value for operation in SelectionOperation} == {
+        "replace",
+        "add",
+        "toggle",
+        "subtract",
+    }
+    assert SelectionOperation.coerce("ADD") is SelectionOperation.ADD
+    assert SelectionOperation.coerce("bogus") is SelectionOperation.REPLACE
 
 
 def test_selection_target_ref_roundtrip_and_order() -> None:

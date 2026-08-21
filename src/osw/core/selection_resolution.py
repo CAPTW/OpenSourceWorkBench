@@ -132,6 +132,16 @@ def resolve_selection_target(
                 "be explicitly reselected."
             ),
         )
+    if (
+        target.kind is not target.locator.entity_kind
+        or target.mesh_ref != target.locator.mesh_ref
+        or target.ids != target.locator.entity_ids
+    ):
+        return _invalid_result(
+            "TARGET_LOCATOR_IDENTITY_MISMATCH",
+            "The selection target and its canonical entity locator disagree.",
+            target.locator,
+        )
     return resolve_entity_locator(
         target.locator,
         mesh=mesh,

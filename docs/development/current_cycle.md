@@ -30,9 +30,13 @@ interaction, also without integration or publication. The current isolated
 `OSW-3D-WORKSPACE-ENTITY-PICKING-AND-NAMED-SELECTION` branch adds exact mesh
 fingerprints, durable node/cell locators, fail-closed five-state resolution,
 Project schema 0.3 selection persistence, generation-guarded picking, and
-NamedSelection CRUD. Fake-session/offscreen evidence is not prepared live
-PyVistaQt evidence. Face/Edge, setup/result overlays, full scene persistence,
-solver execution, integration, publication, and Golden repair remain separate.
+NamedSelection CRUD. The current product continuation adds subtract/invert,
+canonical metadata inspection, save/reopen restoration, stale-state display,
+Project Tree synchronization, and a separate non-pickable active-selection
+actor. Prepared visible PyVistaQt evidence covers the native node/cell picker,
+multi-selection highlight, and active NamedSelection actor. Face/Edge,
+topology-independent identity, solver execution, integration, publication, and
+Golden repair remain separate.
 
 The chained local `OSW-3D-WORKSPACE-SOLVER-SETUP-OVERLAYS` branch adds typed
 material, translational fixed-support, and global per-node force records;
