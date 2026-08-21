@@ -4,7 +4,7 @@ OpenSolver Workbench (OSW) is an educational/research open-source Engineering
 Solver & Script Workbench for inspectable desktop workflows, solver case
 preparation, script previews, result review, and report generation.
 
-OSW package metadata is currently `0.1.5rc1`, and the current public GitHub
+OSW package metadata is currently `0.1.5rc2`, and the current public GitHub
 prerelease is `v0.1.5-rc1`. It is useful for teaching, research prototyping,
 and transparent workflow experiments, but it is not an industrial-certified CAE
 tool, MATLAB clone, ANSYS clone, Simulink clone, or commercial CAD replacement.
@@ -179,8 +179,9 @@ with offscreen mode. This MVP is for integration review with documented
 limitations. It is not production-ready or industrially certified.
 
 Local installed-package smoke, after a no-isolation wheel build, must import
-`osw` from the install target rather than this source checkout. Package version
-remains `0.1.5rc1` until a separate RC build/tag gate.
+`osw` from the install target rather than this source checkout. Current package
+version is `0.1.5rc2` for the planned annotated tag `v0.1.5-rc2`. That tag has
+not been created.
 
 ## Optional Dependencies
 
@@ -220,9 +221,10 @@ the canonical report-asset claim boundary.
 
 ## Release Status
 
-- Current `develop` package metadata: `0.1.5rc1`.
-- Current public prerelease tag: `v0.1.5-rc1`.
-- `develop` may be ahead of the `v0.1.5-rc1` release tag.
+- Current `develop` package metadata: `0.1.5rc2`.
+- Planned next annotated tag: `v0.1.5-rc2` (not created).
+- Current public prerelease tag: `v0.1.5-rc1` (immutable historical public identity).
+- `develop` is ahead of the `v0.1.5-rc1` release tag.
 - A public GitHub Release prerelease exists for `v0.1.5-rc1`.
 - Release assets are attached: wheel, sdist, Windows portable ZIP, checksums,
   and manifest; local validation artifacts are not release assets.

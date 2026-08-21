@@ -47,6 +47,7 @@ def _minimal_release_tree(root: Path, *, version: str = "0.1.0rc3") -> None:
         "0.1.3rc2.dev0": "v0.1.3-rc1",
         "0.1.4rc1": "v0.1.4-rc1",
         "0.1.5rc1": "v0.1.5-rc1",
+        "0.1.5rc2": "v0.1.5-rc2",
     }
     tag = tag_by_version.get(version, "v0.1.0-rc3")
     _write(

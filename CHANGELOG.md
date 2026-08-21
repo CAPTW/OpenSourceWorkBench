@@ -6,16 +6,36 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### 3D Workspace MVP RC2 Metadata Preparation
+
+Candidate package version: `0.1.5rc2`
+
+- Aligned current `develop` package, import, CLI, release-metadata checker, and
+  package-smoke expectations to `0.1.5rc2` for the planned annotated tag
+  `v0.1.5-rc2`. This is local release-candidate metadata preparation only. No
+  `v0.1.5-rc2` tag, push, GitHub Release, asset upload, package-index
+  publication, or deployment is created by this change.
+- Preserves the consumed public identity `0.1.5rc1` / annotated `v0.1.5-rc1`
+  at `85c8144f7ff19159ab02c40adb6483ce6b13c017` as immutable historical
+  evidence. That tag is not retargeted, deleted, recreated, or force-updated.
+- Records that RC2 carries the locally integrated 3D Workspace MVP line on the
+  existing `0.1.5` prerelease line. Supported preview topology remains triangle,
+  quad, polygon surface rendering, and linear tetra. Unsupported topology
+  remains tetra10, hexahedron, hexahedron20, wedge, and pyramid. Native
+  locality remains `DEFERRED_RETAINED`. No industrial certification, solver
+  numerical certification, all-topology, all-platform, or production-readiness
+  claim is made.
+
 ### 3D Workspace MVP Local Integration And RC Readiness
 
 - Fast-forwarded the complete local 3D Workspace MVP feature chain onto
   `develop` after whole-tree Ruff/QA closure, isolated GUI document-lifecycle
   hang repair, optional-dependency matrix, local wheel/sdist metadata checks,
-  and installed-package smoke. Package metadata remains `0.1.5rc1` until a
-  separate RC build/tag/publication gate. This is local integration-review
-  readiness with documented limits, not a tag, push, publication, production,
-  certification, all-topology, or native-locality claim. Native report-asset
-  resolution remains `DEFERRED_RETAINED`.
+  and installed-package smoke. At that integration gate package metadata
+  remained `0.1.5rc1` until this later RC2 metadata-preparation change. This is
+  local integration-review readiness with documented limits, not a tag, push,
+  publication, production, certification, all-topology, or native-locality
+  claim. Native report-asset resolution remains `DEFERRED_RETAINED`.
 
 ### 3D Workspace MVP End-To-End Validation
 

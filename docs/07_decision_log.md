@@ -4368,3 +4368,24 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   integration, and remote publication remain outside this decision.
 - Next gate: `OSW-3D-WORKSPACE-SOLVER-SETUP-OVERLAYS` requires separate human
   authorization and must not be executed automatically.
+
+## ADR-0185: Owner Selects 0.1.5rc2 After Consumed v0.1.5-rc1
+
+- Status: Accepted for local metadata preparation only
+- Date: 2026-08-22
+- Context: Local `develop` at `4c685754af6b23c600daf0e82e8b3a9a8adafba7`
+  contains the integrated 3D Workspace MVP line. Authoritative package metadata
+  was still `0.1.5rc1`, but annotated `v0.1.5-rc1` already peels to
+  `85c8144f7ff19159ab02c40adb6483ce6b13c017` and is a consumed public
+  prerelease. Retargeting RC1, promoting directly to final `0.1.5`, or opening
+  a `0.1.6rc1` line was rejected.
+- Decision: Keep the existing `0.1.5` release line and prepare a second release
+  candidate: package version `0.1.5rc2` and planned annotated unsigned Git tag
+  `v0.1.5-rc2`. Preserve `0.1.5rc1` / `v0.1.5-rc1` as an immutable historical
+  public identity. Documented publication destination remains GitHub prerelease
+  assets. Package-index publication remains not configured. Native locality
+  remains `DEFERRED_RETAINED`.
+- Consequences: A dedicated metadata/rebuild gate may update current version
+  sources and prepare local wheel/sdist artifacts. It must not create the
+  `v0.1.5-rc2` tag, push, create a GitHub Release, upload assets, or deploy.
+  Historical RC1 publication records remain unchanged in meaning.

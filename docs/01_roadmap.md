@@ -19,8 +19,9 @@ must make no industrial certification claim.
 
 ## Post-Public-Release Roadmap
 
-The current public prerelease is `v0.1.5-rc1`, and package metadata is
-`0.1.5rc1`. `develop` may be ahead of the release tag. Older `v0.1.3-rc1` and
+The current public prerelease is `v0.1.5-rc1`, and current package metadata is
+`0.1.5rc2`. The planned next annotated tag is `v0.1.5-rc2` and has not been
+created. `develop` is ahead of the immutable `v0.1.5-rc1` release tag. Older `v0.1.3-rc1` and
 `v0.1.4-rc1` references are historical unless a page explicitly marks them as
 the current boundary.
 

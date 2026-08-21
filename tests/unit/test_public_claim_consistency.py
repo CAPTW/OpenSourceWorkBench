@@ -91,14 +91,14 @@ SIGNING_CURRENT_AUTHORITY_NOTE = (
     "retained as historical planning, not current roadmap authority."
 )
 TUTORIAL_CURRENT_RELEASE_COPY = (
-    "OSW package metadata is currently `0.1.5rc1`, and the current public GitHub "
+    "OSW package metadata is currently `0.1.5rc2`, and the current public GitHub "
     "prerelease is `v0.1.5-rc1`. OSW is intended for educational and research "
     "workflows, not stable-production, industrial, or regulated engineering use; "
     "it is not a MATLAB, ANSYS, or Simulink clone or a commercial CAD replacement."
 )
 EXAMPLES_CURRENT_RELEASE_COPY = (
     "These examples are small source-tree workflows for the current `develop` "
-    "line. Package metadata is `0.1.5rc1`, and `v0.1.5-rc1` is the current public "
+    "line. Package metadata is `0.1.5rc2`, and `v0.1.5-rc1` is the current public "
     "prerelease. They are intended for inspection and teaching, not production "
     "or regulated engineering use."
 )

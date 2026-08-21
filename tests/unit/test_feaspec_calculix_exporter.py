@@ -203,8 +203,8 @@ def test_export_manifest_parses_and_records_checksums(tmp_path: Path) -> None:
     manifest = json.loads((tmp_path / "ready_case.manifest.json").read_text())
 
     assert manifest["exporter_module"] == "osw.experimental.feaspec.calculix_exporter"
-    assert manifest["osw_version"] == "0.1.5rc1"
-    assert manifest["release_tag"] == "v0.1.5-rc1"
+    assert manifest["osw_version"] == "0.1.5rc2"
+    assert manifest["release_tag"] == "v0.1.5-rc2"
     assert manifest["target_solver"] == "calculix"
     assert manifest["source_feaspec_id"] == "synthetic_ready"
     assert manifest["solver_execution_performed"] is False

@@ -1,6 +1,6 @@
 # License And Version Plan
 
-Status: historical license/version plan; current package metadata is `0.1.5rc1`
+Status: historical license/version plan; current package metadata is `0.1.5rc2`
 and current public prerelease is `v0.1.5-rc1`
 
 This historical document records the v0.1 maintainer license decision, package

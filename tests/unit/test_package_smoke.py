@@ -10,7 +10,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "src"
-EXPECTED_VERSION = "0.1.5rc1"
+EXPECTED_VERSION = "0.1.5rc2"
 
 
 def _python_env() -> dict[str, str]:

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "open-solver-workbench"
-version = "0.1.5rc1"
+version = "0.1.5rc2"
 description = "Open-source educational and research engineering solver workbench."
 readme = "README.md"
 requires-python = ">=3.11"

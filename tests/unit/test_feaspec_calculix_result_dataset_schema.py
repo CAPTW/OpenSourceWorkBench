@@ -156,7 +156,7 @@ def test_ready_mapping_and_write_plan_build_schema_payload(tmp_path: Path) -> No
     assert validation.has_blockers is False
     assert payload.schema.schema_name == "osw.feaspec.calculix.resultdataset"
     assert payload.schema.schema_version == "0.1"
-    assert payload.schema.producer_version == "0.1.5rc1"
+    assert payload.schema.producer_version == "0.1.5rc2"
     assert payload.schema.source_version == "0.1.4rc1"
     assert payload.schema.source_release == "v0.1.4-rc1"
     assert payload.dataset["dataset_id"] == "schema_case"
