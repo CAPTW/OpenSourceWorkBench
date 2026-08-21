@@ -51,6 +51,7 @@ class PropertiesPanel(_BaseWidget):
         self._curve_by_label: dict[str, object] = {}
         self._setup_properties: dict[str, str] = {}
         self._mesh_diagnostics_properties: dict[str, str] = {}
+        self._interactive_result_properties: dict[str, str] = {}
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -105,6 +106,8 @@ class PropertiesPanel(_BaseWidget):
             return self._setup_properties[name]
         if name in self._mesh_diagnostics_properties:
             return self._mesh_diagnostics_properties[name]
+        if name in self._interactive_result_properties:
+            return self._interactive_result_properties[name]
         mesh = self._selected_mesh_ref()
         if mesh is not None:
             return _mesh_row_value(mesh, name)
@@ -265,6 +268,88 @@ class PropertiesPanel(_BaseWidget):
     def mesh_diagnostics_property_rows(self) -> dict[str, str]:
         return dict(self._mesh_diagnostics_properties)
 
+    def set_interactive_result_view_model(
+        self,
+        view_model: object,
+        *,
+        result_dataset: object | None,
+        result_ref_id: str = "",
+        mesh_ref: str = "",
+        field_id: str = "",
+    ) -> None:
+        """Inspect exact result/catalog/view state without exposing native handles."""
+
+        catalog = getattr(view_model, "catalog", None)
+        state = getattr(view_model, "state", None)
+        active_field = field_id or str(getattr(state, "active_field_id", "") or "")
+        descriptor = None
+        if catalog is not None and active_field:
+            try:
+                descriptor = catalog.field(active_field)
+            except KeyError:
+                descriptor = None
+        metadata = getattr(result_dataset, "metadata", {}) or {}
+        title = str(metadata.get("title", "") or "") if isinstance(metadata, dict) else ""
+        scalar = getattr(view_model, "scalar", None)
+        statistics = getattr(scalar, "statistics", None)
+        vector = getattr(view_model, "vector", None)
+        deformation = getattr(view_model, "deformation", None)
+        probe = getattr(view_model, "probe", None)
+        fingerprint = str(getattr(catalog, "mesh_fingerprint", "") or "")
+        diagnostics = tuple(getattr(catalog, "diagnostics", ()) or ())
+        self._interactive_result_properties = {
+            "Result ID": str(getattr(result_dataset, "dataset_id", "") or ""),
+            "Result reference": str(result_ref_id),
+            "Result name": title or str(getattr(result_dataset, "dataset_id", "") or ""),
+            "Source": str(getattr(result_dataset, "source", "") or "unspecified"),
+            "Provider": str(getattr(result_dataset, "solver", "") or "unspecified"),
+            "Mesh reference": str(mesh_ref or "unspecified"),
+            "Mesh fingerprint": fingerprint[:16] if fingerprint else "unavailable",
+            "Binding status": str(getattr(state, "binding_status", "UNRESOLVED")),
+            "Stale reason": str(getattr(state, "stale_reason", "") or "none"),
+            "Field ID": active_field or "none",
+            "Field name": str(getattr(descriptor, "display_name", "") or active_field or "none"),
+            "Association": str(getattr(descriptor, "association", "") or "unspecified"),
+            "Components": ", ".join(getattr(descriptor, "component_names", ()) or ()) or "none",
+            "Component count": str(len(getattr(descriptor, "component_names", ()) or ())),
+            "Units": str(getattr(descriptor, "units", "") or "unspecified"),
+            "Tuple count": str(getattr(descriptor, "tuple_count", 0) or 0),
+            "Finite / nonfinite": (
+                f"{getattr(descriptor, 'finite_tuple_count', 0)} / "
+                f"{getattr(descriptor, 'nonfinite_tuple_count', 0)}"
+            ),
+            "Active scalar mode": str(getattr(state, "active_scalar_mode", "scalar")),
+            "Current range": str(getattr(scalar, "display_range", None) or "none"),
+            "Scalar minimum": _diagnostic_number(getattr(statistics, "minimum", None)),
+            "Scalar maximum": _diagnostic_number(getattr(statistics, "maximum", None)),
+            "Scalar mean": _diagnostic_number(getattr(statistics, "mean", None)),
+            "Scalar median": _diagnostic_number(getattr(statistics, "median", None)),
+            "Vector sample count": str(getattr(vector, "sampled_count", 0) or 0),
+            "Vector magnitude range": (
+                f"{_diagnostic_number(getattr(vector, 'magnitude_minimum', None))} .. "
+                f"{_diagnostic_number(getattr(vector, 'magnitude_maximum', None))}"
+            ),
+            "Deformation eligible": (
+                "yes" if bool(getattr(descriptor, "deformation_eligible", False)) else "no"
+            ),
+            "Deformation mode": str(getattr(state, "deformation_mode", "ORIGINAL")),
+            "Deformation scale": _diagnostic_number(getattr(deformation, "scale", None)),
+            "Probe": (
+                "none"
+                if probe is None
+                else f"{probe.entity_display_id}: {probe.display_value} {probe.unit}".strip()
+            ),
+            "Diagnostic": diagnostics[-1] if diagnostics else "none",
+        }
+        self._refresh_interactive_result_properties_table()
+
+    def clear_interactive_result_view_model(self) -> None:
+        self._interactive_result_properties = {}
+        self._refresh_interactive_result_properties_table()
+
+    def interactive_result_property_rows(self) -> dict[str, str]:
+        return dict(self._interactive_result_properties)
+
     def _refresh_setup_properties_table(self) -> None:
         table = self.setup_properties_table
         table.clear()
@@ -282,6 +367,17 @@ class PropertiesPanel(_BaseWidget):
             item.setToolTip(1, value)
             table.addTopLevelItem(item)
         self.mesh_diagnostics_properties_group.setVisible(bool(self._mesh_diagnostics_properties))
+
+    def _refresh_interactive_result_properties_table(self) -> None:
+        table = self.interactive_result_properties_table
+        table.clear()
+        for key, value in self._interactive_result_properties.items():
+            item = QtWidgets.QTreeWidgetItem((key, value))
+            item.setToolTip(1, value)
+            table.addTopLevelItem(item)
+        self.interactive_result_properties_group.setVisible(
+            bool(self._interactive_result_properties)
+        )
 
     def reset_demo_data(self) -> None:
         self.material_section.set_material_library("builtin")
@@ -379,6 +475,30 @@ class PropertiesPanel(_BaseWidget):
         self.mesh_diagnostics_properties_table.setRootIsDecorated(False)
         diagnostics_layout.addWidget(self.mesh_diagnostics_properties_table)
         self.mesh_diagnostics_properties_group.setVisible(False)
+        self.interactive_result_properties_group = QtWidgets.QGroupBox(
+            "INTERACTIVE RESULT",
+            content,
+        )
+        self.interactive_result_properties_group.setObjectName(
+            "oswInteractiveResultPropertiesSection"
+        )
+        self.interactive_result_properties_group.setAccessibleName("Interactive result properties")
+        interactive_result_layout = QtWidgets.QVBoxLayout(self.interactive_result_properties_group)
+        self.interactive_result_properties_table = QtWidgets.QTreeWidget(
+            self.interactive_result_properties_group
+        )
+        self.interactive_result_properties_table.setObjectName(
+            "oswInteractiveResultPropertiesTable"
+        )
+        self.interactive_result_properties_table.setAccessibleName(
+            "Result binding field statistics deformation and probe properties"
+        )
+        self.interactive_result_properties_table.setColumnCount(2)
+        self.interactive_result_properties_table.setHeaderLabels(("Property", "Value"))
+        self.interactive_result_properties_table.header().setStretchLastSection(True)
+        self.interactive_result_properties_table.setRootIsDecorated(False)
+        interactive_result_layout.addWidget(self.interactive_result_properties_table)
+        self.interactive_result_properties_group.setVisible(False)
         self.setup_properties_group = QtWidgets.QGroupBox(
             "SOLVER SETUP",
             content,
@@ -398,6 +518,7 @@ class PropertiesPanel(_BaseWidget):
         setup_layout.addWidget(self.setup_properties_table)
         self.setup_properties_group.setVisible(False)
         for section in (
+            self.interactive_result_properties_group,
             self.mesh_diagnostics_properties_group,
             self.setup_properties_group,
             self.material_section,

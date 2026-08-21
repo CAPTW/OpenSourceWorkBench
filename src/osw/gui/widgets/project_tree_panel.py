@@ -391,7 +391,12 @@ def _setup_payload(record: object, project: Project) -> tuple[tuple[str, str], .
 
 def _result_nodes(project: Project) -> list[ProjectTreeNode]:
     run_0001_children = [
-        ProjectTreeNode(_ref_label(ref), icon_key="result_file")
+        ProjectTreeNode(
+            _ref_label(ref),
+            kind="result_dataset",
+            icon_key="result_file",
+            data=_result_ref_payload(ref),
+        )
         for ref in project.result_refs
         if getattr(ref, "run_id", "") == "run_0001" and getattr(ref, "role", "") != "run"
     ]
@@ -407,8 +412,34 @@ def _result_nodes(project: Project) -> list[ProjectTreeNode]:
         )
     for ref in project.result_refs:
         if getattr(ref, "run_id", "") != "run_0001":
-            nodes.append(ProjectTreeNode(_ref_label(ref), kind="run", icon_key="result_file"))
+            nodes.append(
+                ProjectTreeNode(
+                    _ref_label(ref),
+                    kind="result_dataset",
+                    icon_key="result_file",
+                    data=_result_ref_payload(ref),
+                )
+            )
     return nodes
+
+
+def _result_ref_payload(ref: object) -> tuple[tuple[str, str], ...]:
+    metadata = getattr(ref, "metadata", {}) or {}
+    binding = metadata.get("mesh_binding", {}) if isinstance(metadata, Mapping) else {}
+    payload = {
+        "result_ref_id": str(getattr(ref, "id", "") or getattr(ref, "ref_id", "") or ""),
+        "result_dataset_id": str(
+            metadata.get("result_dataset_id", "") if isinstance(metadata, Mapping) else ""
+        ),
+        "source": str(getattr(ref, "path", "") or ""),
+        "provider": str(getattr(ref, "format", "") or ""),
+        "mesh_ref": str(binding.get("mesh_ref", "") if isinstance(binding, Mapping) else ""),
+        "mesh_fingerprint": str(
+            binding.get("mesh_fingerprint", "") if isinstance(binding, Mapping) else ""
+        ),
+        "binding_status": "UNRESOLVED",
+    }
+    return tuple((key, value) for key, value in payload.items() if value)
 
 
 def _report_labels(project: Project) -> list[str]:
@@ -549,6 +580,131 @@ class ProjectTreePanel(_BaseWidget):
             if self.item_payload(item).get("setup_id") == setup_id:
                 return item
         return None
+
+    def result_item(self, result_id: str) -> object | None:
+        for item in self._tree_items():
+            payload = self.item_payload(item)
+            if result_id in {
+                payload.get("result_ref_id", ""),
+                payload.get("result_dataset_id", ""),
+            }:
+                return item
+        return None
+
+    def set_interactive_result_catalog(
+        self,
+        *,
+        result_ref_id: str,
+        result_dataset: object,
+        catalog: object | None,
+        binding_reason: str = "",
+        mesh_ref: str = "",
+    ) -> None:
+        """Project one transient field catalog into the existing Results branch."""
+
+        dataset_id = str(getattr(result_dataset, "dataset_id", "") or "")
+        item = self.result_item(result_ref_id or dataset_id)
+        if item is None:
+            return
+        status = str(getattr(getattr(catalog, "binding_status", None), "value", "UNRESOLVED"))
+        fingerprint = str(getattr(catalog, "mesh_fingerprint", "") or "")
+        metadata = getattr(result_dataset, "metadata", {}) or {}
+        title = str(metadata.get("title", "") or "") if isinstance(metadata, Mapping) else ""
+        provider = str(getattr(result_dataset, "solver", "") or "")
+        source = str(getattr(result_dataset, "source", "") or "")
+        item.setText(0, title or dataset_id or item.text(0))
+        item.setText(1, status)
+        payload = {
+            **self.item_payload(item),
+            "result_ref_id": str(result_ref_id),
+            "result_dataset_id": dataset_id,
+            "binding_status": status,
+            "binding_reason": str(binding_reason),
+            "mesh_ref": str(mesh_ref),
+            "mesh_fingerprint": fingerprint,
+            "provider": provider,
+            "source": source,
+        }
+        item.setData(0, QtCore.Qt.ItemDataRole.UserRole + 2, payload)
+        item.setToolTip(
+            0,
+            (
+                f"Binding: {status}\nTarget mesh: {mesh_ref or 'unspecified'}\n"
+                f"Provider: {provider or 'unspecified'}\n"
+                f"Source: {source or 'unspecified'}\n"
+                f"Reason: {binding_reason or 'none'}"
+            ),
+        )
+        while item.childCount():
+            item.takeChild(0)
+        for descriptor in tuple(getattr(catalog, "fields", ()) or ()):
+            field_id = str(getattr(descriptor, "field_id", "") or "")
+            association = str(getattr(descriptor, "association", "") or "")
+            kind = str(getattr(getattr(descriptor, "kind", ""), "value", "") or "")
+            units = str(getattr(descriptor, "units", "") or "")
+            child = self._build_item(
+                ProjectTreeNode(
+                    field_id,
+                    kind="result_field",
+                    icon_key="result_file",
+                    data=tuple(
+                        {
+                            "result_ref_id": str(result_ref_id),
+                            "result_dataset_id": dataset_id,
+                            "field_id": field_id,
+                            "association": association,
+                            "field_kind": kind,
+                            "units": units,
+                            "binding_status": status,
+                        }.items()
+                    ),
+                )
+            )
+            child.setText(1, f"{association} · {kind.replace('_', ' ').title()}")
+            child.setToolTip(
+                0,
+                f"{field_id}\nAssociation: {association}\nUnits: {units or 'unspecified'}",
+            )
+            item.addChild(child)
+        item.setExpanded(True)
+
+    def select_result(self, result_id: str, *, emit: bool = True) -> bool:
+        item = self.result_item(result_id)
+        if item is None:
+            return False
+        blocked = self.tree.blockSignals(not emit)
+        try:
+            self.tree.setCurrentItem(item)
+        finally:
+            self.tree.blockSignals(blocked)
+        return True
+
+    def select_result_field(
+        self,
+        result_id: str,
+        field_id: str,
+        *,
+        emit: bool = True,
+    ) -> bool:
+        parent = self.result_item(result_id)
+        if parent is None:
+            return False
+        item = next(
+            (
+                parent.child(index)
+                for index in range(parent.childCount())
+                if self.item_payload(parent.child(index)).get("field_id") == field_id
+            ),
+            None,
+        )
+        if item is None:
+            return False
+        blocked = self.tree.blockSignals(not emit)
+        try:
+            self.tree.setCurrentItem(item)
+        finally:
+            self.tree.blockSignals(blocked)
+        return True
 
     def mesh_diagnostics_item(self) -> object | None:
         for item in self._tree_items():

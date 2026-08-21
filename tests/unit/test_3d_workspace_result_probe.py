@@ -52,8 +52,7 @@ def _dataset(*, nonfinite: bool = False) -> ResultDataset:
                 location="node",
                 components=("value",),
                 rows=tuple(
-                    ResultRow(index, {"value": value})
-                    for index, value in enumerate(node_values)
+                    ResultRow(index, {"value": value}) for index, value in enumerate(node_values)
                 ),
                 unit="K",
             ),
@@ -132,7 +131,7 @@ def test_exact_point_and_cell_probe_return_stored_values_only() -> None:
     assert cell.unit == "MPa"
 
 
-def test_probe_wrong_association_missing_row_stale_and_nonfinite_fail_closed() -> None:
+def test_probe_wrong_association_missing_row_stale_and_nonfinite_are_explicit() -> None:
     probe, binding = _api()
     mesh = _mesh()
     dataset = _dataset()
@@ -203,7 +202,9 @@ def test_probe_wrong_association_missing_row_stale_and_nonfinite_fail_closed() -
     assert mismatch.status is probe.ResultProbeStatus.ASSOCIATION_MISMATCH
     assert missing.status is probe.ResultProbeStatus.NOT_FOUND
     assert stale.status is probe.ResultProbeStatus.STALE
-    assert invalid.status is probe.ResultProbeStatus.INVALID
+    assert invalid.status is probe.ResultProbeStatus.RESOLVED
+    assert invalid.value_status is probe.ResultValueStatus.NONFINITE
+    assert invalid.display_value == "N/A"
 
 
 def test_selected_result_table_is_deterministic_bounded_and_shares_lookup() -> None:

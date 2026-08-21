@@ -18,9 +18,11 @@ from typing import Any
 from osw.core.workspace_3d import ActiveSceneCameraState
 from osw.gui.interactive_results_view_model import (
     RESULT_COLORBAR_ACTOR_KEY,
+    RESULT_DEFORMED_ACTOR_KEY,
     RESULT_PROBE_ACTOR_KEY,
     RESULT_SCALAR_ACTOR_KEY,
     RESULT_VECTOR_ACTOR_KEY,
+    DeformedResultOverlaySpec,
     ResultColorbarSpec,
     ResultProbeOverlaySpec,
     ScalarResultOverlaySpec,
@@ -383,6 +385,12 @@ class PyVistaQtRendererSession:
             self._payloads[semantic_id] = (payload, generation)
             self._visibility.setdefault(semantic_id, payload.visible)
             return self._replace_result_colorbar(semantic_id, payload)
+        if semantic_id == RESULT_DEFORMED_ACTOR_KEY:
+            if not isinstance(payload, DeformedResultOverlaySpec):
+                raise TypeError("Deformed result actor requires a derived geometry spec.")
+            self._payloads[semantic_id] = (payload, generation)
+            self._visibility.setdefault(semantic_id, True)
+            return self._replace_deformed_result_actor(semantic_id, payload)
         if semantic_id not in {"base_mesh", "wireframe"}:
             raise ValueError(f"Unsupported semantic actor: {semantic_id}")
         if not hasattr(payload, "mesh") or not hasattr(payload, "scene_state"):
@@ -734,6 +742,9 @@ class PyVistaQtRendererSession:
         if isinstance(payload, ResultColorbarSpec):
             self._replace_result_colorbar(semantic_id, payload)
             return
+        if isinstance(payload, DeformedResultOverlaySpec):
+            self._replace_deformed_result_actor(semantic_id, payload)
+            return
         self._remove_native_actor(semantic_id)
         mesh = payload.mesh
         scene_state = payload.scene_state
@@ -923,23 +934,59 @@ class PyVistaQtRendererSession:
         )
         if active_fingerprint != payload.mesh_fingerprint:
             raise RuntimeError("Scalar result overlay fingerprint does not match the active mesh.")
-        dataset = mesh_data_to_pyvista_dataset(
-            mesh_payload.mesh,
-            pyvista_module=self._pyvista,
-        )
+        source_mesh = payload.mesh or mesh_payload.mesh
+        dataset = mesh_data_to_pyvista_dataset(source_mesh, pyvista_module=self._pyvista)
+        self._attach_transient_pick_indices(dataset, source_mesh)
+        array_name = payload.array_name or payload.field_name
         if payload.association == "point":
-            dataset.point_data[payload.field_name] = payload.values
+            dataset.point_data[array_name] = payload.values
         elif payload.association == "cell":
-            dataset.cell_data[payload.field_name] = payload.values
+            dataset.cell_data[array_name] = payload.values
         else:
             raise RuntimeError("Scalar result association must be point or cell.")
         actor = self._require_open_interactor().add_mesh(
             dataset,
             name=f"osw-{semantic_id}",
-            scalars=payload.field_name,
+            scalars=array_name,
             clim=payload.display_range,
             cmap=payload.colormap,
             show_scalar_bar=False,
+            pickable=True,
+            reset_camera=False,
+            render=False,
+        )
+        self._actors[semantic_id] = actor
+        _set_native_visibility(actor, self._visibility[semantic_id])
+        return actor
+
+    def _replace_deformed_result_actor(
+        self,
+        semantic_id: str,
+        payload: DeformedResultOverlaySpec,
+    ) -> object:
+        self._remove_native_actor(semantic_id)
+        base_payload_entry = self._payloads.get("base_mesh")
+        if base_payload_entry is None:
+            raise RuntimeError("Deformed result overlay requires an active mesh.")
+        active_fingerprint = getattr(
+            getattr(base_payload_entry[0], "mesh_fingerprint", None),
+            "digest",
+            "",
+        )
+        if active_fingerprint != payload.mesh_fingerprint:
+            raise RuntimeError(
+                "Deformed result overlay fingerprint does not match the active mesh."
+            )
+        dataset = mesh_data_to_pyvista_dataset(payload.mesh, pyvista_module=self._pyvista)
+        self._attach_transient_pick_indices(dataset, payload.mesh)
+        actor = self._require_open_interactor().add_mesh(
+            dataset,
+            name=f"osw-{semantic_id}",
+            color="#d8b4fe",
+            opacity=payload.opacity,
+            show_edges=payload.representation != "surface",
+            style=("wireframe" if payload.representation == "wireframe" else "surface"),
+            pickable=payload.pickable,
             reset_camera=False,
             render=False,
         )
@@ -969,6 +1016,7 @@ class PyVistaQtRendererSession:
             rendered,
             name=f"osw-{semantic_id}",
             color="#38bdf8",
+            pickable=False,
             reset_camera=False,
             render=False,
         )
@@ -993,10 +1041,8 @@ class PyVistaQtRendererSession:
         )
         if active_fingerprint != payload.mesh_fingerprint:
             raise RuntimeError("Result probe overlay fingerprint does not match the active mesh.")
-        dataset = mesh_data_to_pyvista_dataset(
-            mesh_payload.mesh,
-            pyvista_module=self._pyvista,
-        )
+        source_mesh, _generation = self._active_selection_mesh()
+        dataset = mesh_data_to_pyvista_dataset(source_mesh, pyvista_module=self._pyvista)
         if payload.association == "point":
             extractor = getattr(dataset, "extract_points", None)
             subset = (
@@ -1006,9 +1052,7 @@ class PyVistaQtRendererSession:
                     include_cells=False,
                 )
                 if callable(extractor)
-                else self._pyvista.PolyData(
-                    [mesh_payload.mesh.points[payload.transient_backend_index]]
-                )
+                else self._pyvista.PolyData([source_mesh.points[payload.transient_backend_index]])
             )
         else:
             extractor = getattr(dataset, "extract_cells", None)
@@ -1022,6 +1066,7 @@ class PyVistaQtRendererSession:
             point_size=14,
             render_points_as_spheres=True,
             show_edges=True,
+            pickable=False,
             reset_camera=False,
             render=False,
         )
@@ -1097,13 +1142,12 @@ class PyVistaQtRendererSession:
         payload_entry = self._payloads.get("base_mesh")
         if payload_entry is None:
             raise RuntimeError("Selection overlay requires an active base mesh.")
-        payload, active_generation = payload_entry
+        mesh, active_generation = self._active_selection_mesh()
         if generation != active_generation:
             return
         self._remove_native_actor(semantic_id)
         if not indices:
             return
-        mesh = payload.mesh
         dataset = mesh_data_to_pyvista_dataset(mesh, pyvista_module=self._pyvista)
         self._attach_transient_pick_indices(dataset, mesh)
         if entity_kind == "node":
@@ -1143,6 +1187,18 @@ class PyVistaQtRendererSession:
             )
         self._actors[semantic_id] = actor
         self.request_render()
+
+    def _active_selection_mesh(self) -> tuple[object, int]:
+        for semantic_id in (RESULT_SCALAR_ACTOR_KEY, RESULT_DEFORMED_ACTOR_KEY):
+            entry = self._payloads.get(semantic_id)
+            if entry is None or not self._visibility.get(semantic_id, True):
+                continue
+            payload, generation = entry
+            mesh = getattr(payload, "mesh", None)
+            if mesh is not None:
+                return mesh, generation
+        payload, generation = self._payloads["base_mesh"]
+        return payload.mesh, generation
 
     def _remove_native_actor(self, semantic_id: str) -> None:
         actor = self._actors.pop(semantic_id, None)

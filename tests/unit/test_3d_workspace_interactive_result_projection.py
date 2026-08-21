@@ -32,9 +32,7 @@ def _api() -> tuple[object, object, object]:
         "project_interactive_scalar_result",
         "build_result_vector_glyph_spec",
     }
-    missing = sorted(
-        name for name in required_mapping if not hasattr(mapping, name)
-    )
+    missing = sorted(name for name in required_mapping if not hasattr(mapping, name))
     if missing or not hasattr(ActiveSceneController, "set_scalar_result"):
         pytest.fail(
             "interactive result projection/lifecycle is missing: "
@@ -60,10 +58,7 @@ def _scalar_field(values: tuple[float, ...]) -> ResultField:
         name="temperature",
         location="node",
         components=("value",),
-        rows=tuple(
-            ResultRow(index, {"value": value})
-            for index, value in enumerate(values)
-        ),
+        rows=tuple(ResultRow(index, {"value": value}) for index, value in enumerate(values)),
         unit="K",
     )
 
@@ -173,9 +168,7 @@ def test_constant_scalar_uses_documented_nonzero_display_range() -> None:
     )
 
     assert result.data_range == (5.0, 5.0)
-    assert result.display_range == pytest.approx(
-        (5.0 - 5e-12, 5.0 + 5e-12)
-    )
+    assert result.display_range == pytest.approx((5.0 - 5e-12, 5.0 + 5e-12))
 
 
 @pytest.mark.parametrize(
@@ -210,7 +203,7 @@ def test_invalid_range_or_colormap_fails_closed(
     assert result.diagnostics
 
 
-def test_nonfinite_scalar_values_fail_closed_without_overlay_mutation() -> None:
+def test_nonfinite_scalar_values_remain_missing_without_overlay_mutation() -> None:
     mapping, _projection, binding = _api()
     mesh = _mesh(3)
     dataset = _dataset(_scalar_field((1.0, float("nan"), 3.0)))
@@ -223,8 +216,11 @@ def test_nonfinite_scalar_values_fail_closed_without_overlay_mutation() -> None:
         component="value",
     )
 
-    assert result.applied is False
-    assert result.status == "INVALID"
+    assert result.applied is True
+    assert result.status == "RESOLVED"
+    assert result.data_range == (1.0, 3.0)
+    assert result.statistics.finite_count == 2
+    assert result.statistics.nonfinite_count == 1
     assert "temperature" not in mesh.point_data
 
 
@@ -347,9 +343,7 @@ def test_controller_replaces_semantic_result_resources_and_preserves_other_actor
     _mapping, projection, binding = _api()
     mesh = _mesh(3)
     scalar = _scalar_field((1.0, 2.0, 3.0))
-    vector = _vector_field(
-        ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
-    )
+    vector = _vector_field(((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)))
     dataset = _dataset(scalar, vector)
     factory = RecordingResultFactory()
     controller = ActiveSceneController(factory)

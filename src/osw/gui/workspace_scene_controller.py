@@ -13,6 +13,7 @@ import hashlib
 import struct
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
+from dataclasses import field as dataclass_field
 from enum import Enum
 from inspect import Parameter, signature
 from math import isfinite
@@ -63,12 +64,16 @@ from osw.core.workspace_3d import (
 )
 from osw.gui.interactive_results_view_model import (
     RESULT_COLORBAR_ACTOR_KEY,
+    RESULT_DEFORMED_ACTOR_KEY,
+    RESULT_ORIGINAL_REFERENCE_ACTOR_KEY,
     RESULT_PROBE_ACTOR_KEY,
     RESULT_SCALAR_ACTOR_KEY,
     RESULT_VECTOR_ACTOR_KEY,
+    InteractiveResultSessionState,
     InteractiveResultsViewModel,
     ResultProbeOverlaySpec,
     build_colorbar_spec,
+    build_deformed_overlay_spec,
     build_interactive_results_view_model,
     build_scalar_overlay_spec,
 )
@@ -105,10 +110,22 @@ from osw.post.pyvista_scene import (
     PyVistaUnavailableError,
     build_scene_state,
 )
+from osw.post.result_deformation import (
+    DeformationMode,
+    DeformationScaleMode,
+    DeformationStatus,
+    DeformedShapeSpec,
+    build_deformed_shape_spec,
+)
+from osw.post.result_field_catalog import (
+    ResultFieldCatalog,
+    build_result_field_catalog,
+)
 from osw.post.result_field_mapping import (
     InteractiveScalarResult,
     ResultVectorGlyphSpec,
     ScalarRangeMode,
+    VectorScaleMode,
     build_result_vector_glyph_spec,
     project_interactive_scalar_result,
 )
@@ -153,6 +170,10 @@ class SceneActorRecord:
     pickable: bool = False
     isolation_eligible: bool = True
     is_helper: bool = False
+    metadata: Mapping[str, object] = dataclass_field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
 
     @property
     def is_content(self) -> bool:
@@ -215,6 +236,13 @@ class MeshQualityAnalysisRequest:
     mesh: MeshData
     threshold: float
     degenerate_epsilon: float
+
+
+@dataclass(frozen=True)
+class _InteractiveResultReplacementSnapshot:
+    state: InteractiveResultSessionState
+    probe: ResultProbeResult | None = None
+    table: SelectedResultTable | None = None
 
 
 @runtime_checkable
@@ -530,11 +558,18 @@ class ActiveSceneController:
         self._interactive_result_binding: ResultMeshBinding | None = None
         self._interactive_result_ref_id = ""
         self._interactive_result_resolution: ResultMeshBindingResolution | None = None
+        self._interactive_result_catalog: ResultFieldCatalog | None = None
+        self._interactive_result_state = InteractiveResultSessionState()
         self._interactive_scalar_result: InteractiveScalarResult | None = None
         self._interactive_vector_result: ResultVectorGlyphSpec | None = None
         self._interactive_probe_result: ResultProbeResult | None = None
         self._interactive_result_table: SelectedResultTable | None = None
+        self._interactive_deformation_result: DeformedShapeSpec | None = None
         self._interactive_result_visibility_snapshot: dict[str, bool] | None = None
+        self._deformation_visibility_snapshot: dict[str, bool] | None = None
+        self._primary_scalar_owner = ""
+        self._result_primary_scalar_snapshot: dict[str, bool] | None = None
+        self._quality_primary_scalar_snapshot: dict[str, bool] | None = None
         self._selection_listener: Callable[[], object] | None = None
 
     @property
@@ -708,6 +743,14 @@ class ActiveSceneController:
         return self._interactive_result_resolution
 
     @property
+    def interactive_result_field_catalog(self) -> ResultFieldCatalog | None:
+        return self._interactive_result_catalog
+
+    @property
+    def interactive_result_state(self) -> InteractiveResultSessionState:
+        return self._interactive_result_state
+
+    @property
     def interactive_results_view_model(self) -> InteractiveResultsViewModel:
         return build_interactive_results_view_model(
             self._interactive_result_resolution,
@@ -717,6 +760,9 @@ class ActiveSceneController:
             vector=self._interactive_vector_result,
             probe=self._interactive_probe_result,
             table=self._interactive_result_table,
+            catalog=self._interactive_result_catalog,
+            deformation=self._interactive_deformation_result,
+            state=self._interactive_result_state,
         )
 
     def attach_host(self, parent: object) -> object | None:
@@ -753,6 +799,11 @@ class ActiveSceneController:
         incoming_fingerprint = compute_mesh_fingerprint(mesh)
         previous_analysis = self._mesh_quality_analysis
         previous_fingerprint = self._mesh_fingerprint
+        result_snapshot = self._capture_interactive_result_snapshot()
+        same_result_identity = bool(
+            previous_fingerprint is not None
+            and previous_fingerprint.digest == incoming_fingerprint.digest
+        )
         same_quality_identity = bool(
             previous_analysis is not None
             and previous_fingerprint is not None
@@ -763,6 +814,18 @@ class ActiveSceneController:
             previous_analysis=previous_analysis,
         )
         self._reset_interactive_result_state(discard_binding=False)
+        if result_snapshot is not None:
+            self._interactive_result_state = (
+                result_snapshot.state
+                if same_result_identity
+                else replace(
+                    result_snapshot.state,
+                    contour_visible=False,
+                    vector_visible=False,
+                    probe_mode="none",
+                    deformation_mode=DeformationMode.ORIGINAL.value,
+                )
+            )
         self._generation += 1
         generation = self._generation
         self._mesh = mesh
@@ -778,6 +841,8 @@ class ActiveSceneController:
         if session is None:
             self._resolve_and_display_named_selections()
             self._resolve_interactive_result_binding()
+            if same_result_identity and result_snapshot is not None:
+                self._restore_interactive_result_snapshot(result_snapshot)
             if same_quality_identity:
                 self._recompute_same_fingerprint_mesh_quality(previous_analysis)
             if self._pending_active_scene_state is not None:
@@ -834,6 +899,8 @@ class ActiveSceneController:
             self._configure_session_picking()
             self._resolve_and_display_named_selections()
             self._resolve_interactive_result_binding()
+            if same_result_identity and result_snapshot is not None:
+                self._restore_interactive_result_snapshot(result_snapshot)
             session.request_render()
         except Exception as exc:
             self._fail_session(exc)
@@ -1061,6 +1128,7 @@ class ActiveSceneController:
             "clear_current_selection",
         )
         self._actor_records.pop("current_selection", None)
+        self.clear_result_probe()
         self._resolve_and_display_active_named_selections()
         self._notify_selection_listener()
         return True
@@ -1081,6 +1149,7 @@ class ActiveSceneController:
         )
         self._actor_records.pop("hover", None)
         self._actor_records.pop("current_selection", None)
+        self.clear_result_probe()
         self._notify_selection_listener()
         return cleared
 
@@ -1217,6 +1286,9 @@ class ActiveSceneController:
         self.clear_interactive_results()
         self._interactive_result_dataset = result_dataset
         self._interactive_result_ref_id = str(result_ref_id or "")
+        self._interactive_result_state = InteractiveResultSessionState(
+            active_result_id=str(getattr(result_dataset, "dataset_id", "") or ""),
+        )
         if isinstance(binding, ResultMeshBinding):
             self._interactive_result_binding = binding
         elif isinstance(binding, Mapping):
@@ -1263,7 +1335,7 @@ class ActiveSceneController:
                 diagnostics=("An exact mesh/result binding is not available.",),
             )
         result = project_interactive_scalar_result(
-            self._mesh,
+            self._active_result_geometry_mesh(),
             self._interactive_result_dataset,
             binding_resolution=self._interactive_result_resolution,
             field_name=field_name,
@@ -1274,6 +1346,18 @@ class ActiveSceneController:
             colorbar_visible=colorbar_visible,
         )
         self._interactive_scalar_result = result
+        self._interactive_result_state = replace(
+            self._interactive_result_state,
+            active_field_id=str(field_name),
+            active_scalar_mode=(
+                result.scalar_mode.value if result.applied else str(component or "scalar")
+            ),
+            contour_visible=bool(result.applied and render),
+            range_mode=(result.range_mode.value if result.applied else str(range_mode).upper()),
+            manual_range=(tuple(manual_range) if manual_range is not None else None),
+            colormap=str(colormap).strip().lower(),
+            colorbar_visible=bool(colorbar_visible),
+        )
         if not result.applied or not render or not self._interactive_result_renderer_available():
             self._remove_result_actor(RESULT_SCALAR_ACTOR_KEY)
             self._remove_result_actor(RESULT_COLORBAR_ACTOR_KEY)
@@ -1283,6 +1367,8 @@ class ActiveSceneController:
         spec = build_scalar_overlay_spec(
             result,
             mesh_fingerprint=fingerprint.digest,
+            result_id=str(getattr(self._interactive_result_dataset, "dataset_id", "") or ""),
+            mesh=self._active_result_geometry_mesh(),
         )
         if spec is None:
             return result
@@ -1294,40 +1380,34 @@ class ActiveSceneController:
                     if quality_snapshot is not None and semantic_id in quality_snapshot
                     else self._actor_records[semantic_id].visible
                 )
-                for semantic_id in ("base_mesh", "wireframe")
+                for semantic_id in (
+                    "base_mesh",
+                    "wireframe",
+                    RESULT_DEFORMED_ACTOR_KEY,
+                )
                 if semantic_id in self._actor_records
             }
         if not self._replace_result_actor(RESULT_SCALAR_ACTOR_KEY, spec):
             return result
+        deformation_mode = self._interactive_result_state.deformation_mode
         for semantic_id in self._interactive_result_visibility_snapshot:
             if semantic_id in self._actor_records:
-                self.set_actor_visible(semantic_id, False)
+                hide = not (
+                    deformation_mode == DeformationMode.OVERLAY.value
+                    and semantic_id in {"base_mesh", "wireframe"}
+                )
+                if hide:
+                    self.set_actor_visible(
+                        semantic_id,
+                        False,
+                        preserve_transient=True,
+                    )
         colorbar = build_colorbar_spec(result)
         if colorbar is None:
             self._remove_result_actor(RESULT_COLORBAR_ACTOR_KEY)
         else:
             self._replace_result_actor(RESULT_COLORBAR_ACTOR_KEY, colorbar)
-        if self._mesh_quality_coloring_visible:
-            if self._mesh_quality_layer_snapshot is None:
-                self._mesh_quality_layer_snapshot = {}
-            for semantic_id in ("base_mesh", "wireframe"):
-                if semantic_id in self._actor_records:
-                    self._mesh_quality_layer_snapshot[semantic_id] = False
-            self._mesh_quality_layer_snapshot[RESULT_SCALAR_ACTOR_KEY] = True
-            if colorbar is None:
-                self._mesh_quality_layer_snapshot.pop(RESULT_COLORBAR_ACTOR_KEY, None)
-            else:
-                self._mesh_quality_layer_snapshot[RESULT_COLORBAR_ACTOR_KEY] = True
-            self._set_mesh_quality_visibility(
-                {
-                    "base_mesh": False,
-                    "wireframe": False,
-                    RESULT_SCALAR_ACTOR_KEY: False,
-                    RESULT_COLORBAR_ACTOR_KEY: False,
-                    MESH_QUALITY_ACTOR_KEY: True,
-                    MESH_QUALITY_SCALARBAR_ACTOR_KEY: True,
-                }
-            )
+        self._activate_result_primary_scalar()
         return result
 
     def set_vector_result(
@@ -1337,6 +1417,7 @@ class ActiveSceneController:
         components: tuple[str, ...] | None = None,
         maximum_glyph_count: int = 500,
         scale: float = 1.0,
+        scale_mode: VectorScaleMode | str = VectorScaleMode.MANUAL,
     ) -> ResultVectorGlyphSpec:
         """Apply or replace one bounded vector-glyph collection."""
 
@@ -1352,15 +1433,26 @@ class ActiveSceneController:
                 diagnostics=("An exact mesh/result binding is not available.",),
             )
         result = build_result_vector_glyph_spec(
-            self._mesh,
+            self._active_result_geometry_mesh(),
             self._interactive_result_dataset,
             binding_resolution=self._interactive_result_resolution,
             field_name=field_name,
             components=components,
             maximum_glyph_count=maximum_glyph_count,
             scale=scale,
+            scale_mode=scale_mode,
         )
         self._interactive_vector_result = result
+        self._interactive_result_state = replace(
+            self._interactive_result_state,
+            vector_field_id=str(field_name),
+            vector_visible=bool(result.applied and result.sampled_count > 0),
+            vector_max_glyph_count=int(maximum_glyph_count),
+            vector_scale_mode=(
+                result.scale_mode.value if result.applied else str(scale_mode).strip().upper()
+            ),
+            vector_manual_scale=float(scale),
+        )
         if (
             result.applied
             and result.sampled_count > 0
@@ -1370,6 +1462,127 @@ class ActiveSceneController:
         else:
             self._remove_result_actor(RESULT_VECTOR_ACTOR_KEY)
         return result
+
+    def set_deformed_result(
+        self,
+        field_name: str,
+        *,
+        mode: DeformationMode | str = DeformationMode.ORIGINAL,
+        scale_mode: DeformationScaleMode | str = DeformationScaleMode.AUTO,
+        manual_scale: float | None = None,
+    ) -> DeformedShapeSpec:
+        """Apply one typed displacement view without mutating source geometry."""
+
+        if (
+            self._mesh is None
+            or self._interactive_result_dataset is None
+            or self._interactive_result_resolution is None
+        ):
+            return DeformedShapeSpec(
+                applied=False,
+                status=DeformationStatus.INVALID,
+                field_name=str(field_name),
+                diagnostics=("An exact mesh/result binding is not available.",),
+            )
+        result = build_deformed_shape_spec(
+            self._mesh,
+            self._interactive_result_dataset,
+            binding_resolution=self._interactive_result_resolution,
+            field_name=field_name,
+            mode=mode,
+            scale_mode=scale_mode,
+            manual_scale=manual_scale,
+        )
+        self._interactive_deformation_result = result
+        self._interactive_result_state = replace(
+            self._interactive_result_state,
+            deformation_field_id=str(field_name),
+            deformation_mode=(result.mode.value if result.applied else str(mode).strip().upper()),
+            deformation_scale_mode=(
+                result.scale_mode.value if result.applied else str(scale_mode).strip().upper()
+            ),
+            deformation_manual_scale=(float(manual_scale) if manual_scale is not None else 1.0),
+        )
+        if not result.applied:
+            self._remove_result_actor(RESULT_DEFORMED_ACTOR_KEY)
+            self._remove_result_actor(RESULT_ORIGINAL_REFERENCE_ACTOR_KEY)
+            return result
+        if result.mode is DeformationMode.ORIGINAL:
+            self.clear_deformed_result(preserve_configuration=True)
+            return result
+        spec = build_deformed_overlay_spec(
+            result,
+            result_id=str(getattr(self._interactive_result_dataset, "dataset_id", "") or ""),
+        )
+        if spec is None or not self._interactive_result_renderer_available():
+            return result
+        if self._deformation_visibility_snapshot is None:
+            self._deformation_visibility_snapshot = {
+                semantic_id: record.visible
+                for semantic_id, record in self._actor_records.items()
+                if semantic_id in {"base_mesh", "wireframe"}
+                or record.category in {"setup", "diagnostic"}
+            }
+        self._replace_result_actor(RESULT_DEFORMED_ACTOR_KEY, spec)
+        if self._interactive_result_visibility_snapshot is not None:
+            self._interactive_result_visibility_snapshot[RESULT_DEFORMED_ACTOR_KEY] = True
+        self._refresh_result_selection_geometry()
+        if result.mode is DeformationMode.DEFORMED:
+            self._set_visibility_map(
+                {semantic_id: False for semantic_id in self._deformation_visibility_snapshot}
+            )
+        else:
+            self._restore_deformation_snapshot(keep_snapshot=True)
+        self._refresh_result_geometry_dependents()
+        return result
+
+    def clear_vector_result(self) -> bool:
+        """Remove the aggregate vector actor while retaining its configuration."""
+
+        existed = RESULT_VECTOR_ACTOR_KEY in self._actor_records
+        self._remove_result_actor(RESULT_VECTOR_ACTOR_KEY)
+        self._interactive_vector_result = None
+        self._interactive_result_state = replace(
+            self._interactive_result_state,
+            vector_visible=False,
+        )
+        return existed
+
+    def clear_result_probe(self) -> bool:
+        """Clear one transient result probe marker and table."""
+
+        existed = RESULT_PROBE_ACTOR_KEY in self._actor_records
+        self._remove_result_actor(RESULT_PROBE_ACTOR_KEY)
+        self._interactive_probe_result = None
+        self._interactive_result_table = None
+        self._interactive_result_state = replace(
+            self._interactive_result_state,
+            probe_mode="none",
+        )
+        return existed
+
+    def clear_deformed_result(
+        self,
+        *,
+        preserve_configuration: bool = False,
+        refresh_dependents: bool = True,
+    ) -> bool:
+        """Remove derived geometry and restore original actor visibility."""
+
+        had_deformation = self._interactive_deformation_result is not None
+        self._remove_result_actor(RESULT_DEFORMED_ACTOR_KEY)
+        self._remove_result_actor(RESULT_ORIGINAL_REFERENCE_ACTOR_KEY)
+        restored = self._restore_deformation_snapshot(keep_snapshot=False)
+        self._interactive_deformation_result = None
+        if not preserve_configuration:
+            self._interactive_result_state = replace(
+                self._interactive_result_state,
+                deformation_mode=DeformationMode.ORIGINAL.value,
+            )
+        if had_deformation and refresh_dependents:
+            self._refresh_result_geometry_dependents()
+            self._refresh_result_selection_geometry()
+        return restored
 
     def probe_result(
         self,
@@ -1401,6 +1614,12 @@ class ActiveSceneController:
             binding_resolution=self._interactive_result_resolution,
         )
         self._interactive_probe_result = result
+        self._interactive_result_state = replace(
+            self._interactive_result_state,
+            probe_mode=(
+                request.association if result.status is ResultProbeStatus.RESOLVED else "none"
+            ),
+        )
         if (
             result.status is ResultProbeStatus.RESOLVED
             and self._interactive_result_renderer_available()
@@ -1461,6 +1680,10 @@ class ActiveSceneController:
         """Remove scalar/colorbar resources and restore exact mesh visibility."""
 
         self._interactive_scalar_result = None
+        self._interactive_result_state = replace(
+            self._interactive_result_state,
+            contour_visible=False,
+        )
         self._remove_result_actor(RESULT_SCALAR_ACTOR_KEY)
         self._remove_result_actor(RESULT_COLORBAR_ACTOR_KEY)
         snapshot = self._interactive_result_visibility_snapshot
@@ -1476,7 +1699,15 @@ class ActiveSceneController:
             else:
                 for semantic_id, visible in snapshot.items():
                     if semantic_id in self._actor_records:
-                        restored = self.set_actor_visible(semantic_id, visible) and restored
+                        restored = (
+                            self.set_actor_visible(
+                                semantic_id,
+                                visible,
+                                preserve_transient=True,
+                            )
+                            and restored
+                        )
+        restored = self._restore_result_primary_scalar() and restored
         if restored:
             self._interactive_result_visibility_snapshot = None
         return restored
@@ -1488,6 +1719,15 @@ class ActiveSceneController:
         self._interactive_vector_result = None
         self._interactive_probe_result = None
         self._interactive_result_table = None
+        self.clear_deformed_result(
+            preserve_configuration=True,
+            refresh_dependents=False,
+        )
+        self._interactive_result_state = replace(
+            self._interactive_result_state,
+            vector_visible=False,
+            probe_mode="none",
+        )
         for semantic_id in (
             RESULT_VECTOR_ACTOR_KEY,
             RESULT_PROBE_ACTOR_KEY,
@@ -1695,7 +1935,16 @@ class ActiveSceneController:
             self._mesh_quality_coloring_visible = False
             self._remove_mesh_quality_actor(MESH_QUALITY_ACTOR_KEY)
             self._remove_mesh_quality_actor(MESH_QUALITY_SCALARBAR_ACTOR_KEY)
-            return self._restore_mesh_quality_layer_visibility()
+            restored = self._restore_mesh_quality_layer_visibility()
+            if self._quality_primary_scalar_snapshot is not None:
+                restored = (
+                    self._set_visibility_map(self._quality_primary_scalar_snapshot) and restored
+                )
+                self._quality_primary_scalar_snapshot = None
+                self._primary_scalar_owner = (
+                    "result" if self._interactive_result_state.contour_visible else ""
+                )
+            return restored
         if (
             self._mesh_quality_analysis is None
             or not self._mesh_quality_renderer_available()
@@ -1704,6 +1953,19 @@ class ActiveSceneController:
             not in {MeshDiagnosticsStatus.READY, MeshDiagnosticsStatus.PARTIAL_COVERAGE}
         ):
             return False
+        if (
+            self._interactive_result_state.contour_visible
+            and RESULT_SCALAR_ACTOR_KEY in self._actor_records
+        ):
+            self._quality_primary_scalar_snapshot = {
+                semantic_id: self._actor_records[semantic_id].visible
+                for semantic_id in (
+                    RESULT_SCALAR_ACTOR_KEY,
+                    RESULT_COLORBAR_ACTOR_KEY,
+                )
+                if semantic_id in self._actor_records
+            }
+            self._primary_scalar_owner = "diagnostics"
         self._mesh_quality_coloring_visible = True
         return self._refresh_mesh_quality_resources()
 
@@ -1897,7 +2159,13 @@ class ActiveSceneController:
                     self.set_actor_visible(semantic_id, False)
         return True
 
-    def set_actor_visible(self, semantic_id: str, visible: bool) -> bool:
+    def set_actor_visible(
+        self,
+        semantic_id: str,
+        visible: bool,
+        *,
+        preserve_transient: bool = False,
+    ) -> bool:
         if semantic_id not in self._actor_records:
             return False
         record = self._actor_records[semantic_id]
@@ -1920,7 +2188,7 @@ class ActiveSceneController:
             record,
             visible=bool(visible),
         )
-        if not visible and record.isolation_eligible:
+        if not visible and record.isolation_eligible and not preserve_transient:
             self._clear_transient_state(call_session=True)
         return True
 
@@ -2955,11 +3223,20 @@ class ActiveSceneController:
             message="No current entities are selected.",
         )
         if call_session:
+            self._interactive_probe_result = None
+            self._interactive_result_table = None
+            self._interactive_result_state = replace(
+                self._interactive_result_state,
+                probe_mode="none",
+            )
             self._call_session("selection-overlays", "clear_hover")
             self._call_session(
                 "selection-overlays",
                 "clear_current_selection",
             )
+            self._remove_result_actor(RESULT_PROBE_ACTOR_KEY)
+        else:
+            self._actor_records.pop(RESULT_PROBE_ACTOR_KEY, None)
 
     def _resolve_and_display_named_selections(self) -> None:
         session = self._session
@@ -3396,6 +3673,209 @@ class ActiveSceneController:
         if discard_cache:
             self._mesh_quality_cache.clear()
 
+    def _active_result_geometry_mesh(self) -> MeshData:
+        deformation = self._interactive_deformation_result
+        if deformation is not None and deformation.applied and deformation.mesh_data is not None:
+            return deformation.mesh_data
+        if self._mesh is None:
+            raise RuntimeError("An active mesh is required for result projection.")
+        return self._mesh
+
+    def _capture_interactive_result_snapshot(
+        self,
+    ) -> _InteractiveResultReplacementSnapshot | None:
+        if self._interactive_result_dataset is None:
+            return None
+        return _InteractiveResultReplacementSnapshot(
+            state=self._interactive_result_state,
+            probe=self._interactive_probe_result,
+            table=self._interactive_result_table,
+        )
+
+    def _restore_interactive_result_snapshot(
+        self,
+        snapshot: _InteractiveResultReplacementSnapshot,
+    ) -> None:
+        resolution = self._interactive_result_resolution
+        if resolution is None or resolution.state.value != "RESOLVED":
+            return
+        state = snapshot.state
+        if state.deformation_field_id and state.deformation_mode != DeformationMode.ORIGINAL.value:
+            self.set_deformed_result(
+                state.deformation_field_id,
+                mode=state.deformation_mode,
+                scale_mode=state.deformation_scale_mode,
+                manual_scale=state.deformation_manual_scale,
+            )
+        if state.active_field_id and state.contour_visible:
+            self.set_scalar_result(
+                state.active_field_id,
+                component=state.active_scalar_mode,
+                range_mode=state.range_mode,
+                manual_range=state.manual_range,
+                colormap=state.colormap,
+                colorbar_visible=state.colorbar_visible,
+            )
+        if state.vector_field_id and state.vector_visible:
+            self.set_vector_result(
+                state.vector_field_id,
+                maximum_glyph_count=state.vector_max_glyph_count,
+                scale=state.vector_manual_scale,
+                scale_mode=state.vector_scale_mode,
+            )
+        probe = snapshot.probe
+        fingerprint = self._mesh_fingerprint
+        dataset_id = str(getattr(self._interactive_result_dataset, "dataset_id", "") or "")
+        if probe is not None and fingerprint is not None and state.probe_mode in {"point", "cell"}:
+            self.probe_result(
+                ResultProbeRequest(
+                    dataset_id=dataset_id,
+                    field_name=probe.field_name,
+                    component=probe.component,
+                    association=probe.association,
+                    stable_entity_key=probe.stable_entity_key,
+                    mesh_fingerprint=fingerprint.digest,
+                )
+            )
+        table = snapshot.table
+        if table is not None:
+            self.set_selected_result_table(
+                field_name=table.field_name,
+                component=table.component,
+                association=table.association,
+                stable_entity_keys=tuple(row.stable_entity_key for row in table.rows),
+                limit=table.limit,
+            )
+
+    def _set_visibility_map(self, visibility: Mapping[str, bool]) -> bool:
+        restored = True
+        for semantic_id, visible in visibility.items():
+            if semantic_id in self._actor_records:
+                restored = (
+                    self.set_actor_visible(
+                        semantic_id,
+                        visible,
+                        preserve_transient=True,
+                    )
+                    and restored
+                )
+        return restored
+
+    def _restore_deformation_snapshot(self, *, keep_snapshot: bool) -> bool:
+        snapshot = self._deformation_visibility_snapshot
+        if snapshot is None:
+            return True
+        restored = self._set_visibility_map(snapshot)
+        if (
+            self._interactive_result_state.contour_visible
+            and self._interactive_result_state.deformation_mode != DeformationMode.OVERLAY.value
+        ):
+            for semantic_id in ("base_mesh", "wireframe", RESULT_DEFORMED_ACTOR_KEY):
+                if semantic_id in self._actor_records:
+                    restored = (
+                        self.set_actor_visible(
+                            semantic_id,
+                            False,
+                            preserve_transient=True,
+                        )
+                        and restored
+                    )
+        if restored and not keep_snapshot:
+            self._deformation_visibility_snapshot = None
+        return restored
+
+    def _refresh_result_geometry_dependents(self) -> None:
+        state = self._interactive_result_state
+        if state.contour_visible and state.active_field_id:
+            self.set_scalar_result(
+                state.active_field_id,
+                component=state.active_scalar_mode,
+                range_mode=state.range_mode,
+                manual_range=state.manual_range,
+                colormap=state.colormap,
+                colorbar_visible=state.colorbar_visible,
+            )
+        if state.vector_visible and state.vector_field_id:
+            self.set_vector_result(
+                state.vector_field_id,
+                maximum_glyph_count=state.vector_max_glyph_count,
+                scale=state.vector_manual_scale,
+                scale_mode=state.vector_scale_mode,
+            )
+
+    def _refresh_result_selection_geometry(self) -> None:
+        """Recreate canonical selection overlays on the active displayed geometry."""
+
+        self._call_session("selection-overlays", "clear_hover")
+        self._hover_target = None
+        self._actor_records.pop("hover", None)
+        self._resolve_and_display_named_selections()
+        target = self._current_selection_target
+        resolution = self._current_selection_resolution
+        if target is None or resolution.state is not ResolutionState.RESOLVED:
+            return
+        highlighted = self._call_session(
+            "selection-overlays",
+            "set_current_selection",
+            target.kind.value,
+            resolution.transient_indices,
+            self._generation,
+        )
+        if highlighted:
+            self._actor_records["current_selection"] = _scene_actor_record(
+                "current_selection",
+                generation=self._generation,
+            )
+
+    def _activate_result_primary_scalar(self) -> None:
+        if self._mesh_quality_coloring_visible:
+            if self._result_primary_scalar_snapshot is None:
+                self._result_primary_scalar_snapshot = {
+                    semantic_id: self._actor_records[semantic_id].visible
+                    for semantic_id in (
+                        MESH_QUALITY_ACTOR_KEY,
+                        MESH_QUALITY_SCALARBAR_ACTOR_KEY,
+                    )
+                    if semantic_id in self._actor_records
+                }
+            self._set_visibility_map(
+                {
+                    MESH_QUALITY_ACTOR_KEY: False,
+                    MESH_QUALITY_SCALARBAR_ACTOR_KEY: False,
+                    RESULT_SCALAR_ACTOR_KEY: True,
+                    RESULT_COLORBAR_ACTOR_KEY: self._interactive_result_state.colorbar_visible,
+                }
+            )
+        self._primary_scalar_owner = "result"
+
+    def _restore_result_primary_scalar(self) -> bool:
+        if self._primary_scalar_owner != "result":
+            self._result_primary_scalar_snapshot = None
+            return True
+        restored = True
+        if self._mesh_quality_coloring_visible and self._result_primary_scalar_snapshot:
+            restored = self._set_visibility_map(self._result_primary_scalar_snapshot)
+        self._result_primary_scalar_snapshot = None
+        self._primary_scalar_owner = "diagnostics" if self._mesh_quality_coloring_visible else ""
+        return restored
+
+    def _result_actor_metadata(self, payload: object) -> Mapping[str, object]:
+        fingerprint = self._mesh_fingerprint
+        return {
+            "result_id": str(
+                getattr(payload, "result_id", "")
+                or getattr(self._interactive_result_dataset, "dataset_id", "")
+                or ""
+            ),
+            "field_id": str(getattr(payload, "field_name", "") or ""),
+            "association": str(getattr(payload, "association", "") or ""),
+            "mesh_generation": self._generation,
+            "mesh_fingerprint": str(
+                getattr(payload, "mesh_fingerprint", "")
+                or (fingerprint.digest if fingerprint is not None else "")
+            ),
+        }
+
     def _interactive_result_renderer_available(self) -> bool:
         return bool(
             self._session is not None
@@ -3414,6 +3894,24 @@ class ActiveSceneController:
             active_mesh=self._mesh,
             active_mesh_ref=self._mesh_ref,
             result_dataset=self._interactive_result_dataset,
+        )
+        resolution = self._interactive_result_resolution
+        if self._mesh is not None and self._interactive_result_dataset is not None:
+            self._interactive_result_catalog = build_result_field_catalog(
+                self._mesh,
+                self._interactive_result_dataset,
+                binding_resolution=resolution,
+            )
+            status = self._interactive_result_catalog.binding_status.value
+        else:
+            self._interactive_result_catalog = None
+            status = "UNRESOLVED"
+        stale_reason = resolution.reason_code if resolution.state.value != "RESOLVED" else ""
+        self._interactive_result_state = replace(
+            self._interactive_result_state,
+            active_result_id=str(getattr(self._interactive_result_dataset, "dataset_id", "") or ""),
+            binding_status=status,
+            stale_reason=stale_reason,
         )
 
     def _replace_result_actor(self, semantic_id: str, payload: object) -> bool:
@@ -3438,6 +3936,7 @@ class ActiveSceneController:
                 semantic_id,
                 generation=self._generation,
                 visible=True if previous is None else previous.visible,
+                metadata=self._result_actor_metadata(payload),
             )
             session.request_render()
         except Exception as exc:
@@ -3462,12 +3961,19 @@ class ActiveSceneController:
         self.clear_interactive_results()
         self._interactive_scalar_result = None
         self._interactive_vector_result = None
+        self._interactive_deformation_result = None
         self._interactive_result_visibility_snapshot = None
+        self._deformation_visibility_snapshot = None
+        self._result_primary_scalar_snapshot = None
+        self._quality_primary_scalar_snapshot = None
+        self._primary_scalar_owner = ""
         if discard_binding:
             self._interactive_result_dataset = None
             self._interactive_result_binding = None
             self._interactive_result_ref_id = ""
             self._interactive_result_resolution = None
+            self._interactive_result_catalog = None
+            self._interactive_result_state = InteractiveResultSessionState()
 
     def _notify_selection_listener(self) -> None:
         callback = self._selection_listener
@@ -3492,6 +3998,7 @@ def _scene_actor_record(
     *,
     generation: int,
     visible: bool = True,
+    metadata: Mapping[str, object] | None = None,
 ) -> SceneActorRecord:
     selection = (
         semantic_id in {"hover", "current_selection"}
@@ -3507,10 +4014,13 @@ def _scene_actor_record(
         RESULT_SCALAR_ACTOR_KEY,
         RESULT_VECTOR_ACTOR_KEY,
         RESULT_PROBE_ACTOR_KEY,
+        RESULT_DEFORMED_ACTOR_KEY,
+        RESULT_ORIGINAL_REFERENCE_ACTOR_KEY,
     }
     setup = semantic_id.startswith(("setup_target:", "setup_glyph:"))
     helper = selection or semantic_id in {
         RESULT_COLORBAR_ACTOR_KEY,
+        RESULT_PROBE_ACTOR_KEY,
         MESH_QUALITY_SCALARBAR_ACTOR_KEY,
     }
     category = (
@@ -3531,9 +4041,15 @@ def _scene_actor_record(
         generation=generation,
         visible=bool(visible),
         category=category,
-        pickable=semantic_id == "base_mesh",
+        pickable=semantic_id
+        in {
+            "base_mesh",
+            RESULT_DEFORMED_ACTOR_KEY,
+            RESULT_SCALAR_ACTOR_KEY,
+        },
         isolation_eligible=not helper,
         is_helper=helper,
+        metadata=dict(metadata or {}),
     )
 
 

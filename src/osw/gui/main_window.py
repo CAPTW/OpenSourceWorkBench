@@ -723,11 +723,16 @@ class MainWindow(_BaseMainWindow):
             self.properties_panel.set_node_selection(current.text(0))
         if self._handle_project_tree_mesh_diagnostics(current):
             self.properties_panel.clear_setup_record()
+            self.properties_panel.clear_interactive_result_view_model()
             return
         self.properties_panel.clear_mesh_diagnostics_view_model()
         if self._handle_project_tree_setup(current):
+            self.properties_panel.clear_interactive_result_view_model()
             return
         self.properties_panel.clear_setup_record()
+        if self._handle_project_tree_result(current):
+            return
+        self.properties_panel.clear_interactive_result_view_model()
         if self._handle_project_tree_named_selection(current):
             return
         self._handle_project_tree_mesh_selection(current)
@@ -764,6 +769,99 @@ class MainWindow(_BaseMainWindow):
             return False
         self._activate_named_selection(selection_id, source="project_tree")
         return True
+
+    def _handle_project_tree_result(self, current: object | None) -> bool:
+        if current is None:
+            return False
+        kind = str(current.data(0, QtCore.Qt.ItemDataRole.UserRole) or "")
+        if kind not in {"result_dataset", "result_field"}:
+            return False
+        payload = self._project_tree_item_payload(current)
+        dataset = self._result_dataset_for_tree_payload(payload)
+        if dataset is None:
+            self.properties_panel.clear_interactive_result_view_model()
+            return True
+        result_ref_id = payload.get("result_ref_id", "")
+        binding = self._interactive_result_binding_for_dataset(
+            dataset,
+            result_ref_id=result_ref_id,
+        )
+        if self.mesh_viewer is not None:
+            current_dataset = self.mesh_viewer.current_result_dataset()
+            current_ref_id = self.mesh_viewer.current_result_ref_id()
+            same_dataset = (
+                current_dataset is not None
+                and _dataset_identifier(current_dataset) == _dataset_identifier(dataset)
+                and current_ref_id == result_ref_id
+            )
+            contour_was_visible = bool(
+                self.active_scene_controller.interactive_result_state.contour_visible
+            )
+            if not same_dataset:
+                self.mesh_viewer.set_result_dataset(dataset)
+                self.mesh_viewer.set_result_binding(binding, result_ref_id=result_ref_id)
+            field_id = payload.get("field_id", "")
+            if field_id:
+                self.mesh_viewer.select_result_field(field_id)
+                self.active_scene_controller.clear_result_probe()
+                target = self.active_scene_controller.current_selection_target
+                locator = None if target is None else target.locator
+                if locator is not None:
+                    self.mesh_viewer.sync_result_selection(
+                        locator.entity_kind.value,
+                        locator.entity_ids,
+                    )
+                if same_dataset and contour_was_visible:
+                    self.mesh_viewer.apply_selected_result_field()
+        else:
+            self.active_scene_controller.set_interactive_result_dataset(
+                dataset,
+                binding,
+                result_ref_id=result_ref_id,
+            )
+        if kind == "result_dataset":
+            self._sync_interactive_result_tree()
+        self._refresh_interactive_result_properties(field_id=payload.get("field_id", ""))
+        return True
+
+    def _result_dataset_for_tree_payload(
+        self,
+        payload: Mapping[str, str],
+    ) -> object | None:
+        dataset_id = str(payload.get("result_dataset_id", "") or "")
+        result_ref_id = str(payload.get("result_ref_id", "") or "")
+        datasets = self._mesh_viewer_result_dataset_candidates()
+        for dataset in datasets:
+            if dataset_id and _dataset_identifier(dataset) == dataset_id:
+                return dataset
+        for dataset in datasets:
+            if any(
+                result_ref_id == _result_ref_display_id(candidate.result_ref)
+                for candidate in self._result_ref_candidates_for_dataset(dataset)
+            ):
+                return dataset
+        return None
+
+    def _interactive_result_binding_for_dataset(
+        self,
+        dataset: object,
+        *,
+        result_ref_id: str,
+    ) -> object | None:
+        candidates = self._result_ref_candidates_for_dataset(dataset)
+        candidate = next(
+            (
+                item
+                for item in candidates
+                if not result_ref_id or _result_ref_display_id(item.result_ref) == result_ref_id
+            ),
+            None,
+        )
+        if candidate is None or (not result_ref_id and len(candidates) != 1):
+            return None
+        from osw.core.result_mesh_binding import result_mesh_binding_from_metadata
+
+        return result_mesh_binding_from_metadata(candidate.result_ref.metadata)
 
     def _handle_project_tree_mesh_selection(self, current: object | None) -> None:
         if current is None:
@@ -2028,6 +2126,13 @@ class MainWindow(_BaseMainWindow):
         elif not active_ids:
             panel.clear_named_selection(emit=False)
             self.project_tree_panel.clear_named_selection(emit=False)
+        mesh_viewer = getattr(self, "mesh_viewer", None)
+        if mesh_viewer is not None:
+            locator = None if target is None else target.locator
+            mesh_viewer.sync_result_selection(
+                "" if locator is None else locator.entity_kind.value,
+                () if locator is None else locator.entity_ids,
+            )
         self._refresh_setup_overlay_panel()
 
     @property
@@ -3346,6 +3451,13 @@ class MainWindow(_BaseMainWindow):
                         stale_result=False,
                     )
                 )
+            if hasattr(
+                self.mesh_viewer,
+                "set_interactive_result_state_changed_callback",
+            ):
+                self.mesh_viewer.set_interactive_result_state_changed_callback(
+                    self._refresh_interactive_result_properties
+                )
             layout.addWidget(self.mesh_viewer)
             if hasattr(self.mesh_viewer, "set_theme_tokens"):
                 self.mesh_viewer.set_theme_tokens(self.theme_manager.current_tokens)
@@ -3892,6 +4004,52 @@ class MainWindow(_BaseMainWindow):
             binding,
             result_ref_id=result_ref_id,
         )
+        self._sync_interactive_result_tree()
+        self._refresh_interactive_result_properties()
+
+    def _sync_interactive_result_tree(self) -> None:
+        panel = self.mesh_viewer
+        if panel is None or not hasattr(panel, "current_result_dataset"):
+            return
+        dataset = panel.current_result_dataset()
+        if dataset is None:
+            return
+        result_ref_id = (
+            panel.current_result_ref_id() if hasattr(panel, "current_result_ref_id") else ""
+        )
+        state = panel.current_state() if hasattr(panel, "current_state") else None
+        mesh_ref = str(getattr(state, "mesh_ref", "") or "")
+        view_model = self.active_scene_controller.interactive_results_view_model
+        self.project_tree_panel.set_interactive_result_catalog(
+            result_ref_id=result_ref_id,
+            result_dataset=dataset,
+            catalog=view_model.catalog,
+            binding_reason=view_model.binding_reason,
+            mesh_ref=mesh_ref,
+        )
+
+    def _refresh_interactive_result_properties(self, *, field_id: str = "") -> None:
+        panel = self.mesh_viewer
+        if panel is None or not hasattr(panel, "current_result_dataset"):
+            return
+        dataset = panel.current_result_dataset()
+        if dataset is None:
+            self.properties_panel.clear_interactive_result_view_model()
+            return
+        selected_field_id = field_id
+        if not selected_field_id and hasattr(panel, "selected_result_field_id"):
+            selected_field_id = panel.selected_result_field_id() or ""
+        result_ref_id = (
+            panel.current_result_ref_id() if hasattr(panel, "current_result_ref_id") else ""
+        )
+        state = panel.current_state() if hasattr(panel, "current_state") else None
+        self.properties_panel.set_interactive_result_view_model(
+            self.active_scene_controller.interactive_results_view_model,
+            result_dataset=dataset,
+            result_ref_id=result_ref_id,
+            mesh_ref=str(getattr(state, "mesh_ref", "") or ""),
+            field_id=selected_field_id,
+        )
 
     def _mesh_viewer_result_dataset_candidates(self) -> tuple[object, ...]:
         if self.last_result_datasets:
@@ -4052,6 +4210,8 @@ class MainWindow(_BaseMainWindow):
                     getattr(bridge.result_ref, "id", "") or getattr(bridge.result_ref, "ref_id", "")
                 ),
             )
+            self._sync_interactive_result_tree()
+            self._refresh_interactive_result_properties()
         self._placeholder_action(message)
         return True
 

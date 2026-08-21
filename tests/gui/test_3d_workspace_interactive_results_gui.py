@@ -74,6 +74,17 @@ def _dataset() -> ResultDataset:
                 unit="mm",
             ),
         ),
+        metadata={
+            "title": "Interactive fixture",
+            "mesh_length_unit": "mm",
+            "field_semantics": {
+                "displacement": {
+                    "semantic_role": "displacement",
+                    "quantity_dimension": "length",
+                    "coordinate_system": "global_cartesian",
+                }
+            },
+        },
     )
 
 
@@ -264,9 +275,7 @@ def test_confirm_rebind_persists_v2_then_transient_controls_do_not_dirty_or_writ
         panel.rebind_result_button.click()
         assert panel.binding_state_label.text() == "RESOLVED"
         assert (
-            window.current_project.results[0].metadata["mesh_binding"][
-                "mesh_fingerprint"
-            ]
+            window.current_project.results[0].metadata["mesh_binding"]["mesh_fingerprint"]
             != payload["mesh_fingerprint"]
         )
     finally:
@@ -311,9 +320,109 @@ def test_renderer_fallback_keeps_mapping_probe_and_table_but_disables_rendering(
         assert panel.apply_vector_button.isEnabled() is False
         assert "unavailable" in panel.result_status_label.text().lower()
         assert not any(
-            key.startswith("result:")
-            for key in window.active_scene_controller.actor_records
+            key.startswith("result:") for key in window.active_scene_controller.actor_records
         )
+    finally:
+        window.close()
+    del app
+
+
+def test_result_tree_properties_controls_and_deformation_stay_synchronized(
+    app: QtWidgets.QApplication,
+) -> None:
+    _api()
+    factory = ResultGuiFactory()
+    window = _window(
+        factory=factory,
+        confirmation=lambda _message: True,
+        project_saver=lambda *_args: None,
+    )
+    try:
+        assert window.persist_mesh_viewer_result_binding() is True
+        panel = window.mesh_viewer
+        tree = window.project_tree_panel
+
+        required_accessible_controls = (
+            panel.result_dataset_selector,
+            panel.scalar_selector,
+            panel.result_association_label,
+            panel.scalar_component_selector,
+            panel.contour_toggle,
+            panel.range_mode_selector,
+            panel.manual_min_input,
+            panel.manual_max_input,
+            panel.colormap_selector,
+            panel.colorbar_toggle,
+            panel.vector_selector,
+            panel.glyph_toggle,
+            panel.glyph_max_count_input,
+            panel.vector_scale_mode_selector,
+            panel.glyph_scale_input,
+            panel.result_probe_label,
+            panel.selected_result_table,
+            panel.deformation_field_selector,
+            panel.deformation_mode_selector,
+            panel.deformation_scale_mode_selector,
+            panel.deformation_scale_input,
+            panel.apply_deformation_button,
+            panel.reset_result_view_button,
+        )
+        assert all(widget.accessibleName() for widget in required_accessible_controls)
+        assert all(widget.toolTip() for widget in required_accessible_controls)
+
+        result_item = tree.result_item("rd-1")
+        assert result_item is not None
+        assert result_item.text(1) == "READY"
+        assert result_item.childCount() == 2
+        assert tree.select_result_field("rd-1", "displacement") is True
+        app.processEvents()
+
+        assert panel.selected_result_field_id() == "displacement"
+        assert panel.result_association_label.text() == "Association: point"
+        assert {"x", "y", "z", "magnitude"}.issubset(
+            {
+                panel.scalar_component_selector.itemText(index)
+                for index in range(panel.scalar_component_selector.count())
+            }
+        )
+        assert "result:scalar" not in factory.session.actors
+        rows = window.properties_panel.interactive_result_property_rows()
+        assert rows["Result ID"] == "rd-1"
+        assert rows["Binding status"] == "READY"
+        assert rows["Field ID"] == "displacement"
+        assert rows["Association"] == "point"
+        assert rows["Components"] == "ux, uy, uz"
+        assert rows["Units"] == "mm"
+        assert rows["Deformation eligible"] == "yes"
+        assert not window.properties_panel.interactive_result_properties_group.isHidden()
+
+        assert panel.deformation_field_selector.currentText() == "displacement"
+        panel.deformation_mode_selector.setCurrentText("DEFORMED")
+        panel.deformation_scale_mode_selector.setCurrentText("MANUAL")
+        panel.deformation_scale_input.setValue(2.0)
+        panel.apply_deformation_button.click()
+        assert "result:deformed" in factory.session.actors
+        assert window.properties_panel.row_value("Deformation mode") == "DEFORMED"
+        assert window.properties_panel.row_value("Deformation scale") == "2"
+
+        panel.range_mode_selector.setCurrentText("MANUAL")
+        panel.manual_min_input.setValue(5.0)
+        panel.manual_max_input.setValue(1.0)
+        assert panel.apply_scalar_button.isEnabled() is False
+        panel.manual_max_input.setValue(10.0)
+        assert panel.apply_scalar_button.isEnabled() is True
+
+        panel.reset_result_view_button.click()
+        assert not any(key.startswith("result:") for key in factory.session.actors)
+
+        window.load_mesh_into_viewer(_mesh(changed=True), mesh_ref="mesh-1")
+        stale_item = tree.result_item("rd-1")
+        assert stale_item is not None
+        assert stale_item.text(1) == "STALE_MESH"
+        assert panel.apply_scalar_button.isEnabled() is False
+        assert panel.apply_vector_button.isEnabled() is False
+        assert panel.apply_deformation_button.isEnabled() is False
+        assert "MESH_FINGERPRINT_MISMATCH" in panel.result_status_label.text()
     finally:
         window.close()
     del app
