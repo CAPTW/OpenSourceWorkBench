@@ -18,6 +18,7 @@ from osw.core.project_schema import (
     ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION,
     LEGACY_PROJECT_SCHEMA_VERSION,
     PATH_KIND_PROJECT_SCHEMA_VERSION,
+    SOLVER_SETUP_PROJECT_SCHEMA_VERSION,
     SUPPORTED_PROJECT_SCHEMA_VERSIONS,
     BoundaryCondition,
     GeometryRef,
@@ -284,8 +285,9 @@ def test_project_schema_versions_keep_feature_unused_projects_at_0_1() -> None:
     assert DEFAULT_PROJECT_SCHEMA_VERSION == "0.1"
     assert PATH_KIND_PROJECT_SCHEMA_VERSION == "0.2"
     assert ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION == "0.3"
-    assert CURRENT_SCHEMA_VERSION == "0.3"
-    assert SUPPORTED_PROJECT_SCHEMA_VERSIONS == frozenset({"0.1", "0.2", "0.3"})
+    assert SOLVER_SETUP_PROJECT_SCHEMA_VERSION == "0.4"
+    assert CURRENT_SCHEMA_VERSION == "0.4"
+    assert SUPPORTED_PROJECT_SCHEMA_VERSIONS == frozenset({"0.1", "0.2", "0.3", "0.4"})
     assert Project(metadata=ProjectMetadata(name="default")).schema_version == "0.1"
 
 
@@ -335,8 +337,7 @@ def test_demo_project_boundary_rows_and_solver_settings_match_gui_mock() -> None
     assert project.primary_physics is not None
 
     rows = [
-        (item.name, item.type, item.value)
-        for item in project.primary_physics.boundary_conditions
+        (item.name, item.type, item.value) for item in project.primary_physics.boundary_conditions
     ]
 
     assert rows == [
@@ -413,8 +414,7 @@ def test_project_validation_warns_when_mat_preview_metadata_is_missing() -> None
 
     assert report.has_warnings
     assert any(
-        "MAT data reference has no variable summary" in item.message
-        for item in report.messages
+        "MAT data reference has no variable summary" in item.message for item in report.messages
     )
 
 
@@ -886,14 +886,10 @@ def test_project_without_report_screenshots_is_byte_identical() -> None:
 def test_project_with_unmarked_report_screenshot_is_byte_identical() -> None:
     project = Project(
         metadata=ProjectMetadata(name="Legacy asset"),
-        report_screenshots=[
-            ReportScreenshotAsset(id="shot-1", path="screenshots/scene.png")
-        ],
+        report_screenshots=[ReportScreenshotAsset(id="shot-1", path="screenshots/scene.png")],
     )
 
-    serialized = json.dumps(
-        project.to_dict(), sort_keys=True, separators=(",", ":")
-    ).encode()
+    serialized = json.dumps(project.to_dict(), sort_keys=True, separators=(",", ":")).encode()
     expected = (
         b'{"boundary_curves":[],"geometry":[],"geometry_refs":[],"materials":[],'
         b'"mesh_refs":[],"meshes":[],"metadata":{"author":"","created_at":"",'

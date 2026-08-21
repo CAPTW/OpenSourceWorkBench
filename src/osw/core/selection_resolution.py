@@ -98,9 +98,7 @@ def resolve_entity_locator(
         )
 
     expected_namespace = (
-        NODE_ORDINAL_NAMESPACE
-        if locator.entity_kind is EntityKind.NODE
-        else CELL_ORDINAL_NAMESPACE
+        NODE_ORDINAL_NAMESPACE if locator.entity_kind is EntityKind.NODE else CELL_ORDINAL_NAMESPACE
     )
     if locator.id_namespace == expected_namespace:
         return _resolve_ordinal_locator(locator, mesh)
@@ -184,16 +182,12 @@ def resolve_named_selection(
         ResolutionState.PARTIAL,
         ResolutionState.RESOLVED,
     )
-    state = next(candidate for candidate in priority if any(
-        result.state is candidate for result in results
-    ))
+    state = next(
+        candidate for candidate in priority if any(result.state is candidate for result in results)
+    )
     first = next(result for result in results if result.state is state)
-    indices = tuple(
-        index for result in results for index in result.transient_indices
-    )
-    missing = tuple(
-        item for result in results for item in result.missing_ids
-    )
+    indices = tuple(index for result in results for index in result.transient_indices)
+    missing = tuple(item for result in results for item in result.missing_ids)
     return ResolutionResult(
         state=state,
         transient_indices=indices if state is ResolutionState.RESOLVED else (),
@@ -224,9 +218,7 @@ def create_named_selection(
     if not normalized_name:
         raise NamedSelectionLifecycleError("Named selection name is required.")
     if any(item.id == normalized_id for item in selections):
-        raise NamedSelectionLifecycleError(
-            f"Named selection ID already exists: {normalized_id}"
-        )
+        raise NamedSelectionLifecycleError(f"Named selection ID already exists: {normalized_id}")
     _require_unique_name(selections, normalized_name)
     assert target is not None
     created = NamedSelection(
@@ -264,9 +256,7 @@ def rename_named_selection(
         else:
             updated.append(item)
     if not found:
-        raise NamedSelectionLifecycleError(
-            f"Named selection was not found: {selection_id}"
-        )
+        raise NamedSelectionLifecycleError(f"Named selection was not found: {selection_id}")
     return tuple(updated)
 
 
@@ -296,9 +286,7 @@ def replace_named_selection_targets(
         else:
             updated.append(item)
     if not found:
-        raise NamedSelectionLifecycleError(
-            f"Named selection was not found: {selection_id}"
-        )
+        raise NamedSelectionLifecycleError(f"Named selection was not found: {selection_id}")
     return tuple(updated)
 
 
@@ -311,17 +299,13 @@ def delete_named_selection(
     """Delete one unreferenced selection; never cascade."""
 
     if references:
-        kinds = ", ".join(
-            f"{item.reference_kind}:{item.owner_id}" for item in references
-        )
+        kinds = ", ".join(f"{item.reference_kind}:{item.owner_id}" for item in references)
         raise NamedSelectionLifecycleError(
             f"Named selection is referenced and cannot be deleted: {kinds}"
         )
     retained = tuple(item for item in selections if item.id != selection_id)
     if len(retained) == len(tuple(selections)):
-        raise NamedSelectionLifecycleError(
-            f"Named selection was not found: {selection_id}"
-        )
+        raise NamedSelectionLifecycleError(f"Named selection was not found: {selection_id}")
     return retained
 
 
@@ -337,9 +321,7 @@ def find_named_selection_references(
         for boundary in getattr(setup, "boundary_conditions", ()) or ():
             target_ref = getattr(boundary, "target_ref", None)
             if getattr(target_ref, "selection_id", "") == selection_id:
-                boundary_name = str(
-                    getattr(boundary, "name", "") or "boundary_condition"
-                )
+                boundary_name = str(getattr(boundary, "name", "") or "boundary_condition")
                 references.append(
                     SelectionReference(
                         reference_kind="boundary_condition",
@@ -349,14 +331,38 @@ def find_named_selection_references(
         for record in getattr(setup, "material_assignment_records", ()) or ():
             if record.target_selection_id == selection_id:
                 references.append(
-                    SelectionReference("material_assignment", record.id)
+                    SelectionReference(
+                        "material_assignment",
+                        _setup_reference_owner(record),
+                    )
                 )
         for record in getattr(setup, "fixed_support_records", ()) or ():
             if record.target_selection_id == selection_id:
-                references.append(SelectionReference("fixed_support", record.id))
+                references.append(
+                    SelectionReference("fixed_support", _setup_reference_owner(record))
+                )
+        for record in getattr(setup, "prescribed_displacement_records", ()) or ():
+            if record.target_selection_id == selection_id:
+                references.append(
+                    SelectionReference(
+                        "prescribed_displacement",
+                        _setup_reference_owner(record),
+                    )
+                )
         for record in getattr(setup, "force_load_records", ()) or ():
             if record.target_selection_id == selection_id:
-                references.append(SelectionReference("force_load", record.id))
+                references.append(SelectionReference("force_load", _setup_reference_owner(record)))
+        for record in getattr(setup, "pressure_load_records", ()) or ():
+            if record.target_selection_id == selection_id:
+                references.append(
+                    SelectionReference("pressure_load", _setup_reference_owner(record))
+                )
+        for record in getattr(setup, "temperature_records", ()) or ():
+            if record.target_selection_id == selection_id:
+                references.append(SelectionReference("temperature", _setup_reference_owner(record)))
+        for record in getattr(setup, "heat_flux_records", ()) or ():
+            if record.target_selection_id == selection_id:
+                references.append(SelectionReference("heat_flux", _setup_reference_owner(record)))
     for asset in getattr(project, "report_screenshots", ()) or ():
         if selection_id in tuple(getattr(asset, "selection_ids", ()) or ()):
             references.append(
@@ -366,6 +372,12 @@ def find_named_selection_references(
                 )
             )
     return tuple(references)
+
+
+def _setup_reference_owner(record: object) -> str:
+    record_id = str(getattr(record, "id", "") or "")
+    name = str(getattr(record, "name", "") or "").strip()
+    return f"{record_id} ({name})" if name and name != record_id else record_id
 
 
 def _validate_locator(locator: EntityLocator) -> ResolutionResult | None:
@@ -418,11 +430,7 @@ def _resolve_ordinal_locator(
     missing: list[int | str] = []
     if locator.entity_kind is EntityKind.NODE:
         for entity_id in locator.entity_ids:
-            if (
-                isinstance(entity_id, bool)
-                or not isinstance(entity_id, int)
-                or entity_id < 0
-            ):
+            if isinstance(entity_id, bool) or not isinstance(entity_id, int) or entity_id < 0:
                 return _invalid_result(
                     "MALFORMED_NODE_ORDINAL",
                     "A node ordinal is malformed.",
@@ -443,10 +451,7 @@ def _resolve_ordinal_locator(
                     locator,
                 )
             block_ordinal, local_ordinal = parsed
-            if (
-                block_ordinal >= len(mesh.cells)
-                or local_ordinal >= mesh.cells[block_ordinal].count
-            ):
+            if block_ordinal >= len(mesh.cells) or local_ordinal >= mesh.cells[block_ordinal].count:
                 missing.append(entity_id)
             else:
                 resolved.append(offsets[block_ordinal] + local_ordinal)
@@ -508,9 +513,7 @@ def _resolution_from_matches(
         resolved_count=len(resolved),
         missing_ids=tuple(missing),
         reason_code=(
-            "ENTITY_IDS_PARTIALLY_RESOLVED"
-            if missing
-            else "EXACT_MESH_IDENTITY_RESOLVED"
+            "ENTITY_IDS_PARTIALLY_RESOLVED" if missing else "EXACT_MESH_IDENTITY_RESOLVED"
         ),
         message=(
             "Only part of the selection resolves on the exact mesh."
@@ -593,9 +596,7 @@ def _require_unique_name(
     excluding_id: str = "",
 ) -> None:
     if any(item.name == name and item.id != excluding_id for item in selections):
-        raise NamedSelectionLifecycleError(
-            f"Named selection name already exists: {name}"
-        )
+        raise NamedSelectionLifecycleError(f"Named selection name already exists: {name}")
 
 
 __all__ = [

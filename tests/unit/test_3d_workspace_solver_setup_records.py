@@ -86,9 +86,7 @@ def test_typed_records_roundtrip_additively_in_schema_0_3() -> None:
     assert api.force_direction(force) == (0.0, -1.0, 0.0)
 
     for version in ("0.1", "0.2", "0.3"):
-        legacy = Project.from_dict(
-            {"schema_version": version, "metadata": {"name": version}}
-        )
+        legacy = Project.from_dict({"schema_version": version, "metadata": {"name": version}})
         assert legacy.primary_physics is None
 
 
@@ -170,20 +168,14 @@ def test_readiness_reports_exact_domain_material_id_and_resolution_reasons() -> 
         resolutions={"cells": _resolved(0)},
     )[0]
     wrong_domain = api.evaluate_solver_setup(
-        PhysicsSetup(
-            fixed_support_records=[
-                api.FixedSupportRecord("support", "Support", "cells")
-            ]
-        ),
+        PhysicsSetup(fixed_support_records=[api.FixedSupportRecord("support", "Support", "cells")]),
         selections=(cell,),
         materials=(),
         resolutions={"cells": _resolved(0)},
     )[0]
     disabled_missing_id = api.evaluate_solver_setup(
         PhysicsSetup(
-            fixed_support_records=[
-                api.FixedSupportRecord("", "Disabled", "nodes", enabled=False)
-            ]
+            fixed_support_records=[api.FixedSupportRecord("", "Disabled", "nodes", enabled=False)]
         ),
         selections=(node,),
         materials=(),
@@ -201,9 +193,7 @@ def test_readiness_reports_exact_domain_material_id_and_resolution_reasons() -> 
     ):
         status = api.evaluate_solver_setup(
             PhysicsSetup(
-                fixed_support_records=[
-                    api.FixedSupportRecord("support", "Support", "nodes")
-                ]
+                fixed_support_records=[api.FixedSupportRecord("support", "Support", "nodes")]
             ),
             selections=(node,),
             materials=(),
@@ -312,16 +302,14 @@ def test_typed_selection_references_block_deletion_without_reinterpreting_legacy
         metadata=ProjectMetadata(name="Refs"),
         selections=(selection,),
         physics=PhysicsSetup(
-            fixed_support_records=[
-                api.FixedSupportRecord("fix-a", "Clamp", "nodes-a")
-            ],
+            fixed_support_records=[api.FixedSupportRecord("fix-a", "Clamp", "nodes-a")],
             material_assignments={"legacy-cell-id": "steel"},
         ),
     )
     references = find_named_selection_references(project, "nodes-a")
 
     assert [(item.reference_kind, item.owner_id) for item in references] == [
-        ("fixed_support", "fix-a")
+        ("fixed_support", "fix-a (Clamp)")
     ]
     with pytest.raises(NamedSelectionLifecycleError, match="referenced"):
         delete_named_selection(

@@ -140,11 +140,7 @@ def _controlled_tree_snapshot(
     """Snapshot only a test-controlled tree, including paths, dirs, and bytes."""
     entries = tuple(sorted(path.relative_to(root).as_posix() for path in root.rglob("*")))
     directories = tuple(
-        sorted(
-            path.relative_to(root).as_posix()
-            for path in root.rglob("*")
-            if path.is_dir()
-        )
+        sorted(path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_dir())
     )
     files = {
         path.relative_to(root).as_posix(): path.read_bytes()
@@ -171,9 +167,7 @@ def test_panel_and_manager_keep_persisted_and_staged_rows_separate(
     assert panel.screenshot_status_label.text() == "Report screenshots staged: 1"
     assert panel.staged_screenshots_list.count() == 1
     assert "staged-1" in panel.staged_screenshots_list.item(0).text()
-    assert panel.persisted_screenshots_status_label.text() == (
-        "Persisted report screenshots: 1"
-    )
+    assert panel.persisted_screenshots_status_label.text() == ("Persisted report screenshots: 1")
     assert panel.manage_persisted_screenshots_button.isEnabled()
     caveat = panel.screenshot_caveat_label.text()
     assert "local report artifacts only" in caveat
@@ -194,9 +188,7 @@ def test_empty_manager_and_no_selection_are_friendly(app: object) -> None:
     window.open_mesh_viewer()
     panel = window.mesh_viewer
 
-    assert panel.persisted_screenshots_status_label.text() == (
-        "Persisted report screenshots: 0"
-    )
+    assert panel.persisted_screenshots_status_label.text() == ("Persisted report screenshots: 0")
     assert not panel.manage_persisted_screenshots_button.isEnabled()
 
     manager = window.open_persisted_report_screenshot_manager()
@@ -208,9 +200,7 @@ def test_empty_manager_and_no_selection_are_friendly(app: object) -> None:
     assert manager.status_label.text() == "Select a persisted scene screenshot first."
 
 
-def test_target_tokens_capture_index_id_and_complete_snapshot(
-    app: object, tmp_path: Path
-) -> None:
+def test_target_tokens_capture_index_id_and_complete_snapshot(app: object, tmp_path: Path) -> None:
     first = _asset("duplicate", str(tmp_path / "a.png"), "A", marker="a")
     second = _asset("duplicate", str(tmp_path / "b.png"), "B", marker="b")
     manager = _window(app, [first, second]).open_persisted_report_screenshot_manager()
@@ -240,9 +230,7 @@ def test_manager_states_report_paths_duplicates_and_shadowing(tmp_path: Path) ->
 
     states = persisted_report_screenshot_states(assets)
     assert states[0] == "available; duplicate id; first persisted record wins"
-    assert states[1] == (
-        "missing; duplicate id; shadowed by earlier persisted record"
-    )
+    assert states[1] == ("missing; duplicate id; shadowed by earlier persisted record")
     assert states[2] == "no path"
 
     shadowed = persisted_report_screenshot_states(assets, ("dup",))
@@ -281,9 +269,7 @@ def test_manager_states_do_not_probe_explicitly_classified_paths(
     )
 
     def _unexpected_probe(*_args: object, **_kwargs: object) -> object:
-        pytest.fail(
-            "explicitly classified manager rows must not probe the filesystem"
-        )
+        pytest.fail("explicitly classified manager rows must not probe the filesystem")
 
     for method_name in ("is_file", "exists", "stat", "resolve"):
         monkeypatch.setattr(Path, method_name, _unexpected_probe)
@@ -364,9 +350,7 @@ def test_complete_snapshot_detects_nested_provenance_mutation(
     window = _window(app, [asset])
     manager = window.open_persisted_report_screenshot_manager()
     target = manager.targets()[0]
-    window.current_project.report_screenshots[0].scene_state["camera"][
-        "view_preset"
-    ] = "xy"
+    window.current_project.report_screenshots[0].scene_state["camera"]["view_preset"] = "xy"
     monkeypatch.setattr(
         window,
         "set_project",
@@ -491,9 +475,7 @@ def test_remove_changes_metadata_only_and_never_deletes_file(
         "_project_saver",
         lambda *args: saves.append(args),
     )
-    monkeypatch.setattr(
-        window, "_confirm_remove_persisted_report_screenshot", lambda _asset: True
-    )
+    monkeypatch.setattr(window, "_confirm_remove_persisted_report_screenshot", lambda _asset: True)
     monkeypatch.setattr(
         Path,
         "unlink",
@@ -530,9 +512,7 @@ def test_remove_cancel_and_post_confirmation_staleness_are_atomic(
     window = _window(app, [asset])
     before = window.current_project
     calls = _spy_set_project(window, monkeypatch)
-    monkeypatch.setattr(
-        window, "_confirm_remove_persisted_report_screenshot", lambda _asset: False
-    )
+    monkeypatch.setattr(window, "_confirm_remove_persisted_report_screenshot", lambda _asset: False)
     assert window.remove_persisted_report_screenshot(_target(asset)) is False
     assert window.current_project is before
     assert calls == []
@@ -649,9 +629,7 @@ def test_relink_updates_explicit_path_and_kind_atomically(
         lambda _asset, _path: True,
     )
 
-    assert window.relink_persisted_report_screenshot(
-        _target(asset), str(new_path)
-    )
+    assert window.relink_persisted_report_screenshot(_target(asset), str(new_path))
 
     assert len(calls) == 1
     replacement = window.current_project.report_screenshots[0]
@@ -681,10 +659,7 @@ def test_relink_updates_explicit_path_and_kind_atomically(
         (
             ReportAssetPathKind.PROJECT_RELATIVE,
             ReportAssetPathKind.EXTERNAL_ABSOLUTE,
-            (
-                "Path reference kind will change from project_relative to "
-                "external_absolute."
-            ),
+            ("Path reference kind will change from project_relative to external_absolute."),
             True,
         ),
     ],
@@ -728,9 +703,7 @@ def test_relink_confirmation_discloses_exact_path_kind_outcome(
 
     monkeypatch.setattr(QtWidgets.QMessageBox, "question", _capture_question)
 
-    assert window.relink_persisted_report_screenshot(
-        _target(asset), str(new_path)
-    )
+    assert window.relink_persisted_report_screenshot(_target(asset), str(new_path))
 
     assert len(questions) == 1
     title, message = questions[0]
@@ -740,21 +713,21 @@ def test_relink_confirmation_discloses_exact_path_kind_outcome(
     assert "No file will be copied or moved." in message
     assert "Saving the Project remains a separate explicit action." in message
     if changes_kind:
-        assert (
-            "The selected file will be stored as an external absolute reference."
-            in message
-        )
+        assert "The selected file will be stored as an external absolute reference." in message
     else:
         assert "will change from" not in message
     assert len(calls) == 1
     replacement = window.current_project.report_screenshots[0]
     assert replacement.path == str(new_path)
     assert replacement.path_kind is expected_kind
-    assert replace(
-        replacement,
-        path=asset.path,
-        path_kind=current_kind,
-    ) == asset
+    assert (
+        replace(
+            replacement,
+            path=asset.path,
+            path_kind=current_kind,
+        )
+        == asset
+    )
 
 
 def test_modal_relink_uses_main_window_picker_and_confirmation(
@@ -794,9 +767,7 @@ def test_relink_cancel_invalid_and_same_path_cases_never_replace_project(
     calls = _spy_set_project(window, monkeypatch)
     target = _target(asset)
 
-    monkeypatch.setattr(
-        window, "_pick_persisted_report_screenshot_relink_path", lambda: None
-    )
+    monkeypatch.setattr(window, "_pick_persisted_report_screenshot_relink_path", lambda: None)
     assert window.relink_persisted_report_screenshot(target) is False
     assert "cancelled" in window._last_persisted_report_screenshot_status.lower()
 
@@ -843,9 +814,7 @@ def test_relink_revalidates_after_confirmation(
         "_confirm_relink_persisted_report_screenshot",
         _replace_during_confirmation,
     )
-    assert window.relink_persisted_report_screenshot(
-        _target(asset), str(new_path)
-    ) is False
+    assert window.relink_persisted_report_screenshot(_target(asset), str(new_path)) is False
     assert window.current_project.report_screenshots == [replacement]
     assert old_path.read_bytes() == b"old"
     assert new_path.read_bytes() == b"new"
@@ -878,9 +847,7 @@ def test_relink_revalidates_file_after_confirmation_before_project_replacement(
         lambda _asset, _path: True,
     )
 
-    assert window.relink_persisted_report_screenshot(
-        _target(asset), str(new_path)
-    ) is False
+    assert window.relink_persisted_report_screenshot(_target(asset), str(new_path)) is False
     assert selected_path_checks == [str(new_path), str(new_path)]
     assert calls == []
     assert window.current_project is before
@@ -902,9 +869,7 @@ def test_duplicate_rows_remain_independently_manageable_and_first_still_wins(
     assert [record.caption for record in window._report_scene_screenshots()] == ["First"]
     manager = window.open_persisted_report_screenshot_manager()
     assert "first persisted record wins" in manager.records_table.item(0, 4).text()
-    assert "shadowed by earlier persisted record" in (
-        manager.records_table.item(1, 4).text()
-    )
+    assert "shadowed by earlier persisted record" in (manager.records_table.item(1, 4).text())
 
     assert window.update_persisted_report_screenshot_caption(
         _target(second, index=1), "Edited second"
@@ -913,12 +878,8 @@ def test_duplicate_rows_remain_independently_manageable_and_first_still_wins(
     assert [record.caption for record in window._report_scene_screenshots()] == ["First"]
 
     current_second = window.current_project.report_screenshots[1]
-    monkeypatch.setattr(
-        window, "_confirm_remove_persisted_report_screenshot", lambda _asset: True
-    )
-    assert window.remove_persisted_report_screenshot(
-        _target(current_second, index=1)
-    )
+    monkeypatch.setattr(window, "_confirm_remove_persisted_report_screenshot", lambda _asset: True)
+    assert window.remove_persisted_report_screenshot(_target(current_second, index=1))
     assert window.current_project.report_screenshots == [first]
 
 
@@ -927,9 +888,7 @@ def test_identical_duplicate_snapshots_are_disambiguated_by_index(
 ) -> None:
     asset = _asset("dup", str(tmp_path / "same.png"), "Same", marker="x")
     window = _window(app, [asset, asset])
-    monkeypatch.setattr(
-        window, "_confirm_remove_persisted_report_screenshot", lambda _asset: True
-    )
+    monkeypatch.setattr(window, "_confirm_remove_persisted_report_screenshot", lambda _asset: True)
 
     assert window.remove_persisted_report_screenshot(_target(asset, index=1))
     assert window.current_project.report_screenshots == [asset]
@@ -938,9 +897,7 @@ def test_identical_duplicate_snapshots_are_disambiguated_by_index(
 def test_transient_conflict_is_diagnosed_and_remains_report_winner(
     app: object, tmp_path: Path
 ) -> None:
-    persisted = _asset(
-        "shared", str(tmp_path / "persisted.png"), "Persisted", marker="p"
-    )
+    persisted = _asset("shared", str(tmp_path / "persisted.png"), "Persisted", marker="p")
     window = _window(app, [persisted])
     window._scene_screenshot_candidates = (
         SceneScreenshotRecord(
@@ -950,15 +907,9 @@ def test_transient_conflict_is_diagnosed_and_remains_report_winner(
     manager = window.open_persisted_report_screenshot_manager()
 
     assert "shadowed by transient" in manager.records_table.item(0, 4).text()
-    assert [record.caption for record in window._report_scene_screenshots()] == [
-        "Transient"
-    ]
-    assert window.update_persisted_report_screenshot_caption(
-        _target(persisted), "Persisted edited"
-    )
-    assert [record.caption for record in window._report_scene_screenshots()] == [
-        "Transient"
-    ]
+    assert [record.caption for record in window._report_scene_screenshots()] == ["Transient"]
+    assert window.update_persisted_report_screenshot_caption(_target(persisted), "Persisted edited")
+    assert [record.caption for record in window._report_scene_screenshots()] == ["Transient"]
     preview = window.build_current_report_summary()
     assert not any(
         getattr(figure, "metadata", {}).get("kind") == "scene_screenshot"
@@ -966,9 +917,7 @@ def test_transient_conflict_is_diagnosed_and_remains_report_winner(
     )
 
 
-def test_manager_and_panel_refresh_after_project_replacement(
-    app: object, tmp_path: Path
-) -> None:
+def test_manager_and_panel_refresh_after_project_replacement(app: object, tmp_path: Path) -> None:
     first = _asset("first", str(tmp_path / "first.png"), "First", marker="1")
     second = _asset("second", str(tmp_path / "second.png"), "Second", marker="2")
     window = _window(app, [first])
@@ -999,7 +948,7 @@ def test_management_never_auto_saves_and_preserves_schema_compatibility(
     assert saves == []
     assert window.current_project.schema_version == "0.1"
     assert DEFAULT_PROJECT_SCHEMA_VERSION == "0.1"
-    assert CURRENT_SCHEMA_VERSION == "0.3"
+    assert CURRENT_SCHEMA_VERSION == "0.4"
 
     legacy_payload = Project(metadata=ProjectMetadata(name="Legacy")).to_dict()
     legacy_payload.pop("report_screenshots", None)

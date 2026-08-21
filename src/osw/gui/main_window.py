@@ -92,9 +92,7 @@ _PERSISTED_CAPTION_NOT_SUPPLIED = object()
 _PERSISTED_SCREENSHOT_STALE_TEXT = (
     "The selected persisted screenshot is stale or no longer available."
 )
-_PERSISTED_SCREENSHOT_FILE_FILTER = (
-    "Image Files (*.png *.jpg *.jpeg *.webp *.gif)"
-)
+_PERSISTED_SCREENSHOT_FILE_FILTER = "Image Files (*.png *.jpg *.jpeg *.webp *.gif)"
 _PERSISTED_SCREENSHOT_SUFFIXES = frozenset({".png", ".jpg", ".jpeg", ".webp", ".gif"})
 
 
@@ -295,17 +293,11 @@ class MainWindow(_BaseMainWindow):
         self.current_project = project or create_heatsink_flow_demo_project()
         self._project_document_context = ProjectDocumentContext()
         self._document_binding_epoch = 0
-        self._project_open_path_picker = (
-            project_open_path_picker or self._choose_project_open_path
-        )
-        self._project_save_path_picker = (
-            project_save_path_picker or self._choose_project_save_path
-        )
+        self._project_open_path_picker = project_open_path_picker or self._choose_project_open_path
+        self._project_save_path_picker = project_save_path_picker or self._choose_project_save_path
         self._project_loader = project_loader or self._load_project_file
         self._project_saver = project_saver or self._save_project_file
-        self._project_error_reporter = (
-            project_error_reporter or self._show_project_file_error
-        )
+        self._project_error_reporter = project_error_reporter or self._show_project_file_error
         self._setup_preview_provider = setup_preview_provider
         self._project_dirty = False
         self.plugin_paths = tuple(Path(path) for path in plugin_paths)
@@ -314,9 +306,7 @@ class MainWindow(_BaseMainWindow):
         self.executable_registry = executable_registry or ExecutablePathRegistry()
         report_directory = legacy_kwargs.get("report_directory")
         self.report_directory = (
-            Path(report_directory)
-            if report_directory is not None
-            else Path("artifacts") / "report"
+            Path(report_directory) if report_directory is not None else Path("artifacts") / "report"
         )
         from osw.gui.workflow_service import WorkbenchWorkflowSession
 
@@ -480,54 +470,31 @@ class MainWindow(_BaseMainWindow):
             self.export_current_report
         )
         self.project_tree.currentItemChanged.connect(self._on_project_tree_selection_changed)
-        self.named_selection_panel.pickModeChanged.connect(
-            self._on_entity_pick_mode_changed
-        )
+        self.named_selection_panel.pickModeChanged.connect(self._on_entity_pick_mode_changed)
         self.named_selection_panel.selectionOperationChanged.connect(
             self._on_selection_operation_changed
         )
-        self.named_selection_panel.clearRequested.connect(
-            self._on_clear_current_selection
-        )
-        self.named_selection_panel.invertRequested.connect(
-            self._on_invert_current_selection
-        )
-        self.named_selection_panel.createRequested.connect(
-            self._on_create_named_selection
-        )
-        self.named_selection_panel.renameRequested.connect(
-            self._on_rename_named_selection
-        )
+        self.named_selection_panel.clearRequested.connect(self._on_clear_current_selection)
+        self.named_selection_panel.invertRequested.connect(self._on_invert_current_selection)
+        self.named_selection_panel.createRequested.connect(self._on_create_named_selection)
+        self.named_selection_panel.renameRequested.connect(self._on_rename_named_selection)
         self.named_selection_panel.replaceRequested.connect(
             self._on_replace_named_selection_targets
         )
-        self.named_selection_panel.deleteRequested.connect(
-            self._on_delete_named_selection
-        )
-        self.named_selection_panel.selectionActivated.connect(
-            self._on_named_selection_activated
-        )
-        self.setup_overlay_panel.createRequested.connect(
-            self._on_create_setup_record
-        )
-        self.setup_overlay_panel.editRequested.connect(
-            self._on_edit_setup_record
-        )
-        self.setup_overlay_panel.deleteRequested.connect(
-            self._on_delete_setup_record
-        )
-        self.setup_overlay_panel.recordSelected.connect(
-            self._on_setup_record_selected
-        )
+        self.named_selection_panel.deleteRequested.connect(self._on_delete_named_selection)
+        self.named_selection_panel.selectionActivated.connect(self._on_named_selection_activated)
+        self.setup_overlay_panel.createRequested.connect(self._on_create_setup_record)
+        self.setup_overlay_panel.editRequested.connect(self._on_edit_setup_record)
+        self.setup_overlay_panel.deleteRequested.connect(self._on_delete_setup_record)
+        self.setup_overlay_panel.recordSelected.connect(self._on_setup_record_selected)
         self.setup_overlay_panel.categoryVisibilityChanged.connect(
             self._on_setup_category_visibility_changed
         )
-        self.setup_overlay_panel.preparePreviewRequested.connect(
-            self._on_prepare_setup_preview
+        self.setup_overlay_panel.recordVisibilityChanged.connect(
+            self._on_setup_record_visibility_changed
         )
-        self.mesh_diagnostics_panel.analyzeRequested.connect(
-            self._on_mesh_diagnostics_analyze
-        )
+        self.setup_overlay_panel.preparePreviewRequested.connect(self._on_prepare_setup_preview)
+        self.mesh_diagnostics_panel.analyzeRequested.connect(self._on_mesh_diagnostics_analyze)
         self.mesh_diagnostics_panel.thresholdChanged.connect(
             self._on_mesh_diagnostics_threshold_changed
         )
@@ -537,15 +504,9 @@ class MainWindow(_BaseMainWindow):
         self.mesh_diagnostics_panel.isolateToggled.connect(
             self._on_mesh_diagnostics_isolate_toggled
         )
-        self.mesh_diagnostics_panel.restoreRequested.connect(
-            self._on_mesh_diagnostics_restore
-        )
-        self.mesh_diagnostics_panel.clearRequested.connect(
-            self._on_mesh_diagnostics_clear
-        )
-        self.active_scene_controller.set_selection_listener(
-            self._refresh_named_selection_panel
-        )
+        self.mesh_diagnostics_panel.restoreRequested.connect(self._on_mesh_diagnostics_restore)
+        self.mesh_diagnostics_panel.clearRequested.connect(self._on_mesh_diagnostics_clear)
+        self.active_scene_controller.set_selection_listener(self._refresh_named_selection_panel)
         picking_available = bool(
             getattr(self.central_viewport_panel, "interactive_available", False)
             and "picking" in self.active_scene_controller.capabilities
@@ -711,9 +672,23 @@ class MainWindow(_BaseMainWindow):
     def _on_project_tree_selection_changed(self, current: object, _previous: object) -> None:
         if current is not None and hasattr(self.properties_panel, "set_node_selection"):
             self.properties_panel.set_node_selection(current.text(0))
+        if self._handle_project_tree_setup(current):
+            return
+        self.properties_panel.clear_setup_record()
         if self._handle_project_tree_named_selection(current):
             return
         self._handle_project_tree_mesh_selection(current)
+
+    def _handle_project_tree_setup(self, current: object | None) -> bool:
+        if current is None:
+            return False
+        kind = str(current.data(0, QtCore.Qt.ItemDataRole.UserRole) or "")
+        payload = self._project_tree_item_payload(current)
+        setup_id = payload.get("setup_id", "")
+        if kind != "solver_setup" or not setup_id:
+            return False
+        self._activate_setup(setup_id, source="project_tree")
+        return True
 
     def _handle_project_tree_named_selection(self, current: object | None) -> bool:
         if current is None:
@@ -831,8 +806,10 @@ class MainWindow(_BaseMainWindow):
                 context.mesh,
                 mesh_ref=context.mesh_ref,
             )
-        if context.mesh is not None and self.mesh_viewer is not None and hasattr(
-            self.mesh_viewer, "set_mesh"
+        if (
+            context.mesh is not None
+            and self.mesh_viewer is not None
+            and hasattr(self.mesh_viewer, "set_mesh")
         ):
             self.mesh_viewer.set_mesh(context.mesh, mesh_ref=context.mesh_ref)
             self._sync_mesh_viewer_result_datasets()
@@ -859,9 +836,7 @@ class MainWindow(_BaseMainWindow):
                     "for 3D preview."
                 )
             diagnostics = context.diagnostics
-        if self.mesh_viewer is not None and hasattr(
-            self.mesh_viewer, "show_active_mesh_status"
-        ):
+        if self.mesh_viewer is not None and hasattr(self.mesh_viewer, "show_active_mesh_status"):
             self.mesh_viewer.show_active_mesh_status(message, diagnostics)
         self._placeholder_action(message)
 
@@ -946,9 +921,7 @@ class MainWindow(_BaseMainWindow):
 
         state = self._metadata_mesh_load_state
         if state is None or not self._metadata_mesh_load_in_flight():
-            return self._show_metadata_mesh_load_status(
-                "No metadata mesh load is in progress."
-            )
+            return self._show_metadata_mesh_load_status("No metadata mesh load is in progress.")
         if state.cancel_requested:
             target = state.label or state.mesh_ref
             return self._show_metadata_mesh_load_status(
@@ -960,12 +933,8 @@ class MainWindow(_BaseMainWindow):
             state,
             status="cancel_requested",
             cancel_requested=True,
-            message=(
-                f"Cancel requested for mesh data load '{state.label or state.mesh_ref}'."
-            ),
-            diagnostics=(
-                "The active mesh will remain unchanged when the current read returns.",
-            ),
+            message=(f"Cancel requested for mesh data load '{state.label or state.mesh_ref}'."),
+            diagnostics=("The active mesh will remain unchanged when the current read returns.",),
         )
         self._metadata_mesh_load_state = canceled
         self._show_metadata_mesh_load_status(canceled.message, canceled.diagnostics)
@@ -1044,8 +1013,7 @@ class MainWindow(_BaseMainWindow):
                 state,
                 status="stale",
                 message=(
-                    "Loaded mesh was not made active because selected project-tree "
-                    "mesh changed."
+                    "Loaded mesh was not made active because selected project-tree mesh changed."
                 ),
                 diagnostics=(
                     f"Original MeshRef: {state.mesh_ref}",
@@ -1145,9 +1113,7 @@ class MainWindow(_BaseMainWindow):
             state,
             status="canceled",
             message="MeshData load was canceled; the active mesh was not changed.",
-            diagnostics=(
-                "Cancel was requested before the loaded MeshData could be committed.",
-            ),
+            diagnostics=("Cancel was requested before the loaded MeshData could be committed.",),
         )
         self._metadata_mesh_load_state = canceled
         self._set_metadata_mesh_load_action_enabled(True)
@@ -1253,9 +1219,7 @@ class MainWindow(_BaseMainWindow):
                 include_entry_points=True,
                 theme_tokens=self.theme_manager.current_tokens,
             )
-            self.plugin_manager_dialog.pluginStateChanged.connect(
-                self._on_plugin_state_changed
-            )
+            self.plugin_manager_dialog.pluginStateChanged.connect(self._on_plugin_state_changed)
             self.plugin_manager_dialog.executablePathsChanged.connect(
                 self._on_executable_paths_changed
             )
@@ -1348,8 +1312,7 @@ class MainWindow(_BaseMainWindow):
 
         root = self.project_tree.topLevelItem(0)
         sections = {
-            root.child(index).text(0): root.child(index)
-            for index in range(root.childCount())
+            root.child(index).text(0): root.child(index) for index in range(root.childCount())
         }
         for item in items:
             section_name = str(getattr(item, "section", "") or "Results")
@@ -1359,9 +1322,11 @@ class MainWindow(_BaseMainWindow):
                 root.addChild(section)
                 sections[section_name] = section
             status = str(getattr(item, "status", "") or "")
-            marker = "✓" if status.lower().startswith(
-                ("imported", "prepared", "previewed", "calculated")
-            ) else ""
+            marker = (
+                "✓"
+                if status.lower().startswith(("imported", "prepared", "previewed", "calculated"))
+                else ""
+            )
             child = QtWidgets.QTreeWidgetItem([str(getattr(item, "label", "")), marker])
             child.setData(0, QtCore.Qt.ItemDataRole.UserRole, "workflow")
             section.addChild(child)
@@ -1403,15 +1368,11 @@ class MainWindow(_BaseMainWindow):
             last_result_datasets=self.last_result_datasets,
             scene_screenshot_candidates=tuple(self._scene_screenshot_candidates),
             metadata_mesh_load_state=self._metadata_mesh_load_state,
-            last_persisted_screenshot_status=(
-                self._last_persisted_report_screenshot_status
-            ),
+            last_persisted_screenshot_status=(self._last_persisted_report_screenshot_status),
             run_log=self.run_monitor.toPlainText(),
             monitor_warnings=tuple(monitor.warning_messages()),
             monitor_progress=monitor.progress_percent(),
-            report_summary=(
-                self.properties_panel.report_preview_panel.last_report_summary
-            ),
+            report_summary=(self.properties_panel.report_preview_panel.last_report_summary),
             document_surfaces=tuple(
                 (name, getattr(self, name)) for name in _DOCUMENT_SURFACE_ATTRIBUTES
             ),
@@ -1466,9 +1427,7 @@ class MainWindow(_BaseMainWindow):
         self.last_result_datasets = snapshot.last_result_datasets
         self._scene_screenshot_candidates = snapshot.scene_screenshot_candidates
         self._metadata_mesh_load_state = snapshot.metadata_mesh_load_state
-        self._last_persisted_report_screenshot_status = (
-            snapshot.last_persisted_screenshot_status
-        )
+        self._last_persisted_report_screenshot_status = snapshot.last_persisted_screenshot_status
         for name, surface in snapshot.document_surfaces:
             setattr(self, name, surface)
         self.run_monitor.set_log_lines(snapshot.run_log.splitlines())
@@ -1490,22 +1449,16 @@ class MainWindow(_BaseMainWindow):
             self._attempt_document_surface_restore(
                 lambda: self.properties_panel.set_project(snapshot.project)
             )
-        if self.result_viewer is not None and hasattr(
-            self.result_viewer, "set_result_catalog"
-        ):
+        if self.result_viewer is not None and hasattr(self.result_viewer, "set_result_catalog"):
             self._attempt_document_surface_restore(
                 lambda: self.result_viewer.set_result_catalog(snapshot.result_catalog)
             )
         report_panel = self.properties_panel.report_preview_panel
-        if snapshot.report_summary is not None and hasattr(
-            report_panel, "set_report_summary"
-        ):
+        if snapshot.report_summary is not None and hasattr(report_panel, "set_report_summary"):
             self._attempt_document_surface_restore(
                 lambda: report_panel.set_report_summary(snapshot.report_summary)
             )
-        self._attempt_document_surface_restore(
-            self._refresh_persisted_report_screenshot_surfaces
-        )
+        self._attempt_document_surface_restore(self._refresh_persisted_report_screenshot_surfaces)
 
     def _attempt_document_surface_restore(self, callback: Callable[[], None]) -> None:
         try:
@@ -1587,10 +1540,7 @@ class MainWindow(_BaseMainWindow):
             self,
             "Open OSW Project",
             "",
-            (
-                "OSW Project Files (*.osw.json *.json *.osw.yaml *.yaml *.yml);;"
-                "All Files (*)"
-            ),
+            ("OSW Project Files (*.osw.json *.json *.osw.yaml *.yaml *.yml);;All Files (*)"),
         )
         return str(selected) if selected else None
 
@@ -1599,10 +1549,7 @@ class MainWindow(_BaseMainWindow):
             self,
             "Save OSW Project As",
             "",
-            (
-                "OSW Project Files (*.osw.json *.json *.osw.yaml *.yaml *.yml);;"
-                "All Files (*)"
-            ),
+            ("OSW Project Files (*.osw.json *.json *.osw.yaml *.yaml *.yml);;All Files (*)"),
         )
         return str(selected) if selected else None
 
@@ -1643,8 +1590,7 @@ class MainWindow(_BaseMainWindow):
             origin=ProjectDocumentOrigin.OPENED,
             success_message="Opened Project",
             failure_message=(
-                "Could not display the selected project. "
-                "The current document was restored."
+                "Could not display the selected project. The current document was restored."
             ),
         )
         return replaced
@@ -1718,11 +1664,10 @@ class MainWindow(_BaseMainWindow):
         self.active_scene_controller.set_solver_setup(
             project.primary_physics,
             materials=project.materials,
+            units=project.units,
         )
         if self.active_scene_controller.current_mesh_fingerprint is None:
-            self.active_scene_controller.set_pending_active_scene_state(
-                project.active_scene
-            )
+            self.active_scene_controller.set_pending_active_scene_state(project.active_scene)
         self._refresh_named_selection_panel()
         self._refresh_setup_overlay_panel()
         self._refresh_mesh_diagnostics_panel()
@@ -1761,15 +1706,12 @@ class MainWindow(_BaseMainWindow):
         bind_controller = getattr(panel, "set_scene_controller", None)
         if callable(bind_controller):
             bind_controller(self.active_scene_controller)
-        self.active_scene_controller.set_selection_listener(
-            self._refresh_named_selection_panel
-        )
-        self.active_scene_controller.set_named_selections(
-            self.current_project.selections
-        )
+        self.active_scene_controller.set_selection_listener(self._refresh_named_selection_panel)
+        self.active_scene_controller.set_named_selections(self.current_project.selections)
         self.active_scene_controller.set_solver_setup(
             self.current_project.primary_physics,
             materials=self.current_project.materials,
+            units=self.current_project.units,
         )
         self.active_scene_controller.set_pending_active_scene_state(
             self.current_project.active_scene
@@ -1798,9 +1740,7 @@ class MainWindow(_BaseMainWindow):
 
     def _on_entity_pick_mode_changed(self, mode: str) -> None:
         if self.active_scene_controller.set_pick_mode(mode):
-            self.named_selection_panel.set_status(
-                f"{mode.title()} picking is active."
-            )
+            self.named_selection_panel.set_status(f"{mode.title()} picking is active.")
             return
         if self.active_scene_controller.current_mesh_fingerprint is None:
             self.named_selection_panel.set_status(
@@ -1837,9 +1777,7 @@ class MainWindow(_BaseMainWindow):
 
     def _on_clear_current_selection(self) -> None:
         self.active_scene_controller.clear_current_selection()
-        self.named_selection_panel.set_status(
-            "Current transient selection cleared."
-        )
+        self.named_selection_panel.set_status("Current transient selection cleared.")
 
     def _on_create_named_selection(
         self,
@@ -1872,9 +1810,7 @@ class MainWindow(_BaseMainWindow):
             self.named_selection_panel.set_status(str(exc), error=True)
             return
         self.named_selection_panel.select_named_selection(selection_id)
-        self.named_selection_panel.set_status(
-            f"Created NamedSelection '{name}'."
-        )
+        self.named_selection_panel.set_status(f"Created NamedSelection '{name}'.")
 
     def _on_rename_named_selection(
         self,
@@ -1903,9 +1839,7 @@ class MainWindow(_BaseMainWindow):
             self.named_selection_panel.set_status(str(exc), error=True)
             return
         self.named_selection_panel.select_named_selection(selection_id)
-        self.named_selection_panel.set_status(
-            f"Renamed NamedSelection to '{name}'."
-        )
+        self.named_selection_panel.set_status(f"Renamed NamedSelection to '{name}'.")
 
     def _on_replace_named_selection_targets(
         self,
@@ -1965,18 +1899,15 @@ class MainWindow(_BaseMainWindow):
         except NamedSelectionLifecycleError as exc:
             self.named_selection_panel.set_status(str(exc), error=True)
             return
-        self.named_selection_panel.set_status(
-            f"Deleted NamedSelection '{selection_id}'."
-        )
+        self.named_selection_panel.set_status(f"Deleted NamedSelection '{selection_id}'.")
 
     def _on_named_selection_activated(self, selection_id: str) -> None:
         self._activate_named_selection(selection_id, source="named_selection_panel")
 
     def _activate_named_selection(self, selection_id: str, *, source: str) -> None:
+        self.active_scene_controller.clear_active_setup_id()
         self.active_scene_controller.set_active_named_selection_ids((selection_id,))
-        resolution = self.active_scene_controller.named_selection_resolutions.get(
-            selection_id
-        )
+        resolution = self.active_scene_controller.named_selection_resolutions.get(selection_id)
         if resolution is not None:
             self.named_selection_panel.set_status(resolution.message)
         if source != "named_selection_panel":
@@ -2047,7 +1978,19 @@ class MainWindow(_BaseMainWindow):
             selections=self.current_project.selections,
             materials=self.current_project.materials,
             statuses=self.active_scene_controller.setup_statuses,
+            units=self.current_project.units,
+            resolved_selection_ids=self.active_scene_controller.resolved_selection_ids,
+            surface_selection_ids=(self.active_scene_controller.explicit_surface_selection_ids),
         )
+        active_id = self.active_scene_controller.active_setup_id
+        self.project_tree_panel.set_setup_statuses(
+            self.active_scene_controller.setup_statuses,
+            active_setup_id=active_id,
+        )
+        if active_id:
+            panel.select_record(active_id, emit=False)
+            self.project_tree_panel.select_setup(active_id, emit=False)
+            self._show_setup_properties(active_id)
 
     def _on_setup_category_visibility_changed(
         self,
@@ -2059,11 +2002,26 @@ class MainWindow(_BaseMainWindow):
             visible,
         )
 
+    def _on_setup_record_visibility_changed(
+        self,
+        setup_id: str,
+        visible: bool,
+    ) -> None:
+        self.active_scene_controller.set_setup_record_visible(setup_id, visible)
+
     def _apply_setup_visibility_to_current_controller(self) -> None:
         panel = getattr(self, "setup_overlay_panel", None)
         if panel is None:
             return
-        for category in ("material", "fixed_support", "force"):
+        for category in (
+            "material",
+            "fixed_support",
+            "prescribed_displacement",
+            "force",
+            "pressure",
+            "temperature",
+            "heat_flux",
+        ):
             checkbox = panel.visibility_checks[category]
             self.active_scene_controller.set_setup_category_visible(
                 category,
@@ -2071,9 +2029,7 @@ class MainWindow(_BaseMainWindow):
             )
 
     def _show_unsupported_setup_kind(self, kind: str) -> None:
-        self.setup_overlay_panel.set_preview(
-            f"Unsupported setup kind: {kind or '<empty>'}."
-        )
+        self.setup_overlay_panel.set_preview(f"Unsupported setup kind: {kind or '<empty>'}.")
 
     def _on_create_setup_record(self, payload: object) -> None:
         if not isinstance(payload, Mapping):
@@ -2087,11 +2043,13 @@ class MainWindow(_BaseMainWindow):
                 kind,
                 record,
             )
-        except ValueError:
-            self._show_unsupported_setup_kind(kind)
+        except ValueError as exc:
+            self.setup_overlay_panel.set_preview(str(exc))
             return
         self.set_project(_project_replacing_primary_physics(self.current_project, setup))
         self._project_dirty = True
+        self.properties_panel.clear_setup_record()
+        self._activate_setup(record_id, source="create")
 
     def _on_edit_setup_record(
         self,
@@ -2111,11 +2069,12 @@ class MainWindow(_BaseMainWindow):
                 record,
                 replace_existing=True,
             )
-        except ValueError:
-            self._show_unsupported_setup_kind(kind)
+        except ValueError as exc:
+            self.setup_overlay_panel.set_preview(str(exc))
             return
         self.set_project(_project_replacing_primary_physics(self.current_project, setup))
         self._project_dirty = True
+        self._activate_setup(record_id, source="edit")
 
     def _on_delete_setup_record(self, kind: str, record_id: str) -> None:
         try:
@@ -2129,14 +2088,74 @@ class MainWindow(_BaseMainWindow):
             return
         self.set_project(_project_replacing_primary_physics(self.current_project, setup))
         self._project_dirty = True
+        self.properties_panel.clear_setup_record()
 
     def _on_setup_record_selected(
         self,
         _kind: str,
-        _record_id: str,
-        target_selection_id: str,
+        record_id: str,
+        _target_selection_id: str,
     ) -> None:
-        self.named_selection_panel.select_named_selection(target_selection_id)
+        if not record_id:
+            self.active_scene_controller.clear_active_setup_id()
+            self.project_tree_panel.clear_setup(emit=False)
+            self.properties_panel.clear_setup_record()
+            return
+        self._activate_setup(record_id, source="setup_panel")
+
+    def _activate_setup(self, setup_id: str, *, source: str) -> None:
+        if not self.active_scene_controller.set_active_setup_id(setup_id):
+            return
+        record = _find_setup_record(self.current_project.primary_physics, setup_id)
+        if record is None:
+            return
+        target_id = str(getattr(record, "target_selection_id", ""))
+        if target_id:
+            self.named_selection_panel.select_named_selection(target_id, emit=False)
+            self.setup_overlay_panel.set_selection_filter(target_id)
+        if source != "setup_panel":
+            self.setup_overlay_panel.select_record(setup_id, emit=False)
+        if source != "project_tree":
+            self.project_tree_panel.select_setup(setup_id, emit=False)
+        self._show_setup_properties(setup_id)
+
+    def _show_setup_properties(self, setup_id: str) -> None:
+        record = _find_setup_record(self.current_project.primary_physics, setup_id)
+        if record is None:
+            self.properties_panel.clear_setup_record()
+            return
+        target_id = str(getattr(record, "target_selection_id", ""))
+        target = next(
+            (
+                item
+                for item in self.current_project.selections
+                if str(getattr(item, "id", "")) == target_id
+            ),
+            None,
+        )
+        material_id = str(getattr(record, "material_id", "") or "")
+        material = next(
+            (
+                item
+                for item in self.current_project.materials
+                if str(getattr(item, "material_id", "")) == material_id
+            ),
+            None,
+        )
+        status = self.active_scene_controller.setup_statuses.get(setup_id)
+        kind = str(
+            getattr(getattr(record, "setup_kind", ""), "value", "")
+            or getattr(record, "setup_kind", "")
+            or ""
+        )
+        adapter_readiness = _setup_adapter_readiness(kind, status)
+        self.properties_panel.set_setup_record(
+            record,
+            status=status,
+            target_name=str(getattr(target, "name", "") or target_id),
+            material_name=str(getattr(material, "name", "") or material_id),
+            adapter_readiness=adapter_readiness,
+        )
 
     def _on_prepare_setup_preview(self) -> None:
         provider = self._setup_preview_provider
@@ -2150,9 +2169,7 @@ class MainWindow(_BaseMainWindow):
             self.last_imported_mesh_data,
             str(self.last_imported_mesh_ref or ""),
         )
-        self.setup_overlay_panel.set_preview(
-            str(getattr(result, "input_preview", result))
-        )
+        self.setup_overlay_panel.set_preview(str(getattr(result, "input_preview", result)))
 
     def _refresh_mesh_diagnostics_panel(self) -> None:
         panel = getattr(self, "mesh_diagnostics_panel", None)
@@ -2169,9 +2186,7 @@ class MainWindow(_BaseMainWindow):
             return
         self._refresh_mesh_diagnostics_panel()
         if analysis is None:
-            panel.set_status(
-                "Load an in-memory mesh before running Mesh Diagnostics."
-            )
+            panel.set_status("Load an in-memory mesh before running Mesh Diagnostics.")
 
     def _on_mesh_diagnostics_threshold_changed(self, threshold: float) -> None:
         if not self.active_scene_controller.set_mesh_quality_threshold(threshold):
@@ -2182,9 +2197,7 @@ class MainWindow(_BaseMainWindow):
         self._refresh_mesh_diagnostics_panel()
 
     def _on_mesh_diagnostics_highlight_toggled(self, visible: bool) -> None:
-        applied = self.active_scene_controller.set_mesh_quality_highlight_visible(
-            visible
-        )
+        applied = self.active_scene_controller.set_mesh_quality_highlight_visible(visible)
         self._refresh_mesh_diagnostics_panel()
         if visible and not applied:
             self.mesh_diagnostics_panel.set_status(
@@ -2196,22 +2209,16 @@ class MainWindow(_BaseMainWindow):
         applied = self.active_scene_controller.set_mesh_quality_isolated(isolated)
         self._refresh_mesh_diagnostics_panel()
         if isolated and not applied:
-            self.mesh_diagnostics_panel.set_status(
-                "Isolate requires a visible bad-cell highlight."
-            )
+            self.mesh_diagnostics_panel.set_status("Isolate requires a visible bad-cell highlight.")
 
     def _on_mesh_diagnostics_restore(self) -> None:
         if self.active_scene_controller.restore_mesh_quality_visibility():
-            self.mesh_diagnostics_panel.set_status(
-                "Restored the pre-isolate base mesh visibility."
-            )
+            self.mesh_diagnostics_panel.set_status("Restored the pre-isolate base mesh visibility.")
 
     def _on_mesh_diagnostics_clear(self) -> None:
         self.active_scene_controller.clear_mesh_quality_overlay()
         self._refresh_mesh_diagnostics_panel()
-        self.mesh_diagnostics_panel.set_status(
-            "Cleared the transient Mesh Diagnostics overlay."
-        )
+        self.mesh_diagnostics_panel.set_status("Cleared the transient Mesh Diagnostics overlay.")
 
     def closeEvent(self, event: object) -> None:
         """Close renderer resources before Qt tears down child widgets."""
@@ -2225,9 +2232,7 @@ class MainWindow(_BaseMainWindow):
         from osw.post.report_sections import build_report_summary
 
         figure_datasets = (
-            (self.last_figure_dataset,)
-            if self.last_figure_dataset is not None
-            else ()
+            (self.last_figure_dataset,) if self.last_figure_dataset is not None else ()
         )
         summary = build_report_summary(
             self.current_project,
@@ -2286,8 +2291,7 @@ class MainWindow(_BaseMainWindow):
                     "webp",
                 }:
                     content_blocks.append(
-                        f"Scene screenshot artifact ({figure.format}): "
-                        f"{screenshot_path}"
+                        f"Scene screenshot artifact ({figure.format}): {screenshot_path}"
                     )
                 else:
                     basename = screenshot_path.replace("\\", "/").rsplit("/", 1)[-1]
@@ -2338,13 +2342,13 @@ class MainWindow(_BaseMainWindow):
         from osw.post.report_generator import build_report
         from osw.post.report_model import ReportBuildRequest
 
-        target = Path(output_path) if output_path is not None else _default_report_export_path(
-            self.current_project
+        target = (
+            Path(output_path)
+            if output_path is not None
+            else _default_report_export_path(self.current_project)
         )
         figure_datasets = (
-            (self.last_figure_dataset,)
-            if self.last_figure_dataset is not None
-            else ()
+            (self.last_figure_dataset,) if self.last_figure_dataset is not None else ()
         )
         result = build_report(
             ReportBuildRequest(project=self.current_project, output_path=target, format="html"),
@@ -2938,9 +2942,7 @@ class MainWindow(_BaseMainWindow):
         from osw.post.result_view_model import result_catalog_from_project
 
         figure_datasets = (
-            (self.last_figure_dataset,)
-            if self.last_figure_dataset is not None
-            else ()
+            (self.last_figure_dataset,) if self.last_figure_dataset is not None else ()
         )
         catalog = result_catalog_from_project(
             self.current_project,
@@ -3083,9 +3085,7 @@ class MainWindow(_BaseMainWindow):
                 "set_open_persisted_report_screenshot_manager_callback",
             ):
                 self.mesh_viewer.set_open_persisted_report_screenshot_manager_callback(
-                    self._guard_document_callback(
-                        self.open_persisted_report_screenshot_manager
-                    )
+                    self._guard_document_callback(self.open_persisted_report_screenshot_manager)
                 )
             if hasattr(self.mesh_viewer, "set_clear_saved_active_scene_callback"):
                 self.mesh_viewer.set_clear_saved_active_scene_callback(
@@ -3147,9 +3147,7 @@ class MainWindow(_BaseMainWindow):
         panel.show_saved_active_scene_status(message)
 
     def _transient_scene_screenshot_ids(self) -> tuple[str, ...]:
-        return tuple(
-            record.id for record in self._scene_screenshot_candidates if record.id
-        )
+        return tuple(record.id for record in self._scene_screenshot_candidates if record.id)
 
     def clear_scene_screenshot_candidates(self) -> None:
         """Clear transient scene screenshot candidate records for report export."""
@@ -3243,9 +3241,7 @@ class MainWindow(_BaseMainWindow):
 
         from osw.post.report_model import report_assets_to_scene_screenshots
 
-        return report_assets_to_scene_screenshots(
-            self.current_project.report_screenshots
-        )
+        return report_assets_to_scene_screenshots(self.current_project.report_screenshots)
 
     def persist_staged_scene_screenshots(self) -> int:
         """Persist staged scene screenshots into project report assets (opt-in).
@@ -3261,12 +3257,9 @@ class MainWindow(_BaseMainWindow):
         if not candidates:
             return 0
         candidate_ids = [record.id for record in candidates]
-        persisted_ids = {
-            asset.id for asset in self.current_project.report_screenshots
-        }
-        if (
-            len(candidate_ids) != len(set(candidate_ids))
-            or any(record_id in persisted_ids for record_id in candidate_ids)
+        persisted_ids = {asset.id for asset in self.current_project.report_screenshots}
+        if len(candidate_ids) != len(set(candidate_ids)) or any(
+            record_id in persisted_ids for record_id in candidate_ids
         ):
             self._show_persisted_report_screenshot_status(
                 "Duplicate scene screenshot IDs must be resolved before staging."
@@ -3295,9 +3288,7 @@ class MainWindow(_BaseMainWindow):
         )
         return answer == QtWidgets.QMessageBox.StandardButton.Yes
 
-    def open_persisted_report_screenshot_manager(
-        self, _checked: bool = False
-    ) -> object:
+    def open_persisted_report_screenshot_manager(self, _checked: bool = False) -> object:
         """Open the persisted-only manager without transferring Project ownership."""
         from osw.gui.widgets.persisted_report_screenshot_manager import (
             PersistedReportScreenshotManager,
@@ -3327,9 +3318,7 @@ class MainWindow(_BaseMainWindow):
         """Replace one exact persisted caption after stale-target revalidation."""
         matched = self._validated_persisted_report_screenshot_target(target)
         if matched is None:
-            return self._show_persisted_report_screenshot_status(
-                _PERSISTED_SCREENSHOT_STALE_TEXT
-            )
+            return self._show_persisted_report_screenshot_status(_PERSISTED_SCREENSHOT_STALE_TEXT)
         _, asset = matched
         if caption is _PERSISTED_CAPTION_NOT_SUPPLIED:
             new_caption = self._prompt_persisted_report_screenshot_caption(asset.caption)
@@ -3342,27 +3331,19 @@ class MainWindow(_BaseMainWindow):
 
         matched = self._validated_persisted_report_screenshot_target(target)
         if matched is None:
-            return self._show_persisted_report_screenshot_status(
-                _PERSISTED_SCREENSHOT_STALE_TEXT
-            )
+            return self._show_persisted_report_screenshot_status(_PERSISTED_SCREENSHOT_STALE_TEXT)
         index, asset = matched
         assets = list(self.persisted_report_screenshot_assets())
         assets[index] = replace(asset, caption=new_caption)
-        self.set_project(
-            _project_replacing_report_screenshots(self.current_project, assets)
-        )
-        self._show_persisted_report_screenshot_status(
-            "Updated persisted scene screenshot caption."
-        )
+        self.set_project(_project_replacing_report_screenshots(self.current_project, assets))
+        self._show_persisted_report_screenshot_status("Updated persisted scene screenshot caption.")
         return True
 
     def remove_persisted_report_screenshot(self, target: object) -> bool:
         """Remove one exact persisted metadata row without touching its file."""
         matched = self._validated_persisted_report_screenshot_target(target)
         if matched is None:
-            return self._show_persisted_report_screenshot_status(
-                _PERSISTED_SCREENSHOT_STALE_TEXT
-            )
+            return self._show_persisted_report_screenshot_status(_PERSISTED_SCREENSHOT_STALE_TEXT)
         _, asset = matched
         if not self._confirm_remove_persisted_report_screenshot(asset):
             return self._show_persisted_report_screenshot_status(
@@ -3371,18 +3352,12 @@ class MainWindow(_BaseMainWindow):
 
         matched = self._validated_persisted_report_screenshot_target(target)
         if matched is None:
-            return self._show_persisted_report_screenshot_status(
-                _PERSISTED_SCREENSHOT_STALE_TEXT
-            )
+            return self._show_persisted_report_screenshot_status(_PERSISTED_SCREENSHOT_STALE_TEXT)
         index, _asset = matched
         assets = list(self.persisted_report_screenshot_assets())
         del assets[index]
-        self.set_project(
-            _project_replacing_report_screenshots(self.current_project, assets)
-        )
-        self._show_persisted_report_screenshot_status(
-            "Removed persisted scene screenshot record."
-        )
+        self.set_project(_project_replacing_report_screenshots(self.current_project, assets))
+        self._show_persisted_report_screenshot_status("Removed persisted scene screenshot record.")
         return True
 
     def relink_persisted_report_screenshot(
@@ -3393,9 +3368,7 @@ class MainWindow(_BaseMainWindow):
         """Explicitly replace one stored path without copying or rewriting a file."""
         matched = self._validated_persisted_report_screenshot_target(target)
         if matched is None:
-            return self._show_persisted_report_screenshot_status(
-                _PERSISTED_SCREENSHOT_STALE_TEXT
-            )
+            return self._show_persisted_report_screenshot_status(_PERSISTED_SCREENSHOT_STALE_TEXT)
         _, asset = matched
         selected = (
             self._pick_persisted_report_screenshot_relink_path()
@@ -3441,18 +3414,12 @@ class MainWindow(_BaseMainWindow):
 
         matched = self._validated_persisted_report_screenshot_target(target)
         if matched is None:
-            return self._show_persisted_report_screenshot_status(
-                _PERSISTED_SCREENSHOT_STALE_TEXT
-            )
+            return self._show_persisted_report_screenshot_status(_PERSISTED_SCREENSHOT_STALE_TEXT)
         index, _asset = matched
         assets = list(self.persisted_report_screenshot_assets())
         assets[index] = replacement
-        self.set_project(
-            _project_replacing_report_screenshots(self.current_project, assets)
-        )
-        self._show_persisted_report_screenshot_status(
-            "Relinked persisted scene screenshot."
-        )
+        self.set_project(_project_replacing_report_screenshots(self.current_project, assets))
+        self._show_persisted_report_screenshot_status("Relinked persisted scene screenshot.")
         return True
 
     def _validated_persisted_report_screenshot_target(
@@ -3491,8 +3458,7 @@ class MainWindow(_BaseMainWindow):
                 "The referenced image file will not be deleted.\n\n"
                 f"Record: {getattr(asset, 'id', '') or '(missing id)'}"
             ),
-            QtWidgets.QMessageBox.StandardButton.Yes
-            | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
             QtWidgets.QMessageBox.StandardButton.No,
         )
         return answer == QtWidgets.QMessageBox.StandardButton.Yes
@@ -3524,8 +3490,7 @@ class MainWindow(_BaseMainWindow):
                 f"Old path: {getattr(asset, 'path', '') or '(no image path)'}\n"
                 f"New path: {selected_path}"
             ),
-            QtWidgets.QMessageBox.StandardButton.Yes
-            | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
             QtWidgets.QMessageBox.StandardButton.No,
         )
         return answer == QtWidgets.QMessageBox.StandardButton.Yes
@@ -3666,9 +3631,7 @@ class MainWindow(_BaseMainWindow):
                     result_mesh_binding_from_metadata,
                 )
 
-                binding = result_mesh_binding_from_metadata(
-                    candidates[0].result_ref.metadata
-                )
+                binding = result_mesh_binding_from_metadata(candidates[0].result_ref.metadata)
                 result_ref_id = str(
                     getattr(candidates[0].result_ref, "id", "")
                     or getattr(candidates[0].result_ref, "ref_id", "")
@@ -3740,13 +3703,12 @@ class MainWindow(_BaseMainWindow):
                 f"'{dataset_id}'. Binding was not persisted."
             )
         if len(target_candidates) > 1:
-            target_candidate, selection_diagnostics = (
-                self._select_result_mesh_binding_target(target_candidates)
+            target_candidate, selection_diagnostics = self._select_result_mesh_binding_target(
+                target_candidates
             )
             if target_candidate is None:
                 return self._show_result_mesh_binding_status(
-                    "Result/mesh binding was not persisted because target selection "
-                    "was cancelled.",
+                    "Result/mesh binding was not persisted because target selection was cancelled.",
                     selection_diagnostics,
                 )
         else:
@@ -3835,8 +3797,7 @@ class MainWindow(_BaseMainWindow):
             self.mesh_viewer.set_result_binding(
                 bridge.binding,
                 result_ref_id=str(
-                    getattr(bridge.result_ref, "id", "")
-                    or getattr(bridge.result_ref, "ref_id", "")
+                    getattr(bridge.result_ref, "id", "") or getattr(bridge.result_ref, "ref_id", "")
                 ),
             )
         self._placeholder_action(message)
@@ -3866,8 +3827,7 @@ class MainWindow(_BaseMainWindow):
             self,
             "Bind result to active mesh",
             message,
-            QtWidgets.QMessageBox.StandardButton.Yes
-            | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
             QtWidgets.QMessageBox.StandardButton.No,
         )
         return result == QtWidgets.QMessageBox.StandardButton.Yes
@@ -4038,15 +3998,22 @@ def _setup_record_from_payload(record_id: str, payload: Mapping[str, object]) ->
     from osw.core.solver_setup import (
         FixedSupportRecord,
         ForceLoadRecord,
+        HeatFluxRecord,
         MaterialAssignmentRecord,
+        PrescribedDisplacementRecord,
+        PressureLoadRecord,
+        TemperatureRecord,
     )
     from osw.core.units import Quantity
 
-    kind = str(payload.get("kind", ""))
+    kind = str(payload.get("kind_id") or payload.get("kind", ""))
     field_name = _setup_field(kind)
+    name = str(payload.get("name", "")).strip()
+    if not name:
+        raise ValueError("Setup record name must be non-empty.")
     common = {
         "id": record_id,
-        "name": str(payload.get("name", "") or record_id),
+        "name": name,
         "target_selection_id": str(payload.get("target_selection_id", "")),
         "enabled": bool(payload.get("enabled", True)),
     }
@@ -4059,30 +4026,58 @@ def _setup_record_from_payload(record_id: str, payload: Mapping[str, object]) ->
         return FixedSupportRecord(
             **common,
             translational_dofs=tuple(
-                int(item)
-                for item in payload.get("translational_dofs", (1, 2, 3))
+                int(item) for item in payload.get("translational_dofs", (1, 2, 3))
             ),
         )
-    return ForceLoadRecord(
-        **common,
-        magnitude=Quantity(
-            float(payload.get("magnitude", 0.0)),
-            str(payload.get("unit", "N")),
-        ),
-        direction=tuple(float(item) for item in payload.get("direction", (0, 0, 0))),
-        coordinate_system=str(payload.get("coordinate_system", "GLOBAL")),
-        application_mode=str(payload.get("application_mode", "PER_NODE")),
+    if field_name == "prescribed_displacement_records":
+        unit = str(payload.get("displacement_unit", "m"))
+        return PrescribedDisplacementRecord(
+            **common,
+            ux=_optional_setup_quantity(payload.get("ux"), unit),
+            uy=_optional_setup_quantity(payload.get("uy"), unit),
+            uz=_optional_setup_quantity(payload.get("uz"), unit),
+            coordinate_system=str(payload.get("coordinate_system", "GLOBAL")),
+        )
+    if field_name == "force_load_records":
+        return ForceLoadRecord(
+            **common,
+            magnitude=Quantity(
+                float(payload.get("magnitude", 0.0)),
+                str(payload.get("unit", "N")),
+            ),
+            direction=tuple(float(item) for item in payload.get("direction", (0, 0, 0))),
+            coordinate_system=str(payload.get("coordinate_system", "GLOBAL")),
+            application_mode=str(payload.get("application_mode", "PER_NODE")),
+        )
+    scalar = Quantity(
+        float(payload.get("value", 0.0)),
+        str(payload.get("unit", "")),
     )
+    if field_name == "pressure_load_records":
+        return PressureLoadRecord(**common, value=scalar)
+    if field_name == "temperature_records":
+        return TemperatureRecord(**common, value=scalar)
+    if field_name == "heat_flux_records":
+        return HeatFluxRecord(**common, value=scalar)
+    raise ValueError(f"Unsupported setup kind: {kind}")
 
 
 def _setup_field(kind: str) -> str:
-    normalized = str(kind).casefold().replace("_", " ")
-    if normalized == "material":
+    normalized = str(kind).strip().casefold().replace("_", " ")
+    if normalized in {"material", "material region"}:
         return "material_assignment_records"
     if normalized in {"fixed support", "fixed"}:
         return "fixed_support_records"
     if normalized == "force":
         return "force_load_records"
+    if normalized in {"prescribed displacement", "displacement"}:
+        return "prescribed_displacement_records"
+    if normalized == "pressure":
+        return "pressure_load_records"
+    if normalized == "temperature":
+        return "temperature_records"
+    if normalized in {"heat flux", "heatflux"}:
+        return "heat_flux_records"
     raise ValueError(f"Unsupported setup kind: {kind}")
 
 
@@ -4103,7 +4098,29 @@ def _setup_with_record(
     )
     field_name = _setup_field(kind)
     records = list(getattr(current, field_name))
+    record_id = str(getattr(record, "id", ""))
+    normalized_name = str(getattr(record, "name", "")).strip().casefold()
+    if any(
+        str(getattr(item, "name", "")).strip().casefold() == normalized_name
+        and str(getattr(item, "id", "")) != record_id
+        for item in (
+            candidate
+            for field in (
+                "material_assignment_records",
+                "fixed_support_records",
+                "prescribed_displacement_records",
+                "force_load_records",
+                "pressure_load_records",
+                "temperature_records",
+                "heat_flux_records",
+            )
+            for candidate in getattr(current, field, ()) or ()
+        )
+    ):
+        raise ValueError("Setup record names must be unique (case-insensitive).")
     if replace_existing:
+        if not any(str(getattr(item, "id", "")) == record_id for item in records):
+            raise ValueError(f"Setup record was not found: {record_id}")
         records = [
             record if getattr(item, "id", "") == getattr(record, "id", "") else item
             for item in records
@@ -4123,9 +4140,7 @@ def _setup_without_record(
     current = setup or PhysicsSetup()
     field_name = _setup_field(kind)
     records = [
-        item
-        for item in getattr(current, field_name)
-        if getattr(item, "id", "") != record_id
+        item for item in getattr(current, field_name) if getattr(item, "id", "") != record_id
     ]
     return replace(current, **{field_name: records})
 
@@ -4137,6 +4152,43 @@ def _project_replacing_primary_physics(project: Project, setup: object) -> Proje
     else:
         physics.append(setup)
     return project_with(project, physics=physics)
+
+
+def _optional_setup_quantity(value: object, unit: str) -> object | None:
+    if value is None:
+        return None
+    from osw.core.units import Quantity
+
+    return Quantity(float(value), unit)
+
+
+def _find_setup_record(setup: object | None, setup_id: str) -> object | None:
+    if setup is None:
+        return None
+    from osw.core.solver_setup import iter_solver_setup_records
+
+    return next(
+        (
+            record
+            for record in iter_solver_setup_records(setup)
+            if str(getattr(record, "id", "")) == str(setup_id)
+        ),
+        None,
+    )
+
+
+def _setup_adapter_readiness(kind: str, status: object | None) -> str:
+    from osw.gui.widgets.setup_overlay_panel import CALCULIX_SUPPORTED_KINDS
+
+    state = str(getattr(status, "state", ""))
+    if "." in state:
+        state = state.rsplit(".", 1)[-1]
+    reason = str(getattr(status, "reason_code", "NOT_EVALUATED"))
+    if state != "READY":
+        return f"BLOCKED: {reason}"
+    if kind not in CALCULIX_SUPPORTED_KINDS:
+        return "UNSUPPORTED_BY_ADAPTER"
+    return "READY"
 
 
 def _project_with_report_screenshots(project: Project, assets: object) -> Project:
@@ -4157,9 +4209,7 @@ def _project_with_report_screenshots(project: Project, assets: object) -> Projec
     return _project_replacing_report_screenshots(project, [*kept, *new_assets])
 
 
-def _project_replacing_report_screenshots(
-    project: Project, assets: Sequence[object]
-) -> Project:
+def _project_replacing_report_screenshots(project: Project, assets: Sequence[object]) -> Project:
     """Return a Project copy with the exact ordered screenshot asset list."""
     return project_with(project, report_screenshots=assets)
 
@@ -4267,13 +4317,9 @@ def _result_mesh_binding_target_label(
     binding_state = _result_ref_binding_state(result_ref)
     source_mesh_ref = _result_ref_metadata_text(result_ref, "source_mesh_ref")
     source_mesh = (
-        f"source_mesh_ref={source_mesh_ref}"
-        if source_mesh_ref
-        else "source_mesh_ref=(none)"
+        f"source_mesh_ref={source_mesh_ref}" if source_mesh_ref else "source_mesh_ref=(none)"
     )
-    diagnostic_text = (
-        f"; diagnostics={'; '.join(diagnostics)}" if diagnostics else ""
-    )
+    diagnostic_text = f"; diagnostics={'; '.join(diagnostics)}" if diagnostics else ""
     ref_text = f"; ref_id={ref_id}" if ref_id and ref_id != display_id else ""
     return (
         f"{reason}: result[{index}] id={display_id}{ref_text}; path={path}; "
@@ -4389,18 +4435,15 @@ def _is_project_tree_mesh_item(
 
 
 def _selected_mesh_ref(payload: Mapping[str, str], label: str) -> str:
-    return (
-        str(
-            payload.get("mesh_ref")
-            or payload.get("id")
-            or payload.get("ref_id")
-            or payload.get("path")
-            or payload.get("name")
-            or label
-            or ""
-        )
-        .strip()
-    )
+    return str(
+        payload.get("mesh_ref")
+        or payload.get("id")
+        or payload.get("ref_id")
+        or payload.get("path")
+        or payload.get("name")
+        or label
+        or ""
+    ).strip()
 
 
 def _mesh_aliases_for_imported_mesh(mesh: object, explicit_ref: object) -> tuple[str, ...]:
@@ -4439,11 +4482,7 @@ def _mesh_ref_aliases(values: Sequence[object]) -> tuple[str, ...]:
 
 
 def _metadata_mesh_source_path(payload: Mapping[str, str]) -> str:
-    return str(
-        payload.get("path")
-        or payload.get("source_path")
-        or ""
-    ).strip()
+    return str(payload.get("path") or payload.get("source_path") or "").strip()
 
 
 def _metadata_mesh_missing_path_diagnostics(source_path: str) -> tuple[str, ...]:

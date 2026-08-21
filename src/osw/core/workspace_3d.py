@@ -14,7 +14,7 @@ from typing import Any
 ACTIVE_SCENE_SCHEMA = "osw.active_scene.v1"
 _MESH_FINGERPRINT_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 _REPRESENTATIONS = frozenset({"surface", "wireframe", "surface_with_edges"})
-_SELECTION_MODES = frozenset({"none", "node", "point", "cell"})
+_SELECTION_MODES = frozenset({"none", "node", "point", "cell", "setup"})
 _ACTOR_KINDS = frozenset(
     {
         "base_mesh",
@@ -23,6 +23,8 @@ _ACTOR_KINDS = frozenset(
         "material_assignment",
         "fixed_support",
         "force_load",
+        "setup_target",
+        "setup_glyph",
         "mesh_quality_bad_cells",
         "scalar_result",
         "vector_result",
@@ -111,9 +113,7 @@ class ActiveSceneCameraState:
     def to_dict(self) -> dict[str, Any]:
         return {
             "position": list(self.position) if self.position is not None else None,
-            "focal_point": (
-                list(self.focal_point) if self.focal_point is not None else None
-            ),
+            "focal_point": (list(self.focal_point) if self.focal_point is not None else None),
             "view_up": list(self.view_up) if self.view_up is not None else None,
             "parallel_projection": self.parallel_projection,
             "parallel_scale": self.parallel_scale,
@@ -219,12 +219,8 @@ class ActiveSceneResultState:
         object.__setattr__(self, "range_mode", mode)
         minimum = _optional_finite(self.manual_min, name="result_state.manual_min")
         maximum = _optional_finite(self.manual_max, name="result_state.manual_max")
-        if mode == "MANUAL" and (
-            minimum is None or maximum is None or minimum >= maximum
-        ):
-            raise ValueError(
-                "Manual result display range must contain finite minimum < maximum."
-            )
+        if mode == "MANUAL" and (minimum is None or maximum is None or minimum >= maximum):
+            raise ValueError("Manual result display range must contain finite minimum < maximum.")
         object.__setattr__(self, "manual_min", minimum)
         object.__setattr__(self, "manual_max", maximum)
         object.__setattr__(
@@ -237,9 +233,7 @@ class ActiveSceneResultState:
             raise ValueError("result_state.glyph_scale must be finite and positive.")
         count = int(self.glyph_max_count)
         if count <= 0 or count > 100_000:
-            raise ValueError(
-                "result_state.glyph_max_count must be between 1 and 100000."
-            )
+            raise ValueError("result_state.glyph_max_count must be between 1 and 100000.")
         object.__setattr__(self, "glyph_scale", scale)
         object.__setattr__(self, "glyph_max_count", count)
         object.__setattr__(self, "colorbar_visible", bool(self.colorbar_visible))
@@ -383,9 +377,7 @@ class ActiveSceneState:
     active_named_selection_ids: tuple[str, ...] = ()
     result_state: ActiveSceneResultState | None = None
     mesh_quality_state: MeshQualityViewState | None = None
-    clipping_state: ActiveSceneClippingState = field(
-        default_factory=ActiveSceneClippingState
-    )
+    clipping_state: ActiveSceneClippingState = field(default_factory=ActiveSceneClippingState)
     selection_mode: str = "none"
     extensions: dict[str, Any] = field(default_factory=dict)
 
@@ -398,9 +390,7 @@ class ActiveSceneState:
             raise ValueError("active_scene.mesh_ref must not be empty.")
         fingerprint = str(self.mesh_fingerprint or "").lower()
         if not _MESH_FINGERPRINT_PATTERN.fullmatch(fingerprint):
-            raise ValueError(
-                "active_scene.mesh_fingerprint must be a SHA-256 hex digest."
-            )
+            raise ValueError("active_scene.mesh_fingerprint must be a SHA-256 hex digest.")
         camera = (
             self.camera
             if isinstance(self.camera, ActiveSceneCameraState)
@@ -445,9 +435,7 @@ class ActiveSceneState:
         )
         selection_mode = str(self.selection_mode or "none").lower()
         if selection_mode not in _SELECTION_MODES:
-            raise ValueError(
-                f"Unsupported active-scene selection mode: {selection_mode}."
-            )
+            raise ValueError(f"Unsupported active-scene selection mode: {selection_mode}.")
         object.__setattr__(self, "schema", schema)
         object.__setattr__(self, "mesh_ref", mesh_ref)
         object.__setattr__(self, "mesh_fingerprint", fingerprint)
@@ -479,22 +467,14 @@ class ActiveSceneState:
             "camera": self.camera.to_dict(),
             "representation": self.representation,
             "axes_visible": self.axes_visible,
-            "actor_visibility": [
-                item.to_dict() for item in self.actor_visibility
-            ],
-            "visible_named_selection_ids": list(
-                self.visible_named_selection_ids
-            ),
+            "actor_visibility": [item.to_dict() for item in self.actor_visibility],
+            "visible_named_selection_ids": list(self.visible_named_selection_ids),
             "active_named_selection_ids": list(self.active_named_selection_ids),
             "result_state": (
-                self.result_state.to_dict()
-                if self.result_state is not None
-                else None
+                self.result_state.to_dict() if self.result_state is not None else None
             ),
             "mesh_quality_state": (
-                self.mesh_quality_state.to_dict()
-                if self.mesh_quality_state is not None
-                else None
+                self.mesh_quality_state.to_dict() if self.mesh_quality_state is not None else None
             ),
             "clipping_state": self.clipping_state.to_dict(),
             "selection_mode": self.selection_mode,
@@ -518,12 +498,8 @@ class ActiveSceneState:
                 SemanticActorVisibility.from_dict(item)
                 for item in data.get("actor_visibility", ()) or ()
             ),
-            visible_named_selection_ids=tuple(
-                data.get("visible_named_selection_ids", ()) or ()
-            ),
-            active_named_selection_ids=tuple(
-                data.get("active_named_selection_ids", ()) or ()
-            ),
+            visible_named_selection_ids=tuple(data.get("visible_named_selection_ids", ()) or ()),
+            active_named_selection_ids=tuple(data.get("active_named_selection_ids", ()) or ()),
             result_state=(
                 None
                 if data.get("result_state") is None
@@ -534,13 +510,9 @@ class ActiveSceneState:
                 if data.get("mesh_quality_state") is None
                 else MeshQualityViewState.from_dict(data["mesh_quality_state"])
             ),
-            clipping_state=ActiveSceneClippingState.from_dict(
-                data.get("clipping_state", {})
-            ),
+            clipping_state=ActiveSceneClippingState.from_dict(data.get("clipping_state", {})),
             selection_mode=str(data.get("selection_mode", "none")),
-            extensions=dict(
-                _mapping(data.get("extensions", {}), name="active_scene.extensions")
-            ),
+            extensions=dict(_mapping(data.get("extensions", {}), name="active_scene.extensions")),
         )
 
 
@@ -599,9 +571,7 @@ class ActiveSceneScreenshotRequest:
         if size is not None:
             size = tuple(int(item) for item in size)
             if len(size) != 2 or any(item <= 0 for item in size):
-                raise ValueError(
-                    "Screenshot requested_size must contain two positive values."
-                )
+                raise ValueError("Screenshot requested_size must contain two positive values.")
         object.__setattr__(self, "record_id", record_id)
         object.__setattr__(self, "output_path", output_path)
         object.__setattr__(
@@ -671,17 +641,11 @@ def active_scene_provenance(
         "vector_association": result.vector_association if result else "",
         "glyph_scale": result.glyph_scale if result else None,
         "glyph_max_count": result.glyph_max_count if result else None,
-        "visible_named_selection_ids": list(
-            state.visible_named_selection_ids
-        ),
+        "visible_named_selection_ids": list(state.visible_named_selection_ids),
         "active_named_selection_ids": list(state.active_named_selection_ids),
         "visible_setup_actor_keys": list(visible_setup),
-        "mesh_quality_metric_schema": (
-            quality.metric_schema if quality is not None else ""
-        ),
-        "mesh_quality_threshold": (
-            quality.threshold if quality is not None else None
-        ),
+        "mesh_quality_metric_schema": (quality.metric_schema if quality is not None else ""),
+        "mesh_quality_threshold": (quality.threshold if quality is not None else None),
         "mesh_quality_highlight_visible": (
             quality.highlight_visible if quality is not None else False
         ),

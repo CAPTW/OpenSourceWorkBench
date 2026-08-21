@@ -183,7 +183,7 @@ class PyVistaQtRendererSession:
     ) -> None:
         """Enable one native point/cell picker with renderer-neutral events."""
 
-        if mode not in {"node", "cell"}:
+        if mode not in {"node", "cell", "setup"}:
             raise ValueError(f"Unsupported pick mode: {mode}")
         if not callable(callback):
             raise TypeError("Pick callback must be callable.")
@@ -191,6 +191,19 @@ class PyVistaQtRendererSession:
         self._pick_mode = mode
         self._pick_callback = callback
         interactor = self._require_open_interactor()
+        self._set_setup_pickability(mode == "setup")
+        if mode == "setup":
+            enable = getattr(interactor, "enable_mesh_picking", None)
+            if not callable(enable):
+                raise RuntimeError("The interactive backend does not support setup picking.")
+            enable(
+                callback=self._on_native_setup_pick,
+                show=False,
+                show_message=False,
+                left_clicking=True,
+                use_actor=True,
+            )
+            return
         if mode == "node":
             enable = getattr(interactor, "enable_point_picking", None)
             if not callable(enable):
@@ -218,6 +231,7 @@ class PyVistaQtRendererSession:
         self._disable_native_picking()
         self._pick_mode = None
         self._pick_callback = None
+        self._set_setup_pickability(False)
 
     def set_selection_operation(self, operation: str) -> None:
         normalized = str(operation or "").strip().lower()
@@ -319,7 +333,7 @@ class PyVistaQtRendererSession:
             and _is_isolation_eligible(semantic_id)
         ):
             self.clear_isolation()
-        if semantic_id.startswith("setup:"):
+        if semantic_id.startswith(("setup:", "setup_target:", "setup_glyph:")):
             if not isinstance(payload, SetupOverlaySpec):
                 raise TypeError("Setup overlay actor requires a SetupOverlaySpec.")
             self._payloads[semantic_id] = (payload, generation)
@@ -737,34 +751,49 @@ class PyVistaQtRendererSession:
     ) -> object:
         self._remove_native_actor(semantic_id)
         interactor = self._require_open_interactor()
-        if payload.category == "material":
+        if payload.overlay_role == "target":
             base_payload = self._payloads.get("base_mesh")
             if base_payload is None:
-                raise RuntimeError("Material overlays require an active mesh.")
+                raise RuntimeError("Setup target overlays require an active mesh.")
             mesh_payload = base_payload[0]
             dataset = mesh_data_to_pyvista_dataset(
                 mesh_payload.mesh,
                 pyvista_module=self._pyvista,
             )
-            extractor = getattr(dataset, "extract_cells", None)
-            if not callable(extractor):
-                raise RuntimeError("The backend cannot extract material cells.")
-            subset = extractor(list(payload.entity_indices))
+            if payload.entity_kind == "node":
+                extractor = getattr(dataset, "extract_points", None)
+                if callable(extractor):
+                    subset = extractor(
+                        list(payload.entity_indices),
+                        adjacent_cells=False,
+                        include_cells=False,
+                    )
+                else:
+                    subset = self._pyvista.PolyData(
+                        [mesh_payload.mesh.points[index] for index in payload.entity_indices]
+                    )
+            else:
+                extractor = getattr(dataset, "extract_cells", None)
+                if not callable(extractor):
+                    raise RuntimeError("The backend cannot extract setup target cells.")
+                subset = extractor(list(payload.entity_indices))
             actor = interactor.add_mesh(
                 subset,
                 name=f"osw-{semantic_id}",
-                color="#60a5fa",
+                color=payload.color,
                 opacity=0.35,
                 show_edges=True,
+                pickable=False,
                 reset_camera=False,
                 render=False,
             )
-        elif payload.category == "force":
-            dataset = self._force_dataset(payload)
+        elif payload.vectors:
+            dataset = self._vector_dataset(payload)
             actor = interactor.add_mesh(
                 dataset,
                 name=f"osw-{semantic_id}",
-                color="#ef4444",
+                color=payload.color,
+                pickable=False,
                 reset_camera=False,
                 render=False,
             )
@@ -773,14 +802,16 @@ class PyVistaQtRendererSession:
             actor = interactor.add_mesh(
                 dataset,
                 name=f"osw-{semantic_id}",
-                color="#22c55e",
+                color=payload.color,
                 point_size=14,
                 render_points_as_spheres=True,
+                pickable=False,
                 reset_camera=False,
                 render=False,
             )
         self._actors[semantic_id] = actor
         _set_native_visibility(actor, self._visibility[semantic_id])
+        _set_native_pickability(actor, self._pick_mode == "setup")
         return actor
 
     def _replace_mesh_quality_actor(
@@ -968,12 +999,13 @@ class PyVistaQtRendererSession:
         _set_native_visibility(actor, self._visibility[semantic_id])
         return actor
 
-    def _force_dataset(self, payload: SetupOverlaySpec) -> object:
+    def _vector_dataset(self, payload: SetupOverlaySpec) -> object:
         arrow = getattr(self._pyvista, "Arrow", None)
-        if not callable(arrow) or payload.direction is None:
+        if not callable(arrow) or not payload.vectors:
             return self._pyvista.PolyData(list(payload.points))
         arrows = [
-            arrow(start=point, direction=payload.direction, scale=0.1) for point in payload.points
+            arrow(start=point, direction=direction, scale=self._setup_visual_scale())
+            for point, direction in zip(payload.points, payload.vectors, strict=True)
         ]
         if not arrows:
             return self._pyvista.PolyData([])
@@ -982,6 +1014,19 @@ class PyVistaQtRendererSession:
         if callable(merge) and len(arrows) > 1:
             merged = merge(arrows[1:])
         return merged
+
+    def _setup_visual_scale(self) -> float:
+        base_payload = self._payloads.get("base_mesh")
+        if base_payload is None:
+            return 0.1
+        points = tuple(getattr(base_payload[0].mesh, "points", ()) or ())
+        if not points:
+            return 0.1
+        extents = tuple(
+            max(point[axis] for point in points) - min(point[axis] for point in points)
+            for axis in range(3)
+        )
+        return max(max(extents) * 0.08, 1.0e-6)
 
     def _set_selection_overlay(
         self,
@@ -1100,6 +1145,32 @@ class PyVistaQtRendererSession:
         if cell_index is not None:
             self._emit_pick(cell_index)
 
+    def _on_native_setup_pick(self, picked_actor: object) -> None:
+        callback = self._pick_callback
+        if callback is None or self._pick_mode != "setup":
+            return
+        semantic_id = next(
+            (
+                actor_id
+                for actor_id, actor in self._actors.items()
+                if actor is picked_actor and actor_id.startswith(("setup_target:", "setup_glyph:"))
+            ),
+            "",
+        )
+        payload_entry = self._payloads.get(semantic_id)
+        if not semantic_id or payload_entry is None:
+            return
+        payload, generation = payload_entry
+        if not isinstance(payload, SetupOverlaySpec):
+            return
+        callback(
+            {
+                "generation": generation,
+                "setup_id": payload.record_id,
+                "semantic_id": semantic_id,
+            }
+        )
+
     def _emit_pick(self, backend_index: int) -> None:
         callback = self._pick_callback
         mode = self._pick_mode
@@ -1131,6 +1202,15 @@ class PyVistaQtRendererSession:
             if callable(method):
                 with suppress(Exception):
                     method()
+
+    def _set_setup_pickability(self, enabled: bool) -> None:
+        for semantic_id, actor in self._actors.items():
+            is_setup = semantic_id.startswith(("setup_target:", "setup_glyph:"))
+            _set_native_pickability(actor, bool(enabled) and is_setup)
+        for semantic_id in ("base_mesh", "wireframe"):
+            actor = self._actors.get(semantic_id)
+            if actor is not None:
+                _set_native_pickability(actor, not enabled and semantic_id == "base_mesh")
 
     @staticmethod
     def _attach_scalar_field(
@@ -1230,6 +1310,15 @@ def _set_native_visibility(actor: object, visible: bool) -> None:
         return
     if hasattr(actor, "visibility"):
         actor.visibility = bool(visible)
+
+
+def _set_native_pickability(actor: object, pickable: bool) -> None:
+    setter = getattr(actor, "SetPickable", None)
+    if callable(setter):
+        setter(bool(pickable))
+        return
+    if hasattr(actor, "pickable"):
+        actor.pickable = bool(pickable)
 
 
 def _native_point_index(picked: object) -> int | None:

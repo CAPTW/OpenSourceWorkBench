@@ -35,8 +35,10 @@ def test_selection_mode_values_and_coerce() -> None:
         "edge",
         "mixed",
         "none",
+        "setup",
     }
     assert SelectionMode.coerce("cell") is SelectionMode.CELL
+    assert SelectionMode.coerce("setup") is SelectionMode.SETUP
     assert SelectionMode.coerce("bogus") is SelectionMode.NONE
 
 

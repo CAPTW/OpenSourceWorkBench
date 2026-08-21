@@ -49,6 +49,7 @@ class PropertiesPanel(_BaseWidget):
         self._mesh_by_label: dict[str, object] = {}
         self._script_by_label: dict[str, object] = {}
         self._curve_by_label: dict[str, object] = {}
+        self._setup_properties: dict[str, str] = {}
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -99,6 +100,8 @@ class PropertiesPanel(_BaseWidget):
             return self._selection
         if name == "Workflow step":
             return _workflow_step_for_selection(self._selection)
+        if name in self._setup_properties:
+            return self._setup_properties[name]
         mesh = self._selected_mesh_ref()
         if mesh is not None:
             return _mesh_row_value(mesh, name)
@@ -130,18 +133,9 @@ class PropertiesPanel(_BaseWidget):
         return self._current_project
 
     def refresh_from_project(self, project: Project) -> None:
-        self._mesh_by_label = {
-            _mesh_label(mesh): mesh
-            for mesh in project.mesh_refs
-        }
-        self._script_by_label = {
-            _script_label(script): script
-            for script in project.script_refs
-        }
-        self._curve_by_label = {
-            _curve_label(curve): curve
-            for curve in project.boundary_curves
-        }
+        self._mesh_by_label = {_mesh_label(mesh): mesh for mesh in project.mesh_refs}
+        self._script_by_label = {_script_label(script): script for script in project.script_refs}
+        self._curve_by_label = {_curve_label(curve): curve for curve in project.boundary_curves}
         material = project.materials[0] if project.materials else None
         if material is not None:
             self.material_section.set_material_library(material.library or "project")
@@ -177,7 +171,44 @@ class PropertiesPanel(_BaseWidget):
             self.report_preview_panel.set_sections(project.report.sections)
 
     def set_properties(self, _properties: dict[str, str]) -> None:
-        return
+        self._setup_properties = {str(key): str(value) for key, value in _properties.items()}
+        self._refresh_setup_properties_table()
+
+    def set_setup_record(
+        self,
+        record: object,
+        *,
+        status: object | None,
+        target_name: str = "",
+        material_name: str = "",
+        adapter_readiness: str = "NOT_EVALUATED",
+    ) -> None:
+        """Inspect persisted typed setup data without making it editable here."""
+
+        self._setup_properties = _setup_property_rows(
+            record,
+            status=status,
+            target_name=target_name,
+            material_name=material_name,
+            adapter_readiness=adapter_readiness,
+        )
+        self._refresh_setup_properties_table()
+
+    def clear_setup_record(self) -> None:
+        self._setup_properties = {}
+        self._refresh_setup_properties_table()
+
+    def setup_property_rows(self) -> dict[str, str]:
+        return dict(self._setup_properties)
+
+    def _refresh_setup_properties_table(self) -> None:
+        table = self.setup_properties_table
+        table.clear()
+        for key, value in self._setup_properties.items():
+            item = QtWidgets.QTreeWidgetItem((key, value))
+            item.setToolTip(1, value)
+            table.addTopLevelItem(item)
+        self.setup_properties_group.setVisible(bool(self._setup_properties))
 
     def reset_demo_data(self) -> None:
         self.material_section.set_material_library("builtin")
@@ -259,7 +290,26 @@ class PropertiesPanel(_BaseWidget):
         self.solver_settings_section = SolverSettingsSection(content)
         self.plugins_section = PluginsSection(content)
         self.report_preview_panel = ReportPreviewPanel(content)
+        self.setup_properties_group = QtWidgets.QGroupBox(
+            "SOLVER SETUP",
+            content,
+        )
+        self.setup_properties_group.setObjectName("oswSetupPropertiesSection")
+        self.setup_properties_group.setAccessibleName("Solver setup properties")
+        setup_layout = QtWidgets.QVBoxLayout(self.setup_properties_group)
+        self.setup_properties_table = QtWidgets.QTreeWidget(self.setup_properties_group)
+        self.setup_properties_table.setObjectName("oswSetupPropertiesTable")
+        self.setup_properties_table.setAccessibleName(
+            "Typed solver setup parameters and validation status"
+        )
+        self.setup_properties_table.setColumnCount(2)
+        self.setup_properties_table.setHeaderLabels(("Property", "Value"))
+        self.setup_properties_table.header().setStretchLastSection(True)
+        self.setup_properties_table.setRootIsDecorated(False)
+        setup_layout.addWidget(self.setup_properties_table)
+        self.setup_properties_group.setVisible(False)
         for section in (
+            self.setup_properties_group,
             self.material_section,
             self.boundary_conditions_section,
             self.solver_settings_section,
@@ -313,6 +363,67 @@ def _format_tolerance(value: object) -> str:
     except (TypeError, ValueError):
         return str(value)
     return f"{numeric:.1e}"
+
+
+def _setup_property_rows(
+    record: object,
+    *,
+    status: object | None,
+    target_name: str,
+    material_name: str,
+    adapter_readiness: str,
+) -> dict[str, str]:
+    kind = str(
+        getattr(getattr(record, "setup_kind", ""), "value", "")
+        or getattr(record, "setup_kind", "")
+        or ""
+    )
+    target_id = str(getattr(record, "target_selection_id", "") or "")
+    reason_code = str(getattr(status, "reason_code", "NOT_EVALUATED"))
+    rows = {
+        "Setup ID": str(getattr(record, "id", "") or ""),
+        "Name": str(getattr(record, "name", "") or ""),
+        "Kind": kind,
+        "Target NamedSelection": target_name or target_id,
+        "Target ID": target_id,
+        "Enabled": str(bool(getattr(record, "enabled", True))),
+        "Validity": reason_code,
+        "Status reason": str(getattr(status, "message", "Setup record not evaluated.")),
+        "Adapter readiness": str(adapter_readiness),
+    }
+    material_id = str(getattr(record, "material_id", "") or "")
+    if material_id:
+        rows["Material"] = material_name or material_id
+        rows["Material ID"] = material_id
+    dofs = tuple(getattr(record, "translational_dofs", ()) or ())
+    if dofs:
+        rows["Constrained DOFs"] = ", ".join(f"U{'XYZ'[item - 1]}" for item in dofs)
+    components = tuple(getattr(record, "components", ()) or ())
+    if components:
+        for axis, component in zip(("UX", "UY", "UZ"), components, strict=True):
+            rows[axis] = "free" if component is None else _quantity_text(component)
+    magnitude = getattr(record, "magnitude", None)
+    if magnitude is not None:
+        rows["Magnitude"] = _quantity_text(magnitude)
+        direction = tuple(getattr(record, "direction", ()) or ())
+        rows["Direction"] = ", ".join(f"{float(value):g}" for value in direction)
+        rows["Coordinate system"] = str(getattr(record, "coordinate_system", "GLOBAL"))
+        rows["Application mode"] = str(getattr(record, "application_mode", "PER_NODE"))
+    value = getattr(record, "value", None)
+    if value is not None:
+        label = {
+            "pressure": "Pressure",
+            "temperature": "Temperature",
+            "heat_flux": "Heat flux",
+        }.get(kind, "Value")
+        rows[label] = _quantity_text(value)
+    return rows
+
+
+def _quantity_text(quantity: object) -> str:
+    value = float(getattr(quantity, "value", 0.0))
+    unit = str(getattr(quantity, "unit", "") or "")
+    return f"{value:g} {unit}".strip()
 
 
 def _mesh_label(mesh: object) -> str:
@@ -435,9 +546,7 @@ def _script_row_value(script: object, name: str) -> str:
     if name in {"Safety", "Safety summary"}:
         preview_metadata = preview_info.get("metadata", {})
         fallback = (
-            preview_metadata.get("safety_summary", "")
-            if isinstance(preview_metadata, dict)
-            else ""
+            preview_metadata.get("safety_summary", "") if isinstance(preview_metadata, dict) else ""
         )
         return str(info.get("safety_summary", fallback))
     if name in {"Plot hints", "Plot hint count"}:

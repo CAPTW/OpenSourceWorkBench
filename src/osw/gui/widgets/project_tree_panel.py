@@ -312,7 +312,81 @@ def _physics_nodes(project: Project) -> list[ProjectTreeNode]:
                 ),
             )
         )
+    if physics is not None:
+        from osw.core.solver_setup import SetupRecordKind, iter_solver_setup_records
+
+        grouped: dict[str, list[object]] = {
+            "Materials": [],
+            "Boundary Conditions": [],
+            "Loads": [],
+            "Thermal Conditions": [],
+        }
+        group_for_kind = {
+            SetupRecordKind.MATERIAL_REGION: "Materials",
+            SetupRecordKind.FIXED_SUPPORT: "Boundary Conditions",
+            SetupRecordKind.PRESCRIBED_DISPLACEMENT: "Boundary Conditions",
+            SetupRecordKind.FORCE: "Loads",
+            SetupRecordKind.PRESSURE: "Loads",
+            SetupRecordKind.TEMPERATURE: "Thermal Conditions",
+            SetupRecordKind.HEAT_FLUX: "Thermal Conditions",
+        }
+        for record in iter_solver_setup_records(physics):
+            grouped[group_for_kind[record.setup_kind]].append(record)
+        for label, records in grouped.items():
+            if not records:
+                continue
+            nodes.append(
+                ProjectTreeNode(
+                    label,
+                    kind="group",
+                    icon_key="physics",
+                    children=tuple(
+                        ProjectTreeNode(
+                            str(record.name or record.id),
+                            kind="solver_setup",
+                            icon_key="physics",
+                            data=_setup_payload(record, project),
+                        )
+                        for record in records
+                    ),
+                )
+            )
     return nodes
+
+
+def _setup_payload(record: object, project: Project) -> tuple[tuple[str, str], ...]:
+    target_id = str(getattr(record, "target_selection_id", "") or "")
+    target = next(
+        (
+            selection
+            for selection in project.selections
+            if str(getattr(selection, "id", "")) == target_id
+        ),
+        None,
+    )
+    material_id = str(getattr(record, "material_id", "") or "")
+    material = next(
+        (
+            item
+            for item in project.materials
+            if str(getattr(item, "material_id", "")) == material_id
+        ),
+        None,
+    )
+    payload = {
+        "setup_id": str(getattr(record, "id", "") or ""),
+        "setup_kind": str(
+            getattr(getattr(record, "setup_kind", ""), "value", "")
+            or getattr(record, "setup_kind", "")
+            or ""
+        ),
+        "target_selection_id": target_id,
+        "target_name": str(getattr(target, "name", "") or target_id),
+        "enabled": "true" if bool(getattr(record, "enabled", True)) else "false",
+        "material_id": material_id,
+        "material_name": str(getattr(material, "name", "") or material_id),
+    }
+    return tuple((key, value) for key, value in payload.items() if value)
 
 
 def _result_nodes(project: Project) -> list[ProjectTreeNode]:
@@ -469,6 +543,72 @@ class ProjectTreePanel(_BaseWidget):
             if self.item_payload(item).get("selection_id") == selection_id:
                 return item
         return None
+
+    def setup_item(self, setup_id: str) -> object | None:
+        for item in self._tree_items():
+            if self.item_payload(item).get("setup_id") == setup_id:
+                return item
+        return None
+
+    def current_setup_id(self) -> str:
+        current = self.tree.currentItem()
+        if current is None:
+            return ""
+        kind = str(current.data(0, QtCore.Qt.ItemDataRole.UserRole) or "")
+        if kind != "solver_setup":
+            return ""
+        return self.item_payload(current).get("setup_id", "")
+
+    def select_setup(self, setup_id: str, *, emit: bool = True) -> bool:
+        item = self.setup_item(setup_id)
+        if item is None:
+            return False
+        blocked = self.tree.blockSignals(not emit)
+        try:
+            self.tree.setCurrentItem(item)
+        finally:
+            self.tree.blockSignals(blocked)
+        return True
+
+    def clear_setup(self, *, emit: bool = True) -> None:
+        if not self.current_setup_id():
+            return
+        blocked = self.tree.blockSignals(not emit)
+        try:
+            self.tree.setCurrentItem(None)
+            self.tree.clearSelection()
+        finally:
+            self.tree.blockSignals(blocked)
+
+    def set_setup_statuses(
+        self,
+        statuses: Mapping[str, object],
+        *,
+        active_setup_id: str = "",
+    ) -> None:
+        for item in self._tree_items():
+            setup_id = self.item_payload(item).get("setup_id", "")
+            if not setup_id:
+                continue
+            status = statuses.get(setup_id)
+            reason = str(getattr(status, "reason_code", "NOT_EVALUATED"))
+            payload = self.item_payload(item)
+            kind = payload.get("setup_kind", "setup").replace("_", " ")
+            target = payload.get("target_name", payload.get("target_selection_id", ""))
+            enabled = "enabled" if payload.get("enabled") == "true" else "disabled"
+            item.setText(1, f"{kind} · {target} · {enabled} · {reason}")
+            item.setToolTip(
+                0,
+                (
+                    f"Type: {kind}\nTarget: {target or 'missing'}\n"
+                    f"State: {enabled}\nStatus: {reason}\n"
+                    + str(getattr(status, "message", "Setup record not evaluated."))
+                ),
+            )
+            font = item.font(0)
+            font.setBold(setup_id == active_setup_id)
+            item.setFont(0, font)
+        self.tree.setColumnWidth(1, 360)
 
     def current_named_selection_id(self) -> str:
         current = self.tree.currentItem()

@@ -196,6 +196,82 @@ def test_project_tree_named_selection_nodes_use_stable_payload_and_runtime_state
     assert panel.current_named_selection_id() == selection.id
 
 
+def test_project_tree_groups_typed_setup_records_by_product_role(app: object) -> None:
+    from osw.core.project_schema import PhysicsSetup, Project, ProjectMetadata
+    from osw.core.solver_setup import (
+        FixedSupportRecord,
+        ForceLoadRecord,
+        HeatFluxRecord,
+        MaterialAssignmentRecord,
+        PrescribedDisplacementRecord,
+        PressureLoadRecord,
+        SetupReadiness,
+        SetupRecordKind,
+        SetupRecordStatus,
+        TemperatureRecord,
+    )
+    from osw.core.units import Quantity
+    from osw.gui.widgets.project_tree_panel import ProjectTreePanel
+
+    setup = PhysicsSetup(
+        material_assignment_records=[
+            MaterialAssignmentRecord("material", "Steel region", "steel", "cells")
+        ],
+        fixed_support_records=[FixedSupportRecord("fixed", "Clamp", "nodes")],
+        prescribed_displacement_records=[
+            PrescribedDisplacementRecord(
+                "move",
+                "Move",
+                "nodes",
+                ux=Quantity(0.0, "m"),
+            )
+        ],
+        force_load_records=[
+            ForceLoadRecord(
+                "force",
+                "Force",
+                "nodes",
+                Quantity(1.0, "N"),
+                (1.0, 0.0, 0.0),
+            )
+        ],
+        pressure_load_records=[
+            PressureLoadRecord("pressure", "Pressure", "surface", Quantity(1.0, "Pa"))
+        ],
+        temperature_records=[
+            TemperatureRecord("temperature", "Temperature", "nodes", Quantity(300.0, "K"))
+        ],
+        heat_flux_records=[HeatFluxRecord("flux", "Heat Flux", "surface", Quantity(2.0, "W/m^2"))],
+    )
+    panel = ProjectTreePanel()
+    panel.set_project(Project(ProjectMetadata(name="Setups"), physics=setup))
+
+    assert panel.setup_item("material").parent().text(0) == "Materials"
+    assert panel.setup_item("fixed").parent().text(0) == "Boundary Conditions"
+    assert panel.setup_item("move").parent().text(0) == "Boundary Conditions"
+    assert panel.setup_item("force").parent().text(0) == "Loads"
+    assert panel.setup_item("pressure").parent().text(0) == "Loads"
+    assert panel.setup_item("temperature").parent().text(0) == "Thermal Conditions"
+    assert panel.setup_item("flux").parent().text(0) == "Thermal Conditions"
+    assert panel.item_payload(panel.setup_item("material"))["material_id"] == "steel"
+    status = SetupRecordStatus(
+        "force",
+        SetupRecordKind.FORCE,
+        SetupReadiness.BLOCKED,
+        "MESH_FINGERPRINT_MISMATCH",
+        "The target is stale.",
+    )
+    panel.set_setup_statuses({"force": status}, active_setup_id="force")
+    summary = panel.setup_item("force").text(1)
+    assert "force" in summary
+    assert "nodes" in summary
+    assert "enabled" in summary
+    assert "MESH_FINGERPRINT_MISMATCH" in summary
+    assert "stale" in panel.setup_item("force").toolTip(0).lower()
+    assert panel.select_setup("force", emit=False)
+    assert panel.current_setup_id() == "force"
+
+
 def test_filtering_for_mesh_hides_unrelated_leaf_nodes(app: object) -> None:
     from osw.gui.widgets.project_tree_panel import ProjectTreePanel
 

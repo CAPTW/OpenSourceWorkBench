@@ -39,7 +39,13 @@ from osw.core.selection_resolution import (
     resolve_named_selection,
     resolve_selection_target,
 )
-from osw.core.solver_setup import SetupRecordStatus, evaluate_solver_setup
+from osw.core.solver_setup import (
+    SetupRecordStatus,
+    evaluate_solver_setup,
+    iter_solver_setup_records,
+    surface_cell_centroid_and_normal,
+)
+from osw.core.units import UnitSystem
 from osw.core.workspace_3d import (
     ACTIVE_SCENE_SCHEMA,
     ActiveSceneCameraState,
@@ -162,6 +168,15 @@ class ScenePickEvent:
     entity_kind: EntityKind
     backend_index: int
     intent: str = "replace"
+
+
+@dataclass(frozen=True)
+class SetupPickEvent:
+    """Renderer-neutral setup-overlay inspection evidence."""
+
+    generation: int
+    setup_id: str
+    semantic_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -456,12 +471,20 @@ class ActiveSceneController:
         self._active_named_overlay_ids: set[str] = set()
         self._solver_setup: object | None = None
         self._setup_materials: tuple[object, ...] = ()
+        self._setup_units = UnitSystem.si()
         self._setup_statuses: dict[str, SetupRecordStatus] = {}
         self._setup_overlay_ids: set[str] = set()
+        self._setup_overlay_categories: dict[str, str] = {}
+        self._setup_record_visibility: dict[str, bool] = {}
+        self._active_setup_id = ""
         self._setup_category_visibility = {
             "material": True,
             "fixed_support": True,
+            "prescribed_displacement": True,
             "force": True,
+            "pressure": True,
+            "temperature": True,
+            "heat_flux": True,
         }
         self._mesh_quality_analyzer = mesh_quality_analyzer or analyze_mesh_cell_quality
         self._mesh_quality_cache: dict[
@@ -568,12 +591,48 @@ class ActiveSceneController:
         return MappingProxyType(dict(self._named_selection_resolutions))
 
     @property
+    def resolved_selection_ids(self) -> frozenset[str]:
+        return frozenset(
+            selection_id
+            for selection_id, resolution in self._named_selection_resolutions.items()
+            if resolution.state is ResolutionState.RESOLVED and resolution.transient_indices
+        )
+
+    @property
     def active_named_selection_ids(self) -> tuple[str, ...]:
         return self._active_named_selection_ids
 
     @property
     def setup_statuses(self) -> Mapping[str, SetupRecordStatus]:
         return MappingProxyType(dict(self._setup_statuses))
+
+    @property
+    def active_setup_id(self) -> str:
+        return self._active_setup_id
+
+    @property
+    def explicit_surface_selection_ids(self) -> frozenset[str]:
+        """Return exact-resolved cell selections made only of supported surfaces."""
+
+        if self._mesh is None:
+            return frozenset()
+        compatible: set[str] = set()
+        for selection in self._named_selections:
+            resolution = self._named_selection_resolutions.get(selection.id)
+            if (
+                selection.entity_kind is not EntityKind.CELL
+                or resolution is None
+                or resolution.state is not ResolutionState.RESOLVED
+                or not resolution.transient_indices
+            ):
+                continue
+            try:
+                for cell_index in resolution.transient_indices:
+                    surface_cell_centroid_and_normal(self._mesh, cell_index)
+            except ValueError:
+                continue
+            compatible.add(selection.id)
+        return frozenset(compatible)
 
     @property
     def mesh_quality_analysis(self) -> MeshQualityAnalysis | None:
@@ -755,7 +814,11 @@ class ActiveSceneController:
         """Enable deterministic node/cell picking for the active mesh."""
 
         normalized = SelectionMode.coerce(mode)
-        if normalized not in {SelectionMode.NODE, SelectionMode.CELL}:
+        if normalized not in {
+            SelectionMode.NODE,
+            SelectionMode.CELL,
+            SelectionMode.SETUP,
+        }:
             return False
         if normalized is not self._pick_mode:
             self._clear_transient_state(call_session=True)
@@ -763,6 +826,24 @@ class ActiveSceneController:
         configured = self._configure_session_picking()
         self._notify_selection_listener()
         return configured
+
+    def handle_setup_pick(self, event: object) -> bool:
+        """Activate semantic setup metadata without changing entity membership."""
+
+        pick = _coerce_setup_pick_event(event)
+        if (
+            pick is None
+            or self._pick_mode is not SelectionMode.SETUP
+            or pick.generation != self._generation
+            or not pick.setup_id
+            or not any(
+                semantic_id.endswith(f":{pick.setup_id}") for semantic_id in self._setup_overlay_ids
+            )
+        ):
+            return False
+        if pick.semantic_id and pick.semantic_id not in self._setup_overlay_ids:
+            return False
+        return self.set_active_setup_id(pick.setup_id)
 
     def set_selection_operation(
         self,
@@ -958,11 +1039,29 @@ class ActiveSceneController:
         setup: object | None,
         *,
         materials: Sequence[object] = (),
+        units: UnitSystem | None = None,
     ) -> None:
         """Replace transient setup projections without mutating durable records."""
 
         self._solver_setup = setup
         self._setup_materials = tuple(materials)
+        self._setup_units = units or UnitSystem.si()
+        known_ids = {
+            str(record.id) for record in (() if setup is None else iter_solver_setup_records(setup))
+        }
+        self._setup_record_visibility = {
+            record_id: visible
+            for record_id, visible in self._setup_record_visibility.items()
+            if record_id in known_ids
+        }
+        active_setup_removed = bool(
+            self._active_setup_id and self._active_setup_id not in known_ids
+        )
+        if self._active_setup_id not in known_ids:
+            self._active_setup_id = ""
+        if active_setup_removed:
+            self._active_named_selection_ids = ()
+            self._resolve_and_display_active_named_selections()
         self._refresh_setup_overlays()
         self._notify_selection_listener()
 
@@ -972,9 +1071,72 @@ class ActiveSceneController:
             return False
         self._setup_category_visibility[normalized] = bool(visible)
         for semantic_id in tuple(self._setup_overlay_ids):
-            marker = "fixed-support" if normalized == "fixed_support" else normalized
-            if semantic_id.startswith(f"setup:{marker}:"):
-                self.set_actor_visible(semantic_id, visible)
+            if self._setup_overlay_categories.get(semantic_id) == normalized:
+                setup_id = semantic_id.rsplit(":", 1)[-1]
+                record_visible = self._setup_record_visibility.get(setup_id, True)
+                self.set_actor_visible(
+                    semantic_id,
+                    bool(visible) and record_visible,
+                )
+        return True
+
+    def set_setup_record_visible(self, setup_id: str, visible: bool) -> bool:
+        """Apply one transient visibility override without mutating the Project."""
+
+        record_id = str(setup_id or "")
+        if not record_id or not any(
+            str(record.id) == record_id
+            for record in (
+                () if self._solver_setup is None else iter_solver_setup_records(self._solver_setup)
+            )
+        ):
+            return False
+        self._setup_record_visibility[record_id] = bool(visible)
+        applied = False
+        for semantic_id in tuple(self._setup_overlay_ids):
+            if semantic_id.endswith(f":{record_id}"):
+                category = self._setup_overlay_categories.get(semantic_id, "")
+                category_visible = self._setup_category_visibility.get(category, True)
+                applied = (
+                    self.set_actor_visible(
+                        semantic_id,
+                        bool(visible) and category_visible,
+                    )
+                    or applied
+                )
+        return applied
+
+    def set_active_setup_id(self, setup_id: str) -> bool:
+        """Activate one durable setup identity and emphasize its NamedSelection."""
+
+        record_id = str(setup_id or "")
+        records = (
+            () if self._solver_setup is None else iter_solver_setup_records(self._solver_setup)
+        )
+        record = next(
+            (item for item in records if str(getattr(item, "id", "")) == record_id),
+            None,
+        )
+        if record is None:
+            return False
+        self._active_setup_id = record_id
+        target_id = str(getattr(record, "target_selection_id", ""))
+        resolution = self._named_selection_resolutions.get(target_id)
+        if resolution is not None and resolution.state is ResolutionState.RESOLVED:
+            self._active_named_selection_ids = (target_id,)
+        else:
+            self._active_named_selection_ids = ()
+        self._resolve_and_display_active_named_selections()
+        self._notify_selection_listener()
+        return True
+
+    def clear_active_setup_id(self) -> bool:
+        """Clear transient setup emphasis without changing persisted records."""
+
+        if not self._active_setup_id:
+            return False
+        self._active_setup_id = ""
+        self._notify_selection_listener()
         return True
 
     def set_interactive_result_dataset(
@@ -1859,7 +2021,9 @@ class ActiveSceneController:
         self._named_overlay_ids.clear()
         self._active_named_overlay_ids.clear()
         self._setup_overlay_ids.clear()
+        self._setup_overlay_categories.clear()
         self._setup_statuses = {}
+        self._active_setup_id = ""
         session = self._session
         if session is None:
             self._actor_records.clear()
@@ -1922,7 +2086,11 @@ class ActiveSceneController:
         self._named_overlay_ids.clear()
         self._active_named_overlay_ids.clear()
         self._setup_overlay_ids.clear()
+        self._setup_overlay_categories.clear()
         self._setup_statuses = {}
+
+        self._active_setup_id = ""
+        self._setup_record_visibility.clear()
 
     def _snapshot_camera_state(self) -> ActiveSceneCameraState:
         session = self._session
@@ -2064,7 +2232,7 @@ class ActiveSceneController:
     ) -> None:
         for item in state.actor_visibility:
             semantic_id = _semantic_id_from_visibility(item)
-            if not semantic_id.startswith("setup:"):
+            if not semantic_id.startswith(("setup:", "setup_target:", "setup_glyph:")):
                 continue
             status = self._setup_statuses.get(item.source_id)
             if status is None or str(getattr(status, "state", "")) != "READY":
@@ -2278,6 +2446,19 @@ class ActiveSceneController:
             )
 
     def _configure_session_picking(self) -> bool:
+        if self._pick_mode is SelectionMode.SETUP:
+            if self._mesh is None or self._mesh_fingerprint is None:
+                return False
+            callback = self.guard_callback(
+                self.handle_setup_pick,
+                stale_result=False,
+            )
+            return self._call_session(
+                "picking",
+                "set_pick_mode",
+                SelectionMode.SETUP.value,
+                callback,
+            )
         if self._pick_mode not in {SelectionMode.NODE, SelectionMode.CELL}:
             return False
         if self._mesh is None or self._mesh_fingerprint is None:
@@ -2536,6 +2717,7 @@ class ActiveSceneController:
                     remover(semantic_id)
             self._actor_records.pop(semantic_id, None)
         self._setup_overlay_ids.clear()
+        self._setup_overlay_categories.clear()
         self._setup_statuses = {}
         if self._solver_setup is None:
             return
@@ -2544,6 +2726,8 @@ class ActiveSceneController:
             selections=self._named_selections,
             materials=self._setup_materials,
             resolutions=self._named_selection_resolutions,
+            mesh=self._mesh,
+            project_units=self._setup_units,
         )
         self._setup_statuses = {item.record_id: item for item in statuses}
         if session is None or self._mesh is None or "setup-overlays" not in self.capabilities:
@@ -2554,9 +2738,15 @@ class ActiveSceneController:
             resolutions=self._named_selection_resolutions,
             statuses=self._setup_statuses,
             category_visibility=self._setup_category_visibility,
+            mesh_ref=self._mesh_ref,
+            selections=self._named_selections,
         )
         for spec in specs:
             previous = self._actor_records.get(spec.actor_key)
+            visible = bool(spec.visible) and self._setup_record_visibility.get(
+                spec.record_id,
+                True,
+            )
             session.replace_actor(
                 spec.actor_key,
                 spec,
@@ -2565,10 +2755,11 @@ class ActiveSceneController:
             self._actor_records[spec.actor_key] = _scene_actor_record(
                 spec.actor_key,
                 generation=self._generation,
-                visible=spec.visible if previous is None else previous.visible,
+                visible=visible if previous is None else previous.visible,
             )
-            session.set_actor_visible(spec.actor_key, spec.visible)
+            session.set_actor_visible(spec.actor_key, visible)
             self._setup_overlay_ids.add(spec.actor_key)
+            self._setup_overlay_categories[spec.actor_key] = spec.category
 
     def _mesh_quality_renderer_available(self) -> bool:
         return bool(
@@ -2769,9 +2960,18 @@ def _scene_actor_record(
         RESULT_VECTOR_ACTOR_KEY,
         RESULT_PROBE_ACTOR_KEY,
     }
+    setup = semantic_id.startswith(("setup_target:", "setup_glyph:"))
     helper = selection or semantic_id == RESULT_COLORBAR_ACTOR_KEY
     category = (
-        "selection" if selection else "helper" if helper else "result" if result else "geometry"
+        "selection"
+        if selection
+        else "setup"
+        if setup
+        else "helper"
+        if helper
+        else "result"
+        if result
+        else "geometry"
     )
     return SceneActorRecord(
         semantic_id=semantic_id,
@@ -2837,6 +3037,18 @@ def _semantic_visibility_entry(
             semantic_id.removeprefix("setup:force:"),
             visible=visible,
         )
+    if semantic_id.startswith("setup_target:"):
+        return SemanticActorVisibility(
+            "setup_target",
+            semantic_id.removeprefix("setup_target:"),
+            visible=visible,
+        )
+    if semantic_id.startswith("setup_glyph:"):
+        return SemanticActorVisibility(
+            "setup_glyph",
+            semantic_id.removeprefix("setup_glyph:"),
+            visible=visible,
+        )
     if semantic_id == MESH_QUALITY_ACTOR_KEY:
         return SemanticActorVisibility(
             "mesh_quality_bad_cells",
@@ -2869,6 +3081,10 @@ def _semantic_id_from_visibility(item: SemanticActorVisibility) -> str:
         return f"setup:fixed-support:{item.source_id}"
     if item.kind == "force_load":
         return f"setup:force:{item.source_id}"
+    if item.kind == "setup_target":
+        return f"setup_target:{item.source_id}"
+    if item.kind == "setup_glyph":
+        return f"setup_glyph:{item.source_id}"
     if item.kind == "mesh_quality_bad_cells":
         return MESH_QUALITY_ACTOR_KEY
     if item.kind == "scalar_result":
@@ -2999,6 +3215,21 @@ def _coerce_pick_event(value: object) -> ScenePickEvent | None:
         return None
 
 
+def _coerce_setup_pick_event(value: object) -> SetupPickEvent | None:
+    if isinstance(value, SetupPickEvent):
+        return value
+    if not isinstance(value, Mapping):
+        return None
+    try:
+        return SetupPickEvent(
+            generation=int(value.get("generation", -1)),
+            setup_id=str(value.get("setup_id", "")),
+            semantic_id=str(value.get("semantic_id", "")),
+        )
+    except (TypeError, ValueError):
+        return None
+
+
 def _entity_kind_for_mode(mode: SelectionMode) -> EntityKind | None:
     if mode is SelectionMode.NODE:
         return EntityKind.NODE
@@ -3046,6 +3277,7 @@ __all__ = [
     "SceneLifecycleState",
     "SceneMeshPayload",
     "ScenePickEvent",
+    "SetupPickEvent",
     "SceneRendererFactoryProtocol",
     "SceneRendererInitializationError",
     "SceneRendererSessionProtocol",

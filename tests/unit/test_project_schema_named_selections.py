@@ -41,7 +41,7 @@ def test_old_project_dict_without_selections_loads_unchanged() -> None:
 def test_project_with_named_selection_roundtrips() -> None:
     project = Project(metadata=ProjectMetadata(name="P"), selections=[_selection()])
     payload = project.to_dict()
-    assert CURRENT_SCHEMA_VERSION == "0.3"
+    assert CURRENT_SCHEMA_VERSION == "0.4"
     assert DEFAULT_PROJECT_SCHEMA_VERSION == "0.1"
     assert payload["schema_version"] == DEFAULT_PROJECT_SCHEMA_VERSION
     assert len(payload["selections"]) == 1
@@ -79,9 +79,7 @@ def test_boundary_condition_target_ref_valid_selection_validates() -> None:
     )
     report = project.validate()
     assert not report.has_errors
-    assert not any(
-        "missing selection id" in message.message for message in report.messages
-    )
+    assert not any("missing selection id" in message.message for message in report.messages)
     # target_ref round-trips through the boundary-condition dict.
     restored = BoundaryCondition.from_dict(bc.to_dict())
     assert restored.target_ref is not None
@@ -103,8 +101,7 @@ def test_boundary_condition_target_ref_missing_selection_warns() -> None:
     report = project.validate()
     assert report.has_warnings
     assert any(
-        "missing selection id: does-not-exist" in message.message
-        for message in report.messages
+        "missing selection id: does-not-exist" in message.message for message in report.messages
     )
     # Missing selection is a warning, not a hard error.
     assert not report.has_errors
@@ -123,5 +120,5 @@ def test_duplicate_selection_ids_are_errors() -> None:
 def test_schema_version_remains_0_1_with_selections() -> None:
     project = Project(metadata=ProjectMetadata(name="P"), selections=[_selection()])
     assert project.schema_version == DEFAULT_PROJECT_SCHEMA_VERSION == "0.1"
-    assert CURRENT_SCHEMA_VERSION == "0.3"
+    assert CURRENT_SCHEMA_VERSION == "0.4"
     assert Project.from_dict(project.to_dict()).schema_version == "0.1"

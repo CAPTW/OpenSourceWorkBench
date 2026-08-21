@@ -50,6 +50,7 @@ class SelectionMode(StrEnum):
 
     NODE = "node"
     CELL = "cell"
+    SETUP = "setup"
     FACE = "face"
     EDGE = "edge"
     MIXED = "mixed"
@@ -172,18 +173,11 @@ class EntityLocator:
             identity_schema=str(data.get("identity_schema", "")),
             mesh_ref=str(data.get("mesh_ref", "")),
             mesh_fingerprint=str(data.get("mesh_fingerprint", "")),
-            entity_kind=EntityKind.coerce(
-                data.get("entity_kind", EntityKind.UNKNOWN.value)
-            ),
+            entity_kind=EntityKind.coerce(data.get("entity_kind", EntityKind.UNKNOWN.value)),
             id_namespace=str(data.get("id_namespace", "")),
-            entity_ids=tuple(
-                _normalize_id(item)
-                for item in data.get("entity_ids", ()) or ()
-            ),
+            entity_ids=tuple(_normalize_id(item) for item in data.get("entity_ids", ()) or ()),
             cell_block_key=(
-                None
-                if data.get("cell_block_key") is None
-                else str(data.get("cell_block_key"))
+                None if data.get("cell_block_key") is None else str(data.get("cell_block_key"))
             ),
         )
 
@@ -422,9 +416,7 @@ class SelectionState:
             metadata=_string_dict(data.get("metadata", {})),
         )
 
-    def to_named_selection(
-        self, id: str, name: str, description: str = ""
-    ) -> NamedSelection:
+    def to_named_selection(self, id: str, name: str, description: str = "") -> NamedSelection:
         """Commit the current transient targets into a persistable NamedSelection."""
         entity_kind = _MODE_TO_ENTITY_KIND.get(self.mode)
         if entity_kind is None:
@@ -520,9 +512,7 @@ def has_durable_entity_locators(
     """Return whether any selection carries new fingerprint-bound identity."""
 
     return any(
-        target.locator is not None
-        for selection in selections
-        for target in selection.targets
+        target.locator is not None for selection in selections for target in selection.targets
     )
 
 

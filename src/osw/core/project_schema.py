@@ -25,13 +25,15 @@ from .workspace_3d import ActiveSceneState
 LEGACY_PROJECT_SCHEMA_VERSION = "0.1"
 PATH_KIND_PROJECT_SCHEMA_VERSION = "0.2"
 ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION = "0.3"
-CURRENT_SCHEMA_VERSION = ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
+SOLVER_SETUP_PROJECT_SCHEMA_VERSION = "0.4"
+CURRENT_SCHEMA_VERSION = SOLVER_SETUP_PROJECT_SCHEMA_VERSION
 DEFAULT_PROJECT_SCHEMA_VERSION = LEGACY_PROJECT_SCHEMA_VERSION
 SUPPORTED_PROJECT_SCHEMA_VERSIONS = frozenset(
     {
         LEGACY_PROJECT_SCHEMA_VERSION,
         PATH_KIND_PROJECT_SCHEMA_VERSION,
         ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION,
+        SOLVER_SETUP_PROJECT_SCHEMA_VERSION,
     }
 )
 NATIVE_COMMERCIAL_CAD_EXTENSIONS = frozenset(
@@ -451,7 +453,11 @@ class PhysicsSetup:
     files: list[str] = field(default_factory=list)
     material_assignment_records: list[object] = field(default_factory=list)
     fixed_support_records: list[object] = field(default_factory=list)
+    prescribed_displacement_records: list[object] = field(default_factory=list)
     force_load_records: list[object] = field(default_factory=list)
+    pressure_load_records: list[object] = field(default_factory=list)
+    temperature_records: list[object] = field(default_factory=list)
+    heat_flux_records: list[object] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not self.boundaries and self.boundary_conditions:
@@ -482,10 +488,20 @@ class PhysicsSetup:
             payload["fixed_support_records"] = [
                 item.to_dict() for item in self.fixed_support_records
             ]
-        if self.force_load_records:
-            payload["force_load_records"] = [
-                item.to_dict() for item in self.force_load_records
+        if self.prescribed_displacement_records:
+            payload["prescribed_displacement_records"] = [
+                item.to_dict() for item in self.prescribed_displacement_records
             ]
+        if self.force_load_records:
+            payload["force_load_records"] = [item.to_dict() for item in self.force_load_records]
+        if self.pressure_load_records:
+            payload["pressure_load_records"] = [
+                item.to_dict() for item in self.pressure_load_records
+            ]
+        if self.temperature_records:
+            payload["temperature_records"] = [item.to_dict() for item in self.temperature_records]
+        if self.heat_flux_records:
+            payload["heat_flux_records"] = [item.to_dict() for item in self.heat_flux_records]
         return payload
 
     @classmethod
@@ -498,7 +514,11 @@ class PhysicsSetup:
         from .solver_setup import (
             FixedSupportRecord,
             ForceLoadRecord,
+            HeatFluxRecord,
             MaterialAssignmentRecord,
+            PrescribedDisplacementRecord,
+            PressureLoadRecord,
+            TemperatureRecord,
         )
 
         return cls(
@@ -514,9 +534,7 @@ class PhysicsSetup:
             },
             materials=[str(item) for item in data.get("materials", [])],
             solver_config=(
-                SolverConfig.from_dict(data["solver_config"])
-                if data.get("solver_config")
-                else None
+                SolverConfig.from_dict(data["solver_config"]) if data.get("solver_config") else None
             ),
             files=[str(item) for item in data.get("files", [])],
             material_assignment_records=[
@@ -524,12 +542,23 @@ class PhysicsSetup:
                 for item in data.get("material_assignment_records", [])
             ],
             fixed_support_records=[
-                FixedSupportRecord.from_dict(item)
-                for item in data.get("fixed_support_records", [])
+                FixedSupportRecord.from_dict(item) for item in data.get("fixed_support_records", [])
+            ],
+            prescribed_displacement_records=[
+                PrescribedDisplacementRecord.from_dict(item)
+                for item in data.get("prescribed_displacement_records", [])
             ],
             force_load_records=[
-                ForceLoadRecord.from_dict(item)
-                for item in data.get("force_load_records", [])
+                ForceLoadRecord.from_dict(item) for item in data.get("force_load_records", [])
+            ],
+            pressure_load_records=[
+                PressureLoadRecord.from_dict(item) for item in data.get("pressure_load_records", [])
+            ],
+            temperature_records=[
+                TemperatureRecord.from_dict(item) for item in data.get("temperature_records", [])
+            ],
+            heat_flux_records=[
+                HeatFluxRecord.from_dict(item) for item in data.get("heat_flux_records", [])
             ],
         )
 
@@ -753,25 +782,25 @@ class Project:
                 else ActiveSceneState.from_dict(active_scene)
             )
         )
-        if (
-            schema_version_value
-            in {
-                LEGACY_PROJECT_SCHEMA_VERSION,
-                PATH_KIND_PROJECT_SCHEMA_VERSION,
-            }
-            and has_durable_entity_locators(named_selections)
-        ):
+        if schema_version_value in {
+            LEGACY_PROJECT_SCHEMA_VERSION,
+            PATH_KIND_PROJECT_SCHEMA_VERSION,
+        } and has_durable_entity_locators(named_selections):
+            schema_version_value = ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
+        if schema_version_value in {
+            LEGACY_PROJECT_SCHEMA_VERSION,
+            PATH_KIND_PROJECT_SCHEMA_VERSION,
+        } and _has_typed_solver_setup(physics_setups):
             schema_version_value = ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
         if (
-            schema_version_value
-            in {
-                LEGACY_PROJECT_SCHEMA_VERSION,
-                PATH_KIND_PROJECT_SCHEMA_VERSION,
-            }
-            and _has_typed_solver_setup(physics_setups)
+            schema_version_value != SOLVER_SETUP_PROJECT_SCHEMA_VERSION
+            and _has_extended_solver_setup(physics_setups)
         ):
-            schema_version_value = ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
-        if active_scene_state is not None:
+            schema_version_value = SOLVER_SETUP_PROJECT_SCHEMA_VERSION
+        if active_scene_state is not None and schema_version_value in {
+            LEGACY_PROJECT_SCHEMA_VERSION,
+            PATH_KIND_PROJECT_SCHEMA_VERSION,
+        }:
             schema_version_value = ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
         screenshot_assets = coerce_report_screenshots(report_screenshots)
         _ensure_report_screenshot_path_kind_envelope(
@@ -874,9 +903,7 @@ class Project:
         # Additive schema 0.1: emit report screenshots only when present so
         # projects without them serialize byte-identically to existing output.
         if self.report_screenshots:
-            payload["report_screenshots"] = [
-                item.to_dict() for item in self.report_screenshots
-            ]
+            payload["report_screenshots"] = [item.to_dict() for item in self.report_screenshots]
         if self.active_scene is not None:
             payload["active_scene"] = self.active_scene.to_dict()
         return payload
@@ -887,9 +914,7 @@ class Project:
             msg = "Project data must be a mapping."
             raise ProjectSchemaError(msg)
         migrated = migrate_project_data(data)
-        schema_version = str(
-            migrated.get("schema_version", DEFAULT_PROJECT_SCHEMA_VERSION)
-        )
+        schema_version = str(migrated.get("schema_version", DEFAULT_PROJECT_SCHEMA_VERSION))
         _ensure_supported_project_schema_version(schema_version)
         screenshot_payload = migrated.get("report_screenshots", [])
         selection_payload = migrated.get("selections", [])
@@ -900,19 +925,24 @@ class Project:
             raise ProjectSchemaError(
                 "Report screenshot path_kind requires Project schema version 0.2."
             )
-        if (
-            schema_version != ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
-            and _payload_has_durable_entity_locator(selection_payload)
-        ):
-            raise ProjectSchemaError(
-                "Durable entity locators require Project schema version 0.3."
-            )
-        if (
-            schema_version != ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION
-            and _payload_has_typed_solver_setup(migrated.get("physics", []))
-        ):
+        if schema_version not in {
+            ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION,
+            SOLVER_SETUP_PROJECT_SCHEMA_VERSION,
+        } and _payload_has_durable_entity_locator(selection_payload):
+            raise ProjectSchemaError("Durable entity locators require Project schema version 0.3.")
+        if schema_version in {
+            LEGACY_PROJECT_SCHEMA_VERSION,
+            PATH_KIND_PROJECT_SCHEMA_VERSION,
+        } and _payload_has_typed_solver_setup(migrated.get("physics", [])):
             raise ProjectSchemaError(
                 "Typed solver setup records require Project schema version 0.3."
+            )
+        if (
+            schema_version != SOLVER_SETUP_PROJECT_SCHEMA_VERSION
+            and _payload_has_extended_solver_setup(migrated.get("physics", []))
+        ):
+            raise ProjectSchemaError(
+                "Extended solver setup records require Project schema version 0.4."
             )
 
         units_defaulted = bool(migrated.get("_units_defaulted", False))
@@ -930,17 +960,14 @@ class Project:
                 meshes=[MeshRef.from_dict(item) for item in migrated.get("meshes", [])],
                 scripts=[ScriptRef.from_dict(item) for item in migrated.get("scripts", [])],
                 boundary_curves=[
-                    BoundaryCurve.from_dict(item)
-                    for item in migrated.get("boundary_curves", [])
+                    BoundaryCurve.from_dict(item) for item in migrated.get("boundary_curves", [])
                 ],
                 physics=[PhysicsSetup.from_dict(item) for item in physics_payload],
                 solvers=[SolverConfig.from_dict(item) for item in solver_payload],
                 results=[ResultRef.from_dict(item) for item in migrated.get("results", [])],
                 report=ReportConfig.from_dict(migrated.get("report")),
                 plugins=[PluginRef.from_dict(item) for item in migrated.get("plugins", [])],
-                warnings=[
-                    ProjectWarning.from_dict(item) for item in migrated.get("warnings", [])
-                ],
+                warnings=[ProjectWarning.from_dict(item) for item in migrated.get("warnings", [])],
                 selections=[
                     NamedSelection.from_dict(item) for item in migrated.get("selections", [])
                 ],
@@ -1044,12 +1071,11 @@ def _ensure_report_screenshot_path_kind_envelope(
     if schema_version in {
         PATH_KIND_PROJECT_SCHEMA_VERSION,
         ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION,
+        SOLVER_SETUP_PROJECT_SCHEMA_VERSION,
     }:
         return
     if any(asset.path_kind is not None for asset in report_screenshots):
-        raise ProjectSchemaError(
-            "Report screenshot path_kind requires Project schema version 0.2."
-        )
+        raise ProjectSchemaError("Report screenshot path_kind requires Project schema version 0.2.")
 
 
 def _payload_has_explicit_report_screenshot_path_kind(value: object) -> bool:
@@ -1064,10 +1090,11 @@ def _ensure_selection_identity_envelope(
 ) -> None:
     if not has_durable_entity_locators(selections):
         return
-    if schema_version != ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION:
-        raise ProjectSchemaError(
-            "Durable entity locators require Project schema version 0.3."
-        )
+    if schema_version not in {
+        ENTITY_LOCATOR_PROJECT_SCHEMA_VERSION,
+        SOLVER_SETUP_PROJECT_SCHEMA_VERSION,
+    }:
+        raise ProjectSchemaError("Durable entity locators require Project schema version 0.3.")
 
 
 def _payload_has_durable_entity_locator(value: object) -> bool:
@@ -1088,7 +1115,21 @@ def _has_typed_solver_setup(setups: Sequence[PhysicsSetup]) -> bool:
     return any(
         setup.material_assignment_records
         or setup.fixed_support_records
+        or setup.prescribed_displacement_records
         or setup.force_load_records
+        or setup.pressure_load_records
+        or setup.temperature_records
+        or setup.heat_flux_records
+        for setup in setups
+    )
+
+
+def _has_extended_solver_setup(setups: Sequence[PhysicsSetup]) -> bool:
+    return any(
+        setup.prescribed_displacement_records
+        or setup.pressure_load_records
+        or setup.temperature_records
+        or setup.heat_flux_records
         for setup in setups
     )
 
@@ -1105,7 +1146,31 @@ def _payload_has_typed_solver_setup(value: object) -> bool:
             for field_name in (
                 "material_assignment_records",
                 "fixed_support_records",
+                "prescribed_displacement_records",
                 "force_load_records",
+                "pressure_load_records",
+                "temperature_records",
+                "heat_flux_records",
+            )
+        )
+        for item in value
+    )
+
+
+def _payload_has_extended_solver_setup(value: object) -> bool:
+    if isinstance(value, Mapping):
+        value = (value,)
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        return False
+    return any(
+        isinstance(item, Mapping)
+        and any(
+            item.get(field_name)
+            for field_name in (
+                "prescribed_displacement_records",
+                "pressure_load_records",
+                "temperature_records",
+                "heat_flux_records",
             )
         )
         for item in value

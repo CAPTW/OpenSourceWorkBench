@@ -62,6 +62,8 @@ def _state() -> object:
             actor_type("wireframe", "mesh-1", visible=True),
             actor_type("base_mesh", "mesh-1", visible=True),
             actor_type("material_assignment", "mat-1", visible=False),
+            actor_type("setup_target", "pressure-1", visible=True),
+            actor_type("setup_glyph", "pressure-1", visible=False),
         ),
         visible_named_selection_ids=("selection-2", "selection-1"),
         active_named_selection_ids=("selection-2",),
@@ -128,12 +130,16 @@ def test_active_scene_round_trip_and_digest_are_deterministic() -> None:
     assert [item["kind"] for item in payload["actor_visibility"]] == [
         "base_mesh",
         "material_assignment",
+        "setup_glyph",
+        "setup_target",
         "wireframe",
     ]
     assert payload["visible_named_selection_ids"] == [
         "selection-1",
         "selection-2",
     ]
+    setup_mode_payload = {**payload, "selection_mode": "setup"}
+    assert state_type.from_dict(setup_mode_payload).selection_mode == "setup"
 
 
 def test_active_scene_rejects_malformed_camera_clipping_actor_and_extensions() -> None:

@@ -111,9 +111,7 @@ def test_prepare_maps_only_ready_records_to_deterministic_one_based_fragments(
         material_assignment_records=[
             api.MaterialAssignmentRecord("mat-a", "Steel", "steel", "cells")
         ],
-        fixed_support_records=[
-            api.FixedSupportRecord("fix-a", "Clamp", "fixed", (1, 2, 3))
-        ],
+        fixed_support_records=[api.FixedSupportRecord("fix-a", "Clamp", "fixed", (1, 2, 3))],
         force_load_records=[
             api.ForceLoadRecord(
                 "force-a",
@@ -177,9 +175,7 @@ def test_prepare_fails_closed_for_stale_identity_and_normalized_name_collision()
     project = Project(
         ProjectMetadata(name="Blocked"),
         physics=setup,
-        selections=[
-            _selection(selection_api, "nodes", EntityKind.NODE, (0,))
-        ],
+        selections=[_selection(selection_api, "nodes", EntityKind.NODE, (0,))],
     )
 
     collision = adapter.prepare_solver_setup(
@@ -362,3 +358,84 @@ def test_prepare_deduplicates_material_definitions_and_blocks_name_collisions() 
 
     assert collision.eligible is False
     assert "NORMALIZED_MATERIAL_NAME_COLLISION" in collision.diagnostics
+
+
+def test_prepare_consumes_normalized_handoff_for_prescribed_displacement() -> None:
+    api, selection_api, adapter = _apis()
+    mesh = _mesh()
+    project = Project(
+        ProjectMetadata(name="Prescribed displacement"),
+        physics=PhysicsSetup(
+            prescribed_displacement_records=[
+                api.PrescribedDisplacementRecord(
+                    "move-y",
+                    "Move Y",
+                    "nodes",
+                    uy=Quantity(-0.001, "m"),
+                )
+            ]
+        ),
+        selections=[
+            _selection(
+                selection_api,
+                "nodes",
+                EntityKind.NODE,
+                (1, 3),
+                mesh=mesh,
+            )
+        ],
+    )
+
+    result = adapter.prepare_solver_setup(
+        project,
+        mesh=mesh,
+        mesh_ref="mesh-1",
+    )
+
+    assert result.eligible is True
+    assert result.record_ids == ("move-y",)
+    assert result.node_sets == (("DISP_MOVE_Y", (2, 4)),)
+    assert "*BOUNDARY\nDISP_MOVE_Y, 2, 2, -0.001" in result.input_preview
+    assert result.execution_mode == "prepare_only"
+
+
+def test_prepare_does_not_mislabel_surface_material_as_a_solid_section() -> None:
+    api, selection_api, adapter = _apis()
+    mesh = MeshData(
+        points=((0, 0, 0), (1, 0, 0), (0, 1, 0)),
+        cells=(MeshCellBlock("triangle", ((0, 1, 2),)),),
+    )
+    project = Project(
+        ProjectMetadata(name="Surface material"),
+        materials=[
+            Material(
+                "steel",
+                "Steel",
+                elastic=IsotropicElastic(Quantity(210e9, "Pa"), 0.3),
+            )
+        ],
+        physics=PhysicsSetup(
+            material_assignment_records=[
+                api.MaterialAssignmentRecord("surface-mat", "Surface", "steel", "surface")
+            ]
+        ),
+        selections=[
+            _selection(
+                selection_api,
+                "surface",
+                EntityKind.CELL,
+                ("0:0",),
+                mesh=mesh,
+            )
+        ],
+    )
+
+    result = adapter.prepare_solver_setup(
+        project,
+        mesh=mesh,
+        mesh_ref="mesh-1",
+    )
+
+    assert result.eligible is False
+    assert result.input_preview == ""
+    assert result.diagnostics == ("surface-mat:UNSUPPORTED_MATERIAL_CELL_TOPOLOGY",)

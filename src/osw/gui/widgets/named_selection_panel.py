@@ -48,7 +48,10 @@ class NamedSelectionPanel(QtWidgets.QWidget):
         mode_label = QtWidgets.QLabel("Pick mode", self)
         self.mode_selector = QtWidgets.QComboBox(self)
         self.mode_selector.setObjectName("oswEntityPickMode")
-        self.mode_selector.addItems(("Node", "Cell"))
+        self.mode_selector.addItems(("Node", "Cell", "Setup"))
+        self.mode_selector.setToolTip(
+            "Node/Cell edits entity membership; Setup inspects overlay identities."
+        )
         mode_row.addWidget(mode_label)
         mode_row.addWidget(self.mode_selector, 1)
         layout.addLayout(mode_row)
@@ -63,9 +66,7 @@ class NamedSelectionPanel(QtWidgets.QWidget):
         layout.addLayout(operation_row)
 
         deferred_row = QtWidgets.QHBoxLayout()
-        deferred_reason = (
-            "Face and edge entity identity is not supported in this gate."
-        )
+        deferred_reason = "Face and edge entity identity is not supported in this gate."
         self.face_mode_button = QtWidgets.QPushButton("Face (deferred)", self)
         self.edge_mode_button = QtWidgets.QPushButton("Edge (deferred)", self)
         for button in (self.face_mode_button, self.edge_mode_button):
@@ -84,9 +85,7 @@ class NamedSelectionPanel(QtWidgets.QWidget):
         current_row = QtWidgets.QHBoxLayout()
         self.selected_count_label = QtWidgets.QLabel("Selected: 0", self)
         self.invert_button = QtWidgets.QPushButton("Invert", self)
-        self.invert_button.setToolTip(
-            "Select the complement in the active node/cell domain."
-        )
+        self.invert_button.setToolTip("Select the complement in the active node/cell domain.")
         self.clear_button = QtWidgets.QPushButton("Clear Selection", self)
         self.clear_button.setShortcut(QtGui.QKeySequence("Esc"))
         self.clear_button.setToolTip("Clear transient current selection (Esc).")
@@ -143,9 +142,7 @@ class NamedSelectionPanel(QtWidgets.QWidget):
         layout.addWidget(self.status_label)
 
     def _connect_signals(self) -> None:
-        self.mode_selector.currentTextChanged.connect(
-            lambda text: self.pickModeChanged.emit(text.lower())
-        )
+        self.mode_selector.currentTextChanged.connect(self._on_pick_mode_changed)
         self.operation_selector.currentTextChanged.connect(
             lambda text: self.selectionOperationChanged.emit(text.lower())
         )
@@ -160,9 +157,7 @@ class NamedSelectionPanel(QtWidgets.QWidget):
         self.rename_button.clicked.connect(self._emit_rename)
         self.replace_button.clicked.connect(self._emit_replace)
         self.delete_button.clicked.connect(self._emit_delete)
-        self.selection_list.currentItemChanged.connect(
-            self._on_current_item_changed
-        )
+        self.selection_list.currentItemChanged.connect(self._on_current_item_changed)
 
     def set_backend_available(self, available: bool, reason: str = "") -> None:
         self._backend_available = bool(available)
@@ -188,9 +183,7 @@ class NamedSelectionPanel(QtWidgets.QWidget):
         self._current_count = max(0, int(count))
         self._current_resolution = str(resolution_state or "UNRESOLVED")
         self.selected_count_label.setText(f"Selected: {self._current_count}")
-        self.current_resolution_label.setText(
-            f"Current: {self._current_resolution}"
-        )
+        self.current_resolution_label.setText(f"Current: {self._current_resolution}")
         summary, details = _selection_metadata_text(metadata)
         self.metadata_label.setText(summary)
         self.metadata_label.setToolTip(details)
@@ -284,17 +277,15 @@ class NamedSelectionPanel(QtWidgets.QWidget):
         if current is None:
             self._refresh_button_state()
             return
-        selection_id = str(
-            current.data(QtCore.Qt.ItemDataRole.UserRole) or ""
-        )
+        selection_id = str(current.data(QtCore.Qt.ItemDataRole.UserRole) or "")
         display = current.text().split(" — ", 1)[0]
         self.name_input.setText(display)
-        self.description_input.setText(
-            str(
-                current.data(QtCore.Qt.ItemDataRole.UserRole + 1) or ""
-            )
-        )
+        self.description_input.setText(str(current.data(QtCore.Qt.ItemDataRole.UserRole + 1) or ""))
         self.selectionActivated.emit(selection_id)
+        self._refresh_button_state()
+
+    def _on_pick_mode_changed(self, text: str) -> None:
+        self.pickModeChanged.emit(text.lower())
         self._refresh_button_state()
 
     def _emit_rename(self) -> None:
@@ -317,11 +308,16 @@ class NamedSelectionPanel(QtWidgets.QWidget):
 
     def _refresh_button_state(self) -> None:
         has_named_selection = bool(self.current_selection_id())
+        entity_mode = self.mode_selector.currentText() in {"Node", "Cell"}
         current_is_usable = (
             self._backend_available
+            and entity_mode
             and self._current_count > 0
             and self._current_resolution == "RESOLVED"
         )
+        self.operation_selector.setEnabled(self._backend_available and entity_mode)
+        self.clear_button.setEnabled(self._backend_available and entity_mode)
+        self.invert_button.setEnabled(self._backend_available and entity_mode)
         self.create_button.setEnabled(current_is_usable)
         self.rename_button.setEnabled(has_named_selection)
         self.replace_button.setEnabled(has_named_selection and current_is_usable)

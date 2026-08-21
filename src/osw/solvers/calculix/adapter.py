@@ -12,15 +12,13 @@ from typing import Any, ClassVar
 
 from osw.core.materials import IsotropicElastic, Material
 from osw.core.project_schema import Project
-from osw.core.selection_resolution import resolve_named_selection
 from osw.core.solver_setup import (
-    SetupReadiness,
-    evaluate_solver_setup,
-    force_direction,
+    SetupRecordKind,
+    iter_solver_setup_records,
 )
+from osw.core.solver_setup_handoff import build_solver_setup_handoff
 from osw.core.units import Quantity
 from osw.core.validation import ValidationReport
-from osw.mesh.identity import compute_mesh_fingerprint
 from osw.mesh.mesh_model import MeshCellBlock, MeshData, MeshModel
 from osw.plugins.base import SolverAdapterPlugin
 from osw.plugins.manifest import PluginManifest
@@ -60,44 +58,44 @@ def prepare_solver_setup(
     mesh: MeshData,
     mesh_ref: str,
 ) -> CalculiXSolverSetupPreparation:
-    """Map ready typed setup records to deterministic CalculiX fragments."""
+    """Consume the normalized zero-based handoff at a one-based adapter boundary."""
 
+    handoff = build_solver_setup_handoff(
+        project,
+        mesh=mesh,
+        mesh_ref=mesh_ref,
+        adapter_id="osw.solvers.calculix.linear_static",
+        supported_kinds=(
+            SetupRecordKind.MATERIAL_REGION,
+            SetupRecordKind.FIXED_SUPPORT,
+            SetupRecordKind.PRESCRIBED_DISPLACEMENT,
+            SetupRecordKind.FORCE,
+        ),
+        strict=True,
+    )
     setup = project.primary_physics
-    fingerprint = compute_mesh_fingerprint(mesh)
     if setup is None:
         return _setup_preparation_error(
             project,
             mesh_ref,
-            fingerprint.digest,
-            ("MISSING_PHYSICS_SETUP",),
+            handoff.mesh_fingerprint,
+            tuple(item.reason_code for item in handoff.diagnostics),
         )
-    resolutions = {
-        selection.id: resolve_named_selection(
-            selection,
-            mesh=mesh,
-            mesh_ref=mesh_ref,
-        )
-        for selection in project.selections
-    }
-    statuses = evaluate_solver_setup(
-        setup,
-        selections=project.selections,
-        materials=project.materials,
-        resolutions=resolutions,
-    )
+    records = iter_solver_setup_records(setup)
     blockers = [
-        f"{status.record_id}:{status.reason_code}"
-        for status in statuses
-        if status.state is SetupReadiness.BLOCKED
+        (f"{item.setup_id}:{item.reason_code}" if item.setup_id else item.reason_code)
+        for item in handoff.diagnostics
     ]
-    records = (
-        *(setup.material_assignment_records or ()),
-        *(setup.fixed_support_records or ()),
-        *(setup.force_load_records or ()),
-    )
     names = [_setup_set_name(record) for record in records if record.enabled]
     if len(names) != len(set(names)):
         blockers.append("NORMALIZED_SET_NAME_COLLISION")
+    for normalized in handoff.records:
+        if normalized.setup_kind is not SetupRecordKind.MATERIAL_REGION:
+            continue
+        if any(
+            _mesh_cell_type(mesh, index) != "tetra" for index in normalized.resolved_entity_indices
+        ):
+            blockers.append(f"{normalized.setup_id}:UNSUPPORTED_MATERIAL_CELL_TOPOLOGY")
     material_by_id = {item.material_id: item for item in project.materials}
     material_signatures: dict[str, tuple[str, float, str, float]] = {}
     for record in setup.material_assignment_records:
@@ -140,7 +138,7 @@ def prepare_solver_setup(
         return _setup_preparation_error(
             project,
             mesh_ref,
-            fingerprint.digest,
+            handoff.mesh_fingerprint,
             tuple(blockers),
         )
 
@@ -148,84 +146,81 @@ def prepare_solver_setup(
     node_sets: list[tuple[str, tuple[int, ...]]] = []
     fragments: list[str] = []
     emitted_materials: set[tuple[str, str, float, str, float]] = set()
-    for record in setup.material_assignment_records:
-        if not record.enabled:
-            continue
+    record_by_id = {str(record.id): record for record in records}
+    for normalized in handoff.records:
+        record = record_by_id[normalized.setup_id]
         set_name = _setup_set_name(record)
-        indices = resolutions[record.target_selection_id].transient_indices
-        entity_ids = tuple(index + 1 for index in indices)
-        element_sets.append((set_name, entity_ids))
-        material = material_by_id[record.material_id]
-        material_name = _normalized_setup_name(material.name)
-        elastic = material.elastic
-        assert elastic is not None
-        material_signature = (
-            material_name,
-            material.material_id,
-            elastic.young_modulus.value,
-            elastic.young_modulus.unit,
-            elastic.poisson_ratio,
-        )
-        fragments.append(f"*ELSET, ELSET={set_name}\n{_id_line(entity_ids)}")
-        if material_signature not in emitted_materials:
-            fragments.append(
-
+        entity_ids = tuple(index + 1 for index in normalized.resolved_entity_indices)
+        parameters = normalized.parameters_in_project_canonical_units
+        if normalized.setup_kind is SetupRecordKind.MATERIAL_REGION:
+            element_sets.append((set_name, entity_ids))
+            material = material_by_id[normalized.material_ref_if_applicable]
+            material_name = _normalized_setup_name(material.name)
+            elastic = material.elastic
+            assert elastic is not None
+            material_signature = (
+                material_name,
+                material.material_id,
+                elastic.young_modulus.value,
+                elastic.young_modulus.unit,
+                elastic.poisson_ratio,
+            )
+            fragments.append(f"*ELSET, ELSET={set_name}\n{_id_line(entity_ids)}")
+            if material_signature not in emitted_materials:
+                fragments.append(
                     f"*MATERIAL, NAME={material_name}\n"
                     f"*ELASTIC\n"
-                    f"{elastic.young_modulus.value:g}, "
-                    f"{elastic.poisson_ratio:g}"
-
+                    f"{elastic.young_modulus.value:g}, {elastic.poisson_ratio:g}"
+                )
+                emitted_materials.add(material_signature)
+            fragments.append(f"*SOLID SECTION, ELSET={set_name}, MATERIAL={material_name}")
+        elif normalized.setup_kind is SetupRecordKind.FIXED_SUPPORT:
+            node_sets.append((set_name, entity_ids))
+            boundary_lines = "\n".join(
+                f"{set_name}, {dof}, {dof}" for dof in parameters["translational_dofs"]
             )
-            emitted_materials.add(material_signature)
-        fragments.append(
-            f"*SOLID SECTION, ELSET={set_name}, MATERIAL={material_name}"
-        )
-    for record in setup.fixed_support_records:
-        if not record.enabled:
-            continue
-        set_name = _setup_set_name(record)
-        indices = resolutions[record.target_selection_id].transient_indices
-        entity_ids = tuple(index + 1 for index in indices)
-        node_sets.append((set_name, entity_ids))
-        boundary_lines = "\n".join(
-            f"{set_name}, {dof}, {dof}" for dof in record.translational_dofs
-        )
-        fragments.extend(
-            (
-                f"*NSET, NSET={set_name}\n{_id_line(entity_ids)}",
-                f"*BOUNDARY\n{boundary_lines}",
+            fragments.extend(
+                (
+                    f"*NSET, NSET={set_name}\n{_id_line(entity_ids)}",
+                    f"*BOUNDARY\n{boundary_lines}",
+                )
             )
-        )
-    for record in setup.force_load_records:
-        if not record.enabled:
-            continue
-        set_name = _setup_set_name(record)
-        indices = resolutions[record.target_selection_id].transient_indices
-        entity_ids = tuple(index + 1 for index in indices)
-        node_sets.append((set_name, entity_ids))
-        scale = 1000.0 if record.magnitude.unit == "kN" else 1.0
-        vector = tuple(
-            component * record.magnitude.value * scale
-            for component in force_direction(record)
-        )
-        load_lines = "\n".join(
-            f"{set_name}, {dof}, {value:g}"
-            for dof, value in enumerate(vector, 1)
-            if value != 0.0
-        )
-        fragments.extend(
-            (
-                f"*NSET, NSET={set_name}\n{_id_line(entity_ids)}",
-                f"*CLOAD\n{load_lines}",
+        elif normalized.setup_kind is SetupRecordKind.PRESCRIBED_DISPLACEMENT:
+            node_sets.append((set_name, entity_ids))
+            boundary_lines = "\n".join(
+                f"{set_name}, {dof}, {dof}, {value:g}"
+                for dof, value in enumerate(
+                    (parameters["ux"], parameters["uy"], parameters["uz"]),
+                    1,
+                )
+                if value is not None
             )
-        )
-    record_ids = tuple(record.id for record in records if record.enabled)
+            fragments.extend(
+                (
+                    f"*NSET, NSET={set_name}\n{_id_line(entity_ids)}",
+                    f"*BOUNDARY\n{boundary_lines}",
+                )
+            )
+        elif normalized.setup_kind is SetupRecordKind.FORCE:
+            node_sets.append((set_name, entity_ids))
+            load_lines = "\n".join(
+                f"{set_name}, {dof}, {value:g}"
+                for dof, value in enumerate(parameters["vector"], 1)
+                if value != 0.0
+            )
+            fragments.extend(
+                (
+                    f"*NSET, NSET={set_name}\n{_id_line(entity_ids)}",
+                    f"*CLOAD\n{load_lines}",
+                )
+            )
+    record_ids = tuple(record.setup_id for record in handoff.records)
     return CalculiXSolverSetupPreparation(
         eligible=True,
         execution_mode="prepare_only",
         source_project_name=project.metadata.name,
         mesh_ref=mesh_ref,
-        mesh_fingerprint=fingerprint.digest,
+        mesh_fingerprint=handoff.mesh_fingerprint,
         record_ids=record_ids,
         element_sets=tuple(element_sets),
         node_sets=tuple(node_sets),
@@ -258,6 +253,7 @@ def _setup_set_name(record: object) -> str:
     prefixes = {
         "MaterialAssignmentRecord": "MAT",
         "FixedSupportRecord": "FIX",
+        "PrescribedDisplacementRecord": "DISP",
         "ForceLoadRecord": "FORCE",
     }
     prefix = prefixes.get(type(record).__name__, "SET")
@@ -271,6 +267,15 @@ def _normalized_setup_name(value: str) -> str:
 
 def _id_line(entity_ids: Sequence[int]) -> str:
     return ", ".join(str(item) for item in entity_ids)
+
+
+def _mesh_cell_type(mesh: MeshData, cell_index: int) -> str:
+    remaining = int(cell_index)
+    for block in mesh.cells:
+        if remaining < block.count:
+            return str(block.cell_type).casefold()
+        remaining -= block.count
+    return ""
 
 
 class CalculixLinearStaticAdapter(SolverAdapterPlugin):
@@ -445,9 +450,7 @@ def create_cantilever_demo_case() -> CalculixLinearStaticCase:
             CalculixNodeSet("FIXED", (1, 4, 5, 8)),
             CalculixNodeSet("TIP", (2, 3, 6, 7)),
         ),
-        boundary_conditions=(
-            CalculixBoundaryCondition.fixed(name="fixed-left", node_set="FIXED"),
-        ),
+        boundary_conditions=(CalculixBoundaryCondition.fixed(name="fixed-left", node_set="FIXED"),),
         loads=(
             CalculixLoad.force(
                 name="tip-force",
@@ -824,9 +827,7 @@ def _numeric_value(value: object) -> float:
 
 def _mapping_items(value: object) -> tuple[Mapping[str, Any], ...]:
     if isinstance(value, Mapping):
-        return tuple(
-            item for item in value.values() if isinstance(item, Mapping)
-        )
+        return tuple(item for item in value.values() if isinstance(item, Mapping))
     if isinstance(value, Sequence) and not isinstance(value, str | bytes):
         return tuple(item for item in value if isinstance(item, Mapping))
     return ()

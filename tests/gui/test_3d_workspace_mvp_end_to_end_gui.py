@@ -145,11 +145,7 @@ def _selection(
     entity_ids: tuple[int | str, ...],
 ) -> NamedSelection:
     fingerprint = compute_mesh_fingerprint(mesh)
-    namespace = (
-        NODE_ORDINAL_NAMESPACE
-        if kind is EntityKind.NODE
-        else CELL_ORDINAL_NAMESPACE
-    )
+    namespace = NODE_ORDINAL_NAMESPACE if kind is EntityKind.NODE else CELL_ORDINAL_NAMESPACE
     locator = EntityLocator(
         fingerprint.schema,
         MESH_REF,
@@ -697,8 +693,7 @@ def test_3d_workspace_mvp_end_to_end_round_trip(
     assert fixed_selection.entity_kind is EntityKind.NODE
     assert force_selection.entity_kind is EntityKind.NODE
     assert all(
-        item.targets[0].locator.mesh_fingerprint == fingerprint.digest
-        for item in selections
+        item.targets[0].locator.mesh_fingerprint == fingerprint.digest for item in selections
     )
     assert all(
         controller.named_selection_resolutions[item.id].state.value == "RESOLVED"
@@ -753,12 +748,14 @@ def test_3d_workspace_mvp_end_to_end_round_trip(
         for record in setup_records
     )
     setup_actor_keys = tuple(
-        key for key in controller.actor_records if key.startswith("setup:")
+        key for key in controller.actor_records if key.startswith(("setup_target:", "setup_glyph:"))
     )
     assert len(setup_actor_keys) == len(set(setup_actor_keys)) == 3
-    assert sum(":material:" in key for key in setup_actor_keys) == 1
-    assert sum(":fixed-support:" in key for key in setup_actor_keys) == 1
-    assert sum(":force:" in key for key in setup_actor_keys) == 1
+    assert set(setup_actor_keys) == {
+        "setup_target:setup-material-000000000004",
+        "setup_glyph:setup-fixed-support-000000000005",
+        "setup_glyph:setup-force-000000000006",
+    }
 
     window._on_prepare_setup_preview()
     assert len(prepare_calls) == 1
@@ -841,9 +838,7 @@ def test_3d_workspace_mvp_end_to_end_round_trip(
     assert tuple(row.stable_entity_key for row in table.rows) == (0, 1, 3)
     assert tuple(row.value for row in table.rows) == (10.0, 20.0, 40.0)
     assert window.current_project.selections == list(selections_before_probe)
-    assert {"result:probe", "result:scalar", "result:vector"}.issubset(
-        session.actors
-    )
+    assert {"result:probe", "result:scalar", "result:vector"}.issubset(session.actors)
     assert window.project_dirty is False
 
     controller.set_active_named_selection_ids(tuple(item.id for item in selections))
@@ -858,9 +853,7 @@ def test_3d_workspace_mvp_end_to_end_round_trip(
     assert scene.result_state is not None
     assert scene.mesh_quality_state is not None
     scene_digest = active_scene_state_digest(scene)
-    assert scene_digest == active_scene_state_digest(
-        ActiveSceneState.from_dict(scene.to_dict())
-    )
+    assert scene_digest == active_scene_state_digest(ActiveSceneState.from_dict(scene.to_dict()))
     scene_text = str(scene.to_dict())
     assert "backend_index" not in scene_text
     assert "probe" not in scene_text
@@ -890,9 +883,7 @@ def test_3d_workspace_mvp_end_to_end_round_trip(
     capture_count = session.capture_count
     preview = window.generate_report_preview(log=False)
     rendered_preview = "\n".join(
-        block
-        for section in preview.sections
-        for block in getattr(section, "content_blocks", ())
+        block for section in preview.sections for block in getattr(section, "content_blocks", ())
     )
     assert "Active scene: osw.active_scene.v1" in rendered_preview
     assert fingerprint.digest[:12] in rendered_preview
@@ -1021,17 +1012,15 @@ def test_3d_workspace_mvp_same_count_changed_mesh_blocks_restore(
     assert result.reason_codes == ("MESH_FINGERPRINT_MISMATCH",)
     assert factory.current.applied_cameras == []
     assert not any(
-        key.startswith(("setup:", "result:", "mesh_quality:"))
+        key.startswith(("setup:", "setup_target:", "setup_glyph:", "result:", "mesh_quality:"))
         for key in factory.current.actors
     )
     assert all(
-        resolution.state.value == "STALE"
-        and resolution.reason_code == "MESH_FINGERPRINT_MISMATCH"
+        resolution.state.value == "STALE" and resolution.reason_code == "MESH_FINGERPRINT_MISMATCH"
         for resolution in controller.named_selection_resolutions.values()
     )
     assert all(
-        status.state is SetupReadiness.BLOCKED
-        for status in controller.setup_statuses.values()
+        status.state is SetupReadiness.BLOCKED for status in controller.setup_statuses.values()
     )
     assert controller.interactive_results_view_model.scalar is None
     assert controller.mesh_quality_view_model.analysis_available is False
@@ -1083,8 +1072,7 @@ def test_3d_workspace_mvp_renderer_fallback_preserves_nonrendering_flow(
         for resolution in controller.named_selection_resolutions.values()
     )
     assert all(
-        status.state is SetupReadiness.READY
-        for status in controller.setup_statuses.values()
+        status.state is SetupReadiness.READY for status in controller.setup_statuses.values()
     )
 
     window._on_prepare_setup_preview()
