@@ -110,6 +110,44 @@ Import -> Configure -> Run or prepare -> Result -> Report
 - Missing optional dependencies can be valid tutorial outcomes when the workflow
   is documenting dependency status rather than executing the optional tool.
 
+## 3D Workspace MVP
+
+- The 3D Workspace MVP user journey is Import/Open, render, select,
+  NamedSelection, solver setup, diagnostics, results, probe/deformation, save
+  view, capture, report, save Project, fresh-process reopen, exact scene
+  restore, and stale-mesh rejection.
+- Supported native rendering topology is triangle, quad, polygon surface, and
+  linear tetra. `tetra10`, hexahedron, `hexahedron20`, wedge, and pyramid are
+  unsupported.
+- Point/cell selection and NamedSelections use canonical refs bound to an exact
+  mesh fingerprint. Different-fingerprint records stay `STALE` and are not
+  rebound by raw index.
+- Solver setup kinds are material region, fixed support, prescribed
+  displacement, force, pressure, temperature, and heat flux. CalculiX
+  prepare-only handoff supports material, fixed support, prescribed
+  displacement, and force. Pressure, temperature, and heat flux remain explicit
+  unsupported adapter capabilities. The GUI does not run a solver subprocess.
+- Scaled Jacobian coverage is triangle, quad, and linear tetra. Uncovered
+  topology, including polygon, stays explicit. Diagnostics are advisory and do
+  not repair meshes or certify numerical quality.
+- Interactive results require an exact ResultDataset-to-mesh fingerprint. The
+  MVP covers scalar contour, vector glyphs, probes, a selected-entity table,
+  and displacement original/deformed/overlay. Source mesh and result data are
+  not mutated by view restore.
+- Scene restore uses `osw.active_scene.v1`. Transient hover, current selection,
+  and probes are not persisted. Project Save, screenshot capture, and report
+  export are explicit. Reports consume persisted screenshot assets only and do
+  not rerender the native scene.
+- Native screenshot pixels are not claimed identical across GPU or driver
+  combinations. Native report-asset filesystem locality remains
+  `DEFERRED_RETAINED`.
+- Optional PyVista, PyVistaQt, PySide6, VTK, quality-provider, and PDF extras
+  fail closed when absent. Historical offscreen PyVistaQt aggregates may hit a
+  Windows access violation; visible prepared tests must run in fresh processes.
+- The 3D Workspace MVP is not an industrial-certified CAE product, not a full
+  ANSYS, MATLAB, or ParaView replacement, not all-topology support, and not a
+  claim of solver numerical correctness.
+
 ## Reporting And Validation
 
 - **Native report-asset availability resolution is unsupported (`DEFERRED_RETAINED`).** Without an authorized resolver, the manager and report bridge continue to represent typed `external_absolute` and `project_relative` references as `unresolved_no_resolver` placeholders. “Relink selected screenshot…” performs point-in-time selected-file and suffix checks and, only after explicit confirmation plus post-confirmation file and stale-target revalidation, replaces one in-memory Project screenshot record: `external_absolute` remains `external_absolute`, while `project_relative` becomes `external_absolute`. Relink does not perform typed native resolution; the runtime descriptor still has no `effective_path`, the report bridge supplies no usable `image_path`, and the placeholder remains. Saving the Project is separate and explicit. These compatibility checks add no durable claim of existence, readability, locality, containment, link safety, provider silence, sandboxing, race-free consumption, authenticity, malware safety, or production readiness, and make no negative finding about the target. Legacy or unmarked compatibility behavior is separate, may perform filesystem checks, and is not certified provider-silent.

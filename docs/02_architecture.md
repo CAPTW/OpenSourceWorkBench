@@ -414,6 +414,59 @@ Native report-path locality remains `DEFERRED_RETAINED`. This local chained
 feature is not integrated into `develop`, not pushed, not hosted-CI validated,
 and not live-PyVistaQt evidence.
 
+## 3D Workspace MVP User Journey And Claim Boundary
+
+The complete local 3D Workspace MVP user journey is:
+
+`Import/Open → Render → Select → NamedSelection → Solver Setup → Diagnostics →
+Results → Probe/Deformation → Save View → Capture → Report → Save Project →
+Fresh-Process Reopen → Exact Scene Restore → Stale-Mesh Rejection`.
+
+Supported native mesh rendering is limited to triangle, quad, polygon surface
+cells, and linear tetrahedra, including mixed surface-plus-tetra datasets.
+`tetra10`, hexahedron, `hexahedron20`, wedge, and pyramid cells are unsupported
+for native rendering and for Scaled Jacobian coverage. Polygon surfaces may
+render but remain uncovered by `osw.mesh_quality.scaled_jacobian.v1`.
+
+Camera presets, representation (`surface` / `surface_with_edges` / `wireframe`),
+axes, and hide/show/isolate operate on semantic actor identities. Point and cell
+picking map native IDs to canonical locators bound to an exact mesh fingerprint.
+NamedSelections persist those locators; a different fingerprint is `STALE` and
+is not rebound by raw index or display name.
+
+Solver setup kinds in the MVP are material region, fixed support, prescribed
+displacement, force, pressure, temperature, and heat flux. The CalculiX
+prepare-only adapter accepts material, fixed support, prescribed displacement,
+and force. Pressure, temperature, and heat flux remain explicit
+`UNSUPPORTED_BY_ADAPTER` values. The GUI does not launch a solver subprocess.
+No fabricated tetra face mapping is introduced.
+
+Mesh Diagnostics evaluate Scaled Jacobian for triangle, quad, and linear tetra
+cells. Uncovered topology stays explicit. Thresholds, highlight, hide/isolate,
+and a bad-element NamedSelection are advisory preview tools. They are not mesh
+repair and not a certification of element quality.
+
+Interactive results require an exact ResultDataset-to-mesh fingerprint bind.
+The MVP shows point/cell scalars, vector component or magnitude, deterministic
+glyph sampling, point/cell probes, a selected-entity table, and
+original/deformed/overlay displacement. Missing fields are not substituted.
+Source mesh and ResultDataset rows are not mutated by view restore.
+
+`osw.active_scene.v1` stores the logical camera, representation, axes, stable
+visibility/isolation, result, vector, deformation, and diagnostics request.
+Transient hover, current selection, and probes are excluded. Project Save,
+screenshot capture, and report export are explicit user actions. Reports consume
+persisted screenshot assets only and do not rerender the native scene. Image
+SHA-256 is capture identity, not mesh identity. Screenshot pixels are not
+claimed identical across GPU, driver, OS, Qt, VTK, or PyVista versions.
+
+Native report-asset filesystem locality remains `DEFERRED_RETAINED`. Optional
+PyVista, PyVistaQt, PySide6, VTK, and PDF extras fail closed when absent. This
+MVP is feature-complete for integration review with documented limitations. It
+is not production-ready, not industrially certified, not a full
+ANSYS/MATLAB/ParaView replacement, and not a claim of all-topology support or
+solver numerical correctness.
+
 ## CHM CoolProp / Cantera Binding
 
 CHM support lives under `osw.solvers.coolprop` and `osw.solvers.cantera` as

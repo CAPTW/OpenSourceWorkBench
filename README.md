@@ -128,6 +128,56 @@ commands:
 - Result catalog and field dataset inspection.
 - HTML report export from the demo project.
 
+## 3D Workspace MVP
+
+The local 3D Workspace MVP user journey is:
+
+`Import/Open → Render → Select → NamedSelection → Solver Setup → Diagnostics →
+Results → Probe/Deformation → Save View → Capture → Report → Save Project →
+Fresh-Process Reopen → Exact Scene Restore → Stale-Mesh Rejection`.
+
+How to open a supported mesh: create or open a Project, then load an in-memory
+or already-imported mesh through the existing 3D viewer. The viewer renders
+triangle, quad, polygon surface, and linear tetra cells. `tetra10`, hexahedron,
+`hexahedron20`, wedge, and pyramid are unsupported.
+
+Camera, representation, and axes controls live on the viewport toolbar.
+Point/cell picking creates canonical NamedSelections. Solver setup kinds are
+material region, fixed support, prescribed displacement, force, pressure,
+temperature, and heat flux. CalculiX prepare-only handoff supports the first
+four; the last three stay explicitly unsupported. The GUI does not launch a
+solver.
+
+Scaled Jacobian diagnostics cover triangle, quad, and linear tetra. Interactive
+results require an exact mesh fingerprint. Project Save persists
+`osw.active_scene.v1`. Screenshot capture and report export are explicit.
+Reports use persisted images only. Native locality remains `DEFERRED_RETAINED`.
+
+Renderer-neutral acceptance:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/unit/test_3d_workspace_mvp_end_to_end.py -q
+```
+
+Prepared visible native acceptance, each stage in a fresh process:
+
+```powershell
+$env:OSW_RUN_PREPARED_INTERACTIVE='1'
+$env:OSW_E2E_WORKSPACE_ROOT='C:\temp\osw-mvp-e2e'
+$env:OSW_E2E_STAGE='AUTHOR'
+python -m pytest tests/gui/test_3d_workspace_mvp_end_to_end_prepared_gui.py -q
+$env:OSW_E2E_STAGE='RESTORE'
+python -m pytest tests/gui/test_3d_workspace_mvp_end_to_end_prepared_gui.py -q
+$env:OSW_E2E_STAGE='STALE'
+python -m pytest tests/gui/test_3d_workspace_mvp_end_to_end_prepared_gui.py -q
+```
+
+With only `OSW_RUN_PREPARED_INTERACTIVE=1` set, the prepared module orchestrates
+AUTHOR, process exit, RESTORE, process exit, and STALE. Historical offscreen
+PyVistaQt aggregates may crash on Windows; do not replace this visible path
+with offscreen mode. This MVP is for integration review with documented
+limitations. It is not production-ready or industrially certified.
+
 ## Optional Dependencies
 
 Install only the extras needed for the workflow you are testing:

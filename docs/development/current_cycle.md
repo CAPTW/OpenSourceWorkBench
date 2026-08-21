@@ -124,6 +124,19 @@ the gate report because a commit cannot contain its own hash. The chain remains
 unintegrated into `develop` and unpushed. The next selected gate is
 `OSW-3D-WORKSPACE-MVP-PREPARED-INTERACTIVE-VALIDATION`.
 
+A later persistence/report slice landed at
+`6936afa6d4fbb82dff67085b1f19dfee389cb7ff`
+(`feat(3d): persist scene state and report captures`). The current local
+`OSW-3D-WORKSPACE-MVP-END-TO-END-VALIDATION` continuation is a validation and
+closure gate on that commit. It does not reopen the historical same-process
+VAL-3D-008 fixture. It adds one renderer-neutral complete journey, one
+hardware-backed AUTHOR/RESTORE/STALE fresh-process journey, an optional
+dependency present/absent matrix, and user-facing MVP limitation closure. The
+posture is `MVP_FEATURE_COMPLETE_FOR_INTEGRATION_REVIEW_WITH_DOCUMENTED_LIMITATIONS`.
+It is not a production-ready, certified, or all-topology claim. Native locality
+remains `DEFERRED_RETAINED`. The next selected but unexecuted gate is
+`OSW-3D-WORKSPACE-MVP-INTEGRATION-AND-RELEASE-CANDIDATE-READINESS`.
+
 **Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
 
 ## Primary Goals
