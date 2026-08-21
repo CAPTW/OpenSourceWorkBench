@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 from osw.gui.qt_compat import PySide6UnavailableError, pyside6_missing_message
@@ -60,6 +61,7 @@ class ViewportToolbar(_BaseWidget):
         axesToggled = QtCore.Signal(bool)
         actorVisibilityRequested = QtCore.Signal(str, bool)
         actorIsolationRequested = QtCore.Signal(str)
+        clearIsolationRequested = QtCore.Signal()
         showAllActorsRequested = QtCore.Signal()
         clippingToggled = QtCore.Signal(bool)
         clippingUpdated = QtCore.Signal(str, float)
@@ -70,6 +72,7 @@ class ViewportToolbar(_BaseWidget):
         super().__init__(parent)
         self.setObjectName("oswViewportToolbar")
         self.tool_buttons: dict[str, object] = {}
+        self._actor_records_snapshot: dict[str, object] = {}
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(8, 6, 8, 6)
@@ -86,6 +89,7 @@ class ViewportToolbar(_BaseWidget):
             button.setObjectName(VIEWPORT_ACTION_OBJECT_NAMES[action])
             button.setText(TOOL_GLYPHS[action])
             button.setToolTip(action)
+            button.setAccessibleName(action)
             button.setAutoRaise(False)
             if action == "Section":
                 button.setCheckable(True)
@@ -96,12 +100,15 @@ class ViewportToolbar(_BaseWidget):
         self.camera_selector.setObjectName("oswViewportCameraPreset")
         self.camera_selector.addItems(CAMERA_PRESETS)
         self.camera_selector.setToolTip("Camera preset")
+        self.camera_selector.setAccessibleName("Camera preset")
         layout.addWidget(self.camera_selector)
 
         self.representation_selector = QtWidgets.QComboBox(self)
         self.representation_selector.setObjectName("oswViewportRepresentation")
         for label_text, value in REPRESENTATION_MODES:
             self.representation_selector.addItem(label_text, value)
+        self.representation_selector.setToolTip("Scene representation")
+        self.representation_selector.setAccessibleName("Scene representation")
         layout.addWidget(self.representation_selector)
 
         self.axes_button = QtWidgets.QToolButton(self)
@@ -109,12 +116,16 @@ class ViewportToolbar(_BaseWidget):
         self.axes_button.setText("Axes")
         self.axes_button.setCheckable(True)
         self.axes_button.setChecked(True)
+        self.axes_button.setToolTip("Show or hide the orientation axis triad")
+        self.axes_button.setAccessibleName("Show orientation axes")
         layout.addWidget(self.axes_button)
 
         self.actor_selector = QtWidgets.QComboBox(self)
         self.actor_selector.setObjectName("oswViewportActorSelector")
         self.actor_selector.addItem("Base mesh", "base_mesh")
         self.actor_selector.addItem("Wireframe", "wireframe")
+        self.actor_selector.setToolTip("Active scene layer")
+        self.actor_selector.setAccessibleName("Active scene layer")
         layout.addWidget(self.actor_selector)
 
         self.actor_visibility_button = QtWidgets.QToolButton(self)
@@ -122,16 +133,31 @@ class ViewportToolbar(_BaseWidget):
         self.actor_visibility_button.setText("Visible")
         self.actor_visibility_button.setCheckable(True)
         self.actor_visibility_button.setChecked(True)
+        self.actor_visibility_button.setToolTip("Show or hide the active scene layer")
+        self.actor_visibility_button.setAccessibleName("Active layer visible")
         layout.addWidget(self.actor_visibility_button)
 
         self.isolate_button = QtWidgets.QToolButton(self)
         self.isolate_button.setObjectName("oswViewportActorIsolate")
         self.isolate_button.setText("Isolate")
+        self.isolate_button.setToolTip("Show only the active content layer")
+        self.isolate_button.setAccessibleName("Isolate active layer")
         layout.addWidget(self.isolate_button)
+
+        self.clear_isolation_button = QtWidgets.QToolButton(self)
+        self.clear_isolation_button.setObjectName("oswViewportActorClearIsolation")
+        self.clear_isolation_button.setText("Clear isolation")
+        self.clear_isolation_button.setToolTip(
+            "Restore scene-layer visibility from before isolation"
+        )
+        self.clear_isolation_button.setAccessibleName("Clear scene isolation")
+        layout.addWidget(self.clear_isolation_button)
 
         self.show_all_button = QtWidgets.QToolButton(self)
         self.show_all_button.setObjectName("oswViewportActorShowAll")
         self.show_all_button.setText("Show all")
+        self.show_all_button.setToolTip("Show all content scene layers")
+        self.show_all_button.setAccessibleName("Show all scene layers")
         layout.addWidget(self.show_all_button)
 
         self.clip_axis_selector = QtWidgets.QComboBox(self)
@@ -164,6 +190,7 @@ class ViewportToolbar(_BaseWidget):
             self.actor_selector,
             self.actor_visibility_button,
             self.isolate_button,
+            self.clear_isolation_button,
             self.show_all_button,
             self.clip_axis_selector,
             self.clip_origin_input,
@@ -179,12 +206,54 @@ class ViewportToolbar(_BaseWidget):
     def selected_clip_axis(self) -> str:
         return self.clip_axis_selector.currentText().lower()
 
+    def sync_actor_records(
+        self,
+        records: Mapping[str, object],
+        *,
+        isolation_active: bool = False,
+        representation: str | None = None,
+        axes_visible: bool | None = None,
+    ) -> None:
+        """Refresh the compact layer selector from renderer-neutral records."""
+
+        self._actor_records_snapshot = dict(records)
+        selected_id = self.selected_actor_id()
+        eligible = tuple(
+            (semantic_id, record)
+            for semantic_id, record in sorted(records.items())
+            if bool(getattr(record, "isolation_eligible", True))
+        )
+        selector_blocker = QtCore.QSignalBlocker(self.actor_selector)
+        self.actor_selector.clear()
+        for semantic_id, _record in eligible:
+            display = {
+                "base_mesh": "Base mesh",
+                "wireframe": "Wireframe",
+            }.get(
+                semantic_id,
+                semantic_id.replace(":", " / ").replace("_", " ").title(),
+            )
+            self.actor_selector.addItem(display, semantic_id)
+        index = self.actor_selector.findData(selected_id)
+        self.actor_selector.setCurrentIndex(index if index >= 0 else 0)
+        del selector_blocker
+        self._sync_selected_actor_state(records)
+        self.clear_isolation_button.setEnabled(bool(isolation_active))
+        if representation is not None:
+            representation_blocker = QtCore.QSignalBlocker(self.representation_selector)
+            index = self.representation_selector.findData(representation)
+            if index >= 0:
+                self.representation_selector.setCurrentIndex(index)
+            del representation_blocker
+        if axes_visible is not None:
+            axes_blocker = QtCore.QSignalBlocker(self.axes_button)
+            self.axes_button.setChecked(bool(axes_visible))
+            del axes_blocker
+
     def _connect_controls(self) -> None:
         for action in ("Orbit", "Pan", "Zoom", "Fit"):
             self.tool_buttons[action].clicked.connect(
-                lambda _checked=False, name=action: self.commandRequested.emit(
-                    name.lower()
-                )
+                lambda _checked=False, name=action: self.commandRequested.emit(name.lower())
             )
         self.tool_buttons["Camera"].clicked.connect(
             lambda _checked=False: self.cameraPresetRequested.emit(
@@ -208,9 +277,10 @@ class ViewportToolbar(_BaseWidget):
             )
         )
         self.isolate_button.clicked.connect(
-            lambda _checked=False: self.actorIsolationRequested.emit(
-                self.selected_actor_id()
-            )
+            lambda _checked=False: self.actorIsolationRequested.emit(self.selected_actor_id())
+        )
+        self.clear_isolation_button.clicked.connect(
+            lambda _checked=False: self.clearIsolationRequested.emit()
         )
         self.show_all_button.clicked.connect(
             lambda _checked=False: self.showAllActorsRequested.emit()
@@ -227,6 +297,19 @@ class ViewportToolbar(_BaseWidget):
                 float(value),
             )
         )
+        self.actor_selector.currentIndexChanged.connect(
+            lambda _index: self._sync_selected_actor_state(self._actor_records_snapshot)
+        )
+
+    def _sync_selected_actor_state(self, records: Mapping[str, object]) -> None:
+        semantic_id = self.selected_actor_id()
+        record = records.get(semantic_id)
+        blocker = QtCore.QSignalBlocker(self.actor_visibility_button)
+        if record is not None:
+            self.actor_visibility_button.setChecked(bool(getattr(record, "visible", True)))
+        self.actor_visibility_button.setEnabled(bool(semantic_id))
+        self.isolate_button.setEnabled(bool(semantic_id))
+        del blocker
 
     def set_theme_tokens(self, tokens: ThemeTokens) -> None:
         self.setStyleSheet(

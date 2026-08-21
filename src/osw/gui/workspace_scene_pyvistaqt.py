@@ -7,10 +7,12 @@ clipping state, timer, and backend callbacks until explicit idempotent close.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from contextlib import suppress
 from importlib import import_module
+from math import isfinite
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from osw.core.workspace_3d import ActiveSceneCameraState
@@ -44,12 +46,12 @@ from osw.post.scene_model import (
 )
 
 _CAMERA_VECTORS = {
-    "front": ((0.0, 1.0, 0.0), (0.0, 0.0, 1.0)),
-    "back": ((0.0, -1.0, 0.0), (0.0, 0.0, 1.0)),
-    "left": ((1.0, 0.0, 0.0), (0.0, 0.0, 1.0)),
-    "right": ((-1.0, 0.0, 0.0), (0.0, 0.0, 1.0)),
+    "front": ((0.0, -1.0, 0.0), (0.0, 0.0, 1.0)),
+    "back": ((0.0, 1.0, 0.0), (0.0, 0.0, 1.0)),
+    "left": ((-1.0, 0.0, 0.0), (0.0, 0.0, 1.0)),
+    "right": ((1.0, 0.0, 0.0), (0.0, 0.0, 1.0)),
     "top": ((0.0, 0.0, 1.0), (0.0, 1.0, 0.0)),
-    "bottom": ((0.0, 0.0, -1.0), (0.0, 1.0, 0.0)),
+    "bottom": ((0.0, 0.0, -1.0), (0.0, -1.0, 0.0)),
     "isometric": ((1.0, 1.0, 1.0), (0.0, 0.0, 1.0)),
 }
 _REPRESENTATION_VISIBILITY = {
@@ -112,7 +114,8 @@ class PyVistaQtRendererSession:
             "wireframe": False,
         }
         self._representation = "surface"
-        self._axes_visible = True
+        self._axes_visible: bool | None = None
+        self._isolation_snapshot: dict[str, bool] | None = None
         self._clip_axis: str | None = None
         self._clip_origin = 0.0
         self._pick_mode: str | None = None
@@ -149,6 +152,14 @@ class PyVistaQtRendererSession:
     def semantic_actor_ids(self) -> tuple[str, ...]:
         return tuple(sorted(self._actors))
 
+    @property
+    def native_actor_registry(self) -> Mapping[str, object]:
+        return MappingProxyType(dict(self._actors))
+
+    @property
+    def axes_visible(self) -> bool:
+        return bool(self._axes_visible)
+
     def clear(self) -> None:
         if self._closed:
             return
@@ -160,6 +171,7 @@ class PyVistaQtRendererSession:
             "base_mesh": True,
             "wireframe": False,
         }
+        self._isolation_snapshot = None
         self._clip_axis = None
         self._clip_origin = 0.0
 
@@ -242,6 +254,11 @@ class PyVistaQtRendererSession:
     def clear_current_selection(self) -> None:
         self._remove_native_actor("current_selection")
 
+    def clear_selection_highlights(self) -> None:
+        self._remove_native_actor("hover")
+        self._remove_native_actor("current_selection")
+        self.request_render()
+
     def set_named_selection_overlay(
         self,
         selection_id: str,
@@ -270,41 +287,47 @@ class PyVistaQtRendererSession:
     ) -> object:
         if self._closed:
             raise RuntimeError("PyVistaQt renderer session is closed.")
+        if (
+            self._isolation_snapshot is not None
+            and semantic_id not in self._visibility
+            and _is_isolation_eligible(semantic_id)
+        ):
+            self.clear_isolation()
         if semantic_id.startswith("setup:"):
             if not isinstance(payload, SetupOverlaySpec):
                 raise TypeError("Setup overlay actor requires a SetupOverlaySpec.")
             self._payloads[semantic_id] = (payload, generation)
-            self._visibility[semantic_id] = payload.visible
+            self._visibility.setdefault(semantic_id, payload.visible)
             return self._replace_setup_actor(semantic_id, payload)
         if semantic_id == MESH_QUALITY_ACTOR_KEY:
             if not isinstance(payload, MeshQualityOverlaySpec):
                 raise TypeError("Mesh quality actor requires a MeshQualityOverlaySpec.")
             self._payloads[semantic_id] = (payload, generation)
-            self._visibility[semantic_id] = payload.visible
+            self._visibility.setdefault(semantic_id, payload.visible)
             return self._replace_mesh_quality_actor(semantic_id, payload)
         if semantic_id == RESULT_SCALAR_ACTOR_KEY:
             if not isinstance(payload, ScalarResultOverlaySpec):
                 raise TypeError("Scalar result actor requires a scalar overlay spec.")
             self._payloads[semantic_id] = (payload, generation)
-            self._visibility[semantic_id] = True
+            self._visibility.setdefault(semantic_id, True)
             return self._replace_scalar_result_actor(semantic_id, payload)
         if semantic_id == RESULT_VECTOR_ACTOR_KEY:
             if not isinstance(payload, ResultVectorGlyphSpec):
                 raise TypeError("Vector result actor requires a vector glyph spec.")
             self._payloads[semantic_id] = (payload, generation)
-            self._visibility[semantic_id] = True
+            self._visibility.setdefault(semantic_id, True)
             return self._replace_vector_result_actor(semantic_id, payload)
         if semantic_id == RESULT_PROBE_ACTOR_KEY:
             if not isinstance(payload, ResultProbeOverlaySpec):
                 raise TypeError("Probe result actor requires a probe overlay spec.")
             self._payloads[semantic_id] = (payload, generation)
-            self._visibility[semantic_id] = True
+            self._visibility.setdefault(semantic_id, True)
             return self._replace_probe_result_actor(semantic_id, payload)
         if semantic_id == RESULT_COLORBAR_ACTOR_KEY:
             if not isinstance(payload, ResultColorbarSpec):
                 raise TypeError("Result colorbar requires an applied colorbar spec.")
             self._payloads[semantic_id] = (payload, generation)
-            self._visibility[semantic_id] = payload.visible
+            self._visibility.setdefault(semantic_id, payload.visible)
             return self._replace_result_colorbar(semantic_id, payload)
         if semantic_id not in {"base_mesh", "wireframe"}:
             raise ValueError(f"Unsupported semantic actor: {semantic_id}")
@@ -320,6 +343,8 @@ class PyVistaQtRendererSession:
     def remove_actor(self, semantic_id: str) -> None:
         self._payloads.pop(semantic_id, None)
         self._remove_native_actor(semantic_id)
+        if self._isolation_snapshot is not None:
+            self._isolation_snapshot.pop(semantic_id, None)
         if semantic_id not in {"base_mesh", "wireframe"}:
             self._visibility.pop(semantic_id, None)
 
@@ -330,19 +355,34 @@ class PyVistaQtRendererSession:
         if callable(render):
             render()
 
-    def fit_to_scene(self) -> None:
-        self._require_open_interactor().reset_camera()
+    def fit_to_scene(self) -> bool:
+        bounds = self._content_bounds()
+        if bounds is None:
+            return False
+        self._require_open_interactor().reset_camera(
+            bounds=bounds,
+            render=False,
+        )
         self.request_render()
+        return True
 
-    def set_camera_preset(self, preset: str) -> None:
+    def set_camera_preset(self, preset: str) -> bool:
         try:
             vector, view_up = _CAMERA_VECTORS[preset]
         except KeyError as exc:
             raise ValueError(f"Unsupported camera preset: {preset}") from exc
+        bounds = self._content_bounds()
+        if bounds is None:
+            return False
         interactor = self._require_open_interactor()
-        interactor.view_vector(vector, view_up)
-        interactor.reset_camera()
+        interactor.view_vector(
+            vector,
+            view_up,
+            render=False,
+            bounds=bounds,
+        )
         self.request_render()
+        return True
 
     def set_interaction_mode(self, mode: str) -> None:
         if mode not in {"orbit", "pan", "zoom"}:
@@ -353,12 +393,15 @@ class PyVistaQtRendererSession:
             enable_trackball()
 
     def set_axes_visible(self, visible: bool) -> None:
+        normalized = bool(visible)
+        if self._axes_visible is normalized:
+            return
         interactor = self._require_open_interactor()
-        method_name = "show_axes" if visible else "hide_axes"
+        method_name = "show_axes" if normalized else "hide_axes"
         method = getattr(interactor, method_name, None)
         if callable(method):
             method()
-        self._axes_visible = bool(visible)
+        self._axes_visible = normalized
         self.request_render()
 
     def set_representation(self, mode: str) -> None:
@@ -366,6 +409,7 @@ class PyVistaQtRendererSession:
             visibility = _REPRESENTATION_VISIBILITY[mode]
         except KeyError as exc:
             raise ValueError(f"Unsupported representation: {mode}") from exc
+        self.clear_isolation()
         self._representation = mode
         self._visibility.update(visibility)
         self._apply_actor_visibility()
@@ -374,21 +418,50 @@ class PyVistaQtRendererSession:
     def set_actor_visible(self, semantic_id: str, visible: bool) -> None:
         if semantic_id not in self._visibility:
             raise ValueError(f"Unsupported semantic actor: {semantic_id}")
+        if _is_isolation_eligible(semantic_id):
+            self.clear_isolation()
         self._visibility[semantic_id] = bool(visible)
+        if not visible and _is_isolation_eligible(semantic_id):
+            self._remove_native_actor("hover")
+            self._remove_native_actor("current_selection")
         self._apply_actor_visibility()
         self.request_render()
 
-    def isolate_actor(self, semantic_id: str) -> None:
-        if semantic_id not in self._visibility:
+    def isolate_actor(self, semantic_id: str) -> bool:
+        if semantic_id not in self._visibility or not _is_isolation_eligible(semantic_id):
             raise ValueError(f"Unsupported semantic actor: {semantic_id}")
+        if self._isolation_snapshot is None:
+            self._isolation_snapshot = {
+                actor_id: visible
+                for actor_id, visible in self._visibility.items()
+                if _is_isolation_eligible(actor_id)
+            }
         for actor_id in self._visibility:
-            self._visibility[actor_id] = actor_id == semantic_id
+            if _is_isolation_eligible(actor_id):
+                self._visibility[actor_id] = actor_id == semantic_id
+        self._remove_native_actor("hover")
+        self._remove_native_actor("current_selection")
         self._apply_actor_visibility()
         self.request_render()
+        return True
+
+    def clear_isolation(self) -> bool:
+        snapshot = self._isolation_snapshot
+        if snapshot is None:
+            return True
+        for semantic_id, visible in snapshot.items():
+            if semantic_id in self._visibility:
+                self._visibility[semantic_id] = visible
+        self._isolation_snapshot = None
+        self._apply_actor_visibility()
+        self.request_render()
+        return True
 
     def show_all_actors(self) -> None:
         for semantic_id in self._visibility:
-            self._visibility[semantic_id] = True
+            if _is_isolation_eligible(semantic_id):
+                self._visibility[semantic_id] = True
+        self._isolation_snapshot = None
         self._representation = "surface_with_edges"
         self._apply_actor_visibility()
         self.request_render()
@@ -502,6 +575,9 @@ class PyVistaQtRendererSession:
         if interactor is None:
             self._actors.clear()
             self._payloads.clear()
+            self._visibility.clear()
+            self._isolation_snapshot = None
+            self._axes_visible = False
             return
 
         self._disable_native_picking()
@@ -510,6 +586,7 @@ class PyVistaQtRendererSession:
         for semantic_id in tuple(self._actors):
             self._remove_native_actor(semantic_id)
         self._payloads.clear()
+        self._isolation_snapshot = None
         self._clip_axis = None
 
         render_timer = getattr(interactor, "render_timer", None)
@@ -521,6 +598,7 @@ class PyVistaQtRendererSession:
         if callable(hide_axes):
             with suppress(Exception):
                 hide_axes()
+        self._axes_visible = False
         clear_plane_widgets = getattr(interactor, "clear_plane_widgets", None)
         if callable(clear_plane_widgets):
             with suppress(Exception):
@@ -539,6 +617,31 @@ class PyVistaQtRendererSession:
                 delete_later()
         self._interactor = None
         self._pyvista = None
+        self._visibility.clear()
+
+    def _content_bounds(self) -> tuple[float, float, float, float, float, float] | None:
+        content_ids = tuple(
+            semantic_id for semantic_id in self._actors if _is_isolation_eligible(semantic_id)
+        )
+        visible_ids = tuple(
+            semantic_id for semantic_id in content_ids if self._visibility.get(semantic_id, True)
+        )
+        candidates = visible_ids or content_ids
+        actor_bounds = tuple(
+            bounds
+            for semantic_id in candidates
+            if (bounds := _native_actor_bounds(self._actors[semantic_id])) is not None
+        )
+        if not actor_bounds:
+            return None
+        return (
+            min(bounds[0] for bounds in actor_bounds),
+            max(bounds[1] for bounds in actor_bounds),
+            min(bounds[2] for bounds in actor_bounds),
+            max(bounds[3] for bounds in actor_bounds),
+            min(bounds[4] for bounds in actor_bounds),
+            max(bounds[5] for bounds in actor_bounds),
+        )
 
     def _set_clipping(self, axis: str, origin: float) -> None:
         if axis not in _CLIP_NORMALS:
@@ -1062,6 +1165,33 @@ class PyVistaQtRendererFactory:
             pyvista_module=pyvista_module,
             interactor_factory=interactor_factory,
         )
+
+
+def _is_isolation_eligible(semantic_id: str) -> bool:
+    return not (
+        semantic_id in {"hover", "current_selection", RESULT_COLORBAR_ACTOR_KEY}
+        or semantic_id.startswith("named_selection:")
+    )
+
+
+def _native_actor_bounds(
+    actor: object,
+) -> tuple[float, float, float, float, float, float] | None:
+    try:
+        getter = getattr(actor, "GetBounds", None)
+        raw_bounds = getter() if callable(getter) else getattr(actor, "bounds", None)
+        if raw_bounds is None:
+            return None
+        bounds = tuple(float(value) for value in raw_bounds)
+    except (AttributeError, RuntimeError, TypeError, ValueError):
+        return None
+    if (
+        len(bounds) != 6
+        or not all(isfinite(value) for value in bounds)
+        or any(bounds[index] > bounds[index + 1] for index in (0, 2, 4))
+    ):
+        return None
+    return bounds
 
 
 def _set_native_visibility(actor: object, visible: bool) -> None:

@@ -131,6 +131,14 @@ class SceneActorRecord:
     semantic_id: str
     generation: int
     visible: bool = True
+    category: str = "geometry"
+    pickable: bool = False
+    isolation_eligible: bool = True
+    is_helper: bool = False
+
+    @property
+    def is_content(self) -> bool:
+        return not self.is_helper
 
 
 @dataclass(frozen=True)
@@ -177,11 +185,9 @@ class SceneRendererSessionProtocol(Protocol):
     capabilities: frozenset[str]
 
     @property
-    def hosted_widget(self) -> object | None:
-        ...
+    def hosted_widget(self) -> object | None: ...
 
-    def clear(self) -> None:
-        ...
+    def clear(self) -> None: ...
 
     def replace_actor(
         self,
@@ -189,79 +195,63 @@ class SceneRendererSessionProtocol(Protocol):
         payload: object,
         *,
         generation: int,
-    ) -> object | None:
-        ...
+    ) -> object | None: ...
 
-    def remove_actor(self, semantic_id: str) -> None:
-        ...
+    def remove_actor(self, semantic_id: str) -> None: ...
 
-    def request_render(self) -> None:
-        ...
+    def request_render(self) -> None: ...
 
-    def fit_to_scene(self) -> None:
-        ...
+    def fit_to_scene(self) -> bool | None: ...
 
-    def set_camera_preset(self, preset: str) -> None:
-        ...
+    def set_camera_preset(self, preset: str) -> bool | None: ...
 
-    def set_interaction_mode(self, mode: str) -> None:
-        ...
+    def set_interaction_mode(self, mode: str) -> None: ...
 
-    def set_axes_visible(self, visible: bool) -> None:
-        ...
+    def set_axes_visible(self, visible: bool) -> None: ...
 
-    def set_representation(self, mode: str) -> None:
-        ...
+    def set_representation(self, mode: str) -> None: ...
 
-    def set_actor_visible(self, semantic_id: str, visible: bool) -> None:
-        ...
+    def set_actor_visible(self, semantic_id: str, visible: bool) -> None: ...
 
-    def isolate_actor(self, semantic_id: str) -> None:
-        ...
+    def isolate_actor(self, semantic_id: str) -> None: ...
 
-    def show_all_actors(self) -> None:
-        ...
+    def clear_isolation(self) -> None: ...
 
-    def enable_clipping(self, axis: str, origin: float) -> None:
-        ...
+    def show_all_actors(self) -> None: ...
 
-    def update_clipping(self, axis: str, origin: float) -> None:
-        ...
+    def enable_clipping(self, axis: str, origin: float) -> None: ...
 
-    def clear_clipping(self) -> None:
-        ...
+    def update_clipping(self, axis: str, origin: float) -> None: ...
+
+    def clear_clipping(self) -> None: ...
 
     def set_pick_mode(
         self,
         mode: str,
         callback: Callable[[object], object],
-    ) -> None:
-        ...
+    ) -> None: ...
 
-    def disable_picking(self) -> None:
-        ...
+    def disable_picking(self) -> None: ...
 
     def set_hover_entities(
         self,
         entity_kind: str,
         indices: tuple[int, ...],
         generation: int,
-    ) -> None:
-        ...
+    ) -> None: ...
 
-    def clear_hover(self) -> None:
-        ...
+    def clear_hover(self) -> None: ...
 
     def set_current_selection(
         self,
         entity_kind: str,
         indices: tuple[int, ...],
         generation: int,
-    ) -> None:
-        ...
+    ) -> None: ...
 
-    def clear_current_selection(self) -> None:
-        ...
+    def clear_current_selection(self) -> None: ...
+
+    def clear_selection_highlights(self) -> None: ...
 
     def set_named_selection_overlay(
         self,
@@ -269,14 +259,11 @@ class SceneRendererSessionProtocol(Protocol):
         entity_kind: str,
         indices: tuple[int, ...],
         generation: int,
-    ) -> None:
-        ...
+    ) -> None: ...
 
-    def remove_named_selection_overlay(self, selection_id: str) -> None:
-        ...
+    def remove_named_selection_overlay(self, selection_id: str) -> None: ...
 
-    def close(self) -> None:
-        ...
+    def close(self) -> None: ...
 
 
 @runtime_checkable
@@ -286,8 +273,7 @@ class SceneRendererFactoryProtocol(Protocol):
     backend_kind: str
     capabilities: frozenset[str]
 
-    def create_session(self) -> SceneRendererSessionProtocol:
-        ...
+    def create_session(self) -> SceneRendererSessionProtocol: ...
 
 
 class SceneRendererInitializationError(RuntimeError):
@@ -437,6 +423,7 @@ class ActiveSceneController:
         self._scene_view_state = SceneViewState()
         self._representation = "surface"
         self._axes_visible = True
+        self._isolation_snapshot: dict[str, bool] | None = None
         self._clipping_state = ActiveSceneClippingState()
         self._active_named_selection_ids: tuple[str, ...] = ()
         self._pending_active_scene_state: ActiveSceneState | None = None
@@ -461,9 +448,7 @@ class ActiveSceneController:
             "fixed_support": True,
             "force": True,
         }
-        self._mesh_quality_analyzer = (
-            mesh_quality_analyzer or analyze_mesh_cell_quality
-        )
+        self._mesh_quality_analyzer = mesh_quality_analyzer or analyze_mesh_cell_quality
         self._mesh_quality_cache: dict[
             tuple[str, str, str, float],
             MeshQualityAnalysis,
@@ -514,6 +499,18 @@ class ActiveSceneController:
     @property
     def fallback_reason(self) -> str:
         return self._fallback_reason
+
+    @property
+    def isolation_active(self) -> bool:
+        return self._isolation_snapshot is not None
+
+    @property
+    def representation(self) -> str:
+        return self._representation
+
+    @property
+    def axes_visible(self) -> bool:
+        return self._axes_visible
 
     @property
     def current_mesh_fingerprint(self) -> MeshFingerprint | None:
@@ -630,6 +627,7 @@ class ActiveSceneController:
         self._scene_view_state = scene_state
         self._representation = _representation_from_scene_state(scene_state)
         self._axes_visible = scene_state.render_options.show_axes
+        self._isolation_snapshot = None
         self._clipping_state = ActiveSceneClippingState()
         self._clear_transient_state(call_session=False)
         session = self._ensure_session()
@@ -642,9 +640,7 @@ class ActiveSceneController:
 
         replacing = bool(self._actor_records)
         self._state = (
-            SceneLifecycleState.REPLACING
-            if replacing
-            else SceneLifecycleState.READY_EMPTY
+            SceneLifecycleState.REPLACING if replacing else SceneLifecycleState.READY_EMPTY
         )
         if replacing:
             try:
@@ -669,8 +665,8 @@ class ActiveSceneController:
                 payload,
                 generation=generation,
             )
-            self._actor_records["base_mesh"] = SceneActorRecord(
-                semantic_id="base_mesh",
+            self._actor_records["base_mesh"] = _scene_actor_record(
+                "base_mesh",
                 generation=generation,
             )
             session.replace_actor(
@@ -678,8 +674,8 @@ class ActiveSceneController:
                 payload,
                 generation=generation,
             )
-            self._actor_records["wireframe"] = SceneActorRecord(
-                semantic_id="wireframe",
+            self._actor_records["wireframe"] = _scene_actor_record(
+                "wireframe",
                 generation=generation,
             )
             representation = _representation_from_scene_state(scene_state)
@@ -797,13 +793,18 @@ class ActiveSceneController:
             mesh=self._mesh,
             mesh_ref=self._mesh_ref,
         )
-        self._call_session(
+        highlighted = self._call_session(
             "selection-overlays",
             "set_current_selection",
             pick.entity_kind.value,
             self._current_selection_resolution.transient_indices,
             self._generation,
         )
+        if highlighted:
+            self._actor_records["current_selection"] = _scene_actor_record(
+                "current_selection",
+                generation=self._generation,
+            )
         self._notify_selection_listener()
         return True
 
@@ -816,6 +817,7 @@ class ActiveSceneController:
                 "selection-overlays",
                 "clear_hover",
             )
+            self._actor_records.pop("hover", None)
             self._notify_selection_listener()
             return cleared
         kind = _entity_kind_for_mode(self._pick_mode)
@@ -838,6 +840,11 @@ class ActiveSceneController:
             resolution.transient_indices,
             self._generation,
         )
+        if applied:
+            self._actor_records["hover"] = _scene_actor_record(
+                "hover",
+                generation=self._generation,
+            )
         self._notify_selection_listener()
         return applied
 
@@ -854,8 +861,28 @@ class ActiveSceneController:
             "selection-overlays",
             "clear_current_selection",
         )
+        self._actor_records.pop("current_selection", None)
         self._notify_selection_listener()
         return True
+
+    def clear_selection_highlights(self) -> bool:
+        """Clear transient hover and current-selection native actors."""
+
+        self._hover_target = None
+        self._current_selection_target = None
+        self._current_selection_resolution = ResolutionResult(
+            state=ResolutionState.UNRESOLVED,
+            reason_code="CURRENT_SELECTION_EMPTY",
+            message="No current entities are selected.",
+        )
+        cleared = self._call_session(
+            "selection-overlays",
+            "clear_selection_highlights",
+        )
+        self._actor_records.pop("hover", None)
+        self._actor_records.pop("current_selection", None)
+        self._notify_selection_listener()
+        return cleared
 
     def set_named_selections(
         self,
@@ -886,11 +913,7 @@ class ActiveSceneController:
             return False
         self._setup_category_visibility[normalized] = bool(visible)
         for semantic_id in tuple(self._setup_overlay_ids):
-            marker = (
-                "fixed-support"
-                if normalized == "fixed_support"
-                else normalized
-            )
+            marker = "fixed-support" if normalized == "fixed_support" else normalized
             if semantic_id.startswith(f"setup:{marker}:"):
                 self.set_actor_visible(semantic_id, visible)
         return True
@@ -964,11 +987,7 @@ class ActiveSceneController:
             colorbar_visible=colorbar_visible,
         )
         self._interactive_scalar_result = result
-        if (
-            not result.applied
-            or not render
-            or not self._interactive_result_renderer_available()
-        ):
+        if not result.applied or not render or not self._interactive_result_renderer_available():
             self._remove_result_actor(RESULT_SCALAR_ACTOR_KEY)
             self._remove_result_actor(RESULT_COLORBAR_ACTOR_KEY)
             return result
@@ -1053,9 +1072,7 @@ class ActiveSceneController:
             result = ResultProbeResult(
                 status=ResultProbeStatus.STALE,
                 stable_entity_key=request.stable_entity_key,
-                entity_display_id=(
-                    f"{request.association} {request.stable_entity_key}"
-                ),
+                entity_display_id=(f"{request.association} {request.stable_entity_key}"),
                 field_name=request.field_name,
                 component=request.component,
                 association=request.association,
@@ -1217,10 +1234,7 @@ class ActiveSceneController:
             self._mesh_quality_highlight_visible = False
             self._remove_mesh_quality_actor()
             return True
-        if (
-            self._mesh_quality_analysis is None
-            or not self._mesh_quality_renderer_available()
-        ):
+        if self._mesh_quality_analysis is None or not self._mesh_quality_renderer_available():
             return False
         self._mesh_quality_highlight_visible = True
         return self._refresh_mesh_quality_actor()
@@ -1314,22 +1328,22 @@ class ActiveSceneController:
     def set_representation(self, mode: str) -> bool:
         if mode not in _REPRESENTATION_VISIBILITY:
             return False
+        if self._isolation_snapshot is not None and not self.clear_isolation():
+            return False
         if not self._call_session("representation", "set_representation", mode):
             return False
         self._representation = mode
         self._set_registry_representation(mode)
         if self._mesh_quality_visibility_snapshot is not None:
             self._mesh_quality_visibility_snapshot = {
-                key: bool(value)
-                for key, value in _REPRESENTATION_VISIBILITY[mode].items()
+                key: bool(value) for key, value in _REPRESENTATION_VISIBILITY[mode].items()
             }
             for semantic_id in self._mesh_quality_visibility_snapshot:
                 if semantic_id in self._actor_records:
                     self.set_actor_visible(semantic_id, False)
         if self._interactive_result_visibility_snapshot is not None:
             self._interactive_result_visibility_snapshot = {
-                key: bool(value)
-                for key, value in _REPRESENTATION_VISIBILITY[mode].items()
+                key: bool(value) for key, value in _REPRESENTATION_VISIBILITY[mode].items()
             }
             for semantic_id in self._interactive_result_visibility_snapshot:
                 if semantic_id in self._actor_records:
@@ -1339,6 +1353,15 @@ class ActiveSceneController:
     def set_actor_visible(self, semantic_id: str, visible: bool) -> bool:
         if semantic_id not in self._actor_records:
             return False
+        record = self._actor_records[semantic_id]
+        if record.category == "selection":
+            return False
+        if (
+            record.isolation_eligible
+            and self._isolation_snapshot is not None
+            and not self.clear_isolation()
+        ):
+            return False
         if not self._call_session(
             "semantic-visibility",
             "set_actor_visible",
@@ -1346,34 +1369,69 @@ class ActiveSceneController:
             bool(visible),
         ):
             return False
-        record = self._actor_records[semantic_id]
-        self._actor_records[semantic_id] = SceneActorRecord(
-            semantic_id=semantic_id,
-            generation=record.generation,
+        self._actor_records[semantic_id] = replace(
+            record,
             visible=bool(visible),
         )
+        if not visible and record.isolation_eligible:
+            self._clear_transient_state(call_session=True)
         return True
 
+    def show_actor(self, semantic_id: str) -> bool:
+        return self.set_actor_visible(semantic_id, True)
+
+    def hide_actor(self, semantic_id: str) -> bool:
+        return self.set_actor_visible(semantic_id, False)
+
     def isolate_actor(self, semantic_id: str) -> bool:
-        if semantic_id not in self._actor_records:
+        record = self._actor_records.get(semantic_id)
+        if record is None or not record.isolation_eligible:
             return False
+        snapshot = self._isolation_snapshot or {
+            key: item.visible
+            for key, item in self._actor_records.items()
+            if item.isolation_eligible
+        }
         if not self._call_session(
             "semantic-visibility",
             "isolate_actor",
             semantic_id,
         ):
             return False
+        if self._isolation_snapshot is None:
+            self._isolation_snapshot = snapshot
         self._set_registry_visibility(
-            {key: key == semantic_id for key in self._actor_records}
+            {
+                key: key == semantic_id
+                for key, item in self._actor_records.items()
+                if item.isolation_eligible
+            }
         )
+        self._clear_transient_state(call_session=True)
+        return True
+
+    def clear_isolation(self) -> bool:
+        snapshot = self._isolation_snapshot
+        if snapshot is None:
+            return True
+        if not self._call_session(
+            "semantic-visibility",
+            "clear_isolation",
+        ):
+            return False
+        self._set_registry_visibility(snapshot)
+        self._isolation_snapshot = None
         return True
 
     def show_all_actors(self) -> bool:
         if not self._call_session("semantic-visibility", "show_all_actors"):
             return False
         self._set_registry_visibility(
-            {key: True for key in self._actor_records}
+            {key: True for key, item in self._actor_records.items() if item.isolation_eligible}
         )
+        self._isolation_snapshot = None
+        if {"base_mesh", "wireframe"}.issubset(self._actor_records):
+            self._representation = "surface_with_edges"
         return True
 
     def enable_clipping(self, axis: str, origin: float) -> bool:
@@ -1460,9 +1518,7 @@ class ActiveSceneController:
             return self._active_scene_restore_result
         try:
             pending = (
-                state
-                if isinstance(state, ActiveSceneState)
-                else ActiveSceneState.from_dict(state)
+                state if isinstance(state, ActiveSceneState) else ActiveSceneState.from_dict(state)
             )
         except (TypeError, ValueError):
             self._pending_active_scene_state = None
@@ -1520,10 +1576,10 @@ class ActiveSceneController:
         reasons: list[str] = []
         diagnostics: list[str] = []
         session = self._session
-        renderer_available = (
-            session is not None
-            and self._state not in {SceneLifecycleState.FALLBACK, SceneLifecycleState.CLOSED}
-        )
+        renderer_available = session is not None and self._state not in {
+            SceneLifecycleState.FALLBACK,
+            SceneLifecycleState.CLOSED,
+        }
 
         if renderer_available:
             if not self.set_representation(state.representation):
@@ -1544,9 +1600,7 @@ class ActiveSceneController:
                 diagnostics.append("The renderer cannot apply a saved camera.")
         else:
             reasons.append("RENDERER_UNAVAILABLE")
-            diagnostics.append(
-                self._fallback_reason or "The renderer backend is unavailable."
-            )
+            diagnostics.append(self._fallback_reason or "The renderer backend is unavailable.")
 
         self._restore_named_selection_state(state, reasons, diagnostics)
         self._restore_setup_visibility(state, reasons, diagnostics)
@@ -1596,11 +1650,7 @@ class ActiveSceneController:
                 diagnostics=("Load an active in-memory mesh before capture.",),
             )
         session = self._ensure_session()
-        exporter = (
-            None
-            if session is None
-            else getattr(session, "export_screenshot_record", None)
-        )
+        exporter = None if session is None else getattr(session, "export_screenshot_record", None)
         if not callable(exporter):
             return ActiveSceneScreenshotResult(
                 status="BLOCKED",
@@ -1718,10 +1768,7 @@ class ActiveSceneController:
         generation = self._generation
 
         def guarded(*args: object, **kwargs: object) -> object | None:
-            if (
-                self._generation != generation
-                or self._state is SceneLifecycleState.CLOSED
-            ):
+            if self._generation != generation or self._state is SceneLifecycleState.CLOSED:
                 return stale_result
             return callback(*args, **kwargs)
 
@@ -1743,12 +1790,11 @@ class ActiveSceneController:
         self._mesh_fingerprint = None
         self._scene_view_state = SceneViewState()
         self._representation = "surface"
-        self._axes_visible = True
+        self._isolation_snapshot = None
         self._clipping_state = ActiveSceneClippingState()
         self._clear_transient_state(call_session=False)
         self._named_selection_resolutions = {
-            selection.id: resolve_named_selection(selection)
-            for selection in self._named_selections
+            selection.id: resolve_named_selection(selection) for selection in self._named_selections
         }
         self._named_overlay_ids.clear()
         self._setup_overlay_ids.clear()
@@ -1801,7 +1847,8 @@ class ActiveSceneController:
         self._mesh_fingerprint = None
         self._scene_view_state = SceneViewState()
         self._representation = "surface"
-        self._axes_visible = True
+        self._axes_visible = False
+        self._isolation_snapshot = None
         self._clipping_state = ActiveSceneClippingState()
         self._active_named_selection_ids = ()
         self._pending_active_scene_state = None
@@ -1829,9 +1876,7 @@ class ActiveSceneController:
                     position=getattr(value, "position", None),
                     focal_point=getattr(value, "focal_point", None),
                     view_up=getattr(value, "view_up", None),
-                    parallel_projection=bool(
-                        getattr(value, "parallel_projection", False)
-                    ),
+                    parallel_projection=bool(getattr(value, "parallel_projection", False)),
                     parallel_scale=getattr(value, "parallel_scale", None),
                     view_preset=str(getattr(value, "view_preset", "") or ""),
                 )
@@ -1858,11 +1903,7 @@ class ActiveSceneController:
             if scalar is not None
             else "AUTO"
         )
-        display_range = (
-            getattr(scalar, "display_range", None)
-            if range_mode == "MANUAL"
-            else None
-        )
+        display_range = getattr(scalar, "display_range", None) if range_mode == "MANUAL" else None
         return ActiveSceneResultState(
             result_ref_id=self._interactive_result_ref_id,
             result_dataset_id=str(
@@ -1872,11 +1913,7 @@ class ActiveSceneController:
             binding_schema=str(getattr(binding, "schema", "") or ""),
             mesh_fingerprint=str(
                 getattr(binding, "mesh_fingerprint", "")
-                or (
-                    self._mesh_fingerprint.digest
-                    if self._mesh_fingerprint is not None
-                    else ""
-                )
+                or (self._mesh_fingerprint.digest if self._mesh_fingerprint is not None else "")
             ),
             scalar_field=str(getattr(scalar, "field_name", "") or ""),
             scalar_component=str(getattr(scalar, "component", "") or ""),
@@ -1885,16 +1922,10 @@ class ActiveSceneController:
             manual_min=display_range[0] if display_range is not None else None,
             manual_max=display_range[1] if display_range is not None else None,
             colormap=str(getattr(scalar, "colormap", "viridis") or "viridis"),
-            colorbar_visible=bool(
-                getattr(scalar, "colorbar_visible", True)
-            ),
+            colorbar_visible=bool(getattr(scalar, "colorbar_visible", True)),
             vector_field=str(getattr(vector, "field_name", "") or ""),
-            vector_components=tuple(
-                getattr(vector, "selected_components", ()) or ()
-            ),
-            vector_association=str(
-                getattr(vector, "association", "") or ""
-            ),
+            vector_components=tuple(getattr(vector, "selected_components", ()) or ()),
+            vector_association=str(getattr(vector, "association", "") or ""),
             vector_visible=bool(
                 vector is not None
                 and vector.applied
@@ -1908,10 +1939,7 @@ class ActiveSceneController:
         )
 
     def _snapshot_mesh_quality_state(self) -> MeshQualityViewState | None:
-        if (
-            self._mesh_quality_analysis is None
-            and not self._mesh_quality_highlight_visible
-        ):
+        if self._mesh_quality_analysis is None and not self._mesh_quality_highlight_visible:
             return None
         return MeshQualityViewState(
             metric_schema=MESH_QUALITY_METRIC_SCHEMA,
@@ -1941,9 +1969,7 @@ class ActiveSceneController:
         known = {selection.id for selection in self._named_selections}
         for selection_id in sorted(requested - known):
             reasons.append("NAMED_SELECTION_NOT_FOUND")
-            diagnostics.append(
-                f"Saved NamedSelection '{selection_id}' is not present."
-            )
+            diagnostics.append(f"Saved NamedSelection '{selection_id}' is not present.")
         session = self._session
         for selection_id in tuple(self._named_overlay_ids):
             if selection_id in requested:
@@ -1966,9 +1992,7 @@ class ActiveSceneController:
             resolution = self._named_selection_resolutions.get(selection_id)
             if resolution is None or resolution.state is not ResolutionState.RESOLVED:
                 reasons.append("NAMED_SELECTION_NOT_RESOLVED")
-                diagnostics.append(
-                    f"NamedSelection '{selection_id}' is not exactly resolved."
-                )
+                diagnostics.append(f"NamedSelection '{selection_id}' is not exactly resolved.")
 
     def _restore_setup_visibility(
         self,
@@ -1983,9 +2007,7 @@ class ActiveSceneController:
             status = self._setup_statuses.get(item.source_id)
             if status is None or str(getattr(status, "state", "")) != "READY":
                 reasons.append("SETUP_RECORD_NOT_READY")
-                diagnostics.append(
-                    f"Setup record '{item.source_id}' is not READY."
-                )
+                diagnostics.append(f"Setup record '{item.source_id}' is not READY.")
 
     def _restore_mesh_quality_state(
         self,
@@ -2002,9 +2024,7 @@ class ActiveSceneController:
             diagnostics.append("Mesh Diagnostics could not be recomputed.")
             return
         self.set_mesh_quality_threshold(quality.threshold)
-        if quality.highlight_visible and not self.set_mesh_quality_highlight_visible(
-            True
-        ):
+        if quality.highlight_visible and not self.set_mesh_quality_highlight_visible(True):
             reasons.append("RENDERER_UNAVAILABLE")
             diagnostics.append("Mesh Diagnostics highlight could not be restored.")
 
@@ -2019,18 +2039,11 @@ class ActiveSceneController:
             return
         if self._interactive_result_dataset is None:
             reasons.append("RESULT_DATASET_NOT_AVAILABLE")
-            diagnostics.append(
-                f"Result dataset '{result.result_dataset_id}' is not loaded."
-            )
+            diagnostics.append(f"Result dataset '{result.result_dataset_id}' is not loaded.")
             return
-        if (
-            result.result_ref_id
-            and result.result_ref_id != self._interactive_result_ref_id
-        ):
+        if result.result_ref_id and result.result_ref_id != self._interactive_result_ref_id:
             reasons.append("RESULT_REF_NOT_AVAILABLE")
-            diagnostics.append(
-                f"Result reference '{result.result_ref_id}' is not available."
-            )
+            diagnostics.append(f"Result reference '{result.result_ref_id}' is not available.")
             return
         resolution = self._interactive_result_resolution
         if (
@@ -2052,9 +2065,7 @@ class ActiveSceneController:
             )
             if not scalar.applied:
                 reasons.append("RESULT_FIELD_NOT_AVAILABLE")
-                diagnostics.append(
-                    f"Result field '{result.scalar_field}' is not available."
-                )
+                diagnostics.append(f"Result field '{result.scalar_field}' is not available.")
         if result.vector_visible and result.vector_field:
             vector = self.set_vector_result(
                 result.vector_field,
@@ -2064,9 +2075,7 @@ class ActiveSceneController:
             )
             if not vector.applied:
                 reasons.append("RESULT_FIELD_NOT_AVAILABLE")
-                diagnostics.append(
-                    f"Result vector field '{result.vector_field}' is not available."
-                )
+                diagnostics.append(f"Result vector field '{result.vector_field}' is not available.")
 
     def _restore_actor_visibility(
         self,
@@ -2152,6 +2161,7 @@ class ActiveSceneController:
         self._mesh_quality_highlight_visible = False
         self._mesh_quality_visibility_snapshot = None
         self._interactive_result_visibility_snapshot = None
+        self._isolation_snapshot = None
         if session is not None:
             try:
                 session.clear()
@@ -2171,7 +2181,8 @@ class ActiveSceneController:
         *args: object,
     ) -> bool:
         if (
-            self._state in {
+            self._state
+            in {
                 SceneLifecycleState.CLOSING,
                 SceneLifecycleState.CLOSED,
                 SceneLifecycleState.FALLBACK,
@@ -2186,20 +2197,19 @@ class ActiveSceneController:
         if not callable(method):
             return False
         try:
-            method(*args)
+            result = method(*args)
         except Exception as exc:
             self._fail_session(exc)
             return False
-        return True
+        return result is not False
 
     def _set_registry_representation(self, mode: str) -> None:
         self._set_registry_visibility(_REPRESENTATION_VISIBILITY[mode])
 
     def _set_registry_visibility(self, visibility: Mapping[str, bool]) -> None:
         for semantic_id, record in tuple(self._actor_records.items()):
-            self._actor_records[semantic_id] = SceneActorRecord(
-                semantic_id=semantic_id,
-                generation=record.generation,
+            self._actor_records[semantic_id] = replace(
+                record,
                 visible=bool(visibility.get(semantic_id, record.visible)),
             )
 
@@ -2256,9 +2266,7 @@ class ActiveSceneController:
         if fingerprint is None:
             raise RuntimeError("Cannot build a durable locator without a loaded mesh.")
         namespace = (
-            NODE_ORDINAL_NAMESPACE
-            if entity_kind is EntityKind.NODE
-            else CELL_ORDINAL_NAMESPACE
+            NODE_ORDINAL_NAMESPACE if entity_kind is EntityKind.NODE else CELL_ORDINAL_NAMESPACE
         )
         stable_ids = _stable_entity_ids(entity_kind, entity_ids)
         locator = EntityLocator(
@@ -2279,6 +2287,8 @@ class ActiveSceneController:
     def _clear_transient_state(self, *, call_session: bool) -> None:
         self._hover_target = None
         self._current_selection_target = None
+        self._actor_records.pop("hover", None)
+        self._actor_records.pop("current_selection", None)
         self._current_selection_resolution = ResolutionResult(
             state=ResolutionState.UNRESOLVED,
             reason_code="CURRENT_SELECTION_EMPTY",
@@ -2339,6 +2349,8 @@ class ActiveSceneController:
         self._refresh_setup_overlays()
 
     def _refresh_setup_overlays(self) -> None:
+        if self._isolation_snapshot is not None and not self.clear_isolation():
+            return
         session = self._session
         for semantic_id in tuple(self._setup_overlay_ids):
             if session is not None:
@@ -2357,11 +2369,7 @@ class ActiveSceneController:
             resolutions=self._named_selection_resolutions,
         )
         self._setup_statuses = {item.record_id: item for item in statuses}
-        if (
-            session is None
-            or self._mesh is None
-            or "setup-overlays" not in self.capabilities
-        ):
+        if session is None or self._mesh is None or "setup-overlays" not in self.capabilities:
             return
         specs = build_setup_overlay_specs(
             self._solver_setup,
@@ -2371,15 +2379,16 @@ class ActiveSceneController:
             category_visibility=self._setup_category_visibility,
         )
         for spec in specs:
+            previous = self._actor_records.get(spec.actor_key)
             session.replace_actor(
                 spec.actor_key,
                 spec,
                 generation=self._generation,
             )
-            self._actor_records[spec.actor_key] = SceneActorRecord(
-                semantic_id=spec.actor_key,
+            self._actor_records[spec.actor_key] = _scene_actor_record(
+                spec.actor_key,
                 generation=self._generation,
-                visible=spec.visible,
+                visible=spec.visible if previous is None else previous.visible,
             )
             session.set_actor_visible(spec.actor_key, spec.visible)
             self._setup_overlay_ids.add(spec.actor_key)
@@ -2423,20 +2432,30 @@ class ActiveSceneController:
         if not self._mesh_quality_renderer_available():
             self._remove_mesh_quality_actor()
             return False
+        if (
+            self._isolation_snapshot is not None
+            and MESH_QUALITY_ACTOR_KEY not in self._actor_records
+            and not self.clear_isolation()
+        ):
+            return False
         session = self._session
         assert session is not None
         try:
+            previous = self._actor_records.get(MESH_QUALITY_ACTOR_KEY)
             session.replace_actor(
                 MESH_QUALITY_ACTOR_KEY,
                 spec,
                 generation=self._generation,
             )
-            self._actor_records[MESH_QUALITY_ACTOR_KEY] = SceneActorRecord(
-                semantic_id=MESH_QUALITY_ACTOR_KEY,
+            self._actor_records[MESH_QUALITY_ACTOR_KEY] = _scene_actor_record(
+                MESH_QUALITY_ACTOR_KEY,
                 generation=self._generation,
-                visible=True,
+                visible=True if previous is None else previous.visible,
             )
-            session.set_actor_visible(MESH_QUALITY_ACTOR_KEY, True)
+            session.set_actor_visible(
+                MESH_QUALITY_ACTOR_KEY,
+                self._actor_records[MESH_QUALITY_ACTOR_KEY].visible,
+            )
             session.request_render()
         except Exception as exc:
             self._fail_session(exc)
@@ -2488,18 +2507,25 @@ class ActiveSceneController:
     def _replace_result_actor(self, semantic_id: str, payload: object) -> bool:
         if not self._interactive_result_renderer_available():
             return False
+        if (
+            self._isolation_snapshot is not None
+            and semantic_id not in self._actor_records
+            and not self.clear_isolation()
+        ):
+            return False
         session = self._session
         assert session is not None
         try:
+            previous = self._actor_records.get(semantic_id)
             session.replace_actor(
                 semantic_id,
                 payload,
                 generation=self._generation,
             )
-            self._actor_records[semantic_id] = SceneActorRecord(
-                semantic_id=semantic_id,
+            self._actor_records[semantic_id] = _scene_actor_record(
+                semantic_id,
                 generation=self._generation,
-                visible=True,
+                visible=True if previous is None else previous.visible,
             )
             session.request_render()
         except Exception as exc:
@@ -2545,10 +2571,38 @@ class ActiveSceneController:
         mesh: MeshData,
         scene_state: SceneViewState,
     ) -> object:
-        config = PyVistaSceneConfig(
-            **scene_state.render_options.to_pyvista_config_dict()
-        )
+        config = PyVistaSceneConfig(**scene_state.render_options.to_pyvista_config_dict())
         return build_scene_state(mesh, config=config, rendered=False)
+
+
+def _scene_actor_record(
+    semantic_id: str,
+    *,
+    generation: int,
+    visible: bool = True,
+) -> SceneActorRecord:
+    selection = semantic_id in {"hover", "current_selection"} or semantic_id.startswith(
+        "named_selection:"
+    )
+    result = semantic_id in {
+        MESH_QUALITY_ACTOR_KEY,
+        RESULT_SCALAR_ACTOR_KEY,
+        RESULT_VECTOR_ACTOR_KEY,
+        RESULT_PROBE_ACTOR_KEY,
+    }
+    helper = selection or semantic_id == RESULT_COLORBAR_ACTOR_KEY
+    category = (
+        "selection" if selection else "helper" if helper else "result" if result else "geometry"
+    )
+    return SceneActorRecord(
+        semantic_id=semantic_id,
+        generation=generation,
+        visible=bool(visible),
+        category=category,
+        pickable=semantic_id == "base_mesh",
+        isolation_eligible=not helper,
+        is_helper=helper,
+    )
 
 
 _REPRESENTATION_VISIBILITY: Mapping[str, Mapping[str, bool]] = {
@@ -2760,9 +2814,7 @@ def _coerce_pick_event(value: object) -> ScenePickEvent | None:
             mesh_fingerprint=str(value.get("mesh_fingerprint", "")).lower(),
             entity_kind=EntityKind.coerce(value.get("entity_kind")),
             backend_index=int(value.get("backend_index", -1)),
-            intent=str(
-                value.get("intent", value.get("modifier", "replace"))
-            ),
+            intent=str(value.get("intent", value.get("modifier", "replace"))),
         )
     except (TypeError, ValueError):
         return None

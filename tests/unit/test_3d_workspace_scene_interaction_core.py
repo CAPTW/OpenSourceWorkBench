@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import FrozenInstanceError
 from types import SimpleNamespace
 
 import pytest
@@ -98,6 +99,9 @@ class RecordingInteractiveSession:
     def isolate_actor(self, semantic_id: str) -> None:
         self.calls.append(("isolate_actor", semantic_id))
 
+    def clear_isolation(self) -> None:
+        self.calls.append(("clear_isolation",))
+
     def show_all_actors(self) -> None:
         self.calls.append(("show_all_actors",))
 
@@ -161,6 +165,7 @@ def test_controller_hosts_one_interactive_session_and_routes_commands() -> None:
     assert controller.set_representation("wireframe") is True
     assert controller.set_actor_visible("wireframe", False) is True
     assert controller.isolate_actor("base_mesh") is True
+    assert controller.clear_isolation() is True
     assert controller.show_all_actors() is True
     assert controller.enable_clipping("x", 0.25) is True
     assert controller.update_clipping("z", 0.5) is True
@@ -170,6 +175,7 @@ def test_controller_hosts_one_interactive_session_and_routes_commands() -> None:
     assert ("fit_to_scene",) in factory.session.calls
     assert ("set_camera_preset", "front") in factory.session.calls
     assert ("set_axes_visible", False) in factory.session.calls
+    assert ("clear_isolation",) in factory.session.calls
     assert ("enable_clipping", "x", 0.25) in factory.session.calls
     assert ("update_clipping", "z", 0.5) in factory.session.calls
     assert ("clear_clipping",) in factory.session.calls
@@ -192,12 +198,37 @@ def test_representation_visibility_is_deterministic_in_registry() -> None:
     assert controller.actor_records["base_mesh"].visible is True
     assert controller.actor_records["wireframe"].visible is True
 
+    records = controller.actor_records
+    assert records["base_mesh"].category == "geometry"
+    assert records["base_mesh"].pickable is True
+    assert records["base_mesh"].isolation_eligible is True
+    assert records["base_mesh"].is_helper is False
+    with pytest.raises(TypeError):
+        records["new"] = records["base_mesh"]  # type: ignore[index]
+    with pytest.raises(FrozenInstanceError):
+        records["base_mesh"].visible = False  # type: ignore[misc]
+
+    assert controller.set_representation("surface") is True
+    assert controller.isolate_actor("base_mesh") is True
     assert controller.isolate_actor("wireframe") is True
     assert controller.actor_records["base_mesh"].visible is False
     assert controller.actor_records["wireframe"].visible is True
 
+    assert controller.clear_isolation() is True
+    assert controller.actor_records["base_mesh"].visible is True
+    assert controller.actor_records["wireframe"].visible is False
+    assert controller.clear_isolation() is True
+
+    assert controller.hide_actor("base_mesh") is True
+    assert controller.actor_records["base_mesh"].visible is False
+    assert controller.show_actor("base_mesh") is True
+    assert controller.actor_records["base_mesh"].visible is True
+    assert controller.isolate_actor("missing") is False
+
     assert controller.show_all_actors() is True
-    assert all(record.visible for record in controller.actor_records.values())
+    assert all(
+        record.visible for record in controller.actor_records.values() if record.isolation_eligible
+    )
 
 
 def test_replacement_does_not_create_a_second_session_or_duplicate_actors() -> None:
@@ -212,9 +243,92 @@ def test_replacement_does_not_create_a_second_session_or_duplicate_actors() -> N
     assert set(factory.session.actors) == {"base_mesh", "wireframe"}
     assert set(controller.actor_records) == {"base_mesh", "wireframe"}
     assert all(
-        record.generation == controller.generation
-        for record in controller.actor_records.values()
+        record.generation == controller.generation for record in controller.actor_records.values()
     )
+
+
+def test_scene_clear_preserves_axes_preference_and_close_disables_state() -> None:
+    controller = ActiveSceneController(RecordingInteractiveFactory())
+    controller.attach_host(object())
+    _load(controller)
+
+    assert controller.set_axes_visible(False) is True
+    controller.clear()
+    assert controller.axes_visible is False
+    assert controller.actor_records == {}
+
+    controller.close()
+    assert controller.axes_visible is False
+
+
+def test_selection_highlight_registry_clears_on_hide_isolate_and_replacement() -> None:
+    class SelectionSession(RecordingInteractiveSession):
+        capabilities = RecordingInteractiveSession.capabilities | frozenset(
+            {"picking", "selection-overlays"}
+        )
+
+        def set_pick_mode(self, mode: str, callback: object) -> None:
+            self.calls.append(("set_pick_mode", mode, callback))
+
+        def set_current_selection(
+            self,
+            entity_kind: str,
+            indices: tuple[int, ...],
+            generation: int,
+        ) -> None:
+            self.actors["current_selection"] = (entity_kind, indices, generation)
+
+        def clear_current_selection(self) -> None:
+            self.actors.pop("current_selection", None)
+
+        def clear_hover(self) -> None:
+            self.actors.pop("hover", None)
+
+    class SelectionFactory(RecordingInteractiveFactory):
+        capabilities = SelectionSession.capabilities
+
+        def __init__(self) -> None:
+            self.host_parent = None
+            self.session = SelectionSession()
+            self.create_calls = 0
+
+    factory = SelectionFactory()
+    controller = ActiveSceneController(factory)
+    controller.attach_host(object())
+    _load(controller)
+    assert controller.set_pick_mode("node") is True
+    fingerprint = controller.current_mesh_fingerprint
+    assert fingerprint is not None
+
+    event = {
+        "generation": controller.generation,
+        "mesh_ref": "mesh-1",
+        "mesh_fingerprint": fingerprint.digest,
+        "entity_kind": "node",
+        "backend_index": 1,
+        "intent": "replace",
+    }
+    assert controller.handle_pick(event) is True
+    selection = controller.actor_records["current_selection"]
+    assert selection.category == "selection"
+    assert selection.is_helper is True
+    assert selection.isolation_eligible is False
+    assert controller.hide_actor("current_selection") is False
+    assert controller.fallback_reason == ""
+
+    assert controller.hide_actor("base_mesh") is True
+    assert controller.current_selection_target is None
+    assert "current_selection" not in controller.actor_records
+    assert "current_selection" not in factory.session.actors
+
+    assert controller.show_actor("base_mesh") is True
+    assert controller.handle_pick(event) is True
+    assert controller.isolate_actor("wireframe") is True
+    assert "current_selection" not in controller.actor_records
+
+    _load(controller, _mesh(x_offset=4.0))
+    assert "current_selection" not in controller.actor_records
+    assert set(factory.session.actors) == {"base_mesh", "wireframe"}
 
 
 def test_interaction_commands_fail_safely_without_capability_or_after_close() -> None:
@@ -238,20 +352,37 @@ def test_interaction_commands_fail_safely_without_capability_or_after_close() ->
 
 
 class FakeActor:
-    def __init__(self) -> None:
+    def __init__(self, bounds: tuple[float, ...] | None = None) -> None:
         self.visible = True
+        self.bounds = bounds
 
     def SetVisibility(self, visible: bool) -> None:
         self.visible = bool(visible)
 
+    def GetBounds(self) -> tuple[float, ...] | None:
+        return self.bounds
+
 
 class FakeDataSet:
-    def __init__(self) -> None:
+    def __init__(self, points: object = ()) -> None:
         self.point_data: dict[str, object] = {}
         self.cell_data: dict[str, object] = {}
         self.clip_calls: list[dict[str, object]] = []
         self.extracted_points: tuple[int, ...] = ()
         self.extracted_cells: tuple[int, ...] = ()
+        normalized = tuple(tuple(float(value) for value in point) for point in points)
+        self.bounds = (
+            (
+                min(point[0] for point in normalized),
+                max(point[0] for point in normalized),
+                min(point[1] for point in normalized),
+                max(point[1] for point in normalized),
+                min(point[2] for point in normalized),
+                max(point[2] for point in normalized),
+            )
+            if normalized
+            else None
+        )
 
     def clip(self, **kwargs: object) -> FakeDataSet:
         clipped = FakeDataSet()
@@ -277,8 +408,9 @@ class FakePyVista:
     def __init__(self) -> None:
         self.datasets: list[FakeDataSet] = []
 
-    def PolyData(self, _points: object, _faces: object) -> FakeDataSet:
-        dataset = FakeDataSet()
+    def PolyData(self, _points: object, _faces: object = None) -> FakeDataSet:
+        del _faces
+        dataset = FakeDataSet(_points)
         self.datasets.append(dataset)
         return dataset
 
@@ -299,6 +431,7 @@ class FakeInteractor:
         self.remove_calls: list[object] = []
         self.view_calls: list[tuple[object, object]] = []
         self.reset_calls = 0
+        self.reset_bounds: list[tuple[float, ...] | None] = []
         self.render_calls = 0
         self.show_axes_calls = 0
         self.hide_axes_calls = 0
@@ -316,17 +449,30 @@ class FakeInteractor:
         return None
 
     def add_mesh(self, dataset: object, **kwargs: object) -> FakeActor:
-        actor = FakeActor()
+        actor = FakeActor(getattr(dataset, "bounds", None))
         self.add_calls.append({"dataset": dataset, "actor": actor, **kwargs})
         return actor
 
     def remove_actor(self, actor: object, **_kwargs: object) -> None:
         self.remove_calls.append(actor)
 
-    def reset_camera(self) -> None:
+    def reset_camera(
+        self,
+        *,
+        bounds: tuple[float, ...] | None = None,
+        render: bool = True,
+    ) -> None:
+        del render
         self.reset_calls += 1
+        self.reset_bounds.append(bounds)
 
-    def view_vector(self, vector: object, viewup: object) -> None:
+    def view_vector(
+        self,
+        vector: object,
+        viewup: object,
+        **kwargs: object,
+    ) -> None:
+        self.reset_bounds.append(kwargs.get("bounds"))
         self.view_calls.append((vector, viewup))
 
     def show_axes(self) -> None:
@@ -371,6 +517,11 @@ def test_pyvistaqt_session_keeps_native_handles_private_and_tears_down() -> None
 
     session.replace_actor("base_mesh", payload, generation=1)
     session.replace_actor("wireframe", payload, generation=1)
+    assert session.native_actor_registry["base_mesh"] is session._actors["base_mesh"]
+    with pytest.raises(TypeError):
+        session.native_actor_registry["extra"] = FakeActor()  # type: ignore[index]
+    assert session.fit_to_scene() is True
+    assert interactor.reset_bounds[-1] == (0.0, 1.0, 0.0, 1.0, 0.0, 0.0)
     session.set_representation("wireframe")
     session.set_camera_preset("isometric")
     session.enable_clipping("x", 0.25)
@@ -391,6 +542,93 @@ def test_pyvistaqt_session_keeps_native_handles_private_and_tears_down() -> None
     assert interactor.close_calls == 1
     assert session.hosted_widget is None
     assert session.semantic_actor_ids == ()
+
+
+def test_pyvistaqt_camera_axes_representation_and_isolation_contract() -> None:
+    from osw.gui.setup_overlay_view_model import SetupOverlaySpec
+    from osw.gui.workspace_scene_pyvistaqt import PyVistaQtRendererSession
+
+    interactor = FakeInteractor()
+    session = PyVistaQtRendererSession(
+        object(),
+        pyvista_module=FakePyVista(),
+        interactor_factory=lambda **_kwargs: interactor,
+    )
+    payload = SimpleNamespace(
+        mesh=_mesh(),
+        scene_state=scene_view_state_from_toggles(show_edges=True),
+    )
+    assert session.fit_to_scene() is False
+    session.replace_actor("base_mesh", payload, generation=1)
+    session.replace_actor("wireframe", payload, generation=1)
+    session._actors["current_selection"] = FakeActor((-100.0, 100.0, -100.0, 100.0, -100.0, 100.0))
+    assert session.fit_to_scene() is True
+    assert interactor.reset_bounds[-1] == (0.0, 1.0, 0.0, 1.0, 0.0, 0.0)
+
+    expected = {
+        "front": ((0.0, -1.0, 0.0), (0.0, 0.0, 1.0)),
+        "back": ((0.0, 1.0, 0.0), (0.0, 0.0, 1.0)),
+        "left": ((-1.0, 0.0, 0.0), (0.0, 0.0, 1.0)),
+        "right": ((1.0, 0.0, 0.0), (0.0, 0.0, 1.0)),
+        "top": ((0.0, 0.0, 1.0), (0.0, 1.0, 0.0)),
+        "bottom": ((0.0, 0.0, -1.0), (0.0, -1.0, 0.0)),
+        "isometric": ((1.0, 1.0, 1.0), (0.0, 0.0, 1.0)),
+    }
+    for preset, camera_call in expected.items():
+        assert session.set_camera_preset(preset) is True
+        assert interactor.view_calls[-1] == camera_call
+        assert interactor.reset_bounds[-1] == (
+            0.0,
+            1.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+        )
+    camera_call_count = len(interactor.view_calls)
+
+    axes_show_calls = interactor.show_axes_calls
+    session.set_axes_visible(True)
+    assert interactor.show_axes_calls == axes_show_calls
+    session.set_axes_visible(False)
+    session.set_axes_visible(False)
+    assert interactor.hide_axes_calls == 1
+    session.set_axes_visible(True)
+    assert interactor.show_axes_calls == axes_show_calls + 1
+
+    session.set_representation("surface")
+    assert session.isolate_actor("base_mesh") is True
+    assert session.isolate_actor("wireframe") is True
+    assert interactor.add_calls[0]["actor"].visible is False
+    assert interactor.add_calls[1]["actor"].visible is True
+    assert session.clear_isolation() is True
+    assert interactor.add_calls[0]["actor"].visible is True
+    assert interactor.add_calls[1]["actor"].visible is False
+    assert session.clear_isolation() is True
+
+    assert session.isolate_actor("base_mesh") is True
+    session.replace_actor(
+        "setup:fixed-support:fixture",
+        SetupOverlaySpec(
+            actor_key="setup:fixed-support:fixture",
+            record_id="fixture",
+            category="fixed_support",
+            target_selection_id="nodes",
+            points=((0.0, 0.0, 0.0),),
+            visible=True,
+        ),
+        generation=1,
+    )
+    assert session._isolation_snapshot is None
+    assert interactor.add_calls[0]["actor"].visible is True
+    assert interactor.add_calls[1]["actor"].visible is False
+
+    session.show_all_actors()
+    assert interactor.add_calls[0]["actor"].visible is True
+    assert interactor.add_calls[1]["actor"].visible is True
+    assert len(interactor.view_calls) == camera_call_count
+    session.close()
+    assert session.axes_visible is False
 
 
 def test_pyvistaqt_partial_initialization_failure_closes_created_interactor() -> None:
@@ -485,6 +723,10 @@ def test_pyvistaqt_picking_and_semantic_selection_overlays_are_session_local() -
 
     session.set_hover_entities("node", (0,), session_generation)
     session.set_current_selection("node", (0, 2), session_generation)
+    first_selection_actor = session._actors["current_selection"]
+    session.set_current_selection("cell", (0,), session_generation)
+    assert session._actors["current_selection"] is not first_selection_actor
+    assert interactor.remove_calls.count(first_selection_actor) == 1
     session.set_named_selection_overlay(
         "selection-1",
         "cell",
@@ -497,6 +739,12 @@ def test_pyvistaqt_picking_and_semantic_selection_overlays_are_session_local() -
         "named_selection:selection-1",
     }.issubset(set(session.semantic_actor_ids))
 
+    session.set_actor_visible("base_mesh", False)
+    assert "hover" not in session.semantic_actor_ids
+    assert "current_selection" not in session.semantic_actor_ids
+    session.set_actor_visible("base_mesh", True)
+    session.set_current_selection("node", (0,), session_generation)
+
     session.set_pick_mode("cell", events.append)
     cell_callback = interactor.cell_pick_kwargs["callback"]
     assert callable(cell_callback)
@@ -508,8 +756,7 @@ def test_pyvistaqt_picking_and_semantic_selection_overlays_are_session_local() -
     assert events[0]["backend_index"] == 0
     assert notifications == []
 
-    session.clear_hover()
-    session.clear_current_selection()
+    session.clear_selection_highlights()
     session.remove_named_selection_overlay("selection-1")
     assert set(session.semantic_actor_ids) == {"base_mesh", "wireframe"}
     session.close()
@@ -525,9 +772,7 @@ def test_missing_pyvistaqt_is_an_explicit_controller_fallback() -> None:
             return FakePyVista()
         raise ModuleNotFoundError(name)
 
-    controller = ActiveSceneController(
-        PyVistaQtRendererFactory(module_loader=loader)
-    )
+    controller = ActiveSceneController(PyVistaQtRendererFactory(module_loader=loader))
 
     assert controller.attach_host(object()) is None
     assert controller.state is SceneLifecycleState.FALLBACK

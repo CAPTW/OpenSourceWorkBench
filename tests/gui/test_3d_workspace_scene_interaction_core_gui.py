@@ -111,6 +111,9 @@ class HostedRecordingSession:
     def isolate_actor(self, semantic_id: str) -> None:
         self.calls.append(("isolate", semantic_id))
 
+    def clear_isolation(self) -> None:
+        self.calls.append(("clear_isolation",))
+
     def show_all_actors(self) -> None:
         self.calls.append(("show_all",))
 
@@ -167,6 +170,7 @@ def test_central_panel_hosts_session_widget_and_routes_toolbar_controls(
     panel.toolbar.actor_selector.setCurrentText("Wireframe")
     panel.toolbar.actor_visibility_button.click()
     panel.toolbar.isolate_button.click()
+    panel.toolbar.clear_isolation_button.click()
     panel.toolbar.show_all_button.click()
     panel.toolbar.clip_axis_selector.setCurrentText("Z")
     panel.toolbar.clip_origin_input.setValue(0.5)
@@ -180,10 +184,15 @@ def test_central_panel_hosts_session_widget_and_routes_toolbar_controls(
     assert ("axes", False) in session.calls
     assert ("visible", "wireframe", False) in session.calls
     assert ("isolate", "wireframe") in session.calls
+    assert ("clear_isolation",) in session.calls
     assert ("show_all",) in session.calls
     assert ("clip_enable", "z", 0.5) in session.calls
     assert ("clip_update", "z", 0.75) in session.calls
     assert ("clip_clear",) in session.calls
+    assert panel.toolbar.clear_isolation_button.accessibleName()
+    assert panel.toolbar.camera_selector.toolTip()
+    assert panel.toolbar.representation_selector.toolTip()
+    assert panel.toolbar.actor_selector.toolTip()
     del app
 
 
@@ -211,10 +220,7 @@ def test_central_panel_shows_explicit_fallback_and_disables_controls(
     assert panel.viewport.isVisibleTo(panel)
     assert "Interactive 3D unavailable" in panel.diagnostic_label.text()
     assert "PyVistaQt initialization failed" in panel.diagnostic_label.text()
-    assert all(
-        not widget.isEnabled()
-        for widget in panel.toolbar.interactive_control_widgets()
-    )
+    assert all(not widget.isEnabled() for widget in panel.toolbar.interactive_control_widgets())
     del app
 
 

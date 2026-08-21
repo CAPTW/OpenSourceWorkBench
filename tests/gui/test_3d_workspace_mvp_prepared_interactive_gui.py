@@ -242,6 +242,15 @@ def _actor_visibility(actor: object) -> bool:
     return bool(actor.visibility)
 
 
+def _normalized_camera_to_focal(camera: object) -> tuple[float, float, float]:
+    position = tuple(float(value) for value in camera.position)
+    focal_point = tuple(float(value) for value in camera.focal_point)
+    direction = tuple(focal_point[index] - position[index] for index in range(3))
+    magnitude = math.sqrt(sum(value * value for value in direction))
+    assert math.isfinite(magnitude) and magnitude > 0.0
+    return tuple(value / magnitude for value in direction)
+
+
 def _observer_signature(interactor: object) -> tuple[tuple[str, int], ...]:
     values = Counter(str(event) for event in interactor.iren._observers.values())
     return tuple(sorted(values.items()))
@@ -415,6 +424,10 @@ def _close_visible_cycle(
     assert session.semantic_actor_ids == ()
     assert session._payloads == {}
     assert session._closed is True
+    assert session.axes_visible is False
+    assert session._isolation_snapshot is None
+    assert session._visibility == {}
+    assert session._pick_callback is None
     assert not interactor.render_timer.isActive()
     window.deleteLater()
     owned_windows.remove(window)
@@ -592,6 +605,10 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         )
         assert bounds == ((-4.0, -0.5, 0.0), (6.0, 0.5, 1.0))
         assert set(controller.actor_records) == {"base_mesh", "wireframe"}
+        assert controller.actor_records["base_mesh"].category == "geometry"
+        assert controller.actor_records["base_mesh"].pickable is True
+        assert controller.actor_records["base_mesh"].isolation_eligible is True
+        assert controller.actor_records["base_mesh"].is_helper is False
         assert session.semantic_actor_ids == ("base_mesh", "wireframe")
         base_dataset = session._actors["base_mesh"].mapper.dataset
         assert isinstance(base_dataset, pyvista.UnstructuredGrid)
@@ -603,8 +620,44 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         assert controller.disable_picking()
         camera_initial = session.get_camera_state()
         assert controller.fit_to_scene()
+        fit_camera = session.get_camera_state()
+        assert fit_camera.focal_point == pytest.approx((1.0, 0.0, 0.5))
+        assert fit_camera.position is not None
+        assert all(math.isfinite(value) for value in fit_camera.position)
+        fit_distance = math.sqrt(
+            sum(
+                (fit_camera.position[index] - fit_camera.focal_point[index]) ** 2
+                for index in range(3)
+            )
+        )
+        assert fit_distance > 5.0
+        assert all(math.isfinite(value) for value in interactor.camera.clipping_range)
+
+        preset_directions = {
+            "front": (0.0, 1.0, 0.0),
+            "back": (0.0, -1.0, 0.0),
+            "left": (1.0, 0.0, 0.0),
+            "right": (-1.0, 0.0, 0.0),
+            "top": (0.0, 0.0, -1.0),
+            "bottom": (0.0, 0.0, 1.0),
+        }
+        for preset, expected_direction in preset_directions.items():
+            assert controller.set_camera_preset(preset)
+            camera = session.get_camera_state()
+            assert _normalized_camera_to_focal(camera) == pytest.approx(expected_direction)
+            assert camera.focal_point == pytest.approx((1.0, 0.0, 0.5))
+        assert controller.set_camera_preset("isometric")
+        isometric_camera = session.get_camera_state()
+        assert all(
+            isometric_camera.position[index] > isometric_camera.focal_point[index]
+            for index in range(3)
+        )
         assert controller.set_camera_preset("top")
         camera_preset = session.get_camera_state()
+        assert controller.set_camera_preset("top")
+        assert _normalized_camera_to_focal(session.get_camera_state()) == pytest.approx(
+            _normalized_camera_to_focal(camera_preset)
+        )
         assert camera_preset.position != camera_initial.position
         assert controller.set_interaction_mode("orbit")
         center = QtCore.QPoint(interactor.width() // 2, interactor.height() // 2)
@@ -620,13 +673,37 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         assert controller.set_representation("surface")
         assert _actor_visibility(session._actors["base_mesh"])
         assert not _actor_visibility(session._actors["wireframe"])
+        assert controller.set_representation("surface_with_edges")
+        assert _actor_visibility(session._actors["base_mesh"])
+        assert _actor_visibility(session._actors["wireframe"])
+        assert controller.isolate_actor("wireframe")
+        assert not _actor_visibility(session._actors["base_mesh"])
+        assert _actor_visibility(session._actors["wireframe"])
+        assert controller.isolate_actor("base_mesh")
+        assert _actor_visibility(session._actors["base_mesh"])
+        assert not _actor_visibility(session._actors["wireframe"])
+        assert controller.clear_isolation()
+        assert _actor_visibility(session._actors["base_mesh"])
+        assert _actor_visibility(session._actors["wireframe"])
+        assert controller.hide_actor("wireframe")
+        assert not _actor_visibility(session._actors["wireframe"])
+        assert controller.show_actor("wireframe")
+        assert _actor_visibility(session._actors["wireframe"])
+        assert controller.set_representation("surface")
+        assert _actor_visibility(session._actors["base_mesh"])
+        assert not _actor_visibility(session._actors["wireframe"])
         assert controller.set_axes_visible(False)
         assert interactor.renderer.axes_enabled is False
         assert controller.set_axes_visible(True)
         assert interactor.renderer.axes_enabled is True
+        axes_actor = interactor.renderer.axes_actor
+        assert axes_actor is not None
+        assert controller.set_axes_visible(True)
+        assert interactor.renderer.axes_actor is axes_actor
         assert controller.set_camera_preset("top")
         assert controller.fit_to_scene()
         interactor.render()
+        print("OSW_PREPARED_SCENE_INTERACTION_CORE_PASS", flush=True)
 
         render_width, render_height = (int(value) for value in render_window.GetSize())
         assert render_width > 0 and render_height > 0
@@ -672,6 +749,11 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         assert point_target.locator.id_namespace == NODE_ORDINAL_NAMESPACE
         assert point_target.locator.mesh_fingerprint == _MESH_FINGERPRINT
         assert int(point_picker.GetPointId()) == 1
+        point_highlight_actor = session._actors["current_selection"]
+        point_highlight_record = controller.actor_records["current_selection"]
+        assert point_highlight_record.category == "selection"
+        assert point_highlight_record.is_helper is True
+        assert point_highlight_record.isolation_eligible is False
         print("OSW_PREPARED_NATIVE_POINT_EVENT_PASS", flush=True)
 
         controller.set_selection_listener(None)
@@ -723,6 +805,10 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         assert min(pick_area) >= 0
         assert pick_area[0] != pick_area[2]
         assert pick_area[1] != pick_area[3]
+        cell_highlight_actor = session._actors["current_selection"]
+        assert cell_highlight_actor is not point_highlight_actor
+        assert not bool(renderer.HasViewProp(point_highlight_actor))
+        assert bool(renderer.HasViewProp(cell_highlight_actor))
         print("OSW_PREPARED_NATIVE_CELL_RECTANGLE_EVENT_PASS", flush=True)
 
         dataset = _result_dataset()
@@ -774,6 +860,29 @@ def test_3d_workspace_mvp_prepared_interactive_backend(
         assert diagnostics.bad_cell_keys == ("0:1",)
         assert diagnostics.table_bad_cell_keys == ("0:1",)
         assert MESH_QUALITY_ACTOR_KEY in controller.actor_records
+
+        colorbar_record = controller.actor_records[RESULT_COLORBAR_ACTOR_KEY]
+        assert colorbar_record.category == "helper"
+        assert colorbar_record.is_helper is True
+        assert colorbar_record.isolation_eligible is False
+        colorbar_visibility = _actor_visibility(session._actors[RESULT_COLORBAR_ACTOR_KEY])
+        eligible_visibility = {
+            semantic_id: record.visible
+            for semantic_id, record in controller.actor_records.items()
+            if record.isolation_eligible
+        }
+        assert controller.isolate_actor(RESULT_VECTOR_ACTOR_KEY)
+        assert controller.current_selection_target is None
+        assert "current_selection" not in controller.actor_records
+        assert _actor_visibility(session._actors[RESULT_VECTOR_ACTOR_KEY])
+        assert _actor_visibility(session._actors[RESULT_COLORBAR_ACTOR_KEY]) is (
+            colorbar_visibility
+        )
+        assert controller.clear_isolation()
+        assert {
+            semantic_id: controller.actor_records[semantic_id].visible
+            for semantic_id in eligible_visibility
+        } == eligible_visibility
 
         assert controller.clear_scalar_result()
         assert RESULT_SCALAR_ACTOR_KEY not in controller.actor_records

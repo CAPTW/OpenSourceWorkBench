@@ -97,14 +97,12 @@ class CentralViewportPanel(_BaseWidget):
             self.diagnostic_label.hide()
             self.scene_stack.setCurrentWidget(self.renderer_host)
             self.toolbar.set_interactive_enabled(True)
+            self._sync_toolbar_state()
             return
         reason = str(getattr(controller, "fallback_reason", "") or "")
         if not reason:
             backend = str(getattr(controller, "backend_kind", "unknown"))
-            reason = (
-                f"Scene backend '{backend}' does not provide an embedded "
-                "interactive widget."
-            )
+            reason = f"Scene backend '{backend}' does not provide an embedded interactive widget."
         self._show_fallback(reason)
 
     def set_mesh(self, mesh: object, *, mesh_ref: str = "") -> object | None:
@@ -130,6 +128,8 @@ class CentralViewportPanel(_BaseWidget):
         fallback_reason = str(getattr(controller, "fallback_reason", "") or "")
         if fallback_reason:
             self._show_fallback(fallback_reason)
+        else:
+            self._sync_toolbar_state()
         return result
 
     def _connect_toolbar(self) -> None:
@@ -140,9 +140,7 @@ class CentralViewportPanel(_BaseWidget):
         self.toolbar.representationRequested.connect(
             lambda mode: self._invoke("set_representation", mode)
         )
-        self.toolbar.axesToggled.connect(
-            lambda visible: self._invoke("set_axes_visible", visible)
-        )
+        self.toolbar.axesToggled.connect(lambda visible: self._invoke("set_axes_visible", visible))
         self.toolbar.actorVisibilityRequested.connect(
             lambda semantic_id, visible: self._invoke(
                 "set_actor_visible",
@@ -153,9 +151,8 @@ class CentralViewportPanel(_BaseWidget):
         self.toolbar.actorIsolationRequested.connect(
             lambda semantic_id: self._invoke("isolate_actor", semantic_id)
         )
-        self.toolbar.showAllActorsRequested.connect(
-            lambda: self._invoke("show_all_actors")
-        )
+        self.toolbar.clearIsolationRequested.connect(lambda: self._invoke("clear_isolation"))
+        self.toolbar.showAllActorsRequested.connect(lambda: self._invoke("show_all_actors"))
         self.toolbar.clippingToggled.connect(self._on_clipping_toggled)
         self.toolbar.clippingUpdated.connect(self._on_clipping_updated)
 
@@ -183,11 +180,23 @@ class CentralViewportPanel(_BaseWidget):
         controller = self._scene_controller
         method = getattr(controller, method_name, None)
         succeeded = bool(method(*args)) if callable(method) else False
+        if succeeded:
+            self._sync_toolbar_state()
         if not succeeded:
             reason = str(getattr(controller, "fallback_reason", "") or "")
             if reason:
                 self._show_fallback(reason)
         return succeeded
+
+    def _sync_toolbar_state(self) -> None:
+        controller = self._scene_controller
+        records = getattr(controller, "actor_records", {})
+        self.toolbar.sync_actor_records(
+            records,
+            isolation_active=bool(getattr(controller, "isolation_active", False)),
+            representation=str(getattr(controller, "representation", "surface")),
+            axes_visible=bool(getattr(controller, "axes_visible", True)),
+        )
 
     def _show_fallback(self, reason: str) -> None:
         self.interactive_available = False
