@@ -13,6 +13,31 @@ TIMESTAMP_RE = re.compile(
 )
 
 
+def lexical_path_variants(value: str | Path) -> tuple[str, ...]:
+    """Return known-root spellings without host-native filesystem resolution.
+
+    A Windows absolute root must produce both separator forms on every host.
+    Foreign paths are not passed through ``Path.resolve()``.
+    """
+
+    raw = str(value)
+    variants: list[str] = []
+    seen: set[str] = set()
+
+    def add(item: str) -> None:
+        if item and item not in seen:
+            seen.add(item)
+            variants.append(item)
+
+    add(raw)
+    add(raw.replace("\\", "/"))
+    add(raw.replace("/", "\\"))
+    if isinstance(value, Path):
+        add(value.as_posix())
+    variants.sort(key=len, reverse=True)
+    return tuple(variants)
+
+
 def normalize_text(
     text: str,
     *,
@@ -21,10 +46,13 @@ def normalize_text(
     """Normalize line endings, trailing whitespace, timestamps, and known paths."""
 
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    replacement_pairs: list[tuple[str, str]] = []
     for value, token in replacements:
-        raw = str(value)
-        normalized = normalized.replace(raw, token)
-        normalized = normalized.replace(raw.replace("\\", "/"), token)
+        for candidate in lexical_path_variants(value):
+            replacement_pairs.append((candidate, token))
+    replacement_pairs.sort(key=lambda item: len(item[0]), reverse=True)
+    for candidate, token in replacement_pairs:
+        normalized = normalized.replace(candidate, token)
     normalized = TIMESTAMP_RE.sub("<TIMESTAMP>", normalized)
     return "\n".join(line.rstrip() for line in normalized.strip().splitlines()) + "\n"
 
