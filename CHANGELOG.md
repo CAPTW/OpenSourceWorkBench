@@ -6,6 +6,29 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### 3D Workspace MVP RC3 Publication
+
+Package version remains: `0.1.5rc3`
+
+- Published annotated tag `v0.1.5-rc3` at release source
+  `4b1effccf3bbc4fd18073c0ab39f90cfb6822232` (tag object
+  `841db318dade807e5294718d4e50813934752d0a`). GitHub prerelease ID
+  `374854738` is public at
+  https://github.com/CAPTW/OpenSourceWorkBench/releases/tag/v0.1.5-rc3
+  (`2026-08-22T06:51:24Z`) with exactly four assets: wheel, sdist,
+  `SHA256SUMS.txt`, and `release_asset_manifest.json`.
+- Draft and published remote-download hashes matched. Downloaded base and
+  native installed-package smokes passed. Green source OSW CI `32555950013`
+  and Release asset smoke `32555949955` remain successful. No tag/release
+  triggered workflow exists under current definitions.
+- Later docs-only `develop` commits do not alter the RC3 tag or release
+  source. RC1 and RC2 remain immutable. Historical failed workflows remain
+  historical failures. No package-index publication is configured. No
+  deployment occurred. RC3 is not final `0.1.5`. Native locality remains
+  `DEFERRED_RETAINED`. No industrial certification, solver numerical
+  certification, all-topology, all-platform, or production-readiness claim
+  is made.
+
 ### 3D Workspace MVP RC3 Metadata Preparation
 
 Candidate package version: `0.1.5rc3`

@@ -5,7 +5,7 @@ Solver & Script Workbench for inspectable desktop workflows, solver case
 preparation, script previews, result review, and report generation.
 
 OSW package metadata is currently `0.1.5rc3`, and the current public GitHub
-prerelease is `v0.1.5-rc2`. It is useful for teaching, research prototyping,
+prerelease is `v0.1.5-rc3`. It is useful for teaching, research prototyping,
 and transparent workflow experiments, but it is not an industrial-certified CAE
 tool, MATLAB clone, ANSYS clone, Simulink clone, or commercial CAD replacement.
 
@@ -180,8 +180,9 @@ limitations. It is not production-ready or industrially certified.
 
 Local installed-package smoke, after a no-isolation wheel build, must import
 `osw` from the install target rather than this source checkout. Current package
-version is `0.1.5rc3` for the planned annotated tag `v0.1.5-rc3`. That tag has
-not been created.
+version is `0.1.5rc3`. Published annotated tag `v0.1.5-rc3` peels to release
+source `4b1effccf3bbc4fd18073c0ab39f90cfb6822232`. A later docs-only `develop`
+commit does not move that tag or release source.
 
 ## Optional Dependencies
 
@@ -222,12 +223,13 @@ the canonical report-asset claim boundary.
 ## Release Status
 
 - Current `develop` package metadata: `0.1.5rc3`.
-- Planned next annotated tag: `v0.1.5-rc3` (not created).
-- Current public prerelease tag: `v0.1.5-rc2` (immutable published historical prerelease).
-- Historical public prerelease tag: `v0.1.5-rc1` (immutable).
-- `develop` is ahead of the `v0.1.5-rc2` release tag and includes both post-RC2 QA repairs.
-- A public GitHub Release prerelease exists for `v0.1.5-rc2` with four assets:
+- Current public prerelease tag: `v0.1.5-rc3` (published and verified).
+- RC3 tag/release source: `4b1effccf3bbc4fd18073c0ab39f90cfb6822232`. Later
+  docs-only `develop` commits do not alter that source.
+- Historical public prerelease tags: `v0.1.5-rc2` and `v0.1.5-rc1` (immutable).
+- A public GitHub Release prerelease exists for `v0.1.5-rc3` with four assets:
   wheel, sdist, `SHA256SUMS.txt`, and `release_asset_manifest.json`. Historical
+  `v0.1.5-rc2` remains published with its exact four-asset set. Historical
   `v0.1.5-rc1` remains published with its original five-asset set, including the
   unsigned Windows portable ZIP. Local validation artifacts are not release assets.
 - OpenFOAM v12 template compatibility issues #18 and #19 are closed with

@@ -2,15 +2,18 @@
 
 Current package metadata: `0.1.5rc3`
 
-Current public prerelease: `v0.1.5-rc2`
+Current public prerelease: `v0.1.5-rc3`
 
-Planned next annotated tag: `v0.1.5-rc3` (not created)
+Cycle state: `RC3_PUBLISHED_VERIFIED_POST_PUBLICATION_DOCUMENTATION_CLOSURE`
 
 Branch: `develop`
 
-Release relationship: `develop` is ahead of the immutable published
-`v0.1.5-rc2` tag and is preparing a third local release candidate on the
-same `0.1.5` line.
+Release relationship: published annotated `v0.1.5-rc3` peels to
+`RC3_RELEASE_SOURCE = 4b1effccf3bbc4fd18073c0ab39f90cfb6822232`. Later
+docs-only `develop` commits, including
+`CURRENT_DEVELOP_AFTER_DOCS_CLOSURE`, do not move that tag or release
+source. Historical `v0.1.5-rc2` and `v0.1.5-rc1` remain immutable. Final
+`0.1.5` is not selected.
 
 Live validation milestone: `live-optional-validation`
 
@@ -150,20 +153,27 @@ At that integration gate package metadata remained `0.1.5rc1`. At the later
 RC2 metadata-preparation gate, package metadata became `0.1.5rc2` for the
 planned annotated tag `v0.1.5-rc2`. Published `v0.1.5-rc2` now remains an
 immutable historical prerelease; its tagged-source GitHub CI remains failed
-and visible. Current package metadata is `0.1.5rc3` for the planned annotated
-tag `v0.1.5-rc3`. RC3 exists to provide a green tagged-source candidate that
-contains both post-RC2 QA repairs (`a2a0b4b` and `c30ef8c`). This
-metadata-preparation gate does not create the RC3 tag or GitHub prerelease.
-Consumed `v0.1.5-rc1` remains immutable. Native locality remains
-`DEFERRED_RETAINED`.
+and visible. A later metadata-preparation gate aligned current package
+metadata to `0.1.5rc3` for the then-planned annotated tag `v0.1.5-rc3`.
+That preparation history remains. Published annotated `v0.1.5-rc3` now
+exists at release source `4b1effccf3bbc4fd18073c0ab39f90cfb6822232` (tag
+object `841db318dade807e5294718d4e50813934752d0a`) as GitHub prerelease
+`374854738` with exactly four public assets. Green source OSW CI
+`32555950013` and Release asset smoke `32555949955` remain successful. No
+tag/release-triggered workflow exists under current definitions. Later
+docs-only `develop` commits do not alter that RC3 tag or release source.
+Consumed `v0.1.5-rc1` and published `v0.1.5-rc2` remain immutable. Native
+locality remains `DEFERRED_RETAINED`.
 
 **Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
 
 ## Primary Goals
 
 - Keep release/status docs aligned with current package metadata `0.1.5rc3`,
-  planned annotated tag `v0.1.5-rc3`, the immutable published prerelease
-  `v0.1.5-rc2`, and the immutable historical prerelease `v0.1.5-rc1`.
+  the published public prerelease `v0.1.5-rc3` at release source
+  `4b1effccf3bbc4fd18073c0ab39f90cfb6822232`, the immutable historical
+  prerelease `v0.1.5-rc2`, and the immutable historical prerelease
+  `v0.1.5-rc1`.
 - Record that OpenFOAM issues #18 and #19 are closed after WSL-scoped OpenFOAM
   v12 template compatibility evidence.
 - Record that optional validation issues #6 through #11 are closed after
@@ -200,6 +210,7 @@ Consumed `v0.1.5-rc1` remains immutable. Native locality remains
 - [Next experimental line selection](../roadmap/next_experimental_line_selection.md)
 - [Report asset runtime path native deferral](../experimental/report_asset_runtime_path_native_deferral.md)
 - [Release checklist](../10_release_checklist.md)
+- [v0.1.5-rc3 post-release monitoring](../release/v0_1_5_rc3_post_release_monitoring.md)
 - [Live optional solver validation evidence](../validation/live_optional_solver_validation.md)
 
 GitHub issues #18 and #19 are closed after WSL-scoped OpenFOAM v12 template

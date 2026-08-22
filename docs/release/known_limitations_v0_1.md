@@ -65,10 +65,12 @@ workflows, not during install or health checks.
 - The historical public `v0.1.5-rc1` GitHub prerelease has five attached
   Release assets: a wheel, an sdist, an unsigned Windows portable ZIP,
   `SHA256SUMS.txt`, and `release_asset_manifest.json`. GitHub's automatic
-  source archives are separate from that five-asset count. The current
+  source archives are separate from that five-asset count. The historical
   published public `v0.1.5-rc2` GitHub prerelease has four attached Release
   assets: a wheel, an sdist, `SHA256SUMS.txt`, and
-  `release_asset_manifest.json`. Release-asset `quick` and `full-static`
+  `release_asset_manifest.json`. The current published public `v0.1.5-rc3`
+  GitHub prerelease has four attached Release assets: a wheel, an sdist,
+  `SHA256SUMS.txt`, and `release_asset_manifest.json`. Release-asset `quick` and `full-static`
   verification establish only their stated identity and static-consistency
   result, report `release_readiness=false`, and do not establish
   installability, launch behavior, runtime correctness, engineering

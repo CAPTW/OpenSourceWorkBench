@@ -4414,3 +4414,26 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   `v0.1.5-rc3` tag, create a GitHub Release, upload assets, query or upload a
   package index, or deploy. Historical RC1 and RC2 publication records remain
   unchanged in meaning.
+
+## ADR-0187: Published RC3 Source Stays Immutable When Develop Advances
+
+- Status: Accepted for post-publication documentation and monitoring closure
+- Date: 2026-08-22
+- Context: Annotated `v0.1.5-rc3` peels to
+  `4b1effccf3bbc4fd18073c0ab39f90cfb6822232` (tag object
+  `841db318dade807e5294718d4e50813934752d0a`). GitHub prerelease `374854738`
+  is public with exactly four verified assets. Current-facing repository
+  documentation still described RC3 as planned and unpublished. A later
+  docs-only `develop` commit is required to record the public truth without
+  rewriting tags, releases, assets, or package version `0.1.5rc3`.
+- Decision: Published RC3 is immutable at source
+  `4b1effccf3bbc4fd18073c0ab39f90cfb6822232`; later docs-only develop commits
+  do not alter its tag/release source. Preserve RC1 and RC2 as immutable
+  historical prereleases. Do not select final `0.1.5`, RC4, or hold in this
+  gate. Package index remains not configured. Native locality remains
+  `DEFERRED_RETAINED`.
+- Consequences: Repository current-facing docs and documentation tests may
+  record the published RC3 identity and monitoring closure. They must not
+  mutate tags, edit or replace GitHub release bodies or assets, change
+  package version, modify product source, query or upload a package index,
+  or deploy. Historical RC3 preparation records remain historical.
