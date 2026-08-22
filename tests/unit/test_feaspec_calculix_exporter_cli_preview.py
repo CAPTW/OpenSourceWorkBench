@@ -135,7 +135,7 @@ def test_preview_json_output_parses_and_records_no_write_flags(
     assert code == 0
     assert err == ""
     payload = json.loads(out)
-    assert payload["version"] == "0.1.5rc2"
+    assert payload["version"] == "0.1.5rc3"
     assert payload["target_solver"] == "calculix"
     assert payload["export_preview_status"] == "blocked"
     assert payload["files_written"] is False

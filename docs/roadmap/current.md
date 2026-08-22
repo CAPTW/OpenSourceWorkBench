@@ -1,22 +1,23 @@
 # Current Roadmap Pointer
 
-Current public prerelease: `v0.1.5-rc1`.
+Current public prerelease: `v0.1.5-rc2`.
 
-Current package metadata: `0.1.5rc2`.
+Current package metadata: `0.1.5rc3`.
 
-Planned next annotated tag: `v0.1.5-rc2` (not created).
+Planned next annotated tag: `v0.1.5-rc3` (not created).
 
 Current development cycle: [post-v0.1.5-rc1 development cycle](../development/current_cycle.md).
 
-`develop` may be ahead of the `v0.1.5-rc1` release tag. The public prerelease is
-not a production release, certification milestone, native-Windows validation
-claim, or bundled-solver distribution.
+`develop` is ahead of the immutable published `v0.1.5-rc2` release tag. The
+public prerelease is not a production release, certification milestone,
+native-Windows validation claim, or bundled-solver distribution.
 
 Current recommended sequence:
 
 1. Keep repository docs and ChatGPT Project Sources aligned with current
-   package metadata `0.1.5rc2`, planned tag `v0.1.5-rc2`, and the immutable
-   public prerelease `v0.1.5-rc1`.
+   package metadata `0.1.5rc3`, planned tag `v0.1.5-rc3`, the immutable
+   published prerelease `v0.1.5-rc2`, and the immutable historical prerelease
+   `v0.1.5-rc1`.
 2. Treat OpenFOAM issues #18 and #19 as closed only for WSL-scoped OpenFOAM v12
    template compatibility evidence: `physicalProperties`, `pFinal`, `blockMesh`
    exit 0, and `icoFoam` exit 0 for the Foundation cavity. Duct status remains

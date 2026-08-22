@@ -6,6 +6,31 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### 3D Workspace MVP RC3 Metadata Preparation
+
+Candidate package version: `0.1.5rc3`
+
+- Aligned current `develop` package, import, CLI, release-metadata checker, and
+  package-smoke expectations to `0.1.5rc3` for the planned annotated tag
+  `v0.1.5-rc3`. RC3 exists to provide a green tagged-source candidate that
+  contains both post-RC2 QA repairs: golden normalizer `a2a0b4b` and
+  scope-drift checker `c30ef8c`. This is local release-candidate metadata
+  preparation. The RC3 tag and GitHub prerelease are not created by this
+  change; required GitHub CI on `develop` must pass before any later tag
+  creation.
+- Preserves published `0.1.5rc2` / annotated `v0.1.5-rc2` at
+  `3eced55adf49e70690af80aeb1eb9a8b053555fd` as an immutable historical
+  prerelease. RC2 runtime assets remain verified. RC2 historical tagged-source
+  CI remains failed and visible. RC1 remains immutable.
+- Supported preview topology remains triangle, quad, polygon surface
+  rendering, and linear tetra. Unsupported topology remains tetra10,
+  hexahedron, hexahedron20, wedge, and pyramid. CalculiX remains the bounded
+  educational subset. Scaled Jacobian remains advisory. Exact mesh-fingerprint
+  binding remains required. PDF remains optional/deferred. Native locality
+  remains `DEFERRED_RETAINED`. No package index is configured. No deployment
+  is planned. No industrial certification, solver numerical certification,
+  all-topology, all-platform, or production-readiness claim is made.
+
 ### 3D Workspace MVP RC2 Metadata Preparation
 
 Candidate package version: `0.1.5rc2`

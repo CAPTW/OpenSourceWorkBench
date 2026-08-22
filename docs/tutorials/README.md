@@ -3,7 +3,7 @@
 Start here if you are new to OpenSolver Workbench. The tutorials are ordered
 from no-solver CLI checks to optional GUI and release-maintainer workflows.
 
-OSW package metadata is currently `0.1.5rc2`, and the current public GitHub prerelease is `v0.1.5-rc1`. OSW is intended for educational and research workflows, not stable-production, industrial, or regulated engineering use; it is not a MATLAB, ANSYS, or Simulink clone or a commercial CAD replacement.
+OSW package metadata is currently `0.1.5rc3`, and the current public GitHub prerelease is `v0.1.5-rc2`. OSW is intended for educational and research workflows, not stable-production, industrial, or regulated engineering use; it is not a MATLAB, ANSYS, or Simulink clone or a commercial CAD replacement.
 
 ## Tutorial Order
 
@@ -21,7 +21,7 @@ OSW package metadata is currently `0.1.5rc2`, and the current public GitHub prer
 
 Level 0, read-only overview:
 - read [README](../../README.md), [Known Limitations](../release/known_limitations_v0_1.md), and [Examples](../examples.md)
-- understand that `v0.1.5-rc1` is the current public prerelease and that `v0.1.3-rc1` records are historical
+- understand that `v0.1.5-rc2` is the current public prerelease and that `v0.1.5-rc1` and `v0.1.3-rc1` records are historical
 
 Level 1, no optional solver dependencies:
 - install from source

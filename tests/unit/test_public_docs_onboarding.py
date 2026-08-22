@@ -5,18 +5,18 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TUTORIALS = REPO_ROOT / "docs" / "tutorials"
 TUTORIAL_CURRENT_RELEASE_COPY = (
-    "OSW package metadata is currently `0.1.5rc2`, and the current public GitHub "
-    "prerelease is `v0.1.5-rc1`. OSW is intended for educational and research "
+    "OSW package metadata is currently `0.1.5rc3`, and the current public GitHub "
+    "prerelease is `v0.1.5-rc2`. OSW is intended for educational and research "
     "workflows, not stable-production, industrial, or regulated engineering use; "
     "it is not a MATLAB, ANSYS, or Simulink clone or a commercial CAD replacement."
 )
 TUTORIAL_CURRENT_RELEASE_BULLET = (
-    "- understand that `v0.1.5-rc1` is the current public prerelease and that "
-    "`v0.1.3-rc1` records are historical"
+    "- understand that `v0.1.5-rc2` is the current public prerelease and that "
+    "`v0.1.5-rc1` and `v0.1.3-rc1` records are historical"
 )
 EXAMPLES_CURRENT_RELEASE_COPY = (
     "These examples are small source-tree workflows for the current `develop` "
-    "line. Package metadata is `0.1.5rc2`, and `v0.1.5-rc1` is the current public "
+    "line. Package metadata is `0.1.5rc3`, and `v0.1.5-rc2` is the current public "
     "prerelease. They are intended for inspection and teaching, not production "
     "or regulated engineering use."
 )
@@ -51,11 +51,12 @@ def test_current_release_onboarding_copy_is_scope_safe() -> None:
     assert tutorial.count(TUTORIAL_CURRENT_RELEASE_COPY) == 1
     assert tutorial.count(TUTORIAL_CURRENT_RELEASE_BULLET) == 1
     assert examples.count(EXAMPLES_CURRENT_RELEASE_COPY) == 1
-    assert "`0.1.5rc2`" in tutorial
+    assert "`0.1.5rc3`" in tutorial
+    assert "`v0.1.5-rc2`" in tutorial
     assert "`v0.1.5-rc1`" in tutorial
     assert "`v0.1.3-rc1` records are historical" in tutorial
-    assert "`0.1.5rc2`" in examples
-    assert "`v0.1.5-rc1`" in examples
+    assert "`0.1.5rc3`" in examples
+    assert "`v0.1.5-rc2`" in examples
     assert SUPERSEDED_TUTORIAL_RELEASE_COPY not in " ".join(tutorial.split())
     assert SUPERSEDED_EXAMPLES_RELEASE_COPY not in " ".join(examples.split())
     assert "industrial-certified CAE tool" not in tutorial

@@ -1,15 +1,16 @@
 # Current Development Cycle
 
-Current package metadata: `0.1.5rc2`
+Current package metadata: `0.1.5rc3`
 
-Current public prerelease: `v0.1.5-rc1`
+Current public prerelease: `v0.1.5-rc2`
 
-Planned next annotated tag: `v0.1.5-rc2` (not created)
+Planned next annotated tag: `v0.1.5-rc3` (not created)
 
 Branch: `develop`
 
-Release relationship: `develop` is ahead of the immutable `v0.1.5-rc1` tag
-and is preparing a second local release candidate on the same `0.1.5` line.
+Release relationship: `develop` is ahead of the immutable published
+`v0.1.5-rc2` tag and is preparing a third local release candidate on the
+same `0.1.5` line.
 
 Live validation milestone: `live-optional-validation`
 
@@ -145,19 +146,24 @@ the complete 17-commit 3D MVP chain from `develop`
 `3fb4ffa577115d008e3472aa8460959c1aa20a66` through feature HEAD
 `c33e7e5d0489094f1a0f55436dba681bb7bc15e5`, then applies bounded RC repairs
 for whole-tree Ruff and an isolated offscreen GUI document-lifecycle hang.
-At that integration gate package metadata remained `0.1.5rc1`. Current package
-metadata is now `0.1.5rc2` for the planned annotated tag `v0.1.5-rc2`. The
-consumed public identity `0.1.5rc1` / `v0.1.5-rc1` remains immutable. No RC2
-tag, push, or publication has occurred. Native locality remains
+At that integration gate package metadata remained `0.1.5rc1`. At the later
+RC2 metadata-preparation gate, package metadata became `0.1.5rc2` for the
+planned annotated tag `v0.1.5-rc2`. Published `v0.1.5-rc2` now remains an
+immutable historical prerelease; its tagged-source GitHub CI remains failed
+and visible. Current package metadata is `0.1.5rc3` for the planned annotated
+tag `v0.1.5-rc3`. RC3 exists to provide a green tagged-source candidate that
+contains both post-RC2 QA repairs (`a2a0b4b` and `c30ef8c`). This
+metadata-preparation gate does not create the RC3 tag or GitHub prerelease.
+Consumed `v0.1.5-rc1` remains immutable. Native locality remains
 `DEFERRED_RETAINED`.
 
 **Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
 
 ## Primary Goals
 
-- Keep release/status docs aligned with current package metadata `0.1.5rc2`,
-  planned annotated tag `v0.1.5-rc2`, and the immutable public prerelease
-  `v0.1.5-rc1`.
+- Keep release/status docs aligned with current package metadata `0.1.5rc3`,
+  planned annotated tag `v0.1.5-rc3`, the immutable published prerelease
+  `v0.1.5-rc2`, and the immutable historical prerelease `v0.1.5-rc1`.
 - Record that OpenFOAM issues #18 and #19 are closed after WSL-scoped OpenFOAM
   v12 template compatibility evidence.
 - Record that optional validation issues #6 through #11 are closed after

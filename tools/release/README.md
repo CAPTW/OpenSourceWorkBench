@@ -1,7 +1,7 @@
 # Release Tooling
 
 This directory contains maintainer-only release verification helpers. The
-current public prerelease is `v0.1.5-rc1`; `v0.1.3-rc1` examples are retained
+current public prerelease is `v0.1.5-rc2`; `v0.1.5-rc1` and `v0.1.3-rc1` examples are retained
 only as explicit historical identities.
 
 ## Identity-Bound Asset Verification

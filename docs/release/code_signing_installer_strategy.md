@@ -8,11 +8,12 @@ not evidence that signing, MSI, MSIX, Store distribution, or certificate
 provisioning already exists.
 
 Current-authority note: this page began as the post-`v0.1.3-rc1` strategy
-record. The current public prerelease is `v0.1.5-rc1`. The
-checksum/signing/installer distinctions and the current unsigned portable ZIP,
-no-MSI, no-code-signing, and no-bundled-solver limitations remain applicable;
-version-specific v0.1.3rc2/v0.1.4 recommendations below are retained as
-historical planning, not current roadmap authority.
+record. The current public prerelease is `v0.1.5-rc2`. The
+checksum/signing/installer distinctions and the no-MSI, no-code-signing,
+and no-bundled-solver limitations remain applicable; the historical
+unsigned portable ZIP remains a `v0.1.5-rc1` public-asset fact, not an
+RC2 public asset. Version-specific v0.1.3rc2/v0.1.4 recommendations below
+are retained as historical planning, not current roadmap authority.
 
 OpenSolver Workbench remains educational/research software. Code signing and
 installer packaging can improve publisher identity and installation experience,

@@ -4389,3 +4389,28 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   sources and prepare local wheel/sdist artifacts. It must not create the
   `v0.1.5-rc2` tag, push, create a GitHub Release, upload assets, or deploy.
   Historical RC1 publication records remain unchanged in meaning.
+
+## ADR-0186: Owner Selects 0.1.5rc3 After Published v0.1.5-rc2
+
+- Status: Accepted for local metadata preparation, develop-only push, and
+  required green GitHub CI before any later tag
+- Date: 2026-08-22
+- Context: Published annotated `v0.1.5-rc2` peels to
+  `3eced55adf49e70690af80aeb1eb9a8b053555fd` and remains an immutable
+  historical prerelease. Its tagged-source GitHub CI failed and stays visible.
+  Current green `develop` `c30ef8c70554461be297f833f2934d08baec0870` contains
+  both post-RC2 QA repairs: golden normalizer `a2a0b4b` and scope-drift
+  checker `c30ef8c`. Terminal RC2 acceptance, hold without a green source
+  candidate, direct final `0.1.5`, and a new `0.1.6` line were rejected.
+- Decision: Keep the existing `0.1.5` release line and prepare a third release
+  candidate: package version `0.1.5rc3` and planned annotated unsigned Git tag
+  `v0.1.5-rc3`. Sequence is metadata commit, develop-only non-force push,
+  required green GitHub CI, then a separately authorized tag-only publication
+  gate. Preserve `v0.1.5-rc1` and published `v0.1.5-rc2` as immutable. Package
+  index remains not configured. Native locality remains `DEFERRED_RETAINED`.
+- Consequences: A dedicated metadata/rebuild gate may update current version
+  sources, qualify new RC3 wheel/sdist artifacts, land exactly one metadata
+  commit on `develop`, and prove required GitHub CI. It must not create the
+  `v0.1.5-rc3` tag, create a GitHub Release, upload assets, query or upload a
+  package index, or deploy. Historical RC1 and RC2 publication records remain
+  unchanged in meaning.

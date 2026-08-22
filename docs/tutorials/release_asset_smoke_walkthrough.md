@@ -1,8 +1,8 @@
 # Release Asset Smoke Walkthrough
 
 This walkthrough is for maintainers who want static, identity-bound release
-asset verification. The current public prerelease is `v0.1.5-rc1`; examples
-using `v0.1.3-rc1` are explicit historical verification examples. The checker
+asset verification. The current public prerelease is `v0.1.5-rc2`; examples
+using `v0.1.5-rc1` or `v0.1.3-rc1` are explicit historical verification examples. The checker
 never uploads assets, edits a GitHub Release, creates or retargets tags, or
 pushes Git refs.
 

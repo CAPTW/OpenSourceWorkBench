@@ -62,17 +62,20 @@ workflows, not during install or health checks.
 - PDF export.
 - Binary desktop installers.
 - Remote plugin store, plugin signing, and dependency auto-install.
-- The current public `v0.1.5-rc1` GitHub prerelease has five attached Release assets: a
-  wheel, an sdist, an unsigned Windows portable ZIP, `SHA256SUMS.txt`, and
-  `release_asset_manifest.json`. GitHub's automatic source archives are separate
-  from that five-asset count. Release-asset `quick` and `full-static`
+- The historical public `v0.1.5-rc1` GitHub prerelease has five attached
+  Release assets: a wheel, an sdist, an unsigned Windows portable ZIP,
+  `SHA256SUMS.txt`, and `release_asset_manifest.json`. GitHub's automatic
+  source archives are separate from that five-asset count. The current
+  published public `v0.1.5-rc2` GitHub prerelease has four attached Release
+  assets: a wheel, an sdist, `SHA256SUMS.txt`, and
+  `release_asset_manifest.json`. Release-asset `quick` and `full-static`
   verification establish only their stated identity and static-consistency
-  result, report `release_readiness=false`, and do not establish installability,
-  launch behavior, runtime correctness, engineering correctness, regulated-use
-  suitability, or publication readiness. No MSI, code signing, Python
-  package-index publication, bundled-solver distribution, stable-production
-  status, broader engineering assurance, or future packaging format is claimed;
-  those remain separately gated.
+  result, report `release_readiness=false`, and do not establish
+  installability, launch behavior, runtime correctness, engineering
+  correctness, regulated-use suitability, or publication readiness. No MSI,
+  code signing, Python package-index publication, bundled-solver distribution,
+  stable-production status, broader engineering assurance, or future packaging
+  format is claimed; those remain separately gated.
 
 For the broader standing limitations document, see
 [Known Limitations](../known_limitations.md).

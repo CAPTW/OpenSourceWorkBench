@@ -1,7 +1,7 @@
 # Release Asset Download Smoke
 
 This page documents the read-only, identity-bound release asset checker. The
-current public prerelease is `v0.1.5-rc1`. The published `v0.1.3-rc1` asset set
+current public prerelease is `v0.1.5-rc2`. The published `v0.1.5-rc1` and `v0.1.3-rc1` asset sets
 remains available as an explicit historical verification example.
 
 The checker never uploads assets, edits a GitHub Release, creates or retargets
