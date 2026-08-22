@@ -72,7 +72,9 @@ FORBIDDEN_PATTERNS = [
 ]
 
 CERTIFICATION_PATTERN = re.compile(
-    r"\bindustrial[\s-]+certification\b|\bcertified\b",
+    r"\bindustrial[\s-]+certification\b|"
+    r"\bsolver\s+numerical\s+certification\b|"
+    r"\bcertified\b",
     re.IGNORECASE,
 )
 INDUSTRIAL_OTHER_PATTERN = re.compile(
@@ -157,18 +159,25 @@ def _pattern_governs_match(
     match_end: int,
 ) -> bool:
     return any(
-        safe.start() <= match_start and safe.end() >= match_end
-        for safe in pattern.finditer(clause)
+        safe.start() <= match_start and safe.end() >= match_end for safe in pattern.finditer(clause)
     )
 
 
+# Coordinated "not/no A or B" is allowed only inside one clause and never after
+# only/merely/just, so "not only certified" stays an overclaim.
+_COORDINATED_DENIAL = r"(?:(?!(?:only|merely|just)\b)(?:(?!\bor\b).)+\s+or\s+)?"
+
 EXPLICIT_CERTIFICATION_NEGATIONS = (
     re.compile(
-        r"\bnot\s+(?:an?\s+)?(?:(?:industrial|solver)[\s-]+)?certified\b",
+        r"\bnot\s+"
+        + _COORDINATED_DENIAL
+        + r"(?:an?\s+)?(?:(?:industrial(?:ly)?|solver)[\s-]+)?certified\b",
         re.IGNORECASE,
     ),
     re.compile(
-        r"\b(?:no|without)\s+industrial\s+certification\b",
+        r"\b(?:no|without)\s+"
+        + _COORDINATED_DENIAL
+        + r"(?:industrial|solver\s+numerical)\s+certification\b",
         re.IGNORECASE,
     ),
     re.compile(
