@@ -4437,3 +4437,29 @@ Decisions are append-only unless a later ADR explicitly supersedes one.
   mutate tags, edit or replace GitHub release bodies or assets, change
   package version, modify product source, query or upload a package index,
   or deploy. Historical RC3 preparation records remain historical.
+
+## ADR-0188: Owner Selects Final 0.1.5 After Published Verified RC3
+
+- Status: Accepted for final 0.1.5 metadata preparation
+- Date: 2026-08-22
+- Context: Published annotated `v0.1.5-rc3` peels to
+  `4b1effccf3bbc4fd18073c0ab39f90cfb6822232`. GitHub prerelease `374854738`
+  is public and verified. Later docs-only `develop` commit
+  `e3beb87af3e2ac134f848beb599dae12167a9bf0` recorded that publication
+  without changing package version `0.1.5rc3`. Owner selected final package
+  `0.1.5` and planned annotated tag `v0.1.5` after that published/verified
+  RC3 and green docs closure, with required green GitHub CI on `develop`
+  before any later tag creation.
+- Decision: Prepare current `develop` identity as final `0.1.5` /
+  planned `v0.1.5`. Preserve RC1, RC2, and published RC3 as immutable
+  source/tag/release/body/asset records. Do not create the final tag or
+  GitHub final release in this gate. Do not introduce RC4 or a new `0.1.6`
+  line. Final artifacts must be newly built and must not reuse RC3
+  artifacts. Package index remains not configured. Native locality remains
+  `DEFERRED_RETAINED`.
+- Consequences: A dedicated metadata/rebuild gate may update current version
+  sources, qualify new final wheel/sdist artifacts, land exactly one metadata
+  commit on `develop`, and prove required GitHub CI. It must not create the
+  `v0.1.5` tag, create a GitHub Release, upload assets, query or upload a
+  package index, or deploy. Historical RC1, RC2, and RC3 publication records
+  remain unchanged in meaning.

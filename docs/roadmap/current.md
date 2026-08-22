@@ -2,7 +2,9 @@
 
 Current public prerelease: `v0.1.5-rc3`.
 
-Current package metadata: `0.1.5rc3`.
+Current package metadata: `0.1.5`.
+
+Planned annotated tag: `v0.1.5`.
 
 Published annotated tag: `v0.1.5-rc3` at
 `4b1effccf3bbc4fd18073c0ab39f90cfb6822232`.
@@ -17,7 +19,7 @@ claim, or bundled-solver distribution.
 Current recommended sequence:
 
 1. Keep repository docs and ChatGPT Project Sources aligned with current
-   package metadata `0.1.5rc3`, the published prerelease `v0.1.5-rc3` at
+   package metadata `0.1.5`, the published prerelease `v0.1.5-rc3` at
    release source `4b1effccf3bbc4fd18073c0ab39f90cfb6822232`, the immutable
    historical prerelease `v0.1.5-rc2`, and the immutable historical prerelease
    `v0.1.5-rc1`.
@@ -34,7 +36,7 @@ Current recommended sequence:
 4. Plan GUI runner-boundary hardening as a later P1 gate; do not use docs status
    cleanup as permission for GUI direct solver execution.
 5. Treat the native-deferral documentation review, commit `adad148becf87ead12f4e3a16f59530d048b21a6`, and post-commit verification as complete. Keep `SELECT_FULL_EXISTING_HISTORY_FAST_FORWARD_PATH` as the selected ancestry direction.
-6. Treat `BLOCKED_DOCUMENTATION_SEMANTIC_MISMATCH` as historical wording-repair evidence. Published `v0.1.5-rc3` is already public and verified; this does not select final `0.1.5`, RC4, package-index publication, or deployment.
+6. Treat `BLOCKED_DOCUMENTATION_SEMANTIC_MISMATCH` as historical wording-repair evidence. Published `v0.1.5-rc3` is already public and verified. Current `develop` package identity is final `0.1.5` metadata preparation after that published/verified RC3 and green docs closure. This does not create annotated `v0.1.5`, select RC4, start a `0.1.6` line, publish a package index, or deploy.
 7. Treat the 3D Workspace MVP line as already integrated on the published RC3 source. Later feature or release-line work requires a separate owner decision and must not retarget RC3.
 
 **Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.

@@ -1,19 +1,26 @@
 # Current Development Cycle
 
-Current package metadata: `0.1.5rc3`
+Current package metadata: `0.1.5`
 
 Current public prerelease: `v0.1.5-rc3`
 
-Cycle state: `RC3_PUBLISHED_VERIFIED_POST_PUBLICATION_DOCUMENTATION_CLOSURE`
+Planned annotated tag: `v0.1.5`
+
+Cycle state: `FINAL_0_1_5_METADATA_PREPARATION`
+
+Preserved RC3 cycle classification: `RC3_PUBLISHED_VERIFIED_POST_PUBLICATION_DOCUMENTATION_CLOSURE`
 
 Branch: `develop`
 
 Release relationship: published annotated `v0.1.5-rc3` peels to
 `RC3_RELEASE_SOURCE = 4b1effccf3bbc4fd18073c0ab39f90cfb6822232`. Later
 docs-only `develop` commits, including
-`CURRENT_DEVELOP_AFTER_DOCS_CLOSURE`, do not move that tag or release
+`CURRENT_DEVELOP_AFTER_DOCS_CLOSURE` =
+`e3beb87af3e2ac134f848beb599dae12167a9bf0`, do not move that tag or release
 source. Historical `v0.1.5-rc2` and `v0.1.5-rc1` remain immutable. Final
-`0.1.5` is not selected.
+package identity `0.1.5` is selected for current `develop` metadata
+preparation after published/verified RC3 and green docs closure. This
+cycle does not create annotated `v0.1.5` or a GitHub final release.
 
 Live validation milestone: `live-optional-validation`
 
@@ -162,15 +169,21 @@ object `841db318dade807e5294718d4e50813934752d0a`) as GitHub prerelease
 `32555950013` and Release asset smoke `32555949955` remain successful. No
 tag/release-triggered workflow exists under current definitions. Later
 docs-only `develop` commits do not alter that RC3 tag or release source.
-Consumed `v0.1.5-rc1` and published `v0.1.5-rc2` remain immutable. Native
-locality remains `DEFERRED_RETAINED`.
+Consumed `v0.1.5-rc1` and published `v0.1.5-rc2` remain immutable. A later
+owner-authorized final-preparation gate selected package identity `0.1.5`
+and planned annotated tag `v0.1.5` after that published/verified RC3 and
+the green docs-closure commit. That gate does not create the final tag or
+GitHub final release, reuse RC3 artifacts, introduce RC4, start a `0.1.6`
+line, query or upload a package index, or deploy. Native locality remains
+`DEFERRED_RETAINED`.
 
 **Native report-asset filesystem resolution is `DEFERRED_RETAINED`.** Production native resolution is unsupported, the strict zero-provider-contact-before-attestation invariant remains unchanged, and no implementation is scheduled. Accepted schema, lexical, privacy, stale-binding, relink, and unresolved-placeholder contracts and their evidence remain retained. The status is not an implementation failure or a native-support claim; reopening requires a qualifying trigger and a separately authorized policy/architecture gate. Branches, worktrees, and evidence remain retained until a separate cleanup decision. Legacy compatibility paths remain outside the typed-resolver policy and are not certified provider-silent.
 
 ## Primary Goals
 
-- Keep release/status docs aligned with current package metadata `0.1.5rc3`,
-  the published public prerelease `v0.1.5-rc3` at release source
+- Keep release/status docs aligned with current package metadata `0.1.5`,
+  the planned annotated tag `v0.1.5`, the published public prerelease
+  `v0.1.5-rc3` at release source
   `4b1effccf3bbc4fd18073c0ab39f90cfb6822232`, the immutable historical
   prerelease `v0.1.5-rc2`, and the immutable historical prerelease
   `v0.1.5-rc1`.
@@ -211,6 +224,7 @@ locality remains `DEFERRED_RETAINED`.
 - [Report asset runtime path native deferral](../experimental/report_asset_runtime_path_native_deferral.md)
 - [Release checklist](../10_release_checklist.md)
 - [v0.1.5-rc3 post-release monitoring](../release/v0_1_5_rc3_post_release_monitoring.md)
+- [v0.1.5 final release notes](../release/v0_1_5_release_notes.md)
 - [Live optional solver validation evidence](../validation/live_optional_solver_validation.md)
 
 GitHub issues #18 and #19 are closed after WSL-scoped OpenFOAM v12 template

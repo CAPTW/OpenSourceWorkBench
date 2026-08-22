@@ -10,7 +10,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "src"
-EXPECTED_VERSION = "0.1.5rc3"
+EXPECTED_VERSION = "0.1.5"
 
 
 def _python_env() -> dict[str, str]:
@@ -112,9 +112,7 @@ def test_pyvistaqt_is_optional_unique_and_not_installed_by_workflows() -> None:
     project = _pyproject()["project"]
     extras = project["optional-dependencies"]
     all_requirements = [
-        requirement
-        for requirements in extras.values()
-        for requirement in requirements
+        requirement for requirements in extras.values() for requirement in requirements
     ]
 
     assert project.get("dependencies", []) == []
@@ -122,7 +120,6 @@ def test_pyvistaqt_is_optional_unique_and_not_installed_by_workflows() -> None:
 
     workflow_root = REPO_ROOT / ".github" / "workflows"
     workflow_text = "\n".join(
-        path.read_text(encoding="utf-8")
-        for path in sorted(workflow_root.glob("*.yml"))
+        path.read_text(encoding="utf-8") for path in sorted(workflow_root.glob("*.yml"))
     )
     assert "pyvistaqt" not in workflow_text.lower()

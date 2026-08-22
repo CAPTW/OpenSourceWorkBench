@@ -6,6 +6,32 @@ by a dedicated release/tag gate.
 
 ## Unreleased
 
+### 3D Workspace MVP Final 0.1.5 Metadata Preparation
+
+Candidate package version: `0.1.5`
+
+- Aligned current `develop` package, import, CLI, release-metadata checker, and
+  package-smoke expectations to `0.1.5` for the planned annotated tag
+  `v0.1.5`. Final `0.1.5` follows published/verified RC3 at release source
+  `4b1effccf3bbc4fd18073c0ab39f90cfb6822232` and the later green docs-closure
+  commit. This is local final-release metadata preparation. The `v0.1.5` tag
+  and GitHub final release are not created by this change; required GitHub CI
+  on `develop` must pass before any later tag creation.
+- Preserves published `0.1.5rc3` / annotated `v0.1.5-rc3` at
+  `4b1effccf3bbc4fd18073c0ab39f90cfb6822232` as an immutable published
+  prerelease. Preserves published `0.1.5rc2` / annotated `v0.1.5-rc2` and
+  consumed `0.1.5rc1` / annotated `v0.1.5-rc1` as immutable historical
+  identities. Final artifacts must be newly built; RC3 artifacts are not
+  renamed or reused.
+- Supported preview topology remains triangle, quad, polygon surface
+  rendering, and linear tetra. Unsupported topology remains tetra10,
+  hexahedron, hexahedron20, wedge, and pyramid. CalculiX remains the bounded
+  educational subset. Scaled Jacobian remains advisory. Exact mesh-fingerprint
+  binding remains required. PDF remains optional/deferred. Native locality
+  remains `DEFERRED_RETAINED`. No package index is configured. No deployment
+  is planned. No industrial certification, solver numerical certification,
+  all-topology, all-platform, or production-readiness claim is made.
+
 ### 3D Workspace MVP RC3 Publication
 
 Package version remains: `0.1.5rc3`

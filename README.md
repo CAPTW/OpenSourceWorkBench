@@ -4,7 +4,7 @@ OpenSolver Workbench (OSW) is an educational/research open-source Engineering
 Solver & Script Workbench for inspectable desktop workflows, solver case
 preparation, script previews, result review, and report generation.
 
-OSW package metadata is currently `0.1.5rc3`, and the current public GitHub
+OSW package metadata is currently `0.1.5`, and the current public GitHub
 prerelease is `v0.1.5-rc3`. It is useful for teaching, research prototyping,
 and transparent workflow experiments, but it is not an industrial-certified CAE
 tool, MATLAB clone, ANSYS clone, Simulink clone, or commercial CAD replacement.
@@ -180,7 +180,8 @@ limitations. It is not production-ready or industrially certified.
 
 Local installed-package smoke, after a no-isolation wheel build, must import
 `osw` from the install target rather than this source checkout. Current package
-version is `0.1.5rc3`. Published annotated tag `v0.1.5-rc3` peels to release
+version is `0.1.5`. Published RC3 package identity remains `0.1.5rc3`.
+Published annotated tag `v0.1.5-rc3` peels to release
 source `4b1effccf3bbc4fd18073c0ab39f90cfb6822232`. A later docs-only `develop`
 commit does not move that tag or release source.
 
@@ -222,8 +223,11 @@ the canonical report-asset claim boundary.
 
 ## Release Status
 
-- Current `develop` package metadata: `0.1.5rc3`.
+- Current `develop` package metadata: `0.1.5`.
+- Planned annotated tag: `v0.1.5`. This metadata gate does not create that tag
+  or a GitHub final release.
 - Current public prerelease tag: `v0.1.5-rc3` (published and verified).
+- Published RC3 package identity remains `0.1.5rc3`.
 - RC3 tag/release source: `4b1effccf3bbc4fd18073c0ab39f90cfb6822232`. Later
   docs-only `develop` commits do not alter that source.
 - Historical public prerelease tags: `v0.1.5-rc2` and `v0.1.5-rc1` (immutable).
@@ -248,6 +252,7 @@ Useful release docs:
 - [v0.1.3rc1 Release Summary](docs/release/v0_1_3rc1_release_summary.md)
 - [v0.1.4-rc1 Candidate Metadata Alignment](docs/release/v0_1_4_rc1_candidate.md)
 - [v0.1.5-rc1 Candidate Metadata Alignment](docs/release/v0_1_5_rc1_candidate.md)
+- [v0.1.5 Final Release Notes](docs/release/v0_1_5_release_notes.md)
 - [v0.1 Release Notes](docs/release/v0_1_release_notes.md)
 - [Release Checklist](docs/10_release_checklist.md)
 - [Post-Public Release Checklist](docs/release/post_public_release_checklist.md)

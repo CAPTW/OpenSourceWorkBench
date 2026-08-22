@@ -49,6 +49,7 @@ def _minimal_release_tree(root: Path, *, version: str = "0.1.0rc3") -> None:
         "0.1.5rc1": "v0.1.5-rc1",
         "0.1.5rc2": "v0.1.5-rc2",
         "0.1.5rc3": "v0.1.5-rc3",
+        "0.1.5": "v0.1.5",
     }
     tag = tag_by_version.get(version, "v0.1.0-rc3")
     _write(
@@ -218,9 +219,7 @@ def _patch_rc1_policy(*, rc_target: str | None = None) -> ReleaseTagPolicy:
             ReleaseTagExpectation("v0.1.0-rc3", PRIOR_RC3_TARGET),
         ),
         forbidden_final_tag="v0.1.1",
-        allowed_historical_final_tags=(
-            ReleaseTagExpectation("v0.1.0", FINAL_TARGET),
-        ),
+        allowed_historical_final_tags=(ReleaseTagExpectation("v0.1.0", FINAL_TARGET),),
     )
 
 
@@ -234,9 +233,7 @@ def _patch_final_prep_policy() -> ReleaseTagPolicy:
             ReleaseTagExpectation("v0.1.0-rc3", PRIOR_RC3_TARGET),
             ReleaseTagExpectation("v0.1.1-rc1", PATCH_RC1_TARGET),
         ),
-        allowed_historical_final_tags=(
-            ReleaseTagExpectation("v0.1.0", FINAL_TARGET),
-        ),
+        allowed_historical_final_tags=(ReleaseTagExpectation("v0.1.0", FINAL_TARGET),),
     )
 
 
@@ -253,9 +250,7 @@ def _patch_final_tag_policy(*, final_target: str | None = PATCH_FINAL_TARGET) ->
             ReleaseTagExpectation("v0.1.0-rc3", PRIOR_RC3_TARGET),
             ReleaseTagExpectation("v0.1.1-rc1", PATCH_RC1_TARGET),
         ),
-        allowed_historical_final_tags=(
-            ReleaseTagExpectation("v0.1.0", FINAL_TARGET),
-        ),
+        allowed_historical_final_tags=(ReleaseTagExpectation("v0.1.0", FINAL_TARGET),),
     )
 
 
@@ -406,10 +401,7 @@ def test_forbid_final_tag_help_uses_action_const_and_tag_metavar(
     assert "v9.8.7" in help_text
     assert "%(const)s" not in help_text
     assert "defaults to v0.1.0" not in help_text
-    assert (
-        "final-prep mode: fail if TAG exists; omit TAG to check v9.8.7"
-        in help_text
-    )
+    assert "final-prep mode: fail if TAG exists; omit TAG to check v9.8.7" in help_text
 
 
 def test_selected_metadata_rejects_stale_distribution_version(
@@ -429,8 +421,7 @@ def test_selected_metadata_rejects_stale_distribution_version(
     )
 
     assert any(
-        "Installed package metadata version is 0.1.3rc1, expected 0.1.5rc1."
-        in failure
+        "Installed package metadata version is 0.1.3rc1, expected 0.1.5rc1." in failure
         for failure in failures
     )
 
@@ -441,12 +432,15 @@ def test_selected_metadata_accepts_matching_repository_environment(
     _minimal_release_tree(tmp_path, version="0.1.5rc1")
     metadata_python = tmp_path / "venv" / "python"
 
-    assert _validate_observation(
-        _installed_observation(tmp_path, metadata_python),
-        expected_version="0.1.5rc1",
-        metadata_python=metadata_python,
-        metadata_root=tmp_path,
-    ) == []
+    assert (
+        _validate_observation(
+            _installed_observation(tmp_path, metadata_python),
+            expected_version="0.1.5rc1",
+            metadata_python=metadata_python,
+            metadata_root=tmp_path,
+        )
+        == []
+    )
 
 
 @pytest.mark.parametrize(
@@ -615,9 +609,7 @@ def test_selected_metadata_rejects_missing_distribution(tmp_path: Path) -> None:
         metadata_root=tmp_path,
     )
 
-    assert any(
-        "open-solver-workbench distribution is missing" in failure for failure in failures
-    )
+    assert any("open-solver-workbench distribution is missing" in failure for failure in failures)
 
 
 def test_selected_metadata_rejects_imported_version_mismatch(tmp_path: Path) -> None:
@@ -636,8 +628,7 @@ def test_selected_metadata_rejects_imported_version_mismatch(tmp_path: Path) -> 
     )
 
     assert any(
-        "Selected imported osw.__version__ is 0.1.4rc1, expected 0.1.5rc1."
-        in failure
+        "Selected imported osw.__version__ is 0.1.4rc1, expected 0.1.5rc1." in failure
         for failure in failures
     )
 
@@ -819,8 +810,7 @@ def test_selected_metadata_rejects_metadata_root_source_mismatch(
     )
 
     assert any(
-        "Selected metadata root pyproject version is 0.1.4rc1, expected 0.1.5rc1."
-        in failure
+        "Selected metadata root pyproject version is 0.1.4rc1, expected 0.1.5rc1." in failure
         for failure in failures
     )
     assert any("[SOURCE_VERSION_MISMATCH]" in failure for failure in failures)
@@ -1143,9 +1133,7 @@ def test_cli_accepts_final_prep_with_three_prior_rc_tags(
     assert release_metadata.main() == 0
 
 
-def test_prior_rc1_wrong_target_fails(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_prior_rc1_wrong_target_fails(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _minimal_release_tree(tmp_path)
     _mock_git_tags(
         monkeypatch,
@@ -1159,9 +1147,7 @@ def test_prior_rc1_wrong_target_fails(
     assert any(f"not {PRIOR_RC1_TARGET}" in failure for failure in failures)
 
 
-def test_prior_rc2_wrong_target_fails(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_prior_rc2_wrong_target_fails(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _minimal_release_tree(tmp_path)
     _mock_git_tags(
         monkeypatch,
@@ -1274,9 +1260,7 @@ def test_expected_rc3_head_target_is_resolved(
     )
 
 
-def test_expected_rc3_wrong_target_fails(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_expected_rc3_wrong_target_fails(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _minimal_release_tree(tmp_path)
     _mock_git_tags(
         monkeypatch,
@@ -1322,9 +1306,7 @@ def test_expected_rc3_lightweight_tag_fails_when_annotated_required(
     assert any("not an annotated tag object" in failure for failure in failures)
 
 
-def test_final_v0_1_0_tag_fails(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_final_v0_1_0_tag_fails(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _minimal_release_tree(tmp_path)
     _mock_git_tags(
         monkeypatch,
@@ -1772,8 +1754,7 @@ def test_patch_rc1_unexpected_v0_1_1_tag_is_rejected(
     )
 
     assert any(
-        "Unexpected local v0.1* Git tags exist: v0.1.1-rc2" in failure
-        for failure in failures
+        "Unexpected local v0.1* Git tags exist: v0.1.1-rc2" in failure for failure in failures
     )
 
 
@@ -2046,8 +2027,7 @@ def test_patch_final_unexpected_v0_1_1_tag_is_rejected(
     )
 
     assert any(
-        "Unexpected local v0.1* Git tags exist: v0.1.1-rc2" in failure
-        for failure in failures
+        "Unexpected local v0.1* Git tags exist: v0.1.1-rc2" in failure for failure in failures
     )
 
 
@@ -2397,8 +2377,7 @@ def test_patch_v012_rc1_unexpected_v0_1_2_tag_is_rejected(
     )
 
     assert any(
-        "Unexpected local v0.1* Git tags exist: v0.1.2-rc2" in failure
-        for failure in failures
+        "Unexpected local v0.1* Git tags exist: v0.1.2-rc2" in failure for failure in failures
     )
 
 
@@ -2725,8 +2704,7 @@ def test_patch_v012_final_unexpected_v0_1_2_tag_is_rejected(
     )
 
     assert any(
-        "Unexpected local v0.1* Git tags exist: v0.1.2-rc2" in failure
-        for failure in failures
+        "Unexpected local v0.1* Git tags exist: v0.1.2-rc2" in failure for failure in failures
     )
 
 
@@ -2744,8 +2722,7 @@ def test_unexpected_release_tag_is_rejected(
     failures = check_release_metadata(tmp_path, expected_version="0.1.0rc3")
 
     assert any(
-        "Unexpected local v0.1* Git tags exist: v0.1.0-rc4" in failure
-        for failure in failures
+        "Unexpected local v0.1* Git tags exist: v0.1.0-rc4" in failure for failure in failures
     )
 
 

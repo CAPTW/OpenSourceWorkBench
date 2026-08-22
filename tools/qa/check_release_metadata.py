@@ -20,9 +20,9 @@ from pathlib import Path
 
 from _common import repo_root
 
-TARGET_VERSION = "0.1.5rc3"
+TARGET_VERSION = "0.1.5"
 TARGET_LICENSE = "GPL-3.0-or-later"
-DEFAULT_RC_TAG = "v0.1.5-rc3"
+DEFAULT_RC_TAG = "v0.1.5"
 DEFAULT_PRIOR_RC1_TAG = "v0.1.0-rc1"
 DEFAULT_PRIOR_RC1_TARGET = "29c5c8bec8df30c7f7be72fc9be5e5409794968e"
 DEFAULT_PRIOR_RC2_TAG = "v0.1.0-rc2"
@@ -41,6 +41,8 @@ DEFAULT_PRIOR_PATCH_V015_RC1_TAG = "v0.1.5-rc1"
 DEFAULT_PRIOR_PATCH_V015_RC1_TARGET = "85c8144f7ff19159ab02c40adb6483ce6b13c017"
 DEFAULT_PRIOR_PATCH_V015_RC2_TAG = "v0.1.5-rc2"
 DEFAULT_PRIOR_PATCH_V015_RC2_TARGET = "3eced55adf49e70690af80aeb1eb9a8b053555fd"
+DEFAULT_PRIOR_PATCH_V015_RC3_TAG = "v0.1.5-rc3"
+DEFAULT_PRIOR_PATCH_V015_RC3_TARGET = "4b1effccf3bbc4fd18073c0ab39f90cfb6822232"
 DEFAULT_HISTORICAL_FINAL_V010_TAG = "v0.1.0"
 DEFAULT_HISTORICAL_FINAL_V010_TARGET = "da8728adf679314442755ed781c1dd57d1c6ed27"
 DEFAULT_HISTORICAL_FINAL_V011_TAG = "v0.1.1"
@@ -130,6 +132,10 @@ DEFAULT_PRIOR_RC_TAGS = (
         DEFAULT_PRIOR_PATCH_V015_RC2_TAG,
         DEFAULT_PRIOR_PATCH_V015_RC2_TARGET,
     ),
+    ReleaseTagExpectation(
+        DEFAULT_PRIOR_PATCH_V015_RC3_TAG,
+        DEFAULT_PRIOR_PATCH_V015_RC3_TARGET,
+    ),
 )
 
 DEFAULT_HISTORICAL_FINAL_TAGS = (
@@ -164,9 +170,7 @@ class ReleaseTagPolicy:
     expected_final_target: str | None = None
     require_annotated_final_tag: bool = True
     require_expected_final_tag: bool = False
-    allowed_historical_final_tags: tuple[ReleaseTagExpectation, ...] = (
-        DEFAULT_HISTORICAL_FINAL_TAGS
-    )
+    allowed_historical_final_tags: tuple[ReleaseTagExpectation, ...] = DEFAULT_HISTORICAL_FINAL_TAGS
 
 
 def _read(path: Path) -> str:
@@ -259,9 +263,7 @@ def _direct_url_failures(value: object, metadata_root: Path) -> list[str]:
     direct_path, error = _parse_local_file_url(value.get("url"))
     if error is not None:
         failures.append(error)
-    elif direct_path is not None and _path_identity(direct_path) != _path_identity(
-        metadata_root
-    ):
+    elif direct_path is not None and _path_identity(direct_path) != _path_identity(metadata_root):
         failures.append(
             "[DIRECT_URL_ROOT_MISMATCH] Installed distribution direct URL does not "
             f"match selected metadata root {metadata_root}."
@@ -278,8 +280,7 @@ def _direct_url_failures(value: object, metadata_root: Path) -> list[str]:
         failures.append("[DIRECT_URL_EDITABLE_MISSING] direct_url.dir_info.editable is missing.")
     elif dir_info.get("editable") is not True:
         failures.append(
-            "[DIRECT_URL_EDITABLE_NOT_TRUE] direct_url.dir_info.editable must be "
-            "Boolean true."
+            "[DIRECT_URL_EDITABLE_NOT_TRUE] direct_url.dir_info.editable must be Boolean true."
         )
     return failures
 
@@ -379,7 +380,7 @@ def _validate_installed_metadata_observation(
         detail = observation.get("osw_import_error")
         failures.append(
             "[IMPORTED_VERSION_MISMATCH] Selected environment could not import osw: "
-            f"{detail or 'unknown error' }."
+            f"{detail or 'unknown error'}."
         )
     elif imported_version != expected_version:
         failures.append(
@@ -439,9 +440,7 @@ def _source_version_failures(root: Path, expected_version: str, *, label: str) -
 
     init_path = root / "src" / "osw" / "__init__.py"
     if not init_path.exists():
-        failures.append(
-            f"[SOURCE_VERSION_MISMATCH] {label} src/osw/__init__.py is missing."
-        )
+        failures.append(f"[SOURCE_VERSION_MISMATCH] {label} src/osw/__init__.py is missing.")
     elif f'__version__ = "{expected_version}"' not in _read(init_path):
         failures.append(
             f"[SOURCE_VERSION_MISMATCH] {label} osw.__version__ is not {expected_version}."
@@ -563,9 +562,7 @@ def _validate_release_tags(root: Path, policy: ReleaseTagPolicy) -> list[str]:
 
     if policy.forbid_release_tags:
         if tags:
-            failures.append(
-                "Local v0.1* Git tags exist; strict pre-tag mode forbids release tags."
-            )
+            failures.append("Local v0.1* Git tags exist; strict pre-tag mode forbids release tags.")
         return failures
 
     expected_final = policy.expected_final_tag
@@ -580,8 +577,7 @@ def _validate_release_tags(root: Path, policy: ReleaseTagPolicy) -> list[str]:
         )
     if FINAL_TAG in tags and FINAL_TAG not in historical_final_tags and expected_final != FINAL_TAG:
         failures.append(
-            f"Final {FINAL_TAG} tag exists; final tag creation requires a separate "
-            "release gate."
+            f"Final {FINAL_TAG} tag exists; final tag creation requires a separate release gate."
         )
 
     expected = policy.expected_rc_tag
@@ -681,9 +677,7 @@ def check_release_metadata(
             if project.get("version") != expected_version:
                 failures.append(f"pyproject project.version is not {expected_version}.")
             if _project_license_text(project) != expected_source_license:
-                failures.append(
-                    f"pyproject license metadata is not {expected_source_license}."
-                )
+                failures.append(f"pyproject license metadata is not {expected_source_license}.")
 
     init_path = root / "src" / "osw" / "__init__.py"
     if not init_path.exists():
@@ -750,9 +744,7 @@ def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
     require_annotated = bool(args.require_annotated_rc_tag) or _truthy_env(
         "OSW_RELEASE_REQUIRE_ANNOTATED_RC_TAG"
     )
-    expected_final_tag = args.expected_final_tag or os.environ.get(
-        "OSW_RELEASE_EXPECTED_FINAL_TAG"
-    )
+    expected_final_tag = args.expected_final_tag or os.environ.get("OSW_RELEASE_EXPECTED_FINAL_TAG")
     expected_final_target = args.expected_final_target or os.environ.get(
         "OSW_RELEASE_EXPECTED_FINAL_TARGET"
     )
@@ -772,9 +764,7 @@ def _tag_policy_from_args(args: argparse.Namespace) -> ReleaseTagPolicy:
             for index, tag in enumerate(prior_tags)
         )
     elif env_prior_tag:
-        allowed_prior_rc_tags = (
-            ReleaseTagExpectation(env_prior_tag, env_prior_target),
-        )
+        allowed_prior_rc_tags = (ReleaseTagExpectation(env_prior_tag, env_prior_target),)
     else:
         allowed_prior_rc_tags = DEFAULT_PRIOR_RC_TAGS
 
@@ -922,9 +912,7 @@ def main() -> int:
             "--allowed-historical-final-tag and --allowed-historical-final-target must be paired"
         )
     if args.allowed_historical_final_target and not args.allowed_historical_final_tag:
-        parser.error(
-            "--allowed-historical-final-target requires --allowed-historical-final-tag"
-        )
+        parser.error("--allowed-historical-final-target requires --allowed-historical-final-tag")
 
     root = repo_root()
     print(

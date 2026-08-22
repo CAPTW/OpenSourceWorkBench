@@ -16,12 +16,8 @@ TUTORIAL_INDEX = REPO_ROOT / "docs" / "tutorials" / "README.md"
 FIRST_CLI = REPO_ROOT / "docs" / "tutorials" / "first_cli_walkthrough.md"
 FIRST_GUI = REPO_ROOT / "docs" / "tutorials" / "first_gui_walkthrough.md"
 RESULT_DATASET = REPO_ROOT / "docs" / "tutorials" / "result_dataset_walkthrough.md"
-RELEASE_ASSET_SMOKE = (
-    REPO_ROOT / "docs" / "tutorials" / "release_asset_smoke_walkthrough.md"
-)
-CODE_SIGNING_STRATEGY = (
-    REPO_ROOT / "docs" / "release" / "code_signing_installer_strategy.md"
-)
+RELEASE_ASSET_SMOKE = REPO_ROOT / "docs" / "tutorials" / "release_asset_smoke_walkthrough.md"
+CODE_SIGNING_STRATEGY = REPO_ROOT / "docs" / "release" / "code_signing_installer_strategy.md"
 
 REQUIRED_PATHS = (
     README,
@@ -64,14 +60,14 @@ LIMITATION_PHRASES = (
 )
 
 TUTORIAL_CURRENT_RELEASE_COPY = (
-    "OSW package metadata is currently `0.1.5rc3`, and the current public GitHub "
+    "OSW package metadata is currently `0.1.5`, and the current public GitHub "
     "prerelease is `v0.1.5-rc3`. OSW is intended for educational and research "
     "workflows, not stable-production, industrial, or regulated engineering use; "
     "it is not a MATLAB, ANSYS, or Simulink clone or a commercial CAD replacement."
 )
 EXAMPLES_CURRENT_RELEASE_COPY = (
     "These examples are small source-tree workflows for the current `develop` "
-    "line. Package metadata is `0.1.5rc3`, and `v0.1.5-rc3` is the current public "
+    "line. Package metadata is `0.1.5`, and `v0.1.5-rc3` is the current public "
     "prerelease. They are intended for inspection and teaching, not production "
     "or regulated engineering use."
 )

@@ -203,8 +203,8 @@ def test_export_manifest_parses_and_records_checksums(tmp_path: Path) -> None:
     manifest = json.loads((tmp_path / "ready_case.manifest.json").read_text())
 
     assert manifest["exporter_module"] == "osw.experimental.feaspec.calculix_exporter"
-    assert manifest["osw_version"] == "0.1.5rc3"
-    assert manifest["release_tag"] == "v0.1.5-rc3"
+    assert manifest["osw_version"] == "0.1.5"
+    assert manifest["release_tag"] == "v0.1.5"
     assert manifest["target_solver"] == "calculix"
     assert manifest["source_feaspec_id"] == "synthetic_ready"
     assert manifest["solver_execution_performed"] is False
@@ -229,8 +229,7 @@ def test_export_diagnostics_json_and_readme_record_no_run_boundary(
     assert diagnostics["solver_execution_performed"] is False
     assert diagnostics["ready_for_solver_execution"] is False
     assert any(
-        item["code"] == "FX_SOLVER_RUN_FORBIDDEN"
-        for item in diagnostics["export_diagnostics"]
+        item["code"] == "FX_SOLVER_RUN_FORBIDDEN" for item in diagnostics["export_diagnostics"]
     )
     assert "no solver execution was performed" in readme
     assert "inspect" in readme

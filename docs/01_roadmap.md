@@ -20,7 +20,7 @@ must make no industrial certification claim.
 ## Post-Public-Release Roadmap
 
 The current public prerelease is `v0.1.5-rc3`, and current package metadata is
-`0.1.5rc3`. Published annotated `v0.1.5-rc3` peels to release source
+`0.1.5`. Published annotated `v0.1.5-rc3` peels to release source
 `4b1effccf3bbc4fd18073c0ab39f90cfb6822232`. Later docs-only `develop`
 commits do not move that tag or release source. Older `v0.1.5-rc2`,
 `v0.1.5-rc1`, `v0.1.3-rc1`, and `v0.1.4-rc1` references are historical

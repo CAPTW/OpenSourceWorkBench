@@ -28,12 +28,9 @@ GUI_SUMMARY_COPY = (
     "2026-07-14: issue #8 is closed after bounded WSL CalculiX evidence, and "
     "this workflow does not broaden that closure."
 )
-PROJECT_SCHEMA_BLOCKER_ID = (
-    "bounded_optional_validation_closure_not_projectschema_authority"
-)
+PROJECT_SCHEMA_BLOCKER_ID = "bounded_optional_validation_closure_not_projectschema_authority"
 PROJECT_SCHEMA_BLOCKER_LABEL = (
-    "bounded issues #6 through #11 closure does not authorize ProjectSchema "
-    "mutation"
+    "bounded issues #6 through #11 closure does not authorize ProjectSchema mutation"
 )
 
 VECTOR_RELEASE_LIMITATION = (
@@ -97,14 +94,14 @@ SIGNING_CURRENT_AUTHORITY_NOTE = (
     "are retained as historical planning, not current roadmap authority."
 )
 TUTORIAL_CURRENT_RELEASE_COPY = (
-    "OSW package metadata is currently `0.1.5rc3`, and the current public GitHub "
+    "OSW package metadata is currently `0.1.5`, and the current public GitHub "
     "prerelease is `v0.1.5-rc3`. OSW is intended for educational and research "
     "workflows, not stable-production, industrial, or regulated engineering use; "
     "it is not a MATLAB, ANSYS, or Simulink clone or a commercial CAD replacement."
 )
 EXAMPLES_CURRENT_RELEASE_COPY = (
     "These examples are small source-tree workflows for the current `develop` "
-    "line. Package metadata is `0.1.5rc3`, and `v0.1.5-rc3` is the current public "
+    "line. Package metadata is `0.1.5`, and `v0.1.5-rc3` is the current public "
     "prerelease. They are intended for inspection and teaching, not production "
     "or regulated engineering use."
 )
@@ -122,30 +119,18 @@ LATER_CLOSURE_CONTEXT = (
 
 ISSUE_SOURCE_EXPECTATIONS: dict[str, tuple[tuple[str, int], ...]] = {
     "src/osw/cli/main.py": ((CALCULIX_ISSUE_COPY, 1),),
-    "src/osw/cli/optional_solver_manifest_reload_acceptance.py": (
-        (GENERAL_ISSUE_COPY, 1),
-    ),
+    "src/osw/cli/optional_solver_manifest_reload_acceptance.py": ((GENERAL_ISSUE_COPY, 1),),
     "src/osw/cli/optional_solver_manifest_reload_acceptance_persistence.py": (
         (GENERAL_ISSUE_COPY, 1),
     ),
-    "src/osw/cli/optional_solver_prepared_machine_validation.py": (
-        (PREPARED_MACHINE_COPY, 1),
-    ),
+    "src/osw/cli/optional_solver_prepared_machine_validation.py": ((PREPARED_MACHINE_COPY, 1),),
     "src/osw/experimental/feaspec/calculix_result_dataset_draft_mapping.py": (
         (CALCULIX_ISSUE_COPY, 1),
     ),
-    "src/osw/experimental/feaspec/calculix_result_dataset_schema.py": (
-        (CALCULIX_ISSUE_COPY, 1),
-    ),
-    "src/osw/experimental/feaspec/calculix_result_import.py": (
-        (CALCULIX_ISSUE_COPY, 1),
-    ),
-    "src/osw/experimental/feaspec/calculix_result_write_viewmodel.py": (
-        (CALCULIX_ISSUE_COPY, 1),
-    ),
-    "src/osw/experimental/feaspec/calculix_run_gate.py": (
-        (CALCULIX_ISSUE_COPY, 2),
-    ),
+    "src/osw/experimental/feaspec/calculix_result_dataset_schema.py": ((CALCULIX_ISSUE_COPY, 1),),
+    "src/osw/experimental/feaspec/calculix_result_import.py": ((CALCULIX_ISSUE_COPY, 1),),
+    "src/osw/experimental/feaspec/calculix_result_write_viewmodel.py": ((CALCULIX_ISSUE_COPY, 1),),
+    "src/osw/experimental/feaspec/calculix_run_gate.py": ((CALCULIX_ISSUE_COPY, 2),),
     "src/osw/experimental/optional_solvers/plugin_manifest_deactivation_viewmodel.py": (
         (COMBINED_ISSUE_COPY, 1),
     ),
@@ -172,21 +157,15 @@ ISSUE_SOURCE_EXPECTATIONS: dict[str, tuple[tuple[str, int], ...]] = {
     (
         "src/osw/experimental/optional_solvers/"
         "plugin_manifest_reload_acceptance_persistence_summary_audit.py"
-    ): (
-        (GENERAL_ISSUE_COPY, 1),
-    ),
+    ): ((GENERAL_ISSUE_COPY, 1),),
     (
         "src/osw/experimental/optional_solvers/"
         "plugin_manifest_reload_acceptance_persistence_viewmodel.py"
-    ): (
-        (GENERAL_ISSUE_COPY, 1),
-    ),
+    ): ((GENERAL_ISSUE_COPY, 1),),
     (
         "src/osw/experimental/optional_solvers/"
         "plugin_manifest_reload_acceptance_persistence_writer.py"
-    ): (
-        (GENERAL_ISSUE_COPY, 1),
-    ),
+    ): ((GENERAL_ISSUE_COPY, 1),),
     "src/osw/experimental/optional_solvers/plugin_manifest_reload_acceptance_viewmodel.py": (
         (GENERAL_ISSUE_COPY, 1),
     ),
@@ -231,9 +210,7 @@ def _string_literals(relative: str) -> list[str]:
 
 def test_current_public_docs_distinguish_vector_preview_rendering_and_release_assets() -> None:
     known_limitations = _compact(_read("docs/release/known_limitations_v0_1.md"))
-    signing_strategy = _compact(
-        _read("docs/release/code_signing_installer_strategy.md")
-    )
+    signing_strategy = _compact(_read("docs/release/code_signing_installer_strategy.md"))
     optional_dependencies = _compact(_read("docs/install/optional_dependencies.md"))
     tutorial = _compact(_read("docs/tutorials/result_dataset_walkthrough.md"))
     mapper = _compact(_read("src/osw/post/result_field_mapping.py"))
@@ -316,9 +293,7 @@ def test_historical_issue_status_records_remain_framed() -> None:
 def test_issue_status_copy_preserves_non_claim_boundaries() -> None:
     main = _read("src/osw/cli/main.py")
     exporter = _read("src/osw/experimental/feaspec/calculix_exporter.py")
-    result_viewmodel = _read(
-        "src/osw/experimental/feaspec/calculix_result_write_viewmodel.py"
-    )
+    result_viewmodel = _read("src/osw/experimental/feaspec/calculix_result_write_viewmodel.py")
     dialog = _read("src/osw/gui/dialogs/feaspec_calculix_result_write_dialog.py")
     acceptance = _read(
         "src/osw/gui/dialogs/optional_solver_plugin_manifest_reload_acceptance_panel.py"

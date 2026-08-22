@@ -80,11 +80,7 @@ def _write_result_dir(root: Path) -> Path:
         encoding="utf-8",
     )
     (root / "schema_case.frd").write_text(
-        "1C FRD HEADER\n"
-        "2C NODE COORDINATES\n"
-        "1 0 0 0\n"
-        "100C DISPLACEMENT FIELD\n"
-        "1 1.0\n",
+        "1C FRD HEADER\n2C NODE COORDINATES\n1 0 0 0\n100C DISPLACEMENT FIELD\n1 1.0\n",
         encoding="utf-8",
     )
     return root
@@ -156,7 +152,7 @@ def test_ready_mapping_and_write_plan_build_schema_payload(tmp_path: Path) -> No
     assert validation.has_blockers is False
     assert payload.schema.schema_name == "osw.feaspec.calculix.resultdataset"
     assert payload.schema.schema_version == "0.1"
-    assert payload.schema.producer_version == "0.1.5rc3"
+    assert payload.schema.producer_version == "0.1.5"
     assert payload.schema.source_version == "0.1.4rc1"
     assert payload.schema.source_release == "v0.1.4-rc1"
     assert payload.dataset["dataset_id"] == "schema_case"
@@ -184,13 +180,9 @@ def test_schema_payload_exposes_companion_payloads(tmp_path: Path) -> None:
     readme = build_calculix_result_dataset_review_readme(payload)
 
     assert manifest.planned_files
+    assert any(item["relative_path"] == "result_dataset.json" for item in manifest.planned_files)
     assert any(
-        item["relative_path"] == "result_dataset.json"
-        for item in manifest.planned_files
-    )
-    assert any(
-        item["relative_path"] == "README_REVIEW_FIRST.txt"
-        for item in manifest.planned_files
+        item["relative_path"] == "README_REVIEW_FIRST.txt" for item in manifest.planned_files
     )
     assert manifest.artifact_references
     assert diagnostics.diagnostic_count >= 1
@@ -237,9 +229,7 @@ def test_schema_payload_writes_no_files(tmp_path: Path) -> None:
 
 
 def test_explain_schema_payload_is_reviewer_readable(tmp_path: Path) -> None:
-    lines = explain_calculix_result_dataset_schema_payload(
-        _schema_payload(tmp_path)
-    )
+    lines = explain_calculix_result_dataset_schema_payload(_schema_payload(tmp_path))
 
     assert any("schema payload status" in line.lower() for line in lines)
     assert any("resultdataset files written: false" in line.lower() for line in lines)
