@@ -1,51 +1,51 @@
-# OpenSolver Workbench
+<!-- BRAND_REFRESH_2026_08_25 -->
+<div align="center">
 
-OpenSolver Workbench (OSW) is an educational/research open-source Engineering
-Solver & Script Workbench for inspectable desktop workflows, solver case
-preparation, script previews, result review, and report generation.
+# 🛠️ OpenSolver Workbench
 
-OSW package metadata is currently `0.1.5`, and the current public GitHub
-prerelease is `v0.1.5-rc3`. It is useful for teaching, research prototyping,
-and transparent workflow experiments, but it is not an industrial-certified CAE
-tool, MATLAB clone, ANSYS clone, Simulink clone, or commercial CAD replacement.
+### Inspect the workflow, not just the answer.
 
-## What This Is
+**An open engineering solver and script workbench for typed project setup, guarded integrations, result inspection, 3D review, and reproducible report generation.**
 
-- A plugin-based desktop workbench built around small, typed project and result
-  contracts.
-- A PySide6 GUI shell for project navigation, properties, result previews, and
-  report status.
-- A CLI for standard engineering file workflows, plugin health checks, demo
-  projects, result inspection, and report summaries.
-- A guarded integration layer for solvers, scripts, result datasets, field
-  metadata, and HTML reports.
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![GUI](https://img.shields.io/badge/GUI-PySide6-41CD52?style=for-the-badge&logo=qt&logoColor=white)
+![Architecture](https://img.shields.io/badge/architecture-plugin--based-7C3AED?style=for-the-badge)
+![Status](https://img.shields.io/badge/status-research%20workbench-F97316?style=for-the-badge)
 
-The core package stays lightweight. GUI, mesh, visualization, script, chemistry,
-and external solver integrations are optional and should fail with clear
-diagnostics when a dependency is missing.
+[Try it](#quickstart) · [See the UI](#interface-preview) · [Workflow](#how-it-fits-together) · [Full technical reference](README.technical.2026-08-25.md)
 
-## What Works In v0.1.3rc1
+</div>
 
-- GUI baseline with Dark, Light, and System themes.
-- ProjectSchema, UnitSystem, MaterialDB, ResultDataset, FigureDataset, and
-  BoundaryCurve contracts.
-- HeatSink_Flow demo project generation and validation.
-- Plugin contract, manifest discovery, plugin health, manager UI, and local
-  folder/ZIP install hardening.
-- Runner diagnostics and explicit external-command safety boundaries.
-- Mesh metadata bridge, optional meshio path, and bounded Gmsh primitive `.geo`
-  generation.
-- CalculiX input deck generation, explicit runner path, parser fixtures, and
-  summary/validation helpers.
-- OpenFOAM cavity/duct template paths and residual parser.
-- MATLAB/Octave `.m` preview, GNU Octave runner path, FigureDataset handoff,
-  MAT reader, and curve bridges.
-- Report generator plus ResultViewer and FieldViewer metadata surfaces.
-- CoolProp and Cantera optional CHM adapters with guarded dependency checks.
+---
+
+> **Transparent engineering workflows should expose the setup, the handoff, the diagnostics, and the evidence — not only the final number.**
+
+OpenSolver Workbench is a desktop and CLI environment for educational, research, and integration-review workflows across projects, scripts, meshes, solver cases, result datasets, visual inspection, and reports.
+
+It is deliberately **not** positioned as an industrial-certified CAE suite, commercial CAD replacement, MATLAB clone, ANSYS clone, or automatic authority on engineering validity.
+
+## What you can do
+
+| Workspace | Capability |
+|---|---|
+| **Projects** | Create and validate typed engineering project contracts, materials, units, datasets, and saved scene state. |
+| **Plugins and adapters** | Inspect optional Gmsh, CalculiX, OpenFOAM, Octave/MAT, CoolProp, and Cantera paths with explicit dependency diagnostics. |
+| **3D review** | Render supported meshes, select entities, create NamedSelections, configure bounded solver setup, inspect diagnostics, and review compatible results. |
+| **Evidence and reports** | Capture persisted views, inspect result metadata, and export HTML reports without hiding unsupported states. |
+
+## How it fits together
+
+```mermaid
+flowchart LR
+    A["Project + typed contracts"] --> B["Plugin / adapter layer"]
+    B --> C["Prepare · preview · diagnose"]
+    C --> D["Result datasets"]
+    D --> E["2D / 3D inspection"]
+    E --> F["Persisted evidence"]
+    F --> G["Report"]
+```
 
 ## Quickstart
-
-Windows source install:
 
 ```powershell
 git clone https://github.com/CAPTW/OpenSourceWorkBench.git
@@ -55,7 +55,7 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[gui]"
 ```
 
-CLI and GUI smoke:
+Smoke the CLI and open the GUI:
 
 ```powershell
 .\.venv\Scripts\python.exe -m osw.cli --help
@@ -63,208 +63,32 @@ CLI and GUI smoke:
 .\.venv\Scripts\python.exe -m osw.cli gui
 ```
 
-Demo project and report summary:
+## Interface preview
 
-```powershell
-.\.venv\Scripts\python.exe -m osw.cli project-demo-json --out artifacts\demo_project.json
-.\.venv\Scripts\python.exe -m osw.cli project-validate artifacts\demo_project.json
-.\.venv\Scripts\python.exe -m osw.cli report-summary artifacts\demo_project.json
-```
+| Dark | Light | System |
+| :---: | :---: | :---: |
+| ![Dark theme](docs/assets/screenshots/osw_dark.png) | ![Light theme](docs/assets/screenshots/osw_light.png) | ![System theme](docs/assets/screenshots/osw_system.png) |
 
-Generated files under `artifacts/*` are local runtime outputs and should not be
-committed. For more commands and troubleshooting, see
-[Quickstart](docs/quickstart.md) and the
-[post-public-release roadmap](docs/roadmap/README.md).
+## Trust contract
 
-## Try It In 10 Minutes
+- Optional integrations fail with explicit diagnostics instead of pretending to be available.
+- Solver preparation, execution authority, result compatibility, and visualization support remain separate contracts.
+- Persisted reports use retained evidence rather than silently regenerating transient views.
+- Unsupported mesh cells, solver setup kinds, stale fingerprints, and unprepared native paths remain visible limitations.
+- Engineering interpretation remains the responsibility of a qualified user.
 
-For a guided first run, use the tutorial ladder:
-
-1. [First CLI Walkthrough](docs/tutorials/first_cli_walkthrough.md)
-2. [Result Dataset Walkthrough](docs/tutorials/result_dataset_walkthrough.md)
-3. [First GUI Walkthrough](docs/tutorials/first_gui_walkthrough.md)
-4. [Release Asset Smoke Walkthrough](docs/tutorials/release_asset_smoke_walkthrough.md)
-
-The first two tutorials need only the source checkout and Python environment.
-The GUI tutorial needs the `.[gui]` extra. Optional solver and science backends
-remain diagnostic-only until you install them separately.
-
-Developer checks:
+## Verification
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests/unit -q
 .\.venv\Scripts\python.exe -m pytest tests/integration -q -m "not external_solver"
-.\.venv\Scripts\python.exe -m pytest tests/integration -q -m external_solver
 .\.venv\Scripts\python.exe -m ruff check src tests tools
 ```
 
-Run the `external_solver` integration subset only on machines where the relevant
-optional executable is intentionally installed and configured.
+External-solver tests should run only on machines where the corresponding executable was intentionally installed and configured.
 
-## Screenshots
+## Full technical reference
 
-| Dark theme | Light theme | System theme |
-| --- | --- | --- |
-| ![OpenSolver Workbench dark theme](docs/assets/screenshots/osw_dark.png) | ![OpenSolver Workbench light theme](docs/assets/screenshots/osw_light.png) | ![OpenSolver Workbench system theme](docs/assets/screenshots/osw_system.png) |
+The original detailed README — including the complete feature inventory, tutorial ladder, 3D Workspace MVP acceptance path, release identities, optional dependencies, and implementation limits — is preserved unchanged at:
 
-The screenshots are offscreen captures of the v0.1 GUI baseline. They show the
-intended layout and preview surfaces; they are not claims of solver accuracy or
-production readiness.
-
-## Examples
-
-Start with [Examples](examples/README.md) or the mirrored
-[examples index](docs/examples.md). The examples and
-[tutorials](docs/tutorials/README.md) use existing fixtures and safe preview
-commands:
-
-- Demo project JSON generation and validation.
-- Plugin health diagnostics.
-- MATLAB/Octave script preview and safety scan.
-- MAT-file info with optional dependency diagnostics.
-- BoundaryCurve CSV/JSON inspection.
-- CalculiX result summary fixtures.
-- OpenFOAM residual log parsing fixtures.
-- Result catalog and field dataset inspection.
-- HTML report export from the demo project.
-
-## 3D Workspace MVP
-
-The local 3D Workspace MVP user journey is:
-
-`Import/Open → Render → Select → NamedSelection → Solver Setup → Diagnostics →
-Results → Probe/Deformation → Save View → Capture → Report → Save Project →
-Fresh-Process Reopen → Exact Scene Restore → Stale-Mesh Rejection`.
-
-How to open a supported mesh: create or open a Project, then load an in-memory
-or already-imported mesh through the existing 3D viewer. The viewer renders
-triangle, quad, polygon surface, and linear tetra cells. `tetra10`, hexahedron,
-`hexahedron20`, wedge, and pyramid are unsupported.
-
-Camera, representation, and axes controls live on the viewport toolbar.
-Point/cell picking creates canonical NamedSelections. Solver setup kinds are
-material region, fixed support, prescribed displacement, force, pressure,
-temperature, and heat flux. CalculiX prepare-only handoff supports the first
-four; the last three stay explicitly unsupported. The GUI does not launch a
-solver.
-
-Scaled Jacobian diagnostics cover triangle, quad, and linear tetra. Interactive
-results require an exact mesh fingerprint. Project Save persists
-`osw.active_scene.v1`. Screenshot capture and report export are explicit.
-Reports use persisted images only. Native locality remains `DEFERRED_RETAINED`.
-
-Renderer-neutral acceptance:
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest tests/unit/test_3d_workspace_mvp_end_to_end.py -q
-```
-
-Prepared visible native acceptance, each stage in a fresh process:
-
-```powershell
-$env:OSW_RUN_PREPARED_INTERACTIVE='1'
-$env:OSW_E2E_WORKSPACE_ROOT='C:\temp\osw-mvp-e2e'
-$env:OSW_E2E_STAGE='AUTHOR'
-python -m pytest tests/gui/test_3d_workspace_mvp_end_to_end_prepared_gui.py -q
-$env:OSW_E2E_STAGE='RESTORE'
-python -m pytest tests/gui/test_3d_workspace_mvp_end_to_end_prepared_gui.py -q
-$env:OSW_E2E_STAGE='STALE'
-python -m pytest tests/gui/test_3d_workspace_mvp_end_to_end_prepared_gui.py -q
-```
-
-With only `OSW_RUN_PREPARED_INTERACTIVE=1` set, the prepared module orchestrates
-AUTHOR, process exit, RESTORE, process exit, and STALE. Historical offscreen
-PyVistaQt aggregates may crash on Windows; do not replace this visible path
-with offscreen mode. This MVP is for integration review with documented
-limitations. It is not production-ready or industrially certified.
-
-Local installed-package smoke, after a no-isolation wheel build, must import
-`osw` from the install target rather than this source checkout. Current package
-version is `0.1.5`. Published RC3 package identity remains `0.1.5rc3`.
-Published annotated tag `v0.1.5-rc3` peels to release
-source `4b1effccf3bbc4fd18073c0ab39f90cfb6822232`. A later docs-only `develop`
-commit does not move that tag or release source.
-
-## Optional Dependencies
-
-Install only the extras needed for the workflow you are testing:
-
-- `.[gui]`: PySide6 GUI.
-- `.[mesh]`: meshio and the Gmsh Python package path.
-- `.[viz]`: PyVista and Matplotlib visualization helpers.
-- `.[mscript]`: SciPy and hdf5storage for MAT workflows.
-- `.[chm]`: CoolProp and Cantera chemistry/thermophysical demos.
-- External executables: Gmsh, GNU Octave, CalculiX `ccx`, and OpenFOAM are
-  optional user-installed tools.
-- PyYAML is optional for YAML project files.
-
-Missing optional dependencies are expected on many machines. OSW should report
-diagnostics or skips rather than pretending a workflow succeeded.
-
-## Known Limitations
-
-- No industrial certification or production CAE accuracy claim.
-- No native SolidWorks, CATIA, NX, Creo, or other commercial CAD direct import.
-- No Simulink, `.slx`, or `.mlapp` compatibility.
-- No full OpenFOAM GUI/editor or broad solver coverage.
-- No full CalculiX FRD field parser.
-- No full OpenFOAM field parser.
-- No plugin signing, remote plugin marketplace, or dependency auto-install.
-- No MSI installer or code signing yet.
-- **Native report-asset availability resolution is unsupported (`DEFERRED_RETAINED`).** Without an authorized resolver, the manager and report bridge continue to represent typed `external_absolute` and `project_relative` references as `unresolved_no_resolver` placeholders. “Relink selected screenshot…” performs point-in-time selected-file and suffix checks and, only after explicit confirmation plus post-confirmation file and stale-target revalidation, replaces one in-memory Project screenshot record: `external_absolute` remains `external_absolute`, while `project_relative` becomes `external_absolute`. Relink does not perform typed native resolution; the runtime descriptor still has no `effective_path`, the report bridge supplies no usable `image_path`, and the placeholder remains. Saving the Project is separate and explicit. These compatibility checks add no durable claim of existence, readability, locality, containment, link safety, provider silence, sandboxing, race-free consumption, authenticity, malware safety, or production readiness, and make no negative finding about the target. Legacy or unmarked compatibility behavior is separate, may perform filesystem checks, and is not certified provider-silent.
-- The GitHub Release for `v0.1.5-rc1` is a public prerelease with assets; it is
-  not a stable production release, certification milestone, or bundled-solver
-  distribution.
-
-See [Known Limitations For v0.1](docs/release/known_limitations_v0_1.md) for
-the full public scope note and [Report Asset Runtime Path Native
-Deferral](docs/experimental/report_asset_runtime_path_native_deferral.md) for
-the canonical report-asset claim boundary.
-
-## Release Status
-
-- Current `develop` package metadata: `0.1.5`.
-- Planned annotated tag: `v0.1.5`. This metadata gate does not create that tag
-  or a GitHub final release.
-- Current public prerelease tag: `v0.1.5-rc3` (published and verified).
-- Published RC3 package identity remains `0.1.5rc3`.
-- RC3 tag/release source: `4b1effccf3bbc4fd18073c0ab39f90cfb6822232`. Later
-  docs-only `develop` commits do not alter that source.
-- Historical public prerelease tags: `v0.1.5-rc2` and `v0.1.5-rc1` (immutable).
-- A public GitHub Release prerelease exists for `v0.1.5-rc3` with four assets:
-  wheel, sdist, `SHA256SUMS.txt`, and `release_asset_manifest.json`. Historical
-  `v0.1.5-rc2` remains published with its exact four-asset set. Historical
-  `v0.1.5-rc1` remains published with its original five-asset set, including the
-  unsigned Windows portable ZIP. Local validation artifacts are not release assets.
-- OpenFOAM v12 template compatibility issues #18 and #19 are closed with
-  WSL-scoped evidence. Optional validation issues #6 through #11 are also
-  closed after separate bounded evidence and closure gates; each closure remains
-  scoped to its issue and is not certification, production-readiness evidence,
-  release-readiness evidence, bundled-solver support, or native-Windows
-  validation where the evidence was WSL-scoped.
-- Future maintenance and feature work are tracked in the
-  [post-public-release roadmap](docs/roadmap/README.md).
-- Package publication, installer/signing work, and public announcement text
-  require separate maintainer-approved gates.
-
-Useful release docs:
-
-- [v0.1.3rc1 Release Summary](docs/release/v0_1_3rc1_release_summary.md)
-- [v0.1.4-rc1 Candidate Metadata Alignment](docs/release/v0_1_4_rc1_candidate.md)
-- [v0.1.5-rc1 Candidate Metadata Alignment](docs/release/v0_1_5_rc1_candidate.md)
-- [v0.1.5 Final Release Notes](docs/release/v0_1_5_release_notes.md)
-- [v0.1 Release Notes](docs/release/v0_1_release_notes.md)
-- [Release Checklist](docs/10_release_checklist.md)
-- [Post-Public Release Checklist](docs/release/post_public_release_checklist.md)
-- [Validation Matrix](docs/04_validation_matrix.md)
-- [Tutorials](docs/tutorials/README.md)
-- [Post-Public-Release Roadmap](docs/roadmap/README.md)
-- [Windows Portable ZIP](docs/release/windows_portable_zip.md)
-- [Code Signing And Installer Strategy](docs/release/code_signing_installer_strategy.md)
-- [Optional Dependencies](docs/install/optional_dependencies.md)
-
-## License
-
-OpenSolver Workbench source is licensed under
-[GPL-3.0-or-later](LICENSE). External solver binaries and optional tools are
-user-installed local dependencies and are not bundled by OSW v0.1.
+**[README.technical.2026-08-25.md](README.technical.2026-08-25.md)**
